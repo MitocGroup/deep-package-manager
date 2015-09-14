@@ -1,0 +1,5 @@
+test
+tests
+/lib
+.gitignore
+sample_property/deeploy.json
