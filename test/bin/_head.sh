@@ -9,23 +9,11 @@ __SRC_PATH="${__ROOT_PATH}src/"
 subpath_run_cmd () {
     local DIR
     local CMD
-    local EXPR
 
     DIR=$(cd $1 && pwd -P)
     CMD=$2
 
-    if [ -z $3 ]; then
-        EXPR="*"
-    else
-        EXPR=$3
-    fi
-
-    for subpath in $DIR/$EXPR
-    do
-        if [ -d ${subpath} ]; then
-            cd ${subpath} && eval_or_exit "$CMD"
-        fi
-    done
+    cd $DIR && eval_or_exit "$CMD"
 }
 
 eval_or_exit() {
