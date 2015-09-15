@@ -13,6 +13,7 @@ branches:
   - stage
   - test
   - dev
+  - unit-testing
 
 before_install:
 - npm install -g babel
