@@ -11,6 +11,7 @@ import {Autoload} from './Metadata/Autoload';
 import {ResourceCollection} from './Metadata/ResourceCollection';
 import {Compiler} from '../Compilation/Compiler';
 import StringUtils from 'underscore.string';
+import {PostDeployHook} from './PostDeployHook';
 
 /**
  * Microservice instance
@@ -35,6 +36,8 @@ export class Instance {
     this._parameters = parameters.extract();
     this._autoload = new Autoload(this._config.autoload, this._basePath);
     this._resources = null;
+
+    this._postDeployHook = new PostDeployHook(this);
   }
 
   /**
@@ -137,6 +140,13 @@ export class Instance {
    */
   get autoload() {
     return this._autoload;
+  }
+
+  /**
+   * @returns {Function}
+   */
+  get postDeployHook() {
+    return this._postDeployHook.getHook();
   }
 
   /**
