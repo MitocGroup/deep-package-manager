@@ -1,13 +1,54 @@
-// THIS TEST WAS GENERATED AUTOMATICALLY ON Thu Sep 03 2015 12:29:31 GMT+0300 (EEST)
-
 'use strict';
 
 import chai from 'chai';
 import {Config} from '../../lib.compiled/Microservice/Config';
+import {InvalidArgumentException} from '../../lib.compiled/Exception/InvalidArgumentException';
+import Core from '@mitocgroup/deep-core';
 
-// @todo: Add more advanced tests
-suite("Microservice/Config", function() {
+suite('Microservice/Config', function() {
+  let configInput = {
+    name: 'config',
+    propertyRoot: false,
+    description: 'Config unit test',
+    identifier: 'unit_test',
+    version: '0.0.1',
+    website: 'http://www.mitocgroup.com/',
+    email: 'hello@mitocgroup.com',
+    dependencies: {},
+    autoload: {
+      backend: 'Backend',
+      docs: 'Docs',
+      frontend: 'Frontend',
+      models: 'Models',
+    },
+  };
+
+
+  let config = new Config(configInput);
+
   test('Class Config exists in Microservice/Config', function() {
     chai.expect(typeof Config).to.equal('function');
+  });
+
+  test('Check constructor sets valid default value for _rawConfig={}', function() {
+    chai.expect(config.rawConfig).to.be.eql(configInput);
+  });
+
+  test('Check constructor sets valid default value for _parsedObject', function() {
+    chai.expect(config._parsedObject).to.be.eql({error: null, value: configInput});
+  });
+
+  test('Check rawconfig getter returns valid value', function() {
+    chai.expect(config.rawConfig).to.be.eql(configInput);
+    configInput.description = 'Test getter';
+    chai.expect(config.rawConfig).to.be.eql(configInput);
+  });
+
+  test('Check valid getter returns true', function() {
+    chai.expect(config.valid).to.be.equal(true);
+  });
+
+  test('Check error getter returns null', function() {
+    chai.expect(config.error).to.be.equal(null);
   });
 });
