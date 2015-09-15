@@ -9,6 +9,7 @@ import Core from '@mitocgroup/deep-core';
 import {WaitFor} from '../../Helpers/WaitFor';
 import {FailedToCreateApiGatewayException} from './Exception/FailedToCreateApiGatewayException';
 import {FailedToCreateApiResourcesException} from './Exception/FailedToCreateApiResourcesException';
+import {FailedToListApiResourcesException} from './Exception/FailedToListApiResourcesException';
 
 /**
  * APIGateway service
@@ -98,6 +99,7 @@ export class APIGatewayService extends AbstractService {
    */
   _createApiResources(metadata, resourcePaths) {
     var restApi = null;
+    var restResourcesCreated = false;
     var restResources = null;
     let apiGateway = this.provisioning.apiGateway;
     let wait = new WaitFor();
@@ -117,15 +119,15 @@ export class APIGatewayService extends AbstractService {
 
     return (callback) => {
       return wait.ready(() => {
-        let innerWait = new WaitFor();
+        let secondLevelWait = new WaitFor();
 
         let params = {
           paths: resourcePaths,
           restapiId: restApi.id,
         };
 
-        apiGateway.createResources(params).then(function(resources) {
-          restResources = resources;
+        apiGateway.createResources(params).then(function() {
+          restResourcesCreated = true;
         }, function(error) {
 
           if (error) {
@@ -133,12 +135,29 @@ export class APIGatewayService extends AbstractService {
           }
         });
 
-        innerWait.push(function() {
-          return restResources !== null;
+        secondLevelWait.push(function() {
+          return restResourcesCreated;
         }.bind(this));
 
-        return innerWait.ready(() => {
-          callback(restApi, restResources);
+        return secondLevelWait.ready(() => {
+          let thirdLevelWait = new WaitFor();
+
+          apiGateway.listResources({restapiId: restApi.id}).then(function(resources) {
+            restResources = resources;
+          }, function(error) {
+
+            if (error) {
+              throw new FailedToListApiResourcesException(restApi.id, error);
+            }
+          });
+
+          thirdLevelWait.push(function() {
+            return restResources !== null;
+          }.bind(this));
+
+          return thirdLevelWait.ready(() => {
+            callback(restApi, this._extractResourcesMetadata(restResources));
+          });
         });
       });
     };
@@ -203,5 +222,31 @@ export class APIGatewayService extends AbstractService {
     }
 
     return path.replace(/\./g, '-'); // API Gateway does not support dots into resource name / path
+  }
+
+  /**
+   * @param {Array} rawResources
+   * @returns {Object}
+   * @private
+   */
+  _extractResourcesMetadata(rawResources) {
+    let resourcesMetadata = {};
+
+    for (let rawResourceKey in rawResources) {
+      if (!rawResources.hasOwnProperty(rawResourceKey)) {
+        continue;
+      }
+
+      let rawResource = rawResources[rawResourceKey].source;
+
+      resourcesMetadata[rawResource.path] = {
+        id: rawResource.id,
+        parentId: rawResource.parentId,
+        path: rawResource.path,
+        pathPart: rawResource.pathPart,
+      };
+    }
+
+    return resourcesMetadata;
   }
 }
