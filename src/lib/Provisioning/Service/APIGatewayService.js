@@ -55,11 +55,9 @@ export class APIGatewayService extends AbstractService {
    * @returns {APIGatewayService}
    */
   _setup(services) {
-    let microservices = this.provisioning.property.microservices;
-
-    this._createApi(
-      apiMetadata,
-      microservices
+    this._createApiResources(
+      this.apiMetadata,
+      this._getResourcePaths(this.provisioning.property.microservices)
     )(function(api, resources) {
       this._config.api = {
         id: api.id,
@@ -94,10 +92,11 @@ export class APIGatewayService extends AbstractService {
 
   /**
    * @param {Object} metadata
+   * @param {Array} resourcePaths
    * @returns {function}
    * @private
    */
-  _createApi(metadata) {
+  _createApiResources(metadata, resourcePaths) {
     var restApi = null;
     var restResources = null;
     let apiGateway = this.provisioning.apiGateway;
@@ -120,15 +119,8 @@ export class APIGatewayService extends AbstractService {
       return wait.ready(() => {
         let innerWait = new WaitFor();
 
-        // @todo - replace it with real resources
-        let paths = [
-          '/user',
-          '/user/retrieve',
-          '/account',
-        ];
-
-        var params = {
-          paths: paths,
+        let params = {
+          paths: resourcePaths,
           restapiId: restApi.id,
         };
 
@@ -150,5 +142,42 @@ export class APIGatewayService extends AbstractService {
         });
       });
     };
+  }
+
+  /**
+   * @param {Object} microservices
+   * @returns {Array}
+   * @private
+   */
+  _getResourcePaths(microservices) {
+    let resourcePaths = [];
+
+    for (let microserviceKey in microservices) {
+      if (!microservices.hasOwnProperty(microserviceKey)) {
+        continue;
+      }
+
+      let microservice = microservices[microserviceKey];
+
+      resourcePaths.push(`/${microservice.identifier}`);
+
+      for (let actionKey in microservice.resources.actions) {
+        if (!microservice.resources.actions.hasOwnProperty(actionKey)) {
+          continue;
+        }
+
+        let action = microservice.resources.actions[actionKey];
+        let resourcePath = `/${microservice.identifier}/${action.resourceName}`;
+
+        // push actions parent resource only once
+        if (resourcePaths.indexOf(resourcePath) === -1) {
+          resourcePaths.push(resourcePath);
+        }
+
+        resourcePaths.push(`/${microservice.identifier}/${action.resourceName}/${action.name}`);
+      }
+    }
+
+    return resourcePaths;
   }
 }

@@ -74,7 +74,7 @@ var APIGatewayService = (function (_AbstractService) {
      * @returns {APIGatewayService}
      */
     value: function _setup(services) {
-      this._createApi(this.apiMetadata)((function (api, resources) {
+      this._createApiResources(this.apiMetadata, this._getResourcePaths(this.provisioning.property.microservices))((function (api, resources) {
         this._config.api = {
           id: api.id,
           name: api.name,
@@ -112,16 +112,21 @@ var APIGatewayService = (function (_AbstractService) {
 
     /**
      * @param {Object} metadata
+     * @param {Array} resourcePaths
      * @returns {function}
      * @private
      */
   }, {
-    key: '_createApi',
-    value: function _createApi(metadata) {
+    key: '_createApiResources',
+    value: function _createApiResources(metadata, resourcePaths) {
+      var _this = this;
+
       var restApi = null;
       var restResources = null;
       var apiGateway = this.provisioning.apiGateway;
       var wait = new _HelpersWaitFor.WaitFor();
+
+      console.log('resourcePaths - ', resourcePaths);
 
       apiGateway.createRestapi(metadata).then(function (api) {
         restApi = api.source;
@@ -132,17 +137,20 @@ var APIGatewayService = (function (_AbstractService) {
         }
       });
 
-      wait.push((function () {
+      wait.push(function () {
         return restApi !== null;
-      }).bind(this));
+      });
 
-      return (function (callback) {
-        return wait.ready((function () {
+      return function (callback) {
+        return wait.ready(function () {
           var innerWait = new _HelpersWaitFor.WaitFor();
 
-          var paths = ['user', 'user/create', 'user/retrieve', 'account', 'account/create'];
+          var params = {
+            paths: resourcePaths,
+            restapiId: restApi.id
+          };
 
-          apiGateway.createResources(paths, restApi.id).then(function (resources) {
+          apiGateway.createResources(params).then(function (resources) {
             restResources = resources;
           }, function (error) {
 
@@ -153,19 +161,58 @@ var APIGatewayService = (function (_AbstractService) {
 
           innerWait.push((function () {
             return restResources !== null;
-          }).bind(this));
+          }).bind(_this));
 
-          innerWait.ready(function () {
+          return innerWait.ready(function () {
             callback(restApi, restResources);
           });
-        }).bind(this));
-      }).bind(this);
+        });
+      };
+    }
+
+    /**
+     * @param {Object} microservices
+     * @returns {Array}
+     * @private
+     */
+  }, {
+    key: '_getResourcePaths',
+    value: function _getResourcePaths(microservices) {
+      var resourcePaths = [];
+
+      for (var microserviceKey in microservices) {
+        if (!microservices.hasOwnProperty(microserviceKey)) {
+          continue;
+        }
+
+        var microservice = microservices[microserviceKey];
+
+        resourcePaths.push('/' + microservice.identifier);
+
+        for (var actionKey in microservice.resources.actions) {
+          if (!microservice.resources.actions.hasOwnProperty(actionKey)) {
+            continue;
+          }
+
+          var action = microservice.resources.actions[actionKey];
+          var resourcePath = '/' + microservice.identifier + '/' + action.resourceName;
+
+          // push actions parent resource only once
+          if (resourcePaths.indexOf(resourcePath) === -1) {
+            resourcePaths.push(resourcePath);
+          }
+
+          resourcePaths.push('/' + microservice.identifier + '/' + action.resourceName + '/' + action.name);
+        }
+      }
+
+      return resourcePaths;
     }
   }, {
     key: 'apiMetadata',
     get: function get() {
       return {
-        name: this.propertyIdentifier + '.api'
+        name: this.generateAwsResourceName('Api', _mitocgroupDeepCore2['default'].AWS.Service.API_GATEWAY)
       };
     }
 
