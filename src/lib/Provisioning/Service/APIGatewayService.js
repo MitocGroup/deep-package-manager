@@ -95,8 +95,8 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _createApi(metadata) {
-    let restApi = null;
-    let restResources = null;
+    var restApi = null;
+    var restResources = null;
     let apiGateway = this.provisioning.apiGateway;
     let wait = new WaitFor();
 
@@ -109,23 +109,27 @@ export class APIGatewayService extends AbstractService {
       }
     });
 
-    wait.push(function() {
+    wait.push(() => {
       return restApi !== null;
-    }.bind(this));
+    });
 
-    return function(callback) {
-      return wait.ready(function() {
+    return (callback) => {
+      return wait.ready(() => {
         let innerWait = new WaitFor();
 
+        // @todo - replace it with real resources
         let paths = [
-          'user',
-          'user/create',
-          'user/retrieve',
-          'account',
-          'account/create',
+          '/user',
+          '/user/retrieve',
+          '/account',
         ];
 
-        apiGateway.createResources(paths, restApi.id).then(function(resources) {
+        var params = {
+          paths: paths,
+          restapiId: restApi.id,
+        };
+
+        apiGateway.createResources(params).then(function(resources) {
           restResources = resources;
         }, function(error) {
 
@@ -138,10 +142,10 @@ export class APIGatewayService extends AbstractService {
           return restResources !== null;
         }.bind(this));
 
-        innerWait.ready(function() {
+        return innerWait.ready(() => {
           callback(restApi, restResources);
         });
-      }.bind(this));
-    }.bind(this);
+      });
+    };
   }
 }
