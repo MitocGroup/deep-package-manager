@@ -64,18 +64,19 @@ var Dispatcher = (function (_Core$OOP$Interface) {
       this._resolveStack = [];
 
       var wait = new _HelpersWaitFor.WaitFor();
-      var stackSize = 0;
+      var microservices = this.microservices;
+      var remaining = microservices.length;
 
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
 
       try {
-        for (var _iterator = this.microservices[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        for (var _iterator = microservices[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
           var microservice = _step.value;
 
           this.dispatch(microservice, (function () {
-            stackSize--;
+            remaining--;
           }).bind(this));
         }
       } catch (err) {
@@ -94,7 +95,7 @@ var Dispatcher = (function (_Core$OOP$Interface) {
       }
 
       wait.push((function () {
-        return stackSize <= 0;
+        return remaining <= 0;
       }).bind(this));
 
       wait.ready((function () {
