@@ -13,67 +13,67 @@ import JsonFile from 'jsonfile';
  * DB model class
  */
 export class Model {
-    /**
-     * @param {String} name
-     * @param {Object} definition
-     */
-    constructor(name, definition) {
-        this._name = name;
-        this._definition = definition;
+  /**
+   * @param {String} name
+   * @param {Object} definition
+   */
+  constructor(name, definition) {
+    this._name = name;
+    this._definition = definition;
+  }
+
+  /**
+   * @param directories
+   * @returns {Model[]}
+   */
+  static create(...directories) {
+    let ext = Model.EXTENSION;
+    let walker = new FileWalker(FileWalker.RECURSIVE);
+    let filter = FileWalker.matchExtensionsFilter(FileWalker.skipDotsFilter(), ext);
+
+    let models = [];
+
+    for (let dir of directories) {
+      for (let modelFile of walker.walk(dir, filter)) {
+        let name = Path.basename(modelFile, `.${ext}`);
+        let definition = JsonFile.readFileSync(modelFile);
+
+        models.push(new Model(name, definition));
+      }
     }
 
-    /**
-     * @param directories
-     * @returns {Model[]}
-     */
-    static create(...directories) {
-        let ext = Model.EXTENSION;
-        let walker = new FileWalker(FileWalker.RECURSIVE);
-        let filter = FileWalker.matchExtensionsFilter(FileWalker.skipDotsFilter(), ext);
+    return models;
+  }
 
-        let models = [];
+  /**
+   * @returns {String}
+   */
+  get name() {
+    return this._name;
+  }
 
-        for (let dir of directories) {
-            for (let modelFile of walker.walk(dir, filter)) {
-                let name = Path.basename(modelFile, `.${ext}`);
-                let definition = JsonFile.readFileSync(modelFile);
+  /**
+   * @returns {Object}
+   */
+  get definition() {
+    return this._definition;
+  }
 
-                models.push(new Model(name, definition));
-            }
-        }
+  /**
+   * @returns {String}
+   */
+  static get EXTENSION() {
+    return 'json';
+  }
 
-        return models;
-    }
+  /**
+   * @returns {Object}
+   */
+  extract() {
+    let obj = {};
 
-    /**
-     * @returns {String}
-     */
-    get name() {
-        return this._name;
-    }
+    obj[this._name] = this._definition;
 
-    /**
-     * @returns {Object}
-     */
-    get definition() {
-        return this._definition;
-    }
-
-    /**
-     * @returns {String}
-     */
-    static get EXTENSION() {
-        return 'json';
-    }
-
-    /**
-     * @returns {Object}
-     */
-    extract() {
-        let obj = {};
-
-        obj[this._name] = this._definition;
-
-        return obj;
-    }
+    return obj;
+  }
 }
