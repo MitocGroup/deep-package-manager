@@ -12,8 +12,8 @@ subpath_run_cmd ${__SRC_PATH} "$__CMD"
 
 COVERAGE_PATH=${__SCRIPT_PATH}"/../coverage"
 
-istanbul-combine -d ${COVERAGE_PATH} -r lcov -p none \
-  ${__SRC_PATH}/*/coverage/*.json
+istanbul-combine -d ${COVERAGE_PATH} -r lcov -p both \
+  ${__SRC_PATH}/coverage/*.json
 
 ### Upload Coverage info to Codacy ###
 
