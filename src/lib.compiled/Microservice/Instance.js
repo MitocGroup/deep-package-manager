@@ -30,6 +30,8 @@ var _underscoreString = require('underscore.string');
 
 var _underscoreString2 = _interopRequireDefault(_underscoreString);
 
+var _PostDeployHook = require('./PostDeployHook');
+
 /**
  * Microservice instance
  */
@@ -57,6 +59,8 @@ var Instance = (function () {
     this._parameters = parameters.extract();
     this._autoload = new _MetadataAutoload.Autoload(this._config.autoload, this._basePath);
     this._resources = null;
+
+    this._postDeployHook = new _PostDeployHook.PostDeployHook(this);
   }
 
   /**
@@ -145,6 +149,15 @@ var Instance = (function () {
     key: 'autoload',
     get: function get() {
       return this._autoload;
+    }
+
+    /**
+     * @returns {Function}
+     */
+  }, {
+    key: 'postDeployHook',
+    get: function get() {
+      return this._postDeployHook.getHook();
     }
 
     /**

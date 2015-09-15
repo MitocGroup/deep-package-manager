@@ -550,14 +550,76 @@ var Instance = (function () {
       }
 
       if (isUpdate) {
-        // @todo - check if we have smth to do in this case
-        callback();
+        this._runPostDeployMsHooks(callback, true);
       } else {
         this.provisioning.postDeployProvision((function (config) {
           this._config.provisioning = config;
-          callback();
+
+          this._runPostDeployMsHooks(callback);
         }).bind(this));
       }
+
+      return this;
+    }
+
+    /**
+     * @param {Function} callback
+     * @param {Boolean} isUpdate
+     * @returns {Instance}
+     * @private
+     */
+  }, {
+    key: '_runPostDeployMsHooks',
+    value: function _runPostDeployMsHooks(callback) {
+      var isUpdate = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+
+      var wait = new _HelpersWaitFor.WaitFor();
+      var microservices = this.microservices;
+      var remaining = microservices.length;
+
+      wait.push((function () {
+        return remaining <= 0;
+      }).bind(this));
+
+      var _iteratorNormalCompletion7 = true;
+      var _didIteratorError7 = false;
+      var _iteratorError7 = undefined;
+
+      try {
+        for (var _iterator7 = microservices[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+          var microservice = _step7.value;
+
+          var hook = microservice.postDeployHook;
+
+          if (!hook) {
+            console.log('- No post deploy hook found for microservice ' + microservice.identifier);
+            continue;
+          }
+
+          console.log('- Running post deploy hook for microservice ' + microservice.identifier);
+
+          hook(this._provisioning, isUpdate, (function () {
+            remaining--;
+          }).bind(this));
+        }
+      } catch (err) {
+        _didIteratorError7 = true;
+        _iteratorError7 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion7 && _iterator7['return']) {
+            _iterator7['return']();
+          }
+        } finally {
+          if (_didIteratorError7) {
+            throw _iteratorError7;
+          }
+        }
+      }
+
+      wait.ready((function () {
+        callback();
+      }).bind(this));
 
       return this;
     }
@@ -587,11 +649,12 @@ var Instance = (function () {
         throw new _ExceptionInvalidArgumentException.InvalidArgumentException(callback, 'Function');
       }
 
-      console.log('- Start installing property: ' + new Date().toTimeString());
+      console.log('- Start ' + (skipProvision ? 'updating' : 'installing') + ' property: ' + new Date().toTimeString());
 
       return this.build((function () {
         this.deploy((function () {
           console.log('- Deploy is done!: ' + new Date().toTimeString());
+
           this._postDeploy(callback, skipProvision);
         }).bind(this), skipProvision);
       }).bind(this), skipProvision);
@@ -669,13 +732,13 @@ var Instance = (function () {
 
         var files = _fs2['default'].readdirSync(this._path);
 
-        var _iteratorNormalCompletion7 = true;
-        var _didIteratorError7 = false;
-        var _iteratorError7 = undefined;
+        var _iteratorNormalCompletion8 = true;
+        var _didIteratorError8 = false;
+        var _iteratorError8 = undefined;
 
         try {
-          for (var _iterator7 = files[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-            var file = _step7.value;
+          for (var _iterator8 = files[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+            var file = _step8.value;
 
             var fullPath = _path2['default'].join(this._path, file);
 
@@ -684,16 +747,16 @@ var Instance = (function () {
             }
           }
         } catch (err) {
-          _didIteratorError7 = true;
-          _iteratorError7 = err;
+          _didIteratorError8 = true;
+          _iteratorError8 = err;
         } finally {
           try {
-            if (!_iteratorNormalCompletion7 && _iterator7['return']) {
-              _iterator7['return']();
+            if (!_iteratorNormalCompletion8 && _iterator8['return']) {
+              _iterator8['return']();
             }
           } finally {
-            if (_didIteratorError7) {
-              throw _iteratorError7;
+            if (_didIteratorError8) {
+              throw _iteratorError8;
             }
           }
         }
