@@ -35,7 +35,7 @@ export class APIGatewayService extends AbstractService {
    */
   get apiMetadata() {
     return {
-      name: `${this.propertyIdentifier}.api`,
+      name: this.generateAwsResourceName('Api', Core.AWS.Service.API_GATEWAY),
     };
   }
 
@@ -55,8 +55,11 @@ export class APIGatewayService extends AbstractService {
    * @returns {APIGatewayService}
    */
   _setup(services) {
+    let microservices = this.provisioning.property.microservices;
+
     this._createApi(
-      this.apiMetadata
+      apiMetadata,
+      microservices
     )(function(api, resources) {
       this._config.api = {
         id: api.id,
