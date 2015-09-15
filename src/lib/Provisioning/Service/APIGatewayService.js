@@ -159,7 +159,7 @@ export class APIGatewayService extends AbstractService {
 
       let microservice = microservices[microserviceKey];
 
-      resourcePaths.push(`/${microservice.identifier}`);
+      resourcePaths.push(this._pathfy(microservice.identifier));
 
       for (let actionKey in microservice.resources.actions) {
         if (!microservice.resources.actions.hasOwnProperty(actionKey)) {
@@ -167,17 +167,41 @@ export class APIGatewayService extends AbstractService {
         }
 
         let action = microservice.resources.actions[actionKey];
-        let resourcePath = `/${microservice.identifier}/${action.resourceName}`;
+        let resourcePath = this._pathfy(microservice.identifier, action.resourceName);
 
         // push actions parent resource only once
         if (resourcePaths.indexOf(resourcePath) === -1) {
           resourcePaths.push(resourcePath);
         }
 
-        resourcePaths.push(`/${microservice.identifier}/${action.resourceName}/${action.name}`);
+        resourcePaths.push(
+          this._pathfy(microservice.identifier, action.resourceName, action.name)
+        );
       }
     }
 
     return resourcePaths;
+  }
+
+  /**
+   * @param {String} microserviceIdentifier
+   * @param {String} resourceName
+   * @param {String} actionName
+   *
+   * @return {String}
+   * @private
+   */
+  _pathfy(microserviceIdentifier, resourceName = '', actionName = '') {
+    let path = `/${microserviceIdentifier}`;
+
+    if (resourceName) {
+      path += `/${resourceName}`;
+    }
+
+    if (actionName) {
+      path += `/${actionName}`;
+    }
+
+    return path.replace(/\./g, '-'); // API Gateway does not support dots into resource name / path
   }
 }
