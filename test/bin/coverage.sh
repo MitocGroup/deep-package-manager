@@ -16,6 +16,9 @@ istanbul-combine -d ${COVERAGE_PATH} -r lcov -p both \
   ${__SRC_PATH}/coverage/*.json
 
 ### Upload Coverage info to Codacy ###
+echo 'combinted contains'
+cd ${COVERAGE_PATH}
+ls -l
 
 cat ${COVERAGE_PATH}"/lcov.info" | codacy-coverage
 cat ${COVERAGE_PATH}"/lcov.info" | coveralls
