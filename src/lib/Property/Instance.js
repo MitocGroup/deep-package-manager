@@ -469,6 +469,7 @@ export class Instance {
 
       if (!hook) {
         console.log(`- No post deploy hook found for microservice ${microservice.identifier}`);
+        remaining--;
         continue;
       }
 
