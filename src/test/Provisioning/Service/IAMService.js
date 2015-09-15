@@ -12,8 +12,8 @@ suite('Provisioning/Service/IAMService', function() {
   });
 
   test('Check constructor sets valid default values', function() {
-    chai.expect(iamService._readyTeardown).to.be.false;
-    chai.expect(iamService._ready).to.be.false;
+    chai.expect(iamService._readyTeardown).to.be.equal(false);
+    chai.expect(iamService._ready).to.be.equal(false);
   });
 
   //todo - TBD

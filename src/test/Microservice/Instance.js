@@ -26,39 +26,58 @@ suite('Microservice/Instance', function() {
   };
   let config = new Config(configInput);
   let parameters = new Parameters();
-
-  let instance = new Instance(config, parameters, 'basePath');
+  let basePath = 'basePath';
+  let instance = new Instance(config, parameters, basePath);
 
   test('Class Instance exists in Microservice/Instance', function() {
     chai.expect(typeof Instance).to.equal('function');
   });
 
-  //test('Check constructor sets valid default values', function() {
-  //  chai.expect(instance._readyTeardown).to.be.false;
-  //  chai.expect(instance._ready).to.be.false;
-  //});
-  //
-  //test('Check name() method returns \'apigateway\'', function() {
-  //  chai.expect(instance.name()).to.be.equal('apigateway');
-  //});
+  test('Check constructor sets valid default values', function() {
+    chai.expect(instance._resources).to.be.equal(null);
+  });
 
-  ////todo - TBD
-  //test('Check AVAILABLE_REGIONS() static method returns array of available regions', function() {
-  //  chai.expect(instance.AVAILABLE_REGIONS.length).to.be.equal(3);
-  //  chai.expect(instance.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.US_EAST_N_VIRGINIA);
-  //  chai.expect(instance.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.US_WEST_OREGON);
-  //  chai.expect(instance.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.EU_IRELAND);
-  //});
-  //
-  //test('Check _postProvision() method returns this._readyTeardown=\'true\'', function() {
-  //  chai.expect(instance._readyTeardown).to.be.equal(false);
-  //  let actualResult = instance._postProvision('service');
-  //  chai.expect(actualResult._readyTeardown).to.be.equal(true);
-  //});
-  //
-  //test('Check _postDeployProvision() method returns this._ready=\'true\'', function() {
-  //  instance._ready = false;
-  //  let actualResult = instance._postDeployProvision('service');
-  //  chai.expect(actualResult._ready).to.be.equal(true);
-  //});
+  test('Check CONFIG_FILE static getter returns \'deepkg.json\'', function() {
+    chai.expect(Instance.CONFIG_FILE).to.be.equal('deepkg.json');
+  });
+
+  test('Check PARAMS_FILE static getter returns \'parameters.json\'', function() {
+    chai.expect(Instance.PARAMS_FILE).to.be.equal('parameters.json');
+  });
+
+  test('Check RESOURCES_FILE static getter returns \'resources.json\'', function() {
+    chai.expect(Instance.RESOURCES_FILE).to.be.equal('resources.json');
+  });
+
+  test('Check identifier getter returns valid value', function() {
+    chai.expect(instance.identifier).to.be.equal(configInput.identifier);
+  });
+
+  test('Check version getter returns valid value', function() {
+    chai.expect(instance.version).to.be.equal(configInput.version);
+  });
+
+  test('Check basePath getter returns valid value', function() {
+    chai.expect(instance.basePath).to.be.equal(basePath);
+  });
+
+  test('Check isRoot getter returns false', function() {
+    chai.expect(instance.isRoot).to.be.equal(configInput.propertyRoot);
+  });
+
+  test('Check config getter returns valid config object', function() {
+    chai.expect(instance.config).to.be.equal(instance._config);
+  });
+
+  test('Check parameters getter returns valid parameters object', function() {
+    chai.expect(instance.parameters).to.be.equal(instance._parameters);
+  });
+
+  test('Check autoload getter returns valid parameters object', function() {
+    chai.expect(instance.autoload).to.be.equal(instance._autoload);
+  });
+
+  test('Check resources getter returns valid parameters object', function() {
+    chai.expect(instance.resources).to.be.equal(instance._resources);
+  });
 });

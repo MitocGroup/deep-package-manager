@@ -12,8 +12,8 @@ suite('Provisioning/Service/CognitoIdentityService', function() {
   });
 
   test('Check constructor sets valid default values', function() {
-    chai.expect(cognitoIdentityService._readyTeardown).to.be.false;
-    chai.expect(cognitoIdentityService._ready).to.be.false;
+    chai.expect(cognitoIdentityService._readyTeardown).to.be.equal(false);
+    chai.expect(cognitoIdentityService._ready).to.be.equal(false);
   });
 
   test('Check name() method returns \'cognito-identity\'', function() {

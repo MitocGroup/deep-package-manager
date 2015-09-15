@@ -12,8 +12,8 @@ suite('Provisioning/Service/LambdaService', function() {
   });
 
   test('Check constructor sets valid default values', function() {
-    chai.expect(lambdaService._readyTeardown).to.be.false;
-    chai.expect(lambdaService._ready).to.be.false;
+    chai.expect(lambdaService._readyTeardown).to.be.equal(false);
+    chai.expect(lambdaService._ready).to.be.equal(false);
   });
 
   test('Check name() method returns \'lambda\'', function() {

@@ -12,8 +12,8 @@ suite('Provisioning/Service/DynamoDBService', function() {
   });
 
   test('Check constructor sets valid default values', function() {
-    chai.expect(dynamoDBService._readyTeardown).to.be.false;
-    chai.expect(dynamoDBService._ready).to.be.false;
+    chai.expect(dynamoDBService._readyTeardown).to.be.equal(false);
+    chai.expect(dynamoDBService._ready).to.be.equal(false);
   });
 
   test('Check name() method returns \'dynamodb\'', function() {

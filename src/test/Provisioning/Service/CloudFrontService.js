@@ -12,8 +12,8 @@ suite('Provisioning/Service/CloudFrontService', function() {
   });
 
   test('Check constructor sets valid default values', function() {
-    chai.expect(cloudFrontService._readyTeardown).to.be.false;
-    chai.expect(cloudFrontService._ready).to.be.false;
+    chai.expect(cloudFrontService._readyTeardown).to.be.equal(false);
+    chai.expect(cloudFrontService._ready).to.be.equal(false);
   });
 
   test('Check name() method returns \'cloudfront\'', function() {

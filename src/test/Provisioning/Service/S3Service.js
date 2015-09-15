@@ -13,8 +13,8 @@ suite('Provisioning/Service/S3Service', function() {
   });
 
   test('Check constructor sets valid default values', function() {
-    chai.expect(s3Service._readyTeardown).to.be.false;
-    chai.expect(s3Service._ready).to.be.false;
+    chai.expect(s3Service._readyTeardown).to.be.equal(false);
+    chai.expect(s3Service._ready).to.be.equal(false);
   });
 
   test('Check TMP_BUCKET static getter returns \'temp\'', function() {

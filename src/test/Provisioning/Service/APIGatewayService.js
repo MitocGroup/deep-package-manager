@@ -12,8 +12,8 @@ suite('Provisioning/Service/APIGatewayService', function() {
   });
 
   test('Check constructor sets valid default values', function() {
-    chai.expect(apiGatewayService._readyTeardown).to.be.false;
-    chai.expect(apiGatewayService._ready).to.be.false;
+    chai.expect(apiGatewayService._readyTeardown).to.be.equal(false);
+    chai.expect(apiGatewayService._ready).to.be.equal(false);
   });
 
   test('Check name() method returns \'apigateway\'', function() {

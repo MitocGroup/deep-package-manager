@@ -12,8 +12,8 @@ suite('Provisioning/Service/ElasticacheService', function() {
   });
 
   test('Check constructor sets valid default values', function() {
-    chai.expect(elasticacheService._readyTeardown).to.be.false;
-    chai.expect(elasticacheService._ready).to.be.false;
+    chai.expect(elasticacheService._readyTeardown).to.be.equal(false);
+    chai.expect(elasticacheService._ready).to.be.equal(false);
   });
 
   test('Check name() method returns \'elasticache\'', function() {

@@ -12,8 +12,8 @@ suite('Provisioning/Service/KinesisService', function() {
   });
 
   test('Check constructor sets valid default values', function() {
-    chai.expect(kinesisService._readyTeardown).to.be.false;
-    chai.expect(kinesisService._ready).to.be.false;
+    chai.expect(kinesisService._readyTeardown).to.be.equal(false);
+    chai.expect(kinesisService._ready).to.be.equal(false);
   });
 
   //todo - TBD

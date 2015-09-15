@@ -16,8 +16,8 @@ suite('Provisioning/Service/SNSService', function() {
   });
 
   test('Check constructor sets valid default values', function() {
-    chai.expect(snsService._readyTeardown).to.be.false;
-    chai.expect(snsService._ready).to.be.false;
+    chai.expect(snsService._readyTeardown).to.be.equal(false);
+    chai.expect(snsService._ready).to.be.equal(false);
   });
 
   //todo - TBD

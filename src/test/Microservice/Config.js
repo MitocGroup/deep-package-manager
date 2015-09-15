@@ -38,6 +38,10 @@ suite('Microservice/Config', function() {
     chai.expect(config._parsedObject).to.be.eql({error: null, value: configInput});
   });
 
+  test('Check extract method returns valid value', function() {
+    chai.expect(config.extract()).to.be.eql(configInput);
+  });
+
   test('Check rawconfig getter returns valid value', function() {
     chai.expect(config.rawConfig).to.be.eql(configInput);
     configInput.description = 'Test getter';
