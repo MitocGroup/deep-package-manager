@@ -2,7 +2,7 @@ DEEP Package Manager
 ====================
 
 [![NPM Version](https://img.shields.io/npm/v/deep-package-manager.svg)](https://npmjs.org/package/deep-package-manager)
-[![Build Status](https://travis-ci.org/MitocGroup/deep-package-manager.svg)](https://travis-ci.org/MitocGroup/deep-package-manager)
+[![Build Status](https://magnum.travis-ci.com/MitocGroup/deep-package-manager.svg?token=SQyAAdgx2QafU3xj5yn2&branch=master)](https://travis-ci.org/MitocGroup/deep-package-manager)
 [![Dependencies Status](https://david-dm.org/MitocGroup/deep-package-manager.svg)](https://david-dm.org/MitocGroup/deep-package-manager)
 [![Coverage Status](https://coveralls.io/repos/MitocGroup/deep-package-manager/badge.svg)](https://coveralls.io/r/MitocGroup/deep-package-manager)
 [![Codacy Badge](https://api.codacy.com/project/badge/d25b05c70a2543918434144277e036e9)](https://www.codacy.com)
