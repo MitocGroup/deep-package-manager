@@ -104,9 +104,9 @@ export class APIGatewayService extends AbstractService {
     let apiGateway = this.provisioning.apiGateway;
     let wait = new WaitFor();
 
-    apiGateway.createRestapi(metadata).then(function(api) {
+    apiGateway.createRestapi(metadata).then((api) => {
       restApi = api.source;
-    }, function(error) {
+    }, (error) => {
 
       if (error) {
         throw new FailedToCreateApiGatewayException(metadata.name, error);
@@ -126,34 +126,34 @@ export class APIGatewayService extends AbstractService {
           restapiId: restApi.id,
         };
 
-        apiGateway.createResources(params).then(function() {
+        apiGateway.createResources(params).then(() => {
           restResourcesCreated = true;
-        }, function(error) {
+        }, (error) => {
 
           if (error) {
-            throw new FailedToCreateApiResourcesException(paths, error);
+            throw new FailedToCreateApiResourcesException(resourcePaths, error);
           }
         });
 
-        secondLevelWait.push(function() {
+        secondLevelWait.push(() => {
           return restResourcesCreated;
-        }.bind(this));
+        });
 
         return secondLevelWait.ready(() => {
           let thirdLevelWait = new WaitFor();
 
-          apiGateway.listResources({restapiId: restApi.id}).then(function(resources) {
+          apiGateway.listResources({restapiId: restApi.id}).then((resources) => {
             restResources = resources;
-          }, function(error) {
+          }, (error) => {
 
             if (error) {
               throw new FailedToListApiResourcesException(restApi.id, error);
             }
           });
 
-          thirdLevelWait.push(function() {
+          thirdLevelWait.push(() => {
             return restResources !== null;
-          }.bind(this));
+          });
 
           return thirdLevelWait.ready(() => {
             callback(restApi, this._extractResourcesMetadata(restResources));
