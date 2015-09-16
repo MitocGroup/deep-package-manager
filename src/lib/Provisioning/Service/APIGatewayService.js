@@ -7,9 +7,11 @@
 import {AbstractService} from './AbstractService';
 import Core from '@mitocgroup/deep-core';
 import {WaitFor} from '../../Helpers/WaitFor';
+import {Exception} from '../../Exception/Exception';
 import {FailedToCreateApiGatewayException} from './Exception/FailedToCreateApiGatewayException';
 import {FailedToCreateApiResourcesException} from './Exception/FailedToCreateApiResourcesException';
 import {FailedToListApiResourcesException} from './Exception/FailedToListApiResourcesException';
+import {Action} from '../../Microservice/Metadata/Action';
 
 /**
  * APIGateway service
@@ -86,6 +88,14 @@ export class APIGatewayService extends AbstractService {
    * @returns {APIGatewayService}
    */
   _postDeployProvision(services) {
+    let integrationURIs = this._getResourcesIntegrationURIs(this.property.config.microservices);
+
+    // @todo - link API resources with deployed deepResources (lambdas and external ones)
+
+    this._config.postDeploy = {
+      integrationURIs: integrationURIs,
+    };
+
     this._ready = true;
 
     return this;
@@ -156,7 +166,7 @@ export class APIGatewayService extends AbstractService {
           });
 
           return thirdLevelWait.ready(() => {
-            callback(restApi, this._extractResourcesMetadata(restResources));
+            callback(restApi, this._extractApiResourcesMetadata(restResources));
           });
         });
       });
@@ -164,6 +174,12 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
+   * All resources to be created in API Gateway
+   *
+   * microservice_identifier
+   *    resource_name
+   *        action_name
+   *
    * @param {Object} microservices
    * @returns {Array}
    * @private
@@ -229,7 +245,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {Object}
    * @private
    */
-  _extractResourcesMetadata(rawResources) {
+  _extractApiResourcesMetadata(rawResources) {
     let resourcesMetadata = {};
 
     for (let rawResourceKey in rawResources) {
@@ -248,5 +264,85 @@ export class APIGatewayService extends AbstractService {
     }
 
     return resourcesMetadata;
+  }
+
+  /**
+   * Collect and compose microservice resources integration URIs
+   *
+   * @param {Object} microservicesConfig
+   * @returns {Object}
+   */
+  _getResourcesIntegrationURIs(microservicesConfig) {
+    let integrationURIs = {};
+
+    for (let microserviceIdentifier in microservicesConfig) {
+      if (!microservicesConfig.hasOwnProperty(microserviceIdentifier)) {
+        continue;
+      }
+
+      let microservice = microservicesConfig[microserviceIdentifier];
+
+      for (let resourceName in microservice.resources) {
+        if (!microservice.resources.hasOwnProperty(resourceName)) {
+          continue;
+        }
+
+        let resourceActions = microservice.resources[resourceName];
+
+        for (let actionName in resourceActions) {
+          if (!resourceActions.hasOwnProperty(actionName)) {
+            continue;
+          }
+
+          let action = resourceActions[actionName];
+          let uri = null;
+
+          switch (action.type) {
+            case Action.LAMBDA:
+              uri = this._composeLambdaIntegrationUri(
+                microservice.deployedServices.lambdas[action.identifier]
+              );
+              break;
+            default:
+              throw new Exception(
+                `Unknown action type "${action.type}". Allowed types "${Action.TYPES.join(', ')}"`
+              );
+          }
+
+          let resourceApiPath = this._pathfy(microserviceIdentifier, resourceName, actionName);
+          integrationURIs[resourceApiPath] = {};
+
+          var httpMethod = null;
+          for (httpMethod of action.methods) {
+            integrationURIs[resourceApiPath][httpMethod] = uri;
+          }
+        }
+      }
+    }
+
+    return integrationURIs;
+  }
+
+  /**
+   * @note - do ask AWS devs what is this, an arn or smth else
+   *
+   * @example arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:389617777922:function:DeepDevSampleSayHelloa24bd154/invocations
+   *
+   * @param {Object} deployedLambdaConfig
+   * @returns {String}
+   * @private
+   */
+  _composeLambdaIntegrationUri(deployedLambdaConfig) {
+    let lambdaArn = deployedLambdaConfig.FunctionArn;
+    let lambdaApiVersion = this.getApiVersions('Lambda').pop();
+    let resourceDescriptor = `path/${lambdaApiVersion}/functions/${lambdaArn}/invocations`;
+
+    let awsResource = Core.AWS.IAM.Factory.create('resource');
+    awsResource.service = Core.AWS.Service.API_GATEWAY;
+    awsResource.region = deployedLambdaConfig.region; // @todo - check if deployed lambda has region key
+    awsResource.accountId = 'lambda';
+    awsResource.descriptor = resourceDescriptor;
+
+    return awsResource.extract();
   }
 }

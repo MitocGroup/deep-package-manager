@@ -44,6 +44,16 @@ export class Action {
   }
 
   /**
+   * @returns {Array}
+   */
+  static get TYPES() {
+    return [
+      Action.LAMBDA,
+      Action.EXTERNAL,
+    ];
+  }
+
+  /**
    * @returns {String}
    */
   get resourceName() {
