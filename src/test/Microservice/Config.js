@@ -23,7 +23,6 @@ suite('Microservice/Config', function() {
     },
   };
 
-
   let config = new Config(configInput);
 
   test('Class Config exists in Microservice/Config', function() {
