@@ -304,24 +304,27 @@ export class LambdaService extends AbstractService {
     logsResource.accountId = Core.AWS.IAM.Policy.ANY;
     logsResource.descriptor = Core.AWS.IAM.Policy.ANY;
 
-    let dynamoDbStatement = policy.statement.add();
-    let dynamoDbAction = dynamoDbStatement.action.add();
+    // avoid 'MalformedPolicyDocument: Policy statement must contain resources' error
+    if (Object.keys(dynamoDbTablesNames).length > 0) {
+      let dynamoDbStatement = policy.statement.add();
+      let dynamoDbAction = dynamoDbStatement.action.add();
 
-    dynamoDbAction.service = Core.AWS.Service.DYNAMO_DB;
-    dynamoDbAction.action = Core.AWS.IAM.Policy.ANY;
+      dynamoDbAction.service = Core.AWS.Service.DYNAMO_DB;
+      dynamoDbAction.action = Core.AWS.IAM.Policy.ANY;
 
-    for (let modelName in dynamoDbTablesNames) {
-      if (!dynamoDbTablesNames.hasOwnProperty(modelName)) {
-        continue;
+      for (let modelName in dynamoDbTablesNames) {
+        if (!dynamoDbTablesNames.hasOwnProperty(modelName)) {
+          continue;
+        }
+
+        let tableName = dynamoDbTablesNames[modelName];
+        let dynamoDbResource = dynamoDbStatement.resource.add();
+
+        dynamoDbResource.service = Core.AWS.Service.DYNAMO_DB;
+        dynamoDbResource.region = Core.AWS.IAM.Policy.ANY;
+        dynamoDbResource.accountId = Core.AWS.IAM.Policy.ANY;
+        dynamoDbResource.descriptor = `table/${tableName}`;
       }
-
-      let tableName = dynamoDbTablesNames[modelName];
-      let dynamoDbResource = dynamoDbStatement.resource.add();
-
-      dynamoDbResource.service = Core.AWS.Service.DYNAMO_DB;
-      dynamoDbResource.region = Core.AWS.IAM.Policy.ANY;
-      dynamoDbResource.accountId = Core.AWS.IAM.Policy.ANY;
-      dynamoDbResource.descriptor = `table/${tableName}`;
     }
 
     let s3Statement = policy.statement.add();
