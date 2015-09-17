@@ -54,4 +54,12 @@ suite('Microservice/Config', function() {
   test('Check error getter returns null', function() {
     chai.expect(config.error).to.be.equal(null);
   });
+
+  test('Check error getter returns null', function() {
+    let invalidConfigInput = {
+      name: 'config',
+    };
+
+    config = new Config(invalidConfigInput);
+  });
 });
