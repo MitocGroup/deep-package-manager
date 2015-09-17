@@ -11,6 +11,7 @@ import {Exception} from '../../Exception/Exception';
 import {FailedToCreateApiGatewayException} from './Exception/FailedToCreateApiGatewayException';
 import {FailedToCreateApiResourcesException} from './Exception/FailedToCreateApiResourcesException';
 import {FailedToListApiResourcesException} from './Exception/FailedToListApiResourcesException';
+import {FailedToPutApiGatewayIntegrationException} from './Exception/FailedToPutApiGatewayIntegrationException';
 import {Action} from '../../Microservice/Metadata/Action';
 
 /**
@@ -91,12 +92,16 @@ export class APIGatewayService extends AbstractService {
     let integrationParams = this._getResourcesIntegrationParams(this.property.config.microservices);
 
     // @todo - link API resources with deployed deepResources (lambdas and external ones)
-
-    this._config.postDeploy = {
-      integrationParams: integrationParams,
-    };
-
-    this._ready = true;
+    this._putApiIntegrations(
+      this._config.api.id,
+      this._config.api.resources,
+      integrationParams
+    )(function(integrations) {
+      this._config.postDeploy = {
+        integrations: integrations,
+      };
+      this._ready = true;
+    }.bind(this));
 
     return this;
   }
@@ -169,6 +174,60 @@ export class APIGatewayService extends AbstractService {
             callback(restApi, this._extractApiResourcesMetadata(restResources));
           });
         });
+      });
+    };
+  }
+
+  /**
+   * @param {String} apiId
+   * @param {Object} apiResources
+   * @param {Object} integrationParams
+   * @private
+   */
+  _putApiIntegrations(apiId, apiResources, integrationParams) {
+    let apiGateway = this.provisioning.apiGateway;
+    var wait = new WaitFor();
+    var integrations = {};
+    var stackSize = Object.keys(integrationParams).length;
+
+    for (let resourcePath in integrationParams) {
+      if (!integrationParams.hasOwnProperty(resourcePath)) {
+        continue;
+      }
+
+      let resourceMethods = integrationParams[resourcePath];
+      let apiResource = apiResources[resourcePath];
+
+      for (let resourceMethod in resourceMethods) {
+        if (!resourceMethods.hasOwnProperty(resourceMethod)) {
+          continue;
+        }
+
+        let methodParams = resourceMethods[resourceMethod];
+        methodParams.httpMethod = resourceMethod;
+        methodParams.resourceId = apiResource.id;
+        methodParams.restapiId = apiId;
+
+        apiGateway.putIntegration(methodParams).then((integration) => {
+          stackSize--;
+          integrations[resourcePath] = integration;
+        }, (error) => {
+
+          stackSize--;
+          if (error) {
+            throw new FailedToPutApiGatewayIntegrationException(resourcePath, methodParams.uri, error);
+          }
+        });
+      }
+    }
+
+    wait.push(() => {
+      return stackSize === 0;
+    });
+
+    return (callback) => {
+      return wait.ready(() => {
+        callback(integrations);
       });
     };
   }
@@ -309,7 +368,7 @@ export class APIGatewayService extends AbstractService {
               for (httpMethod of action.methods) {
                 integrationParams[resourceApiPath][httpMethod] = {
                   type: 'AWS',
-                  httpMethod: 'POST',
+                  integrationHttpMethod: 'POST',
                   uri: uri,
                 };
               }
@@ -319,7 +378,7 @@ export class APIGatewayService extends AbstractService {
               for (httpMethod of action.methods) {
                 integrationParams[resourceApiPath][httpMethod] = {
                   type: 'HTTP',
-                  httpMethod: httpMethod,
+                  integrationHttpMethod: httpMethod,
                   uri: action.source,
                 };
               }
