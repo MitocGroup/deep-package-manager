@@ -300,6 +300,7 @@ export class APIGatewayService extends AbstractService {
           switch (action.type) {
             case Action.LAMBDA:
               uri = this._composeLambdaIntegrationUri(
+                microservice.lambdas[action.identifier],
                 microservice.deployedServices.lambdas[action.identifier]
               );
               break;
@@ -328,18 +329,19 @@ export class APIGatewayService extends AbstractService {
    *
    * @example arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:389617777922:function:DeepDevSampleSayHelloa24bd154/invocations
    *
+   * @param {Object} builtLambdaConfig
    * @param {Object} deployedLambdaConfig
    * @returns {String}
    * @private
    */
-  _composeLambdaIntegrationUri(deployedLambdaConfig) {
+  _composeLambdaIntegrationUri(builtLambdaConfig, deployedLambdaConfig) {
     let lambdaArn = deployedLambdaConfig.FunctionArn;
     let lambdaApiVersion = this.getApiVersions('Lambda').pop();
     let resourceDescriptor = `path/${lambdaApiVersion}/functions/${lambdaArn}/invocations`;
 
     let awsResource = Core.AWS.IAM.Factory.create('resource');
     awsResource.service = Core.AWS.Service.API_GATEWAY;
-    awsResource.region = deployedLambdaConfig.region; // @todo - check if deployed lambda has region key
+    awsResource.region = builtLambdaConfig.region;
     awsResource.accountId = 'lambda';
     awsResource.descriptor = resourceDescriptor;
 
