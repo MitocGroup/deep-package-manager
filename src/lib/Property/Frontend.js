@@ -192,10 +192,14 @@ export class Frontend {
 
       // @todo: implement this in a smarter way
       if (config.isRoot) {
-        let indexFile = `${frontendPath}/index.html`;
-        let indexStats = FileSystem.lstatSync(indexFile);
+        try {
+          let indexFile = `${frontendPath}/index.html`;
+          let indexStats = FileSystem.lstatSync(indexFile);
 
-        if (!indexStats.isFile()) {
+          if (!indexStats.isFile()) {
+            throw new MissingRootIndexException(identifier);
+          }
+        } catch (e) {
           throw new MissingRootIndexException(identifier);
         }
 
