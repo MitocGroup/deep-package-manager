@@ -11,10 +11,10 @@ import Core from '@mitocgroup/deep-core';
  * Thrown when any exception occurs
  */
 export class Exception extends Core.Exception.Exception {
-    /**
-     * @param {Array} args
-     */
-    constructor(...args) {
-        super(...args);
-    }
+  /**
+   * @param {Array} args
+   */
+  constructor(...args) {
+    super(...args);
+  }
 }
