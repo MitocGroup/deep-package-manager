@@ -1,9 +1,7 @@
 'use strict';
 
 import chai from 'chai';
-import {AbstractService} from '../../../lib.compiled/Provisioning/Service/AbstractService';
 import {S3Service} from '../../../lib.compiled/Provisioning/Service/S3Service';
-import Core from '@mitocgroup/deep-core';
 
 suite('Provisioning/Service/S3Service', function() {
   let s3Service = new S3Service();

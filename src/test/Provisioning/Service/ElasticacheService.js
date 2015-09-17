@@ -2,7 +2,6 @@
 
 import chai from 'chai';
 import {ElasticacheService} from '../../../lib.compiled/Provisioning/Service/ElasticacheService';
-import Core from '@mitocgroup/deep-core';
 
 suite('Provisioning/Service/ElasticacheService', function() {
   let elasticacheService = new ElasticacheService();

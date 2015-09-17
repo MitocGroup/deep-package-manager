@@ -2,8 +2,6 @@
 
 import chai from 'chai';
 import {Parameters} from '../../lib.compiled/Microservice/Parameters';
-import {InvalidArgumentException} from '../../lib.compiled/Exception/InvalidArgumentException';
-import Core from '@mitocgroup/deep-core';
 
 suite('Microservice/Parameters', function() {
   let parameters = new Parameters();
