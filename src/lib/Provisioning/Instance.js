@@ -42,6 +42,10 @@ export class Instance {
     this._iam = new property.AWS.IAM();
 
     // set appropriate region for services that are not available on all regions
+    this._dynamoDb = new property.AWS.DynamoDB({
+      region: this.getAwsServiceRegion(DynamoDBService, property.config.awsRegion),
+    });
+
     this._kinesis = new property.AWS.Kinesis({
       region: this.getAwsServiceRegion(KinesisService, property.config.awsRegion),
     });
