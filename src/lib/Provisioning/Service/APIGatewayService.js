@@ -88,12 +88,12 @@ export class APIGatewayService extends AbstractService {
    * @returns {APIGatewayService}
    */
   _postDeployProvision(services) {
-    let integrationURIs = this._getResourcesIntegrationURIs(this.property.config.microservices);
+    let integrationParams = this._getResourcesIntegrationParams(this.property.config.microservices);
 
     // @todo - link API resources with deployed deepResources (lambdas and external ones)
 
     this._config.postDeploy = {
-      integrationURIs: integrationURIs,
+      integrationParams: integrationParams,
     };
 
     this._ready = true;
@@ -272,8 +272,8 @@ export class APIGatewayService extends AbstractService {
    * @param {Object} microservicesConfig
    * @returns {Object}
    */
-  _getResourcesIntegrationURIs(microservicesConfig) {
-    let integrationURIs = {};
+  _getResourcesIntegrationParams(microservicesConfig) {
+    let integrationParams = {};
 
     for (let microserviceIdentifier in microservicesConfig) {
       if (!microservicesConfig.hasOwnProperty(microserviceIdentifier)) {
@@ -295,33 +295,46 @@ export class APIGatewayService extends AbstractService {
           }
 
           let action = resourceActions[actionName];
-          let uri = null;
+          let resourceApiPath = this._pathfy(microserviceIdentifier, resourceName, actionName);
+          integrationParams[resourceApiPath] = {};
+          var httpMethod = null;
 
           switch (action.type) {
             case Action.LAMBDA:
-              uri = this._composeLambdaIntegrationUri(
+              let uri = this._composeLambdaIntegrationUri(
                 microservice.lambdas[action.identifier],
                 microservice.deployedServices.lambdas[action.identifier]
               );
+
+              for (httpMethod of action.methods) {
+                integrationParams[resourceApiPath][httpMethod] = {
+                  type: 'AWS',
+                  httpMethod: 'POST',
+                  uri: uri,
+                };
+              }
+
+              break;
+            case Action.EXTERNAL:
+              for (httpMethod of action.methods) {
+                integrationParams[resourceApiPath][httpMethod] = {
+                  type: 'HTTP',
+                  httpMethod: httpMethod,
+                  uri: action.source,
+                };
+              }
+
               break;
             default:
               throw new Exception(
                 `Unknown action type "${action.type}". Allowed types "${Action.TYPES.join(', ')}"`
               );
           }
-
-          let resourceApiPath = this._pathfy(microserviceIdentifier, resourceName, actionName);
-          integrationURIs[resourceApiPath] = {};
-
-          var httpMethod = null;
-          for (httpMethod of action.methods) {
-            integrationURIs[resourceApiPath][httpMethod] = uri;
-          }
         }
       }
     }
 
-    return integrationURIs;
+    return integrationParams;
   }
 
   /**
