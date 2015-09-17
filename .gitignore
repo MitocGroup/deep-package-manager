@@ -113,3 +113,4 @@ src/*/*.compiled
 lib.compiled/*
 /tests/*
 coverage/*
+.parameters.json
