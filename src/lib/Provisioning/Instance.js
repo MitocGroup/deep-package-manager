@@ -35,7 +35,6 @@ export class Instance {
     this._property = property;
 
     this._s3 = new property.AWS.S3();
-    this._dynamoDb = new property.AWS.DynamoDB();
     this._elasticache = new property.AWS.ElastiCache();
     this._sns = new property.AWS.SNS();
     this._cloudFront = new property.AWS.CloudFront();
