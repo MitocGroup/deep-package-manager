@@ -33,7 +33,12 @@ suite('Property/Model', function() {
     chai.expect(model.extract()).to.be.eql(expectedResult);
   });
 
-  test('Check create() static method creates valid models', function() {
+  test('Check create() static method creates empty model', function() {
     chai.expect(Model.create()).to.be.eql([]);
+  });
+
+  test('Check create() static method creates valid models', function() {
+    //todo - need to add
+    //chai.expect(Model.create('Property')).to.be.eql([]);
   });
 });
