@@ -13,6 +13,7 @@ import {FailedToCreateApiResourcesException} from './Exception/FailedToCreateApi
 import {FailedToListApiResourcesException} from './Exception/FailedToListApiResourcesException';
 import {FailedToPutApiGatewayIntegrationException} from './Exception/FailedToPutApiGatewayIntegrationException';
 import {FailedToPutApiGatewayMethodException} from './Exception/FailedToPutApiGatewayMethodException';
+import {FailedToPutApiGatewayIntegrationResponseException} from './Exception/FailedToPutApiGatewayIntegrationResponseException';
 import {Action} from '../../Microservice/Metadata/Action';
 
 /**
@@ -90,12 +91,12 @@ export class APIGatewayService extends AbstractService {
    * @returns {APIGatewayService}
    */
   _postDeployProvision(services) {
-    let integrationParams = this._getResourcesIntegrationParams(this.property.config.microservices);
+    let integrationMetadata = this.getResourcesIntegrationMetadata(this.property.config.microservices);
 
     this._putApiIntegrations(
       this._config.api.id,
       this._config.api.resources,
-      integrationParams
+      integrationMetadata
     )(function(methods, integrations) {
       this._config.postDeploy = {
         methods: methods,
@@ -182,19 +183,23 @@ export class APIGatewayService extends AbstractService {
   /**
    * @param {String} apiId
    * @param {Object} apiResources
-   * @param {Object} integrationParams
+   * @param {Object} integrationMetadata
    * @private
    */
-  _putApiIntegrations(apiId, apiResources, integrationParams) {
+  _putApiIntegrations(apiId, apiResources, integrationMetadata) {
     let apiGateway = this.provisioning.apiGateway;
     var waitLevel1 = new WaitFor();
     var waitLevel2 = new WaitFor();
+    var waitLevel3 = new WaitFor();
     var methods = {};
     var integrations = {};
-    var stackSizeLevel1 = Object.keys(integrationParams).length; // @todo: count deep resource http methods
-    var stackSizeLevel2 = stackSizeLevel1;
+    var integrationParams = integrationMetadata.params;
+    var stackSizeLevel1 = integrationMetadata.count;
+    var stackSizeLevel2 = integrationMetadata.count;
+    var stackSizeLevel3 = integrationMetadata.count;
 
     // @todo - move these functions as private class methods
+    // @todo - move this step (putHttpMethods) into _createApiResources method to do it on provision time
     function putHttpMethods() {
       for (let resourcePath in integrationParams) {
         if (!integrationParams.hasOwnProperty(resourcePath)) {
@@ -229,6 +234,10 @@ export class APIGatewayService extends AbstractService {
           });
         }
       }
+    }
+
+    function putApiMethodResponse() {
+      // @todo - implement this method on provision time
     }
 
     function putIntegrations() {
@@ -270,6 +279,44 @@ export class APIGatewayService extends AbstractService {
 
     putHttpMethods();
 
+    function putApiIntegrationResponses() {
+      for (let resourcePath in integrationParams) {
+        if (!integrationParams.hasOwnProperty(resourcePath)) {
+          continue;
+        }
+
+        let resourceMethods = integrationParams[resourcePath];
+        let apiResource = apiResources[resourcePath];
+
+        for (let resourceMethod in resourceMethods) {
+          if (!resourceMethods.hasOwnProperty(resourceMethod)) {
+            continue;
+          }
+
+          let params = {
+            httpMethod: resourceMethod,
+            resourceId: apiResource.id,
+            restapiId: apiId,
+            statusCode: 200,
+            selectionPattern: 'default',
+            responseTemplates: {
+              'application/json': 'json 200 response template',
+            },
+          };
+
+          apiGateway.putIntegrationResponse(params).then(() => {
+            stackSizeLevel3--;
+          }, (error) => {
+
+            stackSizeLevel3--;
+            if (error) {
+              throw new FailedToPutApiGatewayIntegrationResponseException(resourcePath, error);
+            }
+          });
+        }
+      }
+    }
+
     waitLevel1.push(() => {
       return stackSizeLevel1 === 0;
     });
@@ -277,12 +324,21 @@ export class APIGatewayService extends AbstractService {
     return (callback) => {
       return waitLevel1.ready(() => {
         putIntegrations();
+
         waitLevel2.push(() => {
           return stackSizeLevel2 === 0;
         });
 
         return waitLevel2.ready(() => {
-          callback(methods, integrations);
+          putApiIntegrationResponses();
+
+          waitLevel3.push(() => {
+            return stackSizeLevel3 === 0;
+          });
+
+          return waitLevel3.ready(() => {
+            callback(methods, integrations);
+          });
         });
       });
     };
@@ -387,7 +443,8 @@ export class APIGatewayService extends AbstractService {
    * @param {Object} microservicesConfig
    * @returns {Object}
    */
-  _getResourcesIntegrationParams(microservicesConfig) {
+  getResourcesIntegrationMetadata(microservicesConfig) {
+    let integrationsCount = 0;
     let integrationParams = {};
 
     for (let microserviceIdentifier in microservicesConfig) {
@@ -426,7 +483,10 @@ export class APIGatewayService extends AbstractService {
                   type: 'AWS',
                   integrationHttpMethod: 'POST',
                   uri: uri,
+                  requestTemplates: this.requestTemplates,
                 };
+
+                integrationsCount++;
               }
 
               break;
@@ -436,7 +496,10 @@ export class APIGatewayService extends AbstractService {
                   type: 'HTTP',
                   integrationHttpMethod: httpMethod,
                   uri: action.source,
+                  requestTemplates: this.requestTemplates,
                 };
+
+                integrationsCount++;
               }
 
               break;
@@ -449,7 +512,10 @@ export class APIGatewayService extends AbstractService {
       }
     }
 
-    return integrationParams;
+    return {
+      count: integrationsCount,
+      params: integrationParams,
+    };
   }
 
   /**
@@ -474,5 +540,14 @@ export class APIGatewayService extends AbstractService {
     awsResource.descriptor = resourceDescriptor;
 
     return awsResource.extract();
+  }
+
+  /**
+   * @returns {Object}
+   */
+  get requestTemplates() {
+    return {
+      'application/json': 'Empty',
+    };
   }
 }
