@@ -10,6 +10,30 @@ suite('Property/Frontend', function() {
   let moduleIdentifier = 'identifierTest';
   let frontend = new Frontend(microservicesConfig, basePath);
 
+  let defaultConfig = {
+    error: [null],
+    value: {
+      aws: {
+        accessKeyId: [null],
+        region: [null],
+        secretAccessKey: [null],
+      },
+      awsAccountId: 123456789012,
+      env: 'dev',
+      propertyIdentifier: '59e6913c9ed3afe744b5434817ce6345',
+    },
+  };
+  let configExpectedResult = {
+    env: defaultConfig.env,
+    deployId: defaultConfig.deployId,
+    awsRegion: defaultConfig.awsRegion,
+    models: defaultConfig.models,
+    identityPoolId: '',
+    identityProviders: '',
+    microservices: {},
+    globals: defaultConfig.globals,
+  };
+
   test('Class Frontend exists in Property/Frontend', function() {
     chai.expect(typeof Frontend).to.equal('function');
   });
@@ -29,5 +53,9 @@ suite('Property/Frontend', function() {
 
   test('Check configPath getter returns valid path', function() {
     chai.expect(frontend.configPath).to.be.equal(`${frontend.path}/_config.json`);
+  });
+
+  test('Check createConfig() method returns valid path', function() {
+    chai.expect(Frontend.createConfig(defaultConfig)).to.be.eql(configExpectedResult);
   });
 });

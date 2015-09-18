@@ -20,6 +20,8 @@ suite('Property/Config', function() {
     },
   };
 
+
+
   test('Class Config exists in Property/Config', function() {
     chai.expect(typeof Config).to.equal('function');
   });
