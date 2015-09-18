@@ -83,6 +83,9 @@ export class DynamoDBService extends AbstractService {
 
     let deepDb = new DB(models, tablesNames);
 
+    // @temp (waiting for https://github.com/aws/aws-sdk-js/issues/710 fix)
+    deepDb._setVogelsDriver(this.provisioning.dynamoDB);
+
     return function(callback) {
       deepDb.assureTables(function() {
         callback(tablesNames);
