@@ -17,7 +17,7 @@ export default Joi.object().keys({
   name: JoiHelper.string(),
   description: JoiHelper.maybeString().default('Deep Microservice'),
   version: JoiHelper.semver(),
-  propertyRoot: JoiHelper.bool().default(false),
+  propertyRoot: Joi.boolean().optional().default(false),
   author: {
     name: JoiHelper.string(),
     email: JoiHelper.email(),
