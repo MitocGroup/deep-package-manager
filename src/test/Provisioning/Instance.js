@@ -22,6 +22,6 @@ suite('Provisioning/Instance', function() {
     }
 
     chai.expect(error).to.be.an.instanceOf(InvalidArgumentException);
-    //chai.expect(error.message).to.be.an.equal(`Invalid argument ${index} of type number provided (meant existing index).`);
+
   });
 });
