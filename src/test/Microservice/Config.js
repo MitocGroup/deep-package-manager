@@ -10,8 +10,6 @@ suite('Microservice/Config', function() {
     description: 'Config unit test',
     identifier: 'unit_test',
     version: '0.0.1',
-    website: 'http://www.mitocgroup.com/',
-    email: 'hello@mitocgroup.com',
     dependencies: {},
     autoload: {
       backend: 'Backend',
