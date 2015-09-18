@@ -12,6 +12,7 @@ import {FailedToCreateApiGatewayException} from './Exception/FailedToCreateApiGa
 import {FailedToCreateApiResourcesException} from './Exception/FailedToCreateApiResourcesException';
 import {FailedToListApiResourcesException} from './Exception/FailedToListApiResourcesException';
 import {FailedToPutApiGatewayIntegrationException} from './Exception/FailedToPutApiGatewayIntegrationException';
+import {FailedToPutApiGatewayMethodException} from './Exception/FailedToPutApiGatewayMethodException';
 import {Action} from '../../Microservice/Metadata/Action';
 
 /**
@@ -95,8 +96,9 @@ export class APIGatewayService extends AbstractService {
       this._config.api.id,
       this._config.api.resources,
       integrationParams
-    )(function(integrations) {
+    )(function(methods, integrations) {
       this._config.postDeploy = {
+        methods: methods,
         integrations: integrations,
       };
       this._ready = true;
@@ -185,49 +187,103 @@ export class APIGatewayService extends AbstractService {
    */
   _putApiIntegrations(apiId, apiResources, integrationParams) {
     let apiGateway = this.provisioning.apiGateway;
-    var wait = new WaitFor();
+    var waitLevel1 = new WaitFor();
+    var waitLevel2 = new WaitFor();
+    var methods = {};
     var integrations = {};
-    var stackSize = Object.keys(integrationParams).length;
+    var stackSizeLevel1 = Object.keys(integrationParams).length; // @todo: count deep resource http methods
+    var stackSizeLevel2 = stackSizeLevel1;
 
-    // @todo: put http method first to avoid "Invalid Method identifier specified"
-    for (let resourcePath in integrationParams) {
-      if (!integrationParams.hasOwnProperty(resourcePath)) {
-        continue;
-      }
-
-      let resourceMethods = integrationParams[resourcePath];
-      let apiResource = apiResources[resourcePath];
-
-      for (let resourceMethod in resourceMethods) {
-        if (!resourceMethods.hasOwnProperty(resourceMethod)) {
+    // @todo - move these functions as private class methods
+    function putHttpMethods() {
+      for (let resourcePath in integrationParams) {
+        if (!integrationParams.hasOwnProperty(resourcePath)) {
           continue;
         }
 
-        let methodParams = resourceMethods[resourceMethod];
-        methodParams.httpMethod = resourceMethod;
-        methodParams.resourceId = apiResource.id;
-        methodParams.restapiId = apiId;
+        let resourceMethods = integrationParams[resourcePath];
+        let apiResource = apiResources[resourcePath];
+        methods[resourcePath] = {};
 
-        apiGateway.putIntegration(methodParams).then((integration) => {
-          stackSize--;
-          integrations[resourcePath] = integration;
-        }, (error) => {
-
-          stackSize--;
-          if (error) {
-            throw new FailedToPutApiGatewayIntegrationException(resourcePath, methodParams.uri, error);
+        for (let resourceMethod in resourceMethods) {
+          if (!resourceMethods.hasOwnProperty(resourceMethod)) {
+            continue;
           }
-        });
+
+          let params = {
+            httpMethod: resourceMethod,
+            authorizationType: 'AWS_IAM',
+            resourceId: apiResource.id,
+            restapiId: apiId,
+          };
+
+          apiGateway.putMethod(params).then((method) => {
+            stackSizeLevel1--;
+            methods[resourcePath][resourceMethod] = method;
+          }, (error) => {
+
+            stackSizeLevel1--;
+            if (error) {
+              throw new FailedToPutApiGatewayMethodException(resourcePath, methodParams.uri, error);
+            }
+          });
+        }
       }
     }
 
-    wait.push(() => {
-      return stackSize === 0;
+    function putIntegrations() {
+      for (let resourcePath in integrationParams) {
+        if (!integrationParams.hasOwnProperty(resourcePath)) {
+          continue;
+        }
+
+        let resourceMethods = integrationParams[resourcePath];
+        let apiResource = apiResources[resourcePath];
+        integrations[resourcePath] = {};
+
+        for (let resourceMethod in resourceMethods) {
+          if (!resourceMethods.hasOwnProperty(resourceMethod)) {
+            continue;
+          }
+
+          let methodParams = resourceMethods[resourceMethod];
+          methodParams.httpMethod = resourceMethod;
+          methodParams.resourceId = apiResource.id;
+          methodParams.restapiId = apiId;
+
+          // @todo - create this role on ApiGateway service provision
+          methodParams.credentials = 'arn:aws:iam::389617777922:role/ApiGatewayInvokeLambda'; // allow APIGateway to invoke lambdas
+
+          apiGateway.putIntegration(methodParams).then((integration) => {
+            stackSizeLevel2--;
+            integrations[resourcePath][resourceMethod] = integration;
+          }, (error) => {
+
+            stackSizeLevel2--;
+            if (error) {
+              throw new FailedToPutApiGatewayIntegrationException(resourcePath, methodParams.uri, error);
+            }
+          });
+        }
+      }
+    }
+
+    putHttpMethods();
+
+    waitLevel1.push(() => {
+      return stackSizeLevel1 === 0;
     });
 
     return (callback) => {
-      return wait.ready(() => {
-        callback(integrations);
+      return waitLevel1.ready(() => {
+        putIntegrations();
+        waitLevel2.push(() => {
+          return stackSizeLevel2 === 0;
+        });
+
+        return waitLevel2.ready(() => {
+          callback(methods, integrations);
+        });
       });
     };
   }
