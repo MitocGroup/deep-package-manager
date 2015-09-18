@@ -2,8 +2,6 @@
 
 import chai from 'chai';
 import {Instance} from '../../lib.compiled/Microservice/Instance';
-import {InvalidArgumentException} from '../../lib.compiled/Exception/InvalidArgumentException';
-import Core from '@mitocgroup/deep-core';
 import {Parameters} from '../../lib.compiled/Microservice/Parameters';
 import {Config} from '../../lib.compiled/Microservice/Config';
 

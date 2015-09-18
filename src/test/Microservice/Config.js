@@ -2,8 +2,6 @@
 
 import chai from 'chai';
 import {Config} from '../../lib.compiled/Microservice/Config';
-import {InvalidArgumentException} from '../../lib.compiled/Exception/InvalidArgumentException';
-import Core from '@mitocgroup/deep-core';
 
 suite('Microservice/Config', function() {
   let configInput = {

@@ -13,21 +13,20 @@ let DOCS = 'Docs';
 let MODELS = 'Models';
 
 export default Joi.object().keys({
-  name: JoiHelper.string(),
-  propertyRoot: JoiHelper.bool(),
   identifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/),
+  name: JoiHelper.string(),
   description: JoiHelper.maybeString().default('Deep Microservice'),
   version: JoiHelper.semver(),
+  propertyRoot: JoiHelper.bool(),
   author: {
     name: JoiHelper.string(),
     email: JoiHelper.email(),
+    website: JoiHelper.website(),
   },
   contributors: Joi.array().items(Joi.object().keys({
     name: JoiHelper.string(),
     email: JoiHelper.email(),
   })),
-  website: JoiHelper.website(),
-  email: JoiHelper.email(),
   dependencies: Joi.object().unknown().pattern(/^[a-zA-Z0-9_-]+$/, JoiHelper.semver()),
   autoload: Joi.object().keys({
     frontend: JoiHelper.maybeString().default(FRONTEND),

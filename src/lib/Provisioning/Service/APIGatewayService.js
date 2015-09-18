@@ -9,6 +9,7 @@ import Core from '@mitocgroup/deep-core';
 import {WaitFor} from '../../Helpers/WaitFor';
 import {FailedToCreateApiGatewayException} from './Exception/FailedToCreateApiGatewayException';
 import {FailedToCreateApiResourcesException} from './Exception/FailedToCreateApiResourcesException';
+import {FailedToListApiResourcesException} from './Exception/FailedToListApiResourcesException';
 
 /**
  * APIGateway service
@@ -35,7 +36,7 @@ export class APIGatewayService extends AbstractService {
    */
   get apiMetadata() {
     return {
-      name: `${this.propertyIdentifier}.api`,
+      name: this.generateAwsResourceName('Api', Core.AWS.Service.API_GATEWAY),
     };
   }
 
@@ -55,8 +56,9 @@ export class APIGatewayService extends AbstractService {
    * @returns {APIGatewayService}
    */
   _setup(services) {
-    this._createApi(
-      this.apiMetadata
+    this._createApiResources(
+      this.apiMetadata,
+      this._getResourcePaths(this.provisioning.property.microservices)
     )(function(api, resources) {
       this._config.api = {
         id: api.id,
@@ -91,12 +93,14 @@ export class APIGatewayService extends AbstractService {
 
   /**
    * @param {Object} metadata
+   * @param {Array} resourcePaths
    * @returns {function}
    * @private
    */
-  _createApi(metadata) {
-    let restApi = null;
-    let restResources = null;
+  _createApiResources(metadata, resourcePaths) {
+    var restApi = null;
+    var restResourcesCreated = false;
+    var restResources = null;
     let apiGateway = this.provisioning.apiGateway;
     let wait = new WaitFor();
 
@@ -109,24 +113,21 @@ export class APIGatewayService extends AbstractService {
       }
     });
 
-    wait.push(function() {
+    wait.push(() => {
       return restApi !== null;
-    }.bind(this));
+    });
 
-    return function(callback) {
-      return wait.ready(function() {
-        let innerWait = new WaitFor();
+    return (callback) => {
+      return wait.ready(() => {
+        let secondLevelWait = new WaitFor();
 
-        let paths = [
-          'user',
-          'user/create',
-          'user/retrieve',
-          'account',
-          'account/create',
-        ];
+        let params = {
+          paths: resourcePaths,
+          restapiId: restApi.id,
+        };
 
-        apiGateway.createResources(paths, restApi.id).then(function(resources) {
-          restResources = resources;
+        apiGateway.createResources(params).then(function() {
+          restResourcesCreated = true;
         }, function(error) {
 
           if (error) {
@@ -134,14 +135,118 @@ export class APIGatewayService extends AbstractService {
           }
         });
 
-        innerWait.push(function() {
-          return restResources !== null;
+        secondLevelWait.push(function() {
+          return restResourcesCreated;
         }.bind(this));
 
-        innerWait.ready(function() {
-          callback(restApi, restResources);
+        return secondLevelWait.ready(() => {
+          let thirdLevelWait = new WaitFor();
+
+          apiGateway.listResources({restapiId: restApi.id}).then(function(resources) {
+            restResources = resources;
+          }, function(error) {
+
+            if (error) {
+              throw new FailedToListApiResourcesException(restApi.id, error);
+            }
+          });
+
+          thirdLevelWait.push(function() {
+            return restResources !== null;
+          }.bind(this));
+
+          return thirdLevelWait.ready(() => {
+            callback(restApi, this._extractResourcesMetadata(restResources));
+          });
         });
-      }.bind(this));
-    }.bind(this);
+      });
+    };
+  }
+
+  /**
+   * @param {Object} microservices
+   * @returns {Array}
+   * @private
+   */
+  _getResourcePaths(microservices) {
+    let resourcePaths = [];
+
+    for (let microserviceKey in microservices) {
+      if (!microservices.hasOwnProperty(microserviceKey)) {
+        continue;
+      }
+
+      let microservice = microservices[microserviceKey];
+
+      resourcePaths.push(this._pathfy(microservice.identifier));
+
+      for (let actionKey in microservice.resources.actions) {
+        if (!microservice.resources.actions.hasOwnProperty(actionKey)) {
+          continue;
+        }
+
+        let action = microservice.resources.actions[actionKey];
+        let resourcePath = this._pathfy(microservice.identifier, action.resourceName);
+
+        // push actions parent resource only once
+        if (resourcePaths.indexOf(resourcePath) === -1) {
+          resourcePaths.push(resourcePath);
+        }
+
+        resourcePaths.push(
+          this._pathfy(microservice.identifier, action.resourceName, action.name)
+        );
+      }
+    }
+
+    return resourcePaths;
+  }
+
+  /**
+   * @param {String} microserviceIdentifier
+   * @param {String} resourceName
+   * @param {String} actionName
+   *
+   * @return {String}
+   * @private
+   */
+  _pathfy(microserviceIdentifier, resourceName = '', actionName = '') {
+    let path = `/${microserviceIdentifier}`;
+
+    if (resourceName) {
+      path += `/${resourceName}`;
+    }
+
+    if (actionName) {
+      path += `/${actionName}`;
+    }
+
+    return path.replace(/\./g, '-'); // API Gateway does not support dots into resource name / path
+  }
+
+  /**
+   * @param {Array} rawResources
+   * @returns {Object}
+   * @private
+   */
+  _extractResourcesMetadata(rawResources) {
+    let resourcesMetadata = {};
+
+    for (let rawResourceKey in rawResources) {
+      if (!rawResources.hasOwnProperty(rawResourceKey)) {
+        continue;
+      }
+
+      let rawResource = rawResources[rawResourceKey].source;
+
+      resourcesMetadata[rawResource.path] = {
+        id: rawResource.id,
+        parentId: rawResource.parentId,
+        path: rawResource.path,
+        pathPart: rawResource.pathPart,
+      };
+    }
+
+    return resourcesMetadata;
   }
 }

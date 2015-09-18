@@ -437,14 +437,52 @@ export class Instance {
     }
 
     if (isUpdate) {
-      // @todo - check if we have smth to do in this case
-      callback();
+      this._runPostDeployMsHooks(callback, true);
     } else {
       this.provisioning.postDeployProvision(function(config) {
         this._config.provisioning = config;
-        callback();
+
+        this._runPostDeployMsHooks(callback);
       }.bind(this));
     }
+
+    return this;
+  }
+
+  /**
+   * @param {Function} callback
+   * @param {Boolean} isUpdate
+   * @returns {Instance}
+   * @private
+   */
+  _runPostDeployMsHooks(callback, isUpdate = false) {
+    let wait = new WaitFor();
+    let microservices = this.microservices;
+    let remaining = microservices.length;
+
+    wait.push(function() {
+      return remaining <= 0;
+    }.bind(this));
+
+    for (let microservice of microservices) {
+      let hook = microservice.postDeployHook;
+
+      if (!hook) {
+        console.log(`- No post deploy hook found for microservice ${microservice.identifier}`);
+        remaining--;
+        continue;
+      }
+
+      console.log(`- Running post deploy hook for microservice ${microservice.identifier}`);
+
+      hook(this._provisioning, isUpdate, function() {
+        remaining--;
+      }.bind(this));
+    }
+
+    wait.ready(function() {
+      callback();
+    }.bind(this));
 
     return this;
   }
@@ -470,11 +508,12 @@ export class Instance {
       throw new InvalidArgumentException(callback, 'Function');
     }
 
-    console.log(`- Start installing property: ${new Date().toTimeString()}`);
+    console.log(`- Start ${skipProvision ? 'updating' : 'installing'} property: ${new Date().toTimeString()}`);
 
     return this.build(function() {
       this.deploy(function() {
         console.log(`- Deploy is done!: ${new Date().toTimeString()}`);
+
         this._postDeploy(callback, skipProvision);
       }.bind(this), skipProvision);
     }.bind(this), skipProvision);

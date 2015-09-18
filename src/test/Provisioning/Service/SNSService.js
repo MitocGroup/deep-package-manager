@@ -2,7 +2,6 @@
 
 import chai from 'chai';
 import {SNSService} from '../../../lib.compiled/Provisioning/Service/SNSService';
-import Core from '@mitocgroup/deep-core';
 
 suite('Provisioning/Service/SNSService', function() {
   let snsService = new SNSService();

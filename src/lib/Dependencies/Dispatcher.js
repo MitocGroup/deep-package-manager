@@ -31,16 +31,17 @@ export class Dispatcher extends Core.OOP.Interface {
     this._resolveStack = [];
 
     let wait = new WaitFor();
-    let stackSize = 0;
+    let microservices = this.microservices;
+    let remaining = microservices.length;
 
-    for (let microservice of this.microservices) {
+    for (let microservice of microservices) {
       this.dispatch(microservice, function() {
-        stackSize--;
+        remaining--;
       }.bind(this));
     }
 
     wait.push(function() {
-      return stackSize <= 0;
+      return remaining <= 0;
     }.bind(this));
 
     wait.ready(function() {
