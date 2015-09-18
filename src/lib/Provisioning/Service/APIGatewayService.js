@@ -91,7 +91,6 @@ export class APIGatewayService extends AbstractService {
   _postDeployProvision(services) {
     let integrationParams = this._getResourcesIntegrationParams(this.property.config.microservices);
 
-    // @todo - link API resources with deployed deepResources (lambdas and external ones)
     this._putApiIntegrations(
       this._config.api.id,
       this._config.api.resources,
@@ -190,6 +189,7 @@ export class APIGatewayService extends AbstractService {
     var integrations = {};
     var stackSize = Object.keys(integrationParams).length;
 
+    // @todo: put http method first to avoid "Invalid Method identifier specified"
     for (let resourcePath in integrationParams) {
       if (!integrationParams.hasOwnProperty(resourcePath)) {
         continue;
