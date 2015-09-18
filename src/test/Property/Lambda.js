@@ -15,11 +15,9 @@ suite('Property/Lambda', function() {
   let path = 'Property';
   let lambda = new Lambda(propertyInstance, microserviceIdentifier, identifier, name, execRole, path);
 
-
-  test('Check constructor set valid default value for _property', function() {
-    //chai.expect(lambda.).to.be.an.instanceOf(InvalidArgumentException);
+  test('Check constructor set valid default value for _uploadedLambda', function() {
+    chai.expect(lambda._uploadedLambda).to.be.an.equal(null);
   });
-
 
   test('Class Lambda exists in Property/Lambda', function() {
     chai.expect(typeof Lambda).to.equal('function');
