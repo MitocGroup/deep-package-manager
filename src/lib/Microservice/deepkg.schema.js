@@ -40,4 +40,8 @@ export default Joi.object().keys({
     docs: DOCS,
     models: MODELS,
   }),
+  frontendEngine: Joi.array()
+    .items(Joi.string().regex(/^[a-z0-9]+$/i))
+    .allow(['angular'])
+    .default(['angular']),
 });
