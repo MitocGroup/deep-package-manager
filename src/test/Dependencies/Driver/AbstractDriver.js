@@ -68,11 +68,13 @@ suite('Dependencies/Driver/AbstractDriver', function() {
   });
 
   test('Check getTmpDir static method returns valid value', function() {
-
-    expectedResult = Path.join(OS.tmpdir(), Hash.md5(identifierInput) + '-' + (new Date()).getTime());
-    chai.expect(AbstractDriver.getTmpDir(identifierInput)).to.be.equal(expectedResult);
+    let time = (new Date()).getTime().toString();
+    time = time.substring(0, (time.length - 3));
+    expectedResult = Path.join(OS.tmpdir(), Hash.md5(identifierInput) + '-' + time);
+    chai.expect(AbstractDriver.getTmpDir(identifierInput)).to.be.contains(expectedResult);
   });
 
+  //todo
   //test('Check errorCallback(descriptor) throws Exception', function() {
   //  let error = null;
   //  let invalidConfigPath = 'invalidPath';
