@@ -9,11 +9,11 @@ suite('Parameters/PathTransformer', function() {
   let keyVector = ['one', 'two', 'three'];
   let keyObject = {
     one: {
-      key1: 'value1'},
+      key1: 'value1', },
     two: {
-      key2: 'value2'},
+      key2: 'value2', },
     three: {
-      key3: 'value3'},
+      key3: 'value3', },
   };
   let testValue = 'testValue';
   let expectedResult = {
@@ -22,6 +22,11 @@ suite('Parameters/PathTransformer', function() {
         three: 'testValue',
       },
     },
+  };
+  let planifyExpectedResult = {
+    'one|key1': 'value1',
+    'two|key2': 'value2',
+    'three|key3': 'value3',
   };
 
   test('Class PathTransformer exists in Parameters/PathTransformer', function() {
@@ -34,6 +39,10 @@ suite('Parameters/PathTransformer', function() {
 
   test('Check transform  method returns valid object', function() {
     chai.expect(pathTransformer.transform(keyObject)).to.be.eql(keyObject);
+  });
+
+  test('Check transform  method returns valid object', function() {
+    chai.expect(pathTransformer.plainify(keyObject)).to.be.eql(planifyExpectedResult);
   });
 
   test('Check DEFAULT_DELIMITER static getter returns \'|\'', function() {
