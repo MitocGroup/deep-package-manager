@@ -6,7 +6,6 @@
 
 import StringUtils from 'underscore.string';
 import FileSystem from 'fs';
-import Path from 'path';
 import exec from 'sync-exec';
 import {FileWalker} from '../Helpers/FileWalker';
 import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
@@ -185,7 +184,7 @@ export class Frontend {
 
       let config = this._microservicesConfig[identifier];
       let modulePath = this.modulePath(identifier);
-      let frontendPath = this._getBuildAwareFrontendPath(config.autoload.frontend);
+      let frontendPath = config.autoload.frontend;
 
       FileSystem.mkdirSync(modulePath);
 
@@ -216,27 +215,6 @@ export class Frontend {
   }
 
   /**
-   * @param {String} path
-   * @returns {String}
-   * @private
-   */
-  _getBuildAwareFrontendPath(path) {
-    let buildPath = Path.join(path, Frontend.BUILD_FOLDER);
-
-    try {
-      let buildStats = FileSystem.lstatSync(buildPath);
-
-      if (buildStats.isDir()) {
-        return buildPath;
-      }
-    } catch (e) {
-      // do nothing...
-    }
-
-    return path;
-  }
-
-  /**
    * @param {String} moduleIdentifier
    * @returns {String}
    */
@@ -262,12 +240,5 @@ export class Frontend {
     let base = this._basePath;
 
     return `${base}/_public`;
-  }
-
-  /**
-   * @returns {String}
-   */
-  static get BUILD_FOLDER() {
-    return '_build';
   }
 }
