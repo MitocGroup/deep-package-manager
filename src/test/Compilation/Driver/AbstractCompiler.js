@@ -22,4 +22,8 @@ suite('Compilation/Driver/AbstractCompiler', function() {
   test('Class AbstractCompiler exists in Compilation/Driver/AbstractCompiler', function() {
     chai.expect(typeof AbstractCompiler).to.equal('function');
   });
+
+  test('Class compiler successfully created', function() {
+    chai.expect(compiler).to.not.equal(null);
+  });
 });

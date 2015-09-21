@@ -41,11 +41,14 @@ suite('Compilation/Driver/NodePackageManagerCompiler', function() {
   let microservice = new Instance(config, parameters, basePath);
   let nodePackageManagerCompiler = new Compiler();
   let npmLocate = '/npm';
-  let npmInstallValidSource = null;
   let npmInstallInvalidSource = 'chai';
 
   test('Class NodePackageManagerCompiler exists in Compilation/Driver/NodePackageManagerCompiler', function() {
     chai.expect(typeof NodePackageManagerCompiler).to.equal('function');
+  });
+
+  test('Class nodePackageManagerCompiler successfully created', function() {
+    chai.expect(nodePackageManagerCompiler).to.not.equal(null);
   });
 
   test('Check compile() static method ', function() {

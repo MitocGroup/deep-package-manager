@@ -23,4 +23,8 @@ suite('Dependencies/Uploader', function() {
   test('Class Uploader exists in Dependencies/Uploader', function() {
     chai.expect(typeof Uploader).to.equal('function');
   });
+
+  test('Class uploader successfully created', function() {
+    chai.expect(uploader).to.not.equal(null);
+  });
 });

@@ -32,6 +32,10 @@ suite('Compilation/Compiler', function() {
     chai.expect(typeof Compiler).to.equal('function');
   });
 
+  test('Class compiler successfully created', function() {
+    chai.expect(compiler).to.not.equal(null);
+  });
+
   test('Check compilers static getter returns []', function() {
     chai.expect(Compiler.compilers).to.be.eql([]);
   });
