@@ -3,18 +3,74 @@
 import chai from 'chai';
 import {AbstractService} from '../../../lib.compiled/Provisioning/Service/AbstractService';
 
-// @todo: Add more advanced tests
+/**
+ * Provisioning service
+ * @description implements AbstractService to test it
+ */
+class ProvisioningService extends AbstractService {
+  /**
+   * @param {Instance} provisioning
+   */
+  constructor(provisioning) {
+    super(provisioning);
+  }
+
+  /**
+   * @returns {String}
+   */
+  name() {
+    return 'abstract-service';
+  }
+
+  /**
+   * @parameter {Core.Generic.ObjectStorage} services
+   * @returns {Service}
+   */
+  _setup(services) {
+    super.setup(services);
+  }
+
+  /**
+   * @parameter {Core.Generic.ObjectStorage} services
+   * @returns {Service}
+   */
+  _postProvision(services) {
+    super.setup(services);
+  }
+
+  /**
+   * @parameter {Core.Generic.ObjectStorage} services
+   * @returns {CloudFrontService}
+   */
+  _postDeployProvision(services) {
+    super.postDeployProvision(services);
+  }
+
+}
+
 suite('Provisioning/Service/AbstractService', function() {
-  //let abstractService = new AbstractService('provisioning');
+  let provisioningInput = 'provisioning';
+  let service = new ProvisioningService(provisioningInput);
 
   test('Class AbstractService exists in Provisioning/Service/AbstractService', function() {
     chai.expect(typeof AbstractService).to.equal('function');
   });
 
-  //test('Check AbstractService constructor sets valid default values', function() {
-  //  let _configEmptyObject = {};
-  //  chai.expect(abstractService.config()).to.equal(_configEmptyObject);
-  //});
+  test('Check AbstractService constructor sets valid default values for _readyTeardown=false', function() {
+    chai.expect(service.readyTeardown).to.equal(false);
+  });
+
+  test('Check AbstractService constructor sets valid default values for _ready=false', function() {
+    chai.expect(service.ready).to.equal(false);
+  });
+
+  test('Check AbstractService constructor sets valid default values for _provisioning', function() {
+    chai.expect(service.provisioning).to.equal(provisioningInput);
+  });
+
+  test('Check AbstractService constructor sets valid default values for _config={}', function() {
+    chai.expect(service.config()).to.eql({});
+  });
 
   test('Check DELIMITER_UPPER_CASE static getter returns \'upperCase\'', function() {
     chai.expect(AbstractService.DELIMITER_UPPER_CASE).to.be.equal('upperCase');

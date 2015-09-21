@@ -9,9 +9,8 @@ suite('Microservice/Config', function() {
     propertyRoot: false,
     description: 'Config unit test',
     identifier: 'unit_test',
+    frontendEngine: ['angular'],
     version: '0.0.1',
-    website: 'http://www.mitocgroup.com/',
-    email: 'hello@mitocgroup.com',
     dependencies: {},
     autoload: {
       backend: 'Backend',
@@ -20,7 +19,6 @@ suite('Microservice/Config', function() {
       models: 'Models',
     },
   };
-
 
   let config = new Config(configInput);
 
@@ -52,5 +50,13 @@ suite('Microservice/Config', function() {
 
   test('Check error getter returns null', function() {
     chai.expect(config.error).to.be.equal(null);
+  });
+
+  test('Check error getter returns null', function() {
+    let invalidConfigInput = {
+      name: 'config',
+    };
+
+    config = new Config(invalidConfigInput);
   });
 });
