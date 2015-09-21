@@ -14,6 +14,7 @@ import {FailedToListApiResourcesException} from './Exception/FailedToListApiReso
 import {FailedToPutApiGatewayIntegrationException} from './Exception/FailedToPutApiGatewayIntegrationException';
 import {FailedToPutApiGatewayMethodException} from './Exception/FailedToPutApiGatewayMethodException';
 import {FailedToPutApiGatewayIntegrationResponseException} from './Exception/FailedToPutApiGatewayIntegrationResponseException';
+import {FailedToPutApiGatewayMethodResponseException} from './Exception/FailedToPutApiGatewayMethodResponseException';
 import {Action} from '../../Microservice/Metadata/Action';
 
 /**
@@ -191,12 +192,14 @@ export class APIGatewayService extends AbstractService {
     var waitLevel1 = new WaitFor();
     var waitLevel2 = new WaitFor();
     var waitLevel3 = new WaitFor();
+    var waitLevel4 = new WaitFor();
     var methods = {};
     var integrations = {};
     var integrationParams = integrationMetadata.params;
     var stackSizeLevel1 = integrationMetadata.count;
     var stackSizeLevel2 = integrationMetadata.count;
     var stackSizeLevel3 = integrationMetadata.count;
+    var stackSizeLevel4 = integrationMetadata.count;
 
     // @todo - move these functions as private class methods
     // @todo - move this step (putHttpMethods) into _createApiResources method to do it on provision time
@@ -229,7 +232,7 @@ export class APIGatewayService extends AbstractService {
 
             stackSizeLevel1--;
             if (error) {
-              throw new FailedToPutApiGatewayMethodException(resourcePath, methodParams.uri, error);
+              throw new FailedToPutApiGatewayMethodException(resourcePath, resourceMethod, error);
             }
           });
         }
@@ -237,7 +240,38 @@ export class APIGatewayService extends AbstractService {
     }
 
     function putApiMethodResponse() {
-      // @todo - implement this method on provision time
+      for (let resourcePath in integrationParams) {
+        if (!integrationParams.hasOwnProperty(resourcePath)) {
+          continue;
+        }
+
+        let resourceMethods = integrationParams[resourcePath];
+        let apiResource = apiResources[resourcePath];
+        methods[resourcePath] = {};
+
+        for (let resourceMethod in resourceMethods) {
+          if (!resourceMethods.hasOwnProperty(resourceMethod)) {
+            continue;
+          }
+
+          let params = {
+            httpMethod: resourceMethod,
+            resourceId: apiResource.id,
+            restapiId: apiId,
+            statusCode: 200,
+          };
+
+          apiGateway.putMethodResponse(params).then(() => {
+            stackSizeLevel2--;
+          }, (error) => {
+
+            stackSizeLevel2--;
+            if (error) {
+              throw new FailedToPutApiGatewayMethodResponseException(resourcePath, resourceMethod, error);
+            }
+          });
+        }
+      }
     }
 
     function putIntegrations() {
@@ -264,11 +298,11 @@ export class APIGatewayService extends AbstractService {
           methodParams.credentials = 'arn:aws:iam::389617777922:role/ApiGatewayInvokeLambda'; // allow APIGateway to invoke lambdas
 
           apiGateway.putIntegration(methodParams).then((integration) => {
-            stackSizeLevel2--;
+            stackSizeLevel3--;
             integrations[resourcePath][resourceMethod] = integration;
           }, (error) => {
 
-            stackSizeLevel2--;
+            stackSizeLevel3--;
             if (error) {
               throw new FailedToPutApiGatewayIntegrationException(resourcePath, methodParams.uri, error);
             }
@@ -276,8 +310,6 @@ export class APIGatewayService extends AbstractService {
         }
       }
     }
-
-    putHttpMethods();
 
     function putApiIntegrationResponses() {
       for (let resourcePath in integrationParams) {
@@ -305,10 +337,10 @@ export class APIGatewayService extends AbstractService {
           };
 
           apiGateway.putIntegrationResponse(params).then(() => {
-            stackSizeLevel3--;
+            stackSizeLevel4--;
           }, (error) => {
 
-            stackSizeLevel3--;
+            stackSizeLevel4--;
             if (error) {
               throw new FailedToPutApiGatewayIntegrationResponseException(resourcePath, error);
             }
@@ -317,27 +349,37 @@ export class APIGatewayService extends AbstractService {
       }
     }
 
+    putHttpMethods();
+
     waitLevel1.push(() => {
       return stackSizeLevel1 === 0;
     });
 
     return (callback) => {
       return waitLevel1.ready(() => {
-        putIntegrations();
+        putApiMethodResponse();
 
         waitLevel2.push(() => {
           return stackSizeLevel2 === 0;
         });
 
         return waitLevel2.ready(() => {
-          putApiIntegrationResponses();
+          putIntegrations();
 
           waitLevel3.push(() => {
             return stackSizeLevel3 === 0;
           });
 
           return waitLevel3.ready(() => {
-            callback(methods, integrations);
+            putApiIntegrationResponses();
+
+            waitLevel4.push(() => {
+              return stackSizeLevel4 === 0;
+            });
+
+            return waitLevel4.ready(() => {
+              callback(methods, integrations);
+            });
           });
         });
       });
