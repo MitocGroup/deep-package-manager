@@ -48,7 +48,6 @@ class ProvisioningService extends AbstractService {
 
 }
 
-// @todo: Add more advanced tests
 suite('Provisioning/Service/AbstractService', function() {
   let provisioningInput = 'provisioning';
   let service = new ProvisioningService(provisioningInput);
