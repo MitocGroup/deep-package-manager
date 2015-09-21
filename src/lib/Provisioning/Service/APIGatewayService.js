@@ -223,6 +223,9 @@ export class APIGatewayService extends AbstractService {
             authorizationType: 'AWS_IAM',
             resourceId: apiResource.id,
             restapiId: apiId,
+            requestModels: {
+              'application/json': 'Empty',
+            },
           };
 
           apiGateway.putMethod(params).then((method) => {
@@ -259,6 +262,9 @@ export class APIGatewayService extends AbstractService {
             resourceId: apiResource.id,
             restapiId: apiId,
             statusCode: 200,
+            responseModels: {
+              'application/json': 'Empty',
+            },
           };
 
           apiGateway.putMethodResponse(params).then(() => {
@@ -330,9 +336,8 @@ export class APIGatewayService extends AbstractService {
             resourceId: apiResource.id,
             restapiId: apiId,
             statusCode: 200,
-            selectionPattern: 'default',
             responseTemplates: {
-              'application/json': 'json 200 response template',
+              'application/json': '',
             },
           };
 
@@ -589,7 +594,7 @@ export class APIGatewayService extends AbstractService {
    */
   get requestTemplates() {
     return {
-      'application/json': 'Empty',
+      'application/json': '',
     };
   }
 }
