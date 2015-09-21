@@ -3,6 +3,8 @@
 import chai from 'chai';
 import {Config} from '../../lib.compiled/Property/Config';
 import Core from '@mitocgroup/deep-core';
+import appConfigSchema from '../../lib.compiled/Property/config.schema';
+import Joi from 'joi';
 
 suite('Property/Config', function() {
   let config = new Config();
@@ -20,7 +22,7 @@ suite('Property/Config', function() {
     },
   };
 
-
+  let configName = 'test/Property/deeploy.test.json';
 
   test('Class Config exists in Property/Config', function() {
     chai.expect(typeof Config).to.equal('function');
@@ -28,6 +30,7 @@ suite('Property/Config', function() {
 
   test('Check constructor sets valid default values', function() {
     chai.expect(config._rawConfig).to.be.eql({});
+
     //todo
     //chai.expect(config._parsedObject).to.be.eql('');
   });
@@ -46,5 +49,38 @@ suite('Property/Config', function() {
 
   test('Check DEFAULT_FILENAME static getter returns \'deeploy.json\'', function() {
     chai.expect(Config.DEFAULT_FILENAME).to.be.equal('deeploy.json');
+  });
+
+  test('Check createFromJsonFile() static method returns valid istance of Config class', function() {
+    let extpectedResult = {
+      name: 'config',
+      propertyRoot: false,
+      description: 'Config unit test',
+      identifier: 'unit_test',
+      version: '0.0.1',
+      website: 'http://www.mitocgroup.com/',
+      email: 'hello@mitocgroup.com',
+      dependencies: {},
+      autoload: {
+        backend: 'Backend',
+        docs: 'Docs',
+        frontend: 'Frontend',
+        models: 'Models',
+      },
+    };
+
+    chai.expect(Config.createFromJsonFile(configName).rawConfig).to.be.eql(extpectedResult);
+  });
+
+  test('Check extract() method returns valid value', function() {
+    chai.expect(config.extract()).to.be.not.equal(null);
+  });
+
+  test('Check extract() method throws an exception when ', function() {
+    chai.expect(config.extract()).to.be.not.equal(null);
+  });
+
+  test('Check generate() method returns valid value', function() {
+    //chai.expect(config.generate()).to.be.not.equal(null);
   });
 });
