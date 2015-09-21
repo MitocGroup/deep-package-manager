@@ -2,8 +2,9 @@
 
 import chai from 'chai';
 import {Config} from '../../lib.compiled/Microservice/Config';
+import {InvalidConfigException} from '../../lib.compiled/Microservice/Exception/InvalidConfigException';
 
-suite('Microservice/Config', function() {
+suite('Microservice/Config', function () {
   let configInput = {
     name: 'config',
     propertyRoot: false,
@@ -52,11 +53,17 @@ suite('Microservice/Config', function() {
     chai.expect(config.error).to.be.equal(null);
   });
 
-  test('Check error getter returns null', function() {
+  test('Check extract() method throws InvalidConfigException exception', function() {
+    let error = null;
     let invalidConfigInput = {
       name: 'config',
     };
-
     config = new Config(invalidConfigInput);
+    try {
+      config.extract();
+    } catch (e) {
+      error = e;
+      chai.expect(error).to.be.an.instanceOf(InvalidConfigException);
+    }
   });
 });

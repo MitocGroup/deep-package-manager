@@ -11,11 +11,18 @@ suite('Property/Lambda', function() {
     config: {
       awsAccountId: 123456789012,
     },
+    provisioning: {
+      lambda: {
+        config: {
+          region: 'us-west-2',
+        },
+      },
+    },
   };
   let microserviceIdentifier = 'microserviceIdentifierTest';
   let identifier = 'lambdaIdentifierTest';
   let name = 'lambdaNameTest';
-  let execRole = 'executeRole';
+  let execRole = { Arn: 'executeRoleArn' };
   let path = 'Property';
   let lambda = new Lambda(propertyInstance, microserviceIdentifier, identifier, name, execRole, path);
   let positiveError = {
@@ -70,17 +77,24 @@ suite('Property/Lambda', function() {
     let configHookDataExpectedResult = {
       CodeSize: 0,
       Description: '',
-     // FunctionArn: `arn:aws:lambda:${lambda.region}:${lambda.awsAccountId}:function:${lambda.functionName}`,
+      FunctionArn: `arn:aws:lambda:${lambda.region}:${lambda.awsAccountId}:function:${lambda.functionName}`,
       FunctionName: lambda.functionName,
       Handler: Lambda.HANDLER,
-    //  LastModified: new Date().toISOString(),
+      LastModified: new Date().toISOString(),
       MemorySize: Lambda.DEFAULT_MEMORY_LIMIT,
-    //  //Role: this._execRole.Arn,
+      Role: lambda._execRole.Arn,
       Runtime: Lambda.RUNTIME,
       Timeout: Lambda.DEFAULT_TIMEOUT,
     };
-
-    //chai.expect(lambda.createConfigHookData).to.be.equal(configHookDataExpectedResult);
+    chai.expect(lambda.createConfigHookData.CodeSize).to.be.equal(configHookDataExpectedResult.CodeSize);
+    chai.expect(lambda.createConfigHookData.Description).to.be.equal(configHookDataExpectedResult.Description);
+    chai.expect(lambda.createConfigHookData.FunctionArn).to.be.equal(configHookDataExpectedResult.FunctionArn);
+    chai.expect(lambda.createConfigHookData.FunctionName).to.be.equal(configHookDataExpectedResult.FunctionName);
+    chai.expect(lambda.createConfigHookData.Handler).to.be.equal(configHookDataExpectedResult.Handler);
+    chai.expect(lambda.createConfigHookData.MemorySize).to.be.equal(configHookDataExpectedResult.MemorySize);
+    chai.expect(lambda.createConfigHookData.Role).to.be.equal(configHookDataExpectedResult.Role);
+    chai.expect(lambda.createConfigHookData.Runtime).to.be.equal(configHookDataExpectedResult.Runtime);
+    chai.expect(lambda.createConfigHookData.Timeout).to.be.equal(configHookDataExpectedResult.Timeout);
   });
 
   test('Check isErrorFalsePositive static method returns true', function() {

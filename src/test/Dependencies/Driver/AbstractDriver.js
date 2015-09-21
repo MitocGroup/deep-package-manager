@@ -2,6 +2,7 @@
 
 import chai from 'chai';
 import {AbstractDriver} from '../../../lib.compiled/Dependencies/Driver/AbstractDriver';
+import {Exception} from '../../../lib.compiled/Dependencies/Exception/Exception';
 import OS from 'os';
 import Path from 'path';
 import {Hash} from '../../../lib.compiled/Helpers/Hash';
@@ -30,6 +31,9 @@ suite('Dependencies/Driver/AbstractDriver', function() {
   let basePathInput = 'basePathTest';
   let identifierInput = 'identifierTest';
   let expectedResult = null;
+  let callbackFunction = function() {
+    return 'callbackFunction';
+  };
 
   test('Class AbstractDriver exists in Dependencies/Driver/AbstractDriver', function() {
     chai.expect(typeof AbstractDriver).to.equal('function');
@@ -75,17 +79,14 @@ suite('Dependencies/Driver/AbstractDriver', function() {
   });
 
   //todo
-  //test('Check errorCallback(descriptor) throws Exception', function() {
-  //  let error = null;
-  //  let invalidConfigPath = 'invalidPath';
-  //  let invalidConfigName = 'invalidConfig.json';
-  //  try {
-  //    propertyInstance = new Instance(invalidConfigPath, invalidConfigName);
-  //  } catch (e) {
-  //    error = e;
-  //  }
-  //
-  //  chai.expect(error).to.be.an.instanceOf(Exception);
-  //  chai.expect(error.message).to.be.an.equal(`Missing ${invalidConfigName} configuration file from ${invalidConfigPath}.`);
-  //});
+  test('Check errorCallback(descriptor) throws Exception', function() {
+    let error = null;
+    try {
+      AbstractDriver.errorCallback('descriptor');
+    } catch (e) {
+      error = e;
+      chai.expect(error).to.be.an.instanceOf(Exception);
+      chai.expect(error.message).to.be.an.equal(`Error while ${descriptor}: ${error}`);
+    }
+  });
 });
