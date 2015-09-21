@@ -21,12 +21,12 @@ export default Joi.object().keys({
   author: {
     name: JoiHelper.string(),
     email: JoiHelper.email(),
-    website: JoiHelper.website(),
+    website: JoiHelper.maybeString().uri(),
   },
   contributors: Joi.array().items(Joi.object().keys({
     name: JoiHelper.string(),
     email: JoiHelper.email(),
-    website: JoiHelper.website(),
+    website: JoiHelper.maybeString().uri(),
   })),
   dependencies: Joi.object().unknown().pattern(/^[a-zA-Z0-9_-]+$/, JoiHelper.semver()),
   autoload: Joi.object().keys({
