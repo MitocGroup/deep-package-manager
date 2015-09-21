@@ -38,7 +38,9 @@ function buildPropertyId() {
       : 'echo `uname -a``ifconfig``date` | md5sum | awk "{print $1}"'
   );
 
-  return result.status === 0 ? result.stdout.toString().trim() : 'your-unique-property-identifier';
+  return result.status === 0
+    ? result.stdout.toString().replace(/[^a-zA-Z0-9_\.-]+/, '')
+    : `your-unique-property-identifier-${new Date().getTime()}`;
 }
 
 function guessAwsAccountId() {

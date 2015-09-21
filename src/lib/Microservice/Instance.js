@@ -12,6 +12,7 @@ import {ResourceCollection} from './Metadata/ResourceCollection';
 import {Compiler} from '../Compilation/Compiler';
 import StringUtils from 'underscore.string';
 import {PostDeployHook} from './PostDeployHook';
+import {FrontendEngine} from './FrontendEngine';
 
 /**
  * Microservice instance
@@ -75,6 +76,13 @@ export class Instance {
       Parameters.createFromJsonFile(parametersFile),
       basePath
     );
+  }
+
+  /**
+   * @returns {FrontendEngine}
+   */
+  get frontendEngine() {
+    return FrontendEngine.create(this);
   }
 
   /**

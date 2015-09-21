@@ -6,7 +6,7 @@
 
 import JsonFile from 'jsonfile';
 import Joi from 'joi';
-import deepPackageSchema from './deepck.schema';
+import deepPackageSchema from './deepkg.schema';
 import {InvalidConfigException} from './Exception/InvalidConfigException';
 
 /**

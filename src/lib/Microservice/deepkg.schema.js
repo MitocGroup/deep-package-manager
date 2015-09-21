@@ -17,15 +17,16 @@ export default Joi.object().keys({
   name: JoiHelper.string(),
   description: JoiHelper.maybeString().default('Deep Microservice'),
   version: JoiHelper.semver(),
-  propertyRoot: JoiHelper.bool(),
+  propertyRoot: Joi.boolean().default(false),
   author: {
     name: JoiHelper.string(),
     email: JoiHelper.email(),
-    website: JoiHelper.website(),
+    website: JoiHelper.maybeString().uri(),
   },
   contributors: Joi.array().items(Joi.object().keys({
     name: JoiHelper.string(),
     email: JoiHelper.email(),
+    website: JoiHelper.maybeString().uri(),
   })),
   dependencies: Joi.object().unknown().pattern(/^[a-zA-Z0-9_-]+$/, JoiHelper.semver()),
   autoload: Joi.object().keys({
@@ -39,4 +40,8 @@ export default Joi.object().keys({
     docs: DOCS,
     models: MODELS,
   }),
+  frontendEngine: Joi.array()
+    .items(Joi.string().regex(/^[a-z0-9]+$/i))
+    .allow(['angular'])
+    .default(['angular']),
 });
