@@ -5,6 +5,8 @@
 'use strict';
 
 import StringUtils from 'underscore.string';
+import Path from 'path';
+import FileSystem from 'fs';
 
 /**
  * Autoloading directories of a microservice
@@ -20,10 +22,31 @@ export class Autoload {
     let docs = StringUtils.trim(rawConfig.docs, '/');
     let models = StringUtils.trim(rawConfig.models, '/');
 
-    this._frontend = `${basePath}/${frontend}`;
+    this._frontend = this._getBuildAwareFrontendPath(`${basePath}/${frontend}`);
     this._backend = `${basePath}/${backend}`;
     this._docs = `${basePath}/${docs}`;
     this._models = `${basePath}/${models}`;
+  }
+
+  /**
+   * @param {String} path
+   * @returns {String}
+   * @private
+   */
+  _getBuildAwareFrontendPath(path) {
+    let buildPath = Path.join(path, Autoload.BUILD_FOLDER);
+
+    try {
+      let buildStats = FileSystem.lstatSync(buildPath);
+
+      if (buildStats.isDir()) {
+        return buildPath;
+      }
+    } catch (e) {
+      // do nothing...
+    }
+
+    return path;
   }
 
   /**
@@ -72,5 +95,12 @@ export class Autoload {
       docs: this._docs,
       models: this._models,
     };
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get BUILD_FOLDER() {
+    return '_build';
   }
 }
