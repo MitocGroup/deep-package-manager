@@ -5,7 +5,6 @@ import {ResourceCollection} from '../../../lib.compiled/Microservice/Metadata/Re
 
 suite('Microservice/Metadata/ResourceCollection', function() {
   let configInput = {};
-  let configExpectedResult = {};
   let resourceCollection = new ResourceCollection(configInput);
 
   test('Class ResourceCollection exists in Microservice/Metadata/ResourceCollection', function () {

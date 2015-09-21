@@ -8,6 +8,9 @@ suite('Property/Lambda', function() {
   let propertyInstance = {
     path: 'propertyPath',
     identifier: 'propertyIdentifier',
+    config: {
+      awsAccountId: 123456789012,
+    },
   };
   let microserviceIdentifier = 'microserviceIdentifierTest';
   let identifier = 'lambdaIdentifierTest';
@@ -24,6 +27,7 @@ suite('Property/Lambda', function() {
     statusCode: 404,
   };
   let expectedResult = null;
+  let timeoutInput = 120;
 
   test('Class Lambda exists in Property/Lambda', function() {
     chai.expect(typeof Lambda).to.equal('function');
@@ -44,6 +48,39 @@ suite('Property/Lambda', function() {
 
   test('Check propertyIdentifier getter returns valid value', function() {
     chai.expect(lambda.propertyIdentifier).to.be.equal(propertyInstance.identifier);
+  });
+
+  test('Check timeout getter returns valid value', function() {
+    chai.expect(lambda.timeout).to.be.equal(Lambda.DEFAULT_TIMEOUT);
+    lambda.timeout = timeoutInput;
+    chai.expect(lambda.timeout).to.be.equal(timeoutInput);
+  });
+
+  test('Check memorySize getter returns valid value', function() {
+    chai.expect(lambda.memorySize).to.be.equal(Lambda.DEFAULT_MEMORY_LIMIT);
+    lambda.memorySize = timeoutInput;
+    chai.expect(lambda.memorySize).to.be.equal(timeoutInput);
+  });
+
+  test('Check functionName getter returns valid value', function() {
+    chai.expect(lambda.functionName).to.be.equal(name);
+  });
+
+  test('Check createConfigHookData getter returns valid value', function() {
+    let configHookDataExpectedResult = {
+      CodeSize: 0,
+      Description: '',
+     // FunctionArn: `arn:aws:lambda:${lambda.region}:${lambda.awsAccountId}:function:${lambda.functionName}`,
+      FunctionName: lambda.functionName,
+      Handler: Lambda.HANDLER,
+    //  LastModified: new Date().toISOString(),
+      MemorySize: Lambda.DEFAULT_MEMORY_LIMIT,
+    //  //Role: this._execRole.Arn,
+      Runtime: Lambda.RUNTIME,
+      Timeout: Lambda.DEFAULT_TIMEOUT,
+    };
+
+    //chai.expect(lambda.createConfigHookData).to.be.equal(configHookDataExpectedResult);
   });
 
   test('Check isErrorFalsePositive static method returns true', function() {

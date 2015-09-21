@@ -2,7 +2,6 @@
 
 import chai from 'chai';
 import {Config} from '../../lib.compiled/Property/Config';
-import Core from '@mitocgroup/deep-core';
 import appConfigSchema from '../../lib.compiled/Property/config.schema';
 import Joi from 'joi';
 
