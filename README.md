@@ -2,9 +2,8 @@ DEEP Package Manager
 ====================
 
 [![NPM Version](https://img.shields.io/npm/v/@mitocgroup/deep-package-manager.svg)](https://npmjs.org/package/@mitocgroup/deep-package-manager)
-[![Build Status](https://magnum.travis-ci.com/MitocGroup/deep-package-manager.svg?token=sAyMHy4Uoefc2JPq5ZLc&branch=unit-testing)](https://magnum.travis-ci.com/MitocGroup/deep-package-manager)
-[![Dependencies Status](https://david-dm.org/MitocGroup/deep-package-manager.svg)](https://david-dm.org/MitocGroup/deep-package-manager)
-[![Coverage Status](https://coveralls.io/repos/MitocGroup/deep-package-manager/badge.svg?branch=unit-testing&service=github&t=J4nqoG)](https://coveralls.io/github/MitocGroup/deep-package-manager?branch=unit-testing)
+[![Build Status](https://magnum.travis-ci.com/MitocGroup/deep-package-manager.svg?token=sAyMHy4Uoefc2JPq5ZLc&branch=master)](https://magnum.travis-ci.com/MitocGroup/deep-package-manager)
+[![Coverage Status](https://coveralls.io/repos/MitocGroup/deep-package-manager/badge.svg?branch=master&service=github&t=J4nqoG)](https://coveralls.io/github/MitocGroup/deep-package-manager)
 [![Codacy Badge](https://api.codacy.com/project/badge/d25b05c70a2543918434144277e036e9)](https://www.codacy.com)
 ## License
 
