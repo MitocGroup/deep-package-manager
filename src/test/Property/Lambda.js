@@ -38,5 +38,4 @@ suite('Property/Lambda', function() {
   test('Check CONFIG_FILE static getter returns \'_config.json\'', function() {
     chai.expect(Lambda.CONFIG_FILE).to.be.equal('_config.json');
   });
-
 });

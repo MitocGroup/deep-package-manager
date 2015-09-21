@@ -9,6 +9,7 @@ suite('Microservice/Config', function() {
     propertyRoot: false,
     description: 'Config unit test',
     identifier: 'unit_test',
+    frontendEngine: ['angular'],
     version: '0.0.1',
     dependencies: {},
     autoload: {
