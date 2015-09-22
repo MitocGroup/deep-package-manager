@@ -6,6 +6,7 @@
 
 import {AbstractService} from './AbstractService';
 import Core from '@mitocgroup/deep-core';
+import {Exception} from '../../Exception/Exception';
 
 /**
  * IAM service
@@ -70,7 +71,9 @@ export class IAMService extends AbstractService {
    * @returns {Core.AWS.IAM.Policy}
    */
   static getAssumeRolePolicy(serviceIdentifier) {
-    // @todo - check if passed id exists in services list
+    if (!Core.AWS.Service.exists(serviceIdentifier)) {
+      throw new Exception(`Unknown service identifier "${serviceIdentifier}".`);
+    }
 
     let rolePolicy = new Core.AWS.IAM.Policy();
 
