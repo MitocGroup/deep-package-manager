@@ -69,8 +69,12 @@ suite('Property/Lambda', function() {
     chai.expect(lambda.memorySize).to.be.equal(timeoutInput);
   });
 
-  test('Check functionName getter returns valid value', function() {
-    chai.expect(lambda.functionName).to.be.equal(name);
+  test('Check identifier getter returns valid value', function() {
+    chai.expect(lambda.identifier).to.be.equal(identifier);
+  });
+
+  test('Check path getter returns valid value', function() {
+    chai.expect(lambda.path).to.be.equal(path);
   });
 
   test('Check createConfigHookData getter returns valid value', function() {
