@@ -475,7 +475,7 @@ export class Instance {
 
       console.log(`- Running post deploy hook for microservice ${microservice.identifier}`);
 
-      hook(this._provisioning, isUpdate, function() {
+      hook(this._config.provisioning, isUpdate, function() {
         remaining--;
       }.bind(this));
     }
