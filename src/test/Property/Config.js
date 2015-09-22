@@ -13,9 +13,6 @@ suite('Property/Config', function() {
 
   test('Check constructor sets valid default values', function() {
     chai.expect(config._rawConfig).to.be.eql({});
-
-    //todo
-    //chai.expect(config._parsedObject).to.be.eql('');
   });
 
   test('Check rawConfig  getter returns valid value', function() {
@@ -36,20 +33,17 @@ suite('Property/Config', function() {
 
   test('Check createFromJsonFile() static method returns valid istance of Config class', function() {
     let extpectedResult = {
-      name: 'config',
-      propertyRoot: false,
-      description: 'Config unit test',
-      identifier: 'unit_test',
-      version: '0.0.1',
-      website: 'http://www.mitocgroup.com/',
-      email: 'hello@mitocgroup.com',
-      dependencies: {},
-      autoload: {
-        backend: 'Backend',
-        docs: 'Docs',
-        frontend: 'Frontend',
-        models: 'Models',
+      aws: {
+        accessKeyId: null,
+        region: null,
+        secretAccessKey: null,
       },
+      dependencies: {
+        bucket: 'testbucket',
+      },
+      env: 'test',
+      awsAccountId: 123456789012,
+      propertyIdentifier: 'generated',
     };
 
     chai.expect(Config.createFromJsonFile(configName).rawConfig).to.be.eql(extpectedResult);
@@ -64,6 +58,21 @@ suite('Property/Config', function() {
   });
 
   test('Check generate() method returns valid value', function() {
-    //chai.expect(config.generate()).to.be.not.equal(null);
+    let generatedConfig = {
+      aws: {
+        accessKeyId: null,
+        region: null,
+        secretAccessKey: null,
+      },
+      awsAccountId: 123456789012,
+      env: 'dev',
+      propertyIdentifier: 'randomly generated',
+    };
+    chai.expect(Config.generate().aws.accessKeyId).to.be.equal(generatedConfig.aws.accessKeyId);
+    chai.expect(Config.generate().aws.region).to.be.equal(generatedConfig.aws.region);
+    chai.expect(Config.generate().aws.secretAccessKey).to.be.equal(generatedConfig.aws.secretAccessKey);
+    chai.expect(Config.generate().awsAccountId).to.be.equal(generatedConfig.awsAccountId);
+    chai.expect(Config.generate().env).to.be.equal(generatedConfig.env);
+    chai.expect(Config.generate().aws.propertyIdentifier).to.be.not.equal('');
   });
 });
