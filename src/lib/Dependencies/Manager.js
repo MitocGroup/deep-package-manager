@@ -11,7 +11,8 @@ import {Uploader} from './Uploader';
 import {WaitFor} from '../Helpers/WaitFor';
 import Path from 'path';
 import {Instance as Microservice} from '../Microservice/Instance';
-
+import {FrontendEngine} from '../Microservice/FrontendEngine';
+import {NoMatchingFrontendEngineException} from './Exception/NoMatchingFrontendEngineException';
 
 /**
  * Dependencies manager
@@ -122,7 +123,7 @@ export class Manager {
 
   /**
    * @param {Function} callback
-   * @returns {Resolver}
+   * @returns {Uploader}
    */
   push(callback) {
     return this._uploader.dispatchBatch(callback);
@@ -130,9 +131,27 @@ export class Manager {
 
   /**
    * @param {Function} callback
+   * @param {Boolean} pullFrontendEngine
    * @returns {Resolver}
    */
-  pull(callback) {
-    return this._resolver.dispatchBatch(callback);
+  pull(callback, pullFrontendEngine = true) {
+    return this._resolver.dispatchBatch(pullFrontendEngine ? () => {
+      // @todo: move root microservice resolver?
+      let frontendEngineManager = new FrontendEngine();
+      let microservices = this._resolver.refresh().microservices;
+
+      let suitableEngine = frontendEngineManager.findSuitable(...microservices);
+
+      if (!suitableEngine) {
+        throw new NoMatchingFrontendEngineException(frontendEngineManager.rawEngines);
+      }
+
+      let payload = {};
+
+      // @todo: specify certain version of frontendEngine
+      payload[FrontendEngine.getRealEngine(suitableEngine)] = FrontendEngine.getLatestEngineVersion(suitableEngine);
+
+      this._resolver._pull(payload, callback);
+    } : callback);
   }
 }

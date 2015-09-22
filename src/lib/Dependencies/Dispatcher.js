@@ -26,6 +26,7 @@ export class Dispatcher extends Core.OOP.Interface {
 
   /**
    * @param {Function} callback
+   * @returns {Dispatcher|*}
    */
   dispatchBatch(callback) {
     this._resolveStack = [];
@@ -49,6 +50,8 @@ export class Dispatcher extends Core.OOP.Interface {
 
       callback();
     }.bind(this));
+
+    return this;
   }
 
   /**
@@ -56,6 +59,15 @@ export class Dispatcher extends Core.OOP.Interface {
    */
   get driver() {
     return this._driver;
+  }
+
+  /**
+   * @returns {Dispatcher|*}
+   */
+  refresh() {
+    this._microservices = null;
+
+    return this;
   }
 
   /**

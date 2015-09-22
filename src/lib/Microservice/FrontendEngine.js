@@ -9,8 +9,8 @@ export class FrontendEngine {
    * @param {String[]} engines
    */
   constructor(...engines) {
-    this._rawEngines = engines;
-    this._engines = engines.map(FrontendEngine._getRealEngine);
+    this._rawEngines = engines || FrontendEngine.engines;
+    this._engines = this._rawEngines.map(FrontendEngine.getRealEngine);
   }
 
   /**
@@ -32,6 +32,16 @@ export class FrontendEngine {
    */
   get engines() {
     return this._engines;
+  }
+
+  /**
+   * @param {String} engine
+   * @returns {String}
+   *
+   * @todo: get versions dynamically!
+   */
+  static getLatestEngineVersion(engine) {
+    return '0.0.1';
   }
 
   /**
@@ -64,7 +74,7 @@ export class FrontendEngine {
    * @returns {Boolean}
    */
   match(engine) {
-    let realEngines = FrontendEngine._getRealEngine(engine);
+    let realEngines = FrontendEngine.getRealEngine(engine);
 
     return this._engines.indexOf(realEngines) !== -1;
   }
@@ -72,9 +82,8 @@ export class FrontendEngine {
   /**
    * @param {String} engine
    * @returns {String}
-   * @private
    */
-  static _getRealEngine(engine) {
+  static getRealEngine(engine) {
     switch (engine) {
       case FrontendEngine.ANGULAR_ENGINE:
         engine = 'ng';
