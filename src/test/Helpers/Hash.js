@@ -6,7 +6,6 @@ import Crc from 'crc';
 import Crypto from 'crypto';
 
 suite('Helpers/Hash', function() {
-  let hash = new Hash();
   let inputDataObject = { keyToCrc: 'value'};
   let inputDataString = 'string_value';
   let actualResult = null;

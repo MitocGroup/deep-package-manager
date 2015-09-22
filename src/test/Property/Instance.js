@@ -42,4 +42,8 @@ suite('Property/Instance', function() {
     //chai.expect(propertyInstance.localDeploy).to.be.an.equal(false);
     //chai.expect(propertyInstance.path).to.be.an.equal(configPath);
   });
+
+  test('Check concurrentAsyncCount static getter returns value more than 1', function() {
+    chai.expect(Instance.concurrentAsyncCount).to.be.above(1);
+  });
 });

@@ -1,16 +1,13 @@
 {
-  "name": "config",
-  "propertyRoot": false,
-  "description": "Config unit test",
-  "identifier": "unit_test",
-  "version": "0.0.1",
-  "website": "http://www.mitocgroup.com/",
-  "email": "hello@mitocgroup.com",
-  "dependencies": {},
-  "autoload": {
-    "backend": "Backend",
-    "docs": "Docs",
-    "frontend": "Frontend",
-    "models": "Models"
-  }
+  "aws": {
+    "accessKeyId": null,
+    "region": null,
+    "secretAccessKey": null
+  },
+  "dependencies": {
+    "bucket": "testbucket"
+  },
+  "env": "test",
+  "awsAccountId": 123456789012,
+  "propertyIdentifier": "generated"
 }
