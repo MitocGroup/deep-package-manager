@@ -13,6 +13,7 @@ import {FailedSettingIdentityPoolRolesException} from './Exception/FailedSetting
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
 import {Exception} from '../../Exception/Exception';
 import {Action} from '../../Microservice/Metadata/Action';
+import {LambdaService} from './LambdaService';
 
 /**
  * Cognito service
@@ -114,7 +115,7 @@ export class CognitoIdentityService extends AbstractService {
    * @returns {CognitoIdentityService}
    */
   _postDeployProvision(services) {
-    let lambdaArns = this.getAllLambdasArn(this.property.config.microservices);
+    let lambdaArns = LambdaService.getAllLambdasArn(this.property.config.microservices);
 
     this._updateCognitoRolesPolicy(
       this._config.roles,
@@ -275,7 +276,7 @@ export class CognitoIdentityService extends AbstractService {
       }
 
       let cognitoRole = cognitoRoles[cognitoRoleType];
-      let lambdasForRole = lambdaARNs[cognitoRoleType];
+      let lambdasForRole = lambdaARNs;
 
       // skip role if there are no lambdas to add
       if (lambdasForRole.length <= 0) {
@@ -336,56 +337,6 @@ export class CognitoIdentityService extends AbstractService {
     }
 
     return policy;
-  }
-
-  /**
-   * @temp - allow all lambdas to be invoked by unauth users
-   *
-   * Collect all lambdas arn from all microservices
-   *
-   * @param {Object} microservicesConfig
-   * @returns {Object}
-   */
-  getAllLambdasArn(microservicesConfig) {
-    let lambdaArns = {};
-    lambdaArns[CognitoIdentityService.ROLE_AUTH] = [];
-    lambdaArns[CognitoIdentityService.ROLE_UNAUTH] = [];
-
-    for (let microserviceIdentifier in microservicesConfig) {
-      if (!microservicesConfig.hasOwnProperty(microserviceIdentifier)) {
-        continue;
-      }
-
-      let microservice = microservicesConfig[microserviceIdentifier];
-
-      for (let resourceName in microservice.resources) {
-        if (!microservice.resources.hasOwnProperty(resourceName)) {
-          continue;
-        }
-
-        let resourceActions = microservice.resources[resourceName];
-
-        for (let actionName in resourceActions) {
-          if (!resourceActions.hasOwnProperty(actionName)) {
-            continue;
-          }
-
-          let action = resourceActions[actionName];
-
-          if (action.type !== Action.LAMBDA) {
-            continue;
-          }
-
-          let actionIdentifier = `${resourceName}-${action.name}`;
-          let lambdaArn = microservice.deployedServices.lambdas[actionIdentifier].FunctionArn;
-
-          lambdaArns[CognitoIdentityService.ROLE_UNAUTH].push(lambdaArn);
-          lambdaArns[CognitoIdentityService.ROLE_AUTH].push(lambdaArn);
-        }
-      }
-    }
-
-    return lambdaArns;
   }
 
   /**

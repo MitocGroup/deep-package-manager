@@ -346,4 +346,46 @@ export class LambdaService extends AbstractService {
 
     return pascalCase;
   }
+
+  /**
+   * Collect all lambdas arn from all microservices
+   *
+   * @param {Object} microservicesConfig
+   * @returns {Array}
+   */
+  static getAllLambdasArn(microservicesConfig) {
+    let lambdaArns = [];
+
+    for (let microserviceIdentifier in microservicesConfig) {
+      if (!microservicesConfig.hasOwnProperty(microserviceIdentifier)) {
+        continue;
+      }
+
+      let microservice = microservicesConfig[microserviceIdentifier];
+
+      for (let resourceName in microservice.resources) {
+        if (!microservice.resources.hasOwnProperty(resourceName)) {
+          continue;
+        }
+
+        let resourceActions = microservice.resources[resourceName];
+
+        for (let actionName in resourceActions) {
+          if (!resourceActions.hasOwnProperty(actionName)) {
+            continue;
+          }
+
+          let action = resourceActions[actionName];
+
+          if (action.type !== Action.LAMBDA) {
+            continue;
+          }
+
+          lambdaArns.push(microservice.deployedServices.lambdas[action.identifier].FunctionArn);
+        }
+      }
+    }
+
+    return lambdaArns;
+  }
 }
