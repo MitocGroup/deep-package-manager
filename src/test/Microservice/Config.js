@@ -13,6 +13,7 @@ suite('Microservice/Config', function () {
     frontendEngine: ['angular'],
     version: '0.0.1',
     dependencies: {},
+    tags: [],
     autoload: {
       backend: 'Backend',
       docs: 'Docs',

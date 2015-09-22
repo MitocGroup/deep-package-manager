@@ -14,6 +14,7 @@ suite('Microservice/FrontendEngine', function() {
       frontendEngine: 'test',
     },
   };
+  let latestEngineVersion = '0.0.1';
 
   test('Class Config exists in Microservice/FrontendEngine', function() {
     chai.expect(typeof FrontendEngine).to.equal('function');
@@ -41,8 +42,16 @@ suite('Microservice/FrontendEngine', function() {
     chai.expect(frontendEngine.match(engines)).to.be.equal(true);
   });
 
-  test('Check _getRealEngine() static method returns true', function() {
-    chai.expect(FrontendEngine._getRealEngine('angular')).to.be.equal(angularEngineResult);
+  test('Check ANGULAR_ENGINE static getter method returns \'angular\'', function() {
+    chai.expect(FrontendEngine.ANGULAR_ENGINE).to.be.equal('angular');
+  });
+
+  test(`Check getRealEngine() static method returns ${angularEngineResult}`, function() {
+    chai.expect(FrontendEngine.getRealEngine('angular')).to.be.equal(angularEngineResult);
+  });
+
+  test('Check getLatestEngineVersion() static method returns valid version', function() {
+    chai.expect(FrontendEngine.getLatestEngineVersion()).to.be.equal(latestEngineVersion );
   });
 
   test('Check create() static method returns true', function() {
