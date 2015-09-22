@@ -31,9 +31,6 @@ suite('Dependencies/Driver/AbstractDriver', function() {
   let basePathInput = 'basePathTest';
   let identifierInput = 'identifierTest';
   let expectedResult = null;
-  let callbackFunction = function() {
-    return 'callbackFunction';
-  };
 
   test('Class AbstractDriver exists in Dependencies/Driver/AbstractDriver', function() {
     chai.expect(typeof AbstractDriver).to.equal('function');

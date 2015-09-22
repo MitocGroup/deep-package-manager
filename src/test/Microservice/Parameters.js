@@ -19,7 +19,7 @@ suite('Microservice/Parameters', function() {
   });
 
   test('Check constructor sets valid default value for _filledObject=null', function() {
-    chai.expect(parameters._filledObject).to.be.null;
+    chai.expect(parameters._filledObject).to.be.equal(null);
   });
 
   test('Check constructor sets valid default value for _parsedObject', function() {

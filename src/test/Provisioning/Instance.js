@@ -2,7 +2,6 @@
 
 import chai from 'chai';
 import {Instance} from '../../lib.compiled/Provisioning/Instance';
-import {Instance as PropertyInstance} from '../../lib.compiled/Property/Instance';
 import {InvalidArgumentException} from '../../lib.compiled/Exception/InvalidArgumentException';
 
 suite('Provisioning/Instance', function() {

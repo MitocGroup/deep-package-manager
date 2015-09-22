@@ -2,25 +2,10 @@
 
 import chai from 'chai';
 import {Config} from '../../lib.compiled/Property/Config';
-import appConfigSchema from '../../lib.compiled/Property/config.schema';
 import Joi from 'joi';
 
 suite('Property/Config', function() {
   let config = new Config();
-  let defaultConfig = {
-    error: [null],
-    value: {
-      aws: {
-        accessKeyId: [null],
-        region: [null],
-        secretAccessKey: [null],
-      },
-      awsAccountId: 123456789012,
-      env: 'dev',
-      propertyIdentifier: '59e6913c9ed3afe744b5434817ce6345',
-    },
-  };
-
   let configName = 'test/Property/deeploy.test.json';
 
   test('Class Config exists in Property/Config', function() {

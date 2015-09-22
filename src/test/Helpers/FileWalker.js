@@ -3,7 +3,6 @@
 import chai from 'chai';
 import {FileWalker} from '../../lib.compiled/Helpers/FileWalker';
 import FileSystem from 'fs';
-import mkdirp from 'mkdirp';
 
 suite('Helpers/FileWalker', function() {
   let fileWalker = new FileWalker();

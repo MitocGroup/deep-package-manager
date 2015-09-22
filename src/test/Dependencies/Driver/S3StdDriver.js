@@ -2,8 +2,6 @@
 
 import chai from 'chai';
 import {S3StdDriver} from '../../../lib.compiled/Dependencies/Driver/S3StdDriver';
-import {Exception} from '../../../lib.compiled/Dependencies/Exception/Exception';
-
 
 suite('Dependencies/Driver/S3StdDriver', function() {
   //todo
