@@ -39,7 +39,7 @@ export class Autoload {
     try {
       let buildStats = FileSystem.lstatSync(buildPath);
 
-      if (buildStats.isDir()) {
+      if (buildStats.isDirectory()) {
         return buildPath;
       }
     } catch (e) {
