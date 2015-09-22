@@ -46,11 +46,11 @@ suite('Microservice/FrontendEngine', function() {
     chai.expect(FrontendEngine.ANGULAR_ENGINE).to.be.equal('angular');
   });
 
-  test('Check getRealEngine() static method returns true', function() {
+  test(`Check getRealEngine() static method returns ${angularEngineResult}`, function() {
     chai.expect(FrontendEngine.getRealEngine('angular')).to.be.equal(angularEngineResult);
   });
 
-  test('Check getRealEngine() static method returns true', function() {
+  test('Check getLatestEngineVersion() static method returns valid version', function() {
     chai.expect(FrontendEngine.getLatestEngineVersion()).to.be.equal(latestEngineVersion );
   });
 
