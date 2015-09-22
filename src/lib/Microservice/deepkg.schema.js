@@ -6,6 +6,7 @@
 
 import Joi from 'joi';
 import {JoiHelper} from '../Helpers/JoiHelper';
+import {FrontendEngine} from '../Microservice/FrontendEngine';
 
 let FRONTEND = 'Frontend';
 let BACKEND = 'Backend';
@@ -41,7 +42,10 @@ export default Joi.object().keys({
     models: MODELS,
   }),
   frontendEngine: Joi.array()
-    .items(Joi.string().regex(/^[a-z0-9]+$/i))
-    .allow(['angular'])
-    .default(['angular']),
+    .items(Joi.string())
+    .allow(FrontendEngine.engines)
+    .default([FrontendEngine.ANGULAR_ENGINE]),
+  tags: Joi.array()
+    .items(Joi.string())
+    .default([]),
 });

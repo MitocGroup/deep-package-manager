@@ -76,11 +76,25 @@ export class FrontendEngine {
    */
   static _getRealEngine(engine) {
     switch (engine) {
-      case 'angular':
+      case FrontendEngine.ANGULAR_ENGINE:
         engine = 'ng';
         break;
     }
 
     return `deep.${engine}.root`;
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get engines() {
+    return [FrontendEngine.ANGULAR_ENGINE];
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get ANGULAR_ENGINE() {
+    return 'angular';
   }
 }
