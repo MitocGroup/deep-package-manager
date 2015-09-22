@@ -2,7 +2,6 @@
 
 import chai from 'chai';
 import {Config} from '../../lib.compiled/Property/Config';
-import Joi from 'joi';
 
 suite('Property/Config', function() {
   let config = new Config();
