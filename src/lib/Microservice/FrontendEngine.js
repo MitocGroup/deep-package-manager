@@ -41,7 +41,11 @@ export class FrontendEngine {
    * @todo: get versions dynamically!
    */
   static getLatestEngineVersion(engine) {
-    return '0.0.1';
+    let version = '0.0.1';
+
+    console.log(`Temporary use ${FrontendEngine.getRealEngine(engine)}@${version} statically...`);
+
+    return version;
   }
 
   /**
