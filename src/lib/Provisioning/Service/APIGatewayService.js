@@ -15,7 +15,9 @@ import {FailedToPutApiGatewayIntegrationException} from './Exception/FailedToPut
 import {FailedToPutApiGatewayMethodException} from './Exception/FailedToPutApiGatewayMethodException';
 import {FailedToPutApiGatewayIntegrationResponseException} from './Exception/FailedToPutApiGatewayIntegrationResponseException';
 import {FailedToPutApiGatewayMethodResponseException} from './Exception/FailedToPutApiGatewayMethodResponseException';
+import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
 import {Action} from '../../Microservice/Metadata/Action';
+import {IAMService} from './IAMService';
 
 /**
  * APIGateway service
@@ -65,11 +67,12 @@ export class APIGatewayService extends AbstractService {
     this._createApiResources(
       this.apiMetadata,
       this._getResourcePaths(this.provisioning.property.microservices)
-    )(function(api, resources) {
+    )(function(api, resources, role) {
       this._config.api = {
         id: api.id,
         name: api.name,
         resources: resources,
+        role: role,
       };
       this._ready = true;
     }.bind(this));
@@ -119,62 +122,103 @@ export class APIGatewayService extends AbstractService {
     var restApi = null;
     var restResourcesCreated = false;
     var restResources = null;
+    var restApiIamRole = null;
     let apiGateway = this.provisioning.apiGateway;
-    let wait = new WaitFor();
+    let iam = this.provisioning.iam;
+    let waitLevel1 = new WaitFor();
+    let waitLevel2 = new WaitFor();
+    let waitLevel3 = new WaitFor();
+    let waitLevel4 = new WaitFor();
 
-    apiGateway.createRestapi(metadata).then((api) => {
-      restApi = api.source;
-    }, (error) => {
+    function createApi() {
+      apiGateway.createRestapi(metadata).then((api) => {
+        restApi = api.source;
+      }, (error) => {
 
-      if (error) {
-        throw new FailedToCreateApiGatewayException(metadata.name, error);
-      }
-    });
+        if (error) {
+          throw new FailedToCreateApiGatewayException(metadata.name, error);
+        }
+      });
+    }
 
-    wait.push(() => {
+    function createApiResources(resourcePaths, restApiId) {
+      let params = {
+        paths: resourcePaths,
+        restapiId: restApiId,
+      };
+
+      apiGateway.createResources(params).then(() => {
+        restResourcesCreated = true;
+      }, (error) => {
+
+        if (error) {
+          throw new FailedToCreateApiResourcesException(resourcePaths, error);
+        }
+      });
+    }
+
+    function listApiResources(restApiId) {
+      apiGateway.listResources({restapiId: restApiId}).then((resources) => {
+        restResources = resources;
+      }, (error) => {
+
+        if (error) {
+          throw new FailedToListApiResourcesException(restApiId, error);
+        }
+      });
+    }
+
+    function createApiIamRole() {
+      let roleName = this.generateAwsResourceName(
+        metadata.name + 'InvokeLambda',
+        Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
+      );
+
+      let params = {
+        AssumeRolePolicyDocument: IAMService.getAssumeRolePolicy(Core.AWS.Service.API_GATEWAY).toString(),
+        RoleName: roleName,
+      };
+
+      iam.createRole(params, (error, data) => {
+        if (error) {
+          throw new FailedToCreateIamRoleException(roleName, error);
+        }
+
+        restApiIamRole = data.Role;
+      });
+    }
+
+    createApi();
+
+    waitLevel1.push(() => {
       return restApi !== null;
     });
 
     return (callback) => {
-      return wait.ready(() => {
-        let secondLevelWait = new WaitFor();
+      return waitLevel1.ready(() => {
+        createApiResources(resourcePaths, restApi.id);
 
-        let params = {
-          paths: resourcePaths,
-          restapiId: restApi.id,
-        };
-
-        apiGateway.createResources(params).then(() => {
-          restResourcesCreated = true;
-        }, (error) => {
-
-          if (error) {
-            throw new FailedToCreateApiResourcesException(resourcePaths, error);
-          }
-        });
-
-        secondLevelWait.push(() => {
+        waitLevel2.push(() => {
           return restResourcesCreated;
         });
 
-        return secondLevelWait.ready(() => {
-          let thirdLevelWait = new WaitFor();
+        return waitLevel2.ready(() => {
+          listApiResources(restApi.id);
 
-          apiGateway.listResources({restapiId: restApi.id}).then((resources) => {
-            restResources = resources;
-          }, (error) => {
-
-            if (error) {
-              throw new FailedToListApiResourcesException(restApi.id, error);
-            }
-          });
-
-          thirdLevelWait.push(() => {
+          waitLevel3.push(() => {
             return restResources !== null;
           });
 
-          return thirdLevelWait.ready(() => {
-            callback(restApi, this._extractApiResourcesMetadata(restResources));
+          return waitLevel3.ready(() => {
+            createApiIamRole();
+
+            waitLevel4.push(() => {
+              return restApiIamRole !== null;
+            });
+
+            return waitLevel4.ready(() => {
+              callback(restApi, this._extractApiResourcesMetadata(restResources), restApiIamRole);
+            });
           });
         });
       });
@@ -202,7 +246,7 @@ export class APIGatewayService extends AbstractService {
     var stackSizeLevel4 = integrationMetadata.count;
 
     // @todo - move these functions as private class methods
-    // @todo - move this step (putHttpMethods) into _createApiResources method to do it on provision time
+    // @todo - move these steps (putHttpMethods, putApiMethodResponse) into _createApiResources method to do it on provision time
     function putHttpMethods() {
       for (let resourcePath in integrationParams) {
         if (!integrationParams.hasOwnProperty(resourcePath)) {

@@ -63,4 +63,26 @@ export class IAMService extends AbstractService {
 
     return this;
   }
+
+  /**
+   * Creates IAM role assume policy for passed aws service
+   *
+   * @returns {Core.AWS.IAM.Policy}
+   */
+  static getAssumeRolePolicy(serviceIdentifier) {
+    // @todo - check if passed id exists in services list
+
+    let rolePolicy = new Core.AWS.IAM.Policy();
+
+    let statement = rolePolicy.statement.add();
+    statement.principal = {
+      Service: Core.AWS.Service.identifier(serviceIdentifier),
+    };
+
+    let action = statement.action.add();
+    action.service = Core.AWS.Service.SECURITY_TOKEN_SERVICE;
+    action.action = 'AssumeRole';
+
+    return rolePolicy;
+  }
 }
