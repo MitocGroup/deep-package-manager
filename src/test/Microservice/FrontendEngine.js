@@ -15,7 +15,7 @@ suite('Microservice/FrontendEngine', function() {
     },
   };
 
-  test('Class Config exists in Microservice/Config', function() {
+  test('Class Config exists in Microservice/FrontendEngine', function() {
     chai.expect(typeof FrontendEngine).to.equal('function');
   });
 
