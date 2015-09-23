@@ -40,7 +40,7 @@ function buildPropertyId() {
 
   return result.status === 0
     ? result.stdout.toString().replace(/[^a-zA-Z0-9_\.-]+/, '')
-    : `your-unique-property-identifier-${new Date().getTime()}`;
+    : `your-unique-app-identifier-${new Date().getTime()}`;
 }
 
 function guessAwsAccountId() {
