@@ -20,7 +20,7 @@ export default Joi.object().keys({
       httpOptions: Joi.object().optional(),
     }).optional(),
   }).optional(),
-  propertyIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).optional().default(buildPropertyId()),
+  appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).optional().default(buildPropertyId()),
   env: JoiHelper.stringEnum(['dev', 'stage', 'test', 'prod']).optional().default('dev'),
   awsAccountId: Joi.number().optional().default(guessAwsAccountId()),
   aws: Joi.object().keys({

@@ -44,7 +44,7 @@ export class ElasticacheService extends AbstractService {
   _setup(services) {
     //this._createCluster(
     //    this.awsAccountId,
-    //    this.propertyIdentifier
+    //    this.appIdentifier
     //)(function(dsn) {
     //    this._config = {
     //        dsn: dsn
@@ -80,15 +80,15 @@ export class ElasticacheService extends AbstractService {
 
   /**
    * @param {String} awsAccountId
-   * @param {String} propertyIdentifier
+   * @param {String} appIdentifier
    * @returns {Function}
    * @private
    */
-  _createCluster(awsAccountId, propertyIdentifier) {
+  _createCluster(awsAccountId, appIdentifier) {
     let syncStack = new AwsRequestSyncStack();
     let ec = this.provisioning.elasticCache;
 
-    let clusterId = ElasticacheService._buildClusterId(awsAccountId, propertyIdentifier);
+    let clusterId = ElasticacheService._buildClusterId(awsAccountId, appIdentifier);
 
     let parameters = {
       CacheClusterId: clusterId,
@@ -176,15 +176,15 @@ export class ElasticacheService extends AbstractService {
 
   /**
    * @param {String} awsAccountId
-   * @param {String} propertyIdentifier
+   * @param {String} appIdentifier
    * @private
    *
    * @todo: figure out why we are limited to 20 chars
    */
-  static _buildClusterId(awsAccountId, propertyIdentifier) {
+  static _buildClusterId(awsAccountId, appIdentifier) {
     let accountHash = Hash.crc32(awsAccountId.toString());
-    let propertyHash = Hash.crc32(propertyIdentifier.toString());
-    let propertyParts = propertyIdentifier.toString().replace(/[^a-zA-Z0-9-]+/, '').split('');
+    let propertyHash = Hash.crc32(appIdentifier.toString());
+    let propertyParts = appIdentifier.toString().replace(/[^a-zA-Z0-9-]+/, '').split('');
     let propertySuffix = `${propertyParts.shift()}${propertyParts.pop()}`;
 
     return `d${accountHash}-${propertyHash}${propertySuffix}`;

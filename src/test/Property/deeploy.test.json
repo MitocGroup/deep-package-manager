@@ -9,5 +9,5 @@
   },
   "env": "test",
   "awsAccountId": 123456789012,
-  "propertyIdentifier": "generated"
+  "appIdentifier": "generated"
 }

@@ -58,9 +58,9 @@ export class Lambda {
 
     config.microserviceIdentifier = this.microserviceIdentifier;
     config.awsAccountId = propertyConfig.awsAccountId;
-    config.propertyIdentifier = propertyConfig.propertyIdentifier;
+    config.appIdentifier = propertyConfig.appIdentifier;
     config.timestamp = (new Date()).getTime();
-    config.buckets = S3Service.fakeBucketsConfig(propertyConfig.propertyIdentifier);
+    config.buckets = S3Service.fakeBucketsConfig(propertyConfig.appIdentifier);
     config.tablesNames = [];
 
     //config.cacheDsn = '';
@@ -102,7 +102,7 @@ export class Lambda {
   /**
    * @returns {String}
    */
-  get propertyIdentifier() {
+  get appIdentifier() {
     return this._property.identifier;
   }
 

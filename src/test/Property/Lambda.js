@@ -7,7 +7,7 @@ suite('Property/Lambda', function() {
 
   let propertyInstance = {
     path: 'propertyPath',
-    identifier: 'propertyIdentifier',
+    identifier: 'appIdentifier',
     config: {
       awsAccountId: 123456789012,
     },
@@ -53,8 +53,8 @@ suite('Property/Lambda', function() {
     chai.expect(lambda.outputPath).to.be.equal(propertyInstance.path);
   });
 
-  test('Check propertyIdentifier getter returns valid value', function() {
-    chai.expect(lambda.propertyIdentifier).to.be.equal(propertyInstance.identifier);
+  test('Check appIdentifier getter returns valid value', function() {
+    chai.expect(lambda.appIdentifier).to.be.equal(propertyInstance.identifier);
   });
 
   test('Check timeout getter returns valid value', function() {

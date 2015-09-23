@@ -20,7 +20,7 @@ suite('Property/Frontend', function() {
       },
       awsAccountId: 123456789012,
       env: 'dev',
-      propertyIdentifier: '59e6913c9ed3afe744b5434817ce6345',
+      appIdentifier: '59e6913c9ed3afe744b5434817ce6345',
     },
   };
   let configExpectedResult = {
