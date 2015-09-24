@@ -29,11 +29,25 @@ export class Autoload {
   }
 
   /**
+   * @todo think on removing this
+   *
+   * Skip _build path if exists
+   */
+  static _skipBuild() {
+    Autoload.__skipBuild = true;
+  }
+
+  /**
    * @param {String} path
    * @returns {String}
    * @private
    */
   _getBuildAwareFrontendPath(path) {
+    // @todo: remove this hook
+    if (Autoload.__skipBuild) {
+      return path;
+    }
+
     let buildPath = Path.join(path, Autoload.BUILD_FOLDER);
 
     try {
@@ -104,3 +118,5 @@ export class Autoload {
     return '_build';
   }
 }
+
+Autoload.__skipBuild = false;
