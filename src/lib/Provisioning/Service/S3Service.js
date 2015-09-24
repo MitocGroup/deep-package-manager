@@ -57,12 +57,12 @@ export class S3Service extends AbstractService {
   }
 
   /**
-   * @param {String} propertyIdentifier
+   * @param {String} appIdentifier
    * @returns {Object}
    */
-  static fakeBucketsConfig(propertyIdentifier) {
+  static fakeBucketsConfig(appIdentifier) {
     let config = {};
-    let propertyHash = Hash.md5(propertyIdentifier.toString());
+    let propertyHash = Hash.md5(appIdentifier.toString());
 
     config[S3Service.TMP_BUCKET] = {
       name: `${propertyHash}-${S3Service.TMP_BUCKET}`,

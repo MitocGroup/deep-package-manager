@@ -69,6 +69,7 @@ export class FileWalker {
     filter = filter || function() {
         return true;
       };
+
     source = StringUtils.rtrim(source, '/');
     destination = StringUtils.rtrim(destination, '/');
     let skipDotFilter = FileWalker.skipDotsFilter(filter);
@@ -98,8 +99,8 @@ export class FileWalker {
     filter = filter || function() {
         return true;
       };
-    let results = [];
 
+    let results = [];
     let list = FileSystem.readdirSync(dir);
 
     list = list.map((file) => `${dir}/${file}`);
@@ -137,7 +138,7 @@ export class FileWalker {
     return {
       filter: function(list) {
         return list;
-      }
+      },
     };
   }
 
@@ -161,7 +162,7 @@ export class FileWalker {
    */
   static skipDotsFilter(originalFilter) {
     return function(file) {
-      return 0 !== Path.basename(file).indexOf('.') && (!originalFilter || originalFilter(file));
+      return Path.basename(file).indexOf('.') !== 0 && (!originalFilter || originalFilter(file));
     };
   }
 

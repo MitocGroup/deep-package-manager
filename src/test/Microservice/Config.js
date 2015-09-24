@@ -2,17 +2,18 @@
 
 import chai from 'chai';
 import {Config} from '../../lib.compiled/Microservice/Config';
+import {InvalidConfigException} from '../../lib.compiled/Microservice/Exception/InvalidConfigException';
 
-suite('Microservice/Config', function() {
+suite('Microservice/Config', function () {
   let configInput = {
     name: 'config',
     propertyRoot: false,
     description: 'Config unit test',
     identifier: 'unit_test',
+    frontendEngine: ['angular'],
     version: '0.0.1',
-    website: 'http://www.mitocgroup.com/',
-    email: 'hello@mitocgroup.com',
     dependencies: {},
+    tags: [],
     autoload: {
       backend: 'Backend',
       docs: 'Docs',
@@ -20,7 +21,6 @@ suite('Microservice/Config', function() {
       models: 'Models',
     },
   };
-
 
   let config = new Config(configInput);
 
@@ -52,5 +52,19 @@ suite('Microservice/Config', function() {
 
   test('Check error getter returns null', function() {
     chai.expect(config.error).to.be.equal(null);
+  });
+
+  test('Check extract() method throws InvalidConfigException exception', function() {
+    let error = null;
+    let invalidConfigInput = {
+      name: 'config',
+    };
+    config = new Config(invalidConfigInput);
+    try {
+      config.extract();
+    } catch (e) {
+      error = e;
+      chai.expect(error).to.be.an.instanceOf(InvalidConfigException);
+    }
   });
 });

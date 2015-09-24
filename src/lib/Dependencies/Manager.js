@@ -11,128 +11,147 @@ import {Uploader} from './Uploader';
 import {WaitFor} from '../Helpers/WaitFor';
 import Path from 'path';
 import {Instance as Microservice} from '../Microservice/Instance';
-
+import {FrontendEngine} from '../Microservice/FrontendEngine';
+import {NoMatchingFrontendEngineException} from './Exception/NoMatchingFrontendEngineException';
 
 /**
  * Dependencies manager
  */
 export class Manager {
-    /**
-     * @param {AbstractDriver} driver
-     */
-    constructor(driver) {
-        if (!(driver instanceof AbstractDriver)) {
-            throw new Core.Exception.InvalidArgumentException(driver, 'AbstractDriver');
-        }
-
-        this._driver = driver;
-
-        this._uploader = new Uploader(this._driver);
-        this._resolver = new Resolver(this._driver);
+  /**
+   * @param {AbstractDriver} driver
+   */
+  constructor(driver) {
+    if (!(driver instanceof AbstractDriver)) {
+      throw new Core.Exception.InvalidArgumentException(driver, 'AbstractDriver');
     }
 
-    /**
-     * @returns {Uploader}
-     */
-    get uploader() {
-        return this._uploader;
+    this._driver = driver;
+
+    this._uploader = new Uploader(this._driver);
+    this._resolver = new Resolver(this._driver);
+  }
+
+  /**
+   * @returns {Uploader}
+   */
+  get uploader() {
+    return this._uploader;
+  }
+
+  /**
+   * @returns {Resolver}
+   */
+  get resolver() {
+    return this._resolver;
+  }
+
+  /**
+   * @returns {AbstractDriver}
+   */
+  get driver() {
+    return this._driver;
+  }
+
+  /**
+   * @param {String[]} subPaths
+   * @param {Function} callback
+   */
+  pushBatch(subPaths, callback) {
+    this._executeBatch(subPaths, this._uploader, callback);
+  }
+
+  /**
+   * @param {String[]} subPaths
+   * @param {Function} callback
+   */
+  pullBatch(subPaths, callback) {
+    this._executeBatch(subPaths, this._resolver, callback);
+  }
+
+  /**
+   * @param {String[]} subPaths
+   * @param {Function} executor
+   * @param {Function} callback
+   * @private
+   */
+  _executeBatch(subPaths, executor, callback) {
+    let wait = new WaitFor();
+    let stackSize = subPaths.length;
+
+    for (let subPath of subPaths) {
+      executor.dispatch(this._createMicroservice(subPath), function() {
+        stackSize--;
+      }.bind(this));
     }
 
-    /**
-     * @returns {Resolver}
-     */
-    get resolver() {
-        return this._resolver;
-    }
+    wait.push(function() {
+      return stackSize <= 0;
+    }.bind(this));
 
-    /**
-     * @returns {AbstractDriver}
-     */
-    get driver() {
-        return this._driver;
-    }
+    wait.ready(function() {
+      callback();
+    }.bind(this));
+  }
 
-    /**
-     * @param {String[]} subPaths
-     * @param {Function} callback
-     */
-    pushBatch(subPaths, callback) {
-        this._executeBatch(subPaths, this._uploader, callback);
-    }
+  /**
+   * @param {String} subPath
+   * @param {Function} callback
+   * @returns {Resolver}
+   */
+  pushSingle(subPath, callback) {
+    return this._uploader.dispatch(this._createMicroservice(subPath), callback);
+  }
 
-    /**
-     * @param {String[]} subPaths
-     * @param {Function} callback
-     */
-    pullBatch(subPaths, callback) {
-        this._executeBatch(subPaths, this._resolver, callback);
-    }
+  /**
+   * @param {String} subPath
+   * @param {Function} callback
+   * @returns {Resolver}
+   */
+  pullSingle(subPath, callback) {
+    return this._resolver.dispatch(this._createMicroservice(subPath), callback);
+  }
 
-    /**
-     * @param {String[]} subPaths
-     * @param {Function} executor
-     * @param {Function} callback
-     * @private
-     */
-    _executeBatch(subPaths, executor, callback) {
-        let wait = new WaitFor();
-        let stackSize = subPaths.length;
+  /**
+   * @param {String} subPath
+   * @returns {Microservice}
+   * @private
+   */
+  _createMicroservice(subPath) {
+    return Microservice.create(Path.join(this._driver.basePath, subPath));
+  }
 
-        for (let subPath of subPaths) {
-            executor.dispatch(this._createMicroservice(subPath), function() {
-                stackSize--;
-            }.bind(this));
-        }
+  /**
+   * @param {Function} callback
+   * @returns {Uploader}
+   */
+  push(callback) {
+    return this._uploader.dispatchBatch(callback);
+  }
 
-        wait.push(function() {
-            return stackSize <= 0;
-        }.bind(this));
+  /**
+   * @param {Function} callback
+   * @param {Boolean} pullFrontendEngine
+   * @returns {Resolver}
+   */
+  pull(callback, pullFrontendEngine = true) {
+    return this._resolver.dispatchBatch(pullFrontendEngine ? () => {
+      // @todo: move root microservice resolver?
+      let frontendEngineManager = new FrontendEngine();
+      let microservices = this._resolver.refresh().microservices;
 
-        wait.ready(function() {
-            callback();
-        }.bind(this));
-    }
+      let suitableEngine = frontendEngineManager.findSuitable(...microservices);
 
-    /**
-     * @param {String} subPath
-     * @param {Function} callback
-     * @returns {Resolver}
-     */
-    pushSingle(subPath, callback) {
-        return this._uploader.dispatch(this._createMicroservice(subPath), callback);
-    }
+      if (!suitableEngine) {
+        throw new NoMatchingFrontendEngineException(frontendEngineManager.rawEngines);
+      }
 
-    /**
-     * @param {String} subPath
-     * @param {Function} callback
-     * @returns {Resolver}
-     */
-    pullSingle(subPath, callback) {
-        return this._resolver.dispatch(this._createMicroservice(subPath), callback);
-    }
+      let payload = {};
 
-    /**
-     * @param {String} subPath
-     * @returns {Microservice}
-     * @private
-     */
-    _createMicroservice(subPath) {
-        return Microservice.create(Path.join(this._driver.basePath, subPath));
-    }
+      // @todo: specify certain version of frontendEngine
+      payload[FrontendEngine.getRealEngine(suitableEngine)] = FrontendEngine.getLatestEngineVersion(suitableEngine);
 
-    /**
-     * @param {Function} callback
-     * @returns {Resolver}
-     */
-    push(callback) {
-        return this._uploader.dispatchBatch(callback);
-    }
-
-    /**
-     * @param {Function} callback
-     * @returns {Resolver}
-     */
-    pull(callback) {
-        return this._resolver.dispatchBatch(callback);
-    }
+      this._resolver._pull(payload, callback);
+    } : callback);
+  }
 }

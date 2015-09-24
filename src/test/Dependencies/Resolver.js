@@ -1,13 +1,30 @@
-// THIS TEST WAS GENERATED AUTOMATICALLY ON Thu Sep 03 2015 12:29:31 GMT+0300 (EEST)
-
 'use strict';
 
 import chai from 'chai';
 import {Resolver} from '../../lib.compiled/Dependencies/Resolver';
 
-// @todo: Add more advanced tests
-suite("Dependencies/Resolver", function() {
+/**
+ * Dependency dispatcher implements abstract method from Dispatcher
+ */
+class DependencyResolver extends Resolver {
+  constructor(driver) {
+    super(driver);
+  }
+
+  dispatch() {
+    return this;
+  }
+}
+
+suite('Dependencies/Resolver', function() {
+  let driver = 'driverTest';
+  let resolver = new DependencyResolver(driver);
+
   test('Class Resolver exists in Dependencies/Resolver', function() {
     chai.expect(typeof Resolver).to.equal('function');
+  });
+
+  test('Check constructor sets valid value for _resolveStack=[]', function() {
+    chai.expect(resolver._resolveStack).to.be.eql([]);
   });
 });

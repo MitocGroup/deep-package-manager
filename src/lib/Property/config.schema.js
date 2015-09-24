@@ -20,7 +20,7 @@ export default Joi.object().keys({
       httpOptions: Joi.object().optional(),
     }).optional(),
   }).optional(),
-  propertyIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).optional().default(buildPropertyId()),
+  appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).optional().default(buildAppId()),
   env: JoiHelper.stringEnum(['dev', 'stage', 'test', 'prod']).optional().default('dev'),
   awsAccountId: Joi.number().optional().default(guessAwsAccountId()),
   aws: Joi.object().keys({
@@ -31,7 +31,7 @@ export default Joi.object().keys({
   }).optional().default(guessAwsSdkConfig()),
 });
 
-function buildPropertyId() {
+function buildAppId() {
   let result = exec(
     process.platform === 'darwin'
       ? 'echo `uname -a``ifconfig``date` | md5'
@@ -40,7 +40,7 @@ function buildPropertyId() {
 
   return result.status === 0
     ? result.stdout.toString().replace(/[^a-zA-Z0-9_\.-]+/, '')
-    : `your-unique-property-identifier-${new Date().getTime()}`;
+    : `your-unique-app-identifier-${new Date().getTime()}`;
 }
 
 function guessAwsAccountId() {

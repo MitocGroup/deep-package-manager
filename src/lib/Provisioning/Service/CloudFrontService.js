@@ -74,7 +74,7 @@ export class CloudFrontService extends AbstractService {
     let idPrefix = `${this.awsAccountId}-${this.env}-`;
 
     let bucketName = services.find(S3Service).config().buckets[S3Service.PUBLIC_BUCKET].name;
-    let environmentPath = `${idPrefix}${Hash.crc32(this.propertyIdentifier)}${Hash.crc32(bucketName)}`;
+    let environmentPath = `${idPrefix}${Hash.crc32(this.appIdentifier)}${Hash.crc32(bucketName)}`;
     let originId = `${bucketName}.s3.amazonaws.com`;
 
     let payload = {

@@ -1,13 +1,55 @@
-// THIS TEST WAS GENERATED AUTOMATICALLY ON Thu Sep 03 2015 12:29:31 GMT+0300 (EEST)
-
 'use strict';
 
 import chai from 'chai';
 import {Manager} from '../../lib.compiled/Dependencies/Manager';
+import {AbstractDriver} from '../../lib.compiled/Dependencies/Driver/AbstractDriver';
 
-// @todo: Add more advanced tests
-suite("Dependencies/Manager", function() {
+/**
+ * Dependency driver implements abstract methods from AbstractDriver
+ */
+class DependencyDriver extends  AbstractDriver{
+  constructor() {
+    super();
+  }
+
+  pull() {
+    return this;
+  }
+
+  push() {
+    return this;
+  }
+}
+
+suite('Dependencies/Manager', function() {
+  let dependencyDriver = new DependencyDriver();
+  let manager = new Manager(dependencyDriver);
+  //let dryRunInput = true;
+  //let prefixInput = 'prefixTest';
+  //let basePathInput = 'basePathTest';
+  //let identifierInput = 'identifierTest';
+  //let expectedResult = null;
+
   test('Class Manager exists in Dependencies/Manager', function() {
     chai.expect(typeof Manager).to.equal('function');
+  });
+
+  test('Check constructor sets valid value for _driver', function() {
+    chai.expect(manager.driver).to.be.eql(dependencyDriver);
+  });
+
+  test('Check constructor sets valid value for _uploader', function() {
+    //todo
+    chai.expect(manager.uploader).to.be.not.equal(null);
+  });
+
+  test('Check constructor sets valid value for _resolver', function() {
+    //todo
+    chai.expect(manager.resolver).to.be.not.equal(null);
+  });
+
+  test('Check pushBatch() method return valid value', function() {
+    //todo
+    //chai.expect(manager.pushBatch(['test'])).to.be.not.equal(null);
   });
 });

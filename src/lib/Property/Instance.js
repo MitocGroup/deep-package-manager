@@ -40,7 +40,7 @@ export class Instance {
     this._config = Config.createFromJsonFile(configFile).extract();
 
     // @todo: improve this!
-    this._config.deployId = Hash.md5(`${this._config.propertyIdentifier}#${new Date().getTime()}`);
+    this._config.deployId = Hash.md5(`${this._config.appIdentifier}#${new Date().getTime()}`);
 
     this._aws = AWS;
     AWS.config.update(this._config.aws);
@@ -91,7 +91,7 @@ export class Instance {
    * @returns {String}
    */
   get identifier() {
-    return this._config.propertyIdentifier;
+    return this._config.appIdentifier;
   }
 
   /**
@@ -475,7 +475,7 @@ export class Instance {
 
       console.log(`- Running post deploy hook for microservice ${microservice.identifier}`);
 
-      hook(this._provisioning, isUpdate, function() {
+      hook(this._config.provisioning, isUpdate, function() {
         remaining--;
       }.bind(this));
     }

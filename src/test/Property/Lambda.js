@@ -1,13 +1,131 @@
-// THIS TEST WAS GENERATED AUTOMATICALLY ON Thu Sep 03 2015 12:29:31 GMT+0300 (EEST)
-
 'use strict';
 
 import chai from 'chai';
 import {Lambda} from '../../lib.compiled/Property/Lambda';
 
-// @todo: Add more advanced tests
-suite("Property/Lambda", function() {
+suite('Property/Lambda', function() {
+
+  let propertyInstance = {
+    path: 'propertyPath',
+    identifier: 'appIdentifier',
+    config: {
+      awsAccountId: 123456789012,
+    },
+    provisioning: {
+      lambda: {
+        config: {
+          region: 'us-west-2',
+        },
+      },
+    },
+  };
+  let microserviceIdentifier = 'microserviceIdentifierTest';
+  let identifier = 'lambdaIdentifierTest';
+  let name = 'lambdaNameTest';
+  let execRole = { Arn: 'executeRoleArn' };
+  let path = 'Property';
+  let lambda = new Lambda(propertyInstance, microserviceIdentifier, identifier, name, execRole, path);
+  let positiveError = {
+    code: 'ResourceConflictException',
+    statusCode: 409,
+  };
+  let negativeError = {
+    code: 'ResourceNotFound',
+    statusCode: 404,
+  };
+  let expectedResult = null;
+  let timeoutInput = 120;
+
   test('Class Lambda exists in Property/Lambda', function() {
     chai.expect(typeof Lambda).to.equal('function');
+  });
+
+  test('Check constructor set valid default value for _uploadedLambda', function() {
+    chai.expect(lambda.uploadedLambda).to.be.an.equal(null);
+  });
+
+  test('Check zipPath getter returns valid value', function() {
+    expectedResult = `${propertyInstance.path}/${microserviceIdentifier}_lambda_${identifier}.zip`;
+    chai.expect(lambda.zipPath).to.be.equal(expectedResult);
+  });
+
+  test('Check outputPath getter returns valid value', function() {
+    chai.expect(lambda.outputPath).to.be.equal(propertyInstance.path);
+  });
+
+  test('Check appIdentifier getter returns valid value', function() {
+    chai.expect(lambda.appIdentifier).to.be.equal(propertyInstance.identifier);
+  });
+
+  test('Check timeout getter returns valid value', function() {
+    chai.expect(lambda.timeout).to.be.equal(Lambda.DEFAULT_TIMEOUT);
+    lambda.timeout = timeoutInput;
+    chai.expect(lambda.timeout).to.be.equal(timeoutInput);
+  });
+
+  test('Check memorySize getter returns valid value', function() {
+    chai.expect(lambda.memorySize).to.be.equal(Lambda.DEFAULT_MEMORY_LIMIT);
+    lambda.memorySize = timeoutInput;
+    chai.expect(lambda.memorySize).to.be.equal(timeoutInput);
+  });
+
+  test('Check identifier getter returns valid value', function() {
+    chai.expect(lambda.identifier).to.be.equal(identifier);
+  });
+
+  test('Check path getter returns valid value', function() {
+    chai.expect(lambda.path).to.be.equal(path);
+  });
+
+  test('Check createConfigHookData getter returns valid value', function() {
+    let configHookDataExpectedResult = {
+      CodeSize: 0,
+      Description: '',
+      FunctionArn: `arn:aws:lambda:${lambda.region}:${lambda.awsAccountId}:function:${lambda.functionName}`,
+      FunctionName: lambda.functionName,
+      Handler: Lambda.HANDLER,
+      LastModified: new Date().toISOString(),
+      MemorySize: Lambda.DEFAULT_MEMORY_LIMIT,
+      Role: lambda._execRole.Arn,
+      Runtime: Lambda.RUNTIME,
+      Timeout: Lambda.DEFAULT_TIMEOUT,
+    };
+    chai.expect(lambda.createConfigHookData.CodeSize).to.be.equal(configHookDataExpectedResult.CodeSize);
+    chai.expect(lambda.createConfigHookData.Description).to.be.equal(configHookDataExpectedResult.Description);
+    chai.expect(lambda.createConfigHookData.FunctionArn).to.be.equal(configHookDataExpectedResult.FunctionArn);
+    chai.expect(lambda.createConfigHookData.FunctionName).to.be.equal(configHookDataExpectedResult.FunctionName);
+    chai.expect(lambda.createConfigHookData.Handler).to.be.equal(configHookDataExpectedResult.Handler);
+    chai.expect(lambda.createConfigHookData.MemorySize).to.be.equal(configHookDataExpectedResult.MemorySize);
+    chai.expect(lambda.createConfigHookData.Role).to.be.equal(configHookDataExpectedResult.Role);
+    chai.expect(lambda.createConfigHookData.Runtime).to.be.equal(configHookDataExpectedResult.Runtime);
+    chai.expect(lambda.createConfigHookData.Timeout).to.be.equal(configHookDataExpectedResult.Timeout);
+  });
+
+  test('Check isErrorFalsePositive static method returns true', function() {
+    chai.expect(Lambda.isErrorFalsePositive(positiveError)).to.be.equal(true);
+  });
+
+  test('Check isErrorFalsePositive static method returns false', function() {
+    chai.expect(Lambda.isErrorFalsePositive(negativeError)).to.be.equal(false);
+  });
+
+  test('Check DEFAULT_TIMEOUT static getter returns value above 0', function() {
+    chai.expect(Lambda.DEFAULT_TIMEOUT).to.be.above(0);
+  });
+
+  test('Check DEFAULT_MEMORY_LIMIT static getter returns value above 0', function() {
+    chai.expect(Lambda.DEFAULT_MEMORY_LIMIT).to.be.above(0);
+  });
+
+  test('Check HANDLER static getter returns \'bootstrap.handler\'', function() {
+    chai.expect(Lambda.HANDLER).to.be.equal('bootstrap.handler');
+  });
+
+  test('Check RUNTIME static getter returns \'nodejs\'', function() {
+    chai.expect(Lambda.RUNTIME).to.be.equal('nodejs');
+  });
+
+  test('Check CONFIG_FILE static getter returns \'_config.json\'', function() {
+    chai.expect(Lambda.CONFIG_FILE).to.be.equal('_config.json');
   });
 });

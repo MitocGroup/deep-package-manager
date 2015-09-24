@@ -151,7 +151,7 @@ export class AbstractService extends Core.OOP.Interface {
   /**
    * @returns {String}
    */
-  get propertyIdentifier() {
+  get appIdentifier() {
     return this.property.identifier;
   }
 
@@ -186,7 +186,7 @@ export class AbstractService extends Core.OOP.Interface {
    * @returns {String}
    */
   getUniqueHash(microserviceIdentifier = '') {
-    return Hash.crc32(this.awsAccountId + microserviceIdentifier + this.propertyIdentifier);
+    return Hash.crc32(this.awsAccountId + microserviceIdentifier + this.appIdentifier);
   }
 
   /**

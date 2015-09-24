@@ -1,0 +1,13 @@
+{
+  "aws": {
+    "accessKeyId": null,
+    "region": null,
+    "secretAccessKey": null
+  },
+  "dependencies": {
+    "bucket": "testbucket"
+  },
+  "env": "test",
+  "awsAccountId": 123456789012,
+  "appIdentifier": "generated"
+}
