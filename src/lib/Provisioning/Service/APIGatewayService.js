@@ -16,8 +16,10 @@ import {FailedToPutApiGatewayMethodException} from './Exception/FailedToPutApiGa
 import {FailedToPutApiGatewayIntegrationResponseException} from './Exception/FailedToPutApiGatewayIntegrationResponseException';
 import {FailedToPutApiGatewayMethodResponseException} from './Exception/FailedToPutApiGatewayMethodResponseException';
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
+import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
+import {LambdaService} from './LambdaService';
 
 /**
  * APIGateway service
@@ -96,15 +98,19 @@ export class APIGatewayService extends AbstractService {
    */
   _postDeployProvision(services) {
     let integrationMetadata = this.getResourcesIntegrationMetadata(this.property.config.microservices);
+    let lambdasArn = LambdaService.getAllLambdasArn(this.property.config.microservices);
 
     this._putApiIntegrations(
       this._config.api.id,
       this._config.api.resources,
+      this._config.api.role,
+      lambdasArn,
       integrationMetadata
-    )(function(methods, integrations) {
+    )(function(methods, integrations, rolePolicy) {
       this._config.postDeploy = {
         methods: methods,
         integrations: integrations,
+        rolePolicy: rolePolicy,
       };
       this._ready = true;
     }.bind(this));
@@ -231,14 +237,17 @@ export class APIGatewayService extends AbstractService {
    * @param {Object} integrationMetadata
    * @private
    */
-  _putApiIntegrations(apiId, apiResources, integrationMetadata) {
+  _putApiIntegrations(apiId, apiResources, apiRole, lambdasArn, integrationMetadata) {
     let apiGateway = this.provisioning.apiGateway;
+    let iam = this.provisioning.iam;
     var waitLevel1 = new WaitFor();
     var waitLevel2 = new WaitFor();
     var waitLevel3 = new WaitFor();
     var waitLevel4 = new WaitFor();
+    var waitLevel5 = new WaitFor();
     var methods = {};
     var integrations = {};
+    var rolePolicy = null;
     var integrationParams = integrationMetadata.params;
     var stackSizeLevel1 = integrationMetadata.count;
     var stackSizeLevel2 = integrationMetadata.count;
@@ -344,8 +353,7 @@ export class APIGatewayService extends AbstractService {
           methodParams.resourceId = apiResource.id;
           methodParams.restapiId = apiId;
 
-          // @todo - create this role on ApiGateway service provision
-          methodParams.credentials = 'arn:aws:iam::389617777922:role/ApiGatewayInvokeLambda'; // allow APIGateway to invoke lambdas
+          methodParams.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
 
           apiGateway.putIntegration(methodParams).then((integration) => {
             stackSizeLevel3--;
@@ -398,6 +406,27 @@ export class APIGatewayService extends AbstractService {
       }
     }
 
+    function addPolicyToApiRole() {
+      let policy = LambdaService.generateAllowInvokeFunctionPolicy(lambdasArn);
+
+      let params = {
+        PolicyDocument: policy.toString(),
+        PolicyName: this.generateAwsResourceName(
+          'InvokeLambdaPolicy',
+          Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
+        ),
+        RoleName: apiRole.RoleName,
+      };
+
+      iam.putRolePolicy(params, (error, data) => {
+        if (error) {
+          throw new FailedAttachingPolicyToRoleException(params.PolicyName, params.RoleName, error);
+        }
+
+        rolePolicy = data;
+      });
+    }
+
     putHttpMethods();
 
     waitLevel1.push(() => {
@@ -427,7 +456,15 @@ export class APIGatewayService extends AbstractService {
             });
 
             return waitLevel4.ready(() => {
-              callback(methods, integrations);
+              addPolicyToApiRole();
+
+              waitLevel5.push(() => {
+                return rolePolicy !== null;
+              });
+
+              return waitLevel5.ready(() => {
+                callback(methods, integrations, rolePolicy);
+              });
             });
           });
         });
