@@ -73,7 +73,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {APIGatewayService}
    */
   _setup(services) {
-    this._createApiResources(
+    this._provisionApiResources(
       this.apiMetadata,
       this._getResourcePaths(this.provisioning.property.microservices)
     )(function(api, resources, role) {
@@ -131,78 +131,20 @@ export class APIGatewayService extends AbstractService {
    * @returns {function}
    * @private
    */
-  _createApiResources(metadata, resourcePaths) {
-    var _this = this;
+  _provisionApiResources(metadata, resourcePaths) {
     var restApi = null;
     var restResourcesCreated = false;
     var restResources = null;
     var restApiIamRole = null;
-    let apiGateway = this.provisioning.apiGateway;
-    let iam = this.provisioning.iam;
+
     let waitLevel1 = new WaitFor();
     let waitLevel2 = new WaitFor();
     let waitLevel3 = new WaitFor();
     let waitLevel4 = new WaitFor();
 
-    function createApi() {
-      apiGateway.createRestapi(metadata).then((api) => {
-        restApi = api.source;
-      }, (error) => {
-
-        if (error) {
-          throw new FailedToCreateApiGatewayException(metadata.name, error);
-        }
-      });
-    }
-
-    function createApiResources(resourcePaths, restApiId) {
-      let params = {
-        paths: resourcePaths,
-        restapiId: restApiId,
-      };
-
-      apiGateway.createResources(params).then(() => {
-        restResourcesCreated = true;
-      }, (error) => {
-
-        if (error) {
-          throw new FailedToCreateApiResourcesException(resourcePaths, error);
-        }
-      });
-    }
-
-    function listApiResources(restApiId) {
-      apiGateway.listResources({restapiId: restApiId}).then((resources) => {
-        restResources = resources;
-      }, (error) => {
-
-        if (error) {
-          throw new FailedToListApiResourcesException(restApiId, error);
-        }
-      });
-    }
-
-    function createApiIamRole() {
-      let roleName = _this.generateAwsResourceName(
-        `${APIGatewayService.API_NAME_PREFIX}InvokeLambda`,
-        Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
-      );
-
-      let params = {
-        AssumeRolePolicyDocument: IAMService.getAssumeRolePolicy(Core.AWS.Service.API_GATEWAY).toString(),
-        RoleName: roleName,
-      };
-
-      iam.createRole(params, (error, data) => {
-        if (error) {
-          throw new FailedToCreateIamRoleException(roleName, error);
-        }
-
-        restApiIamRole = data.Role;
-      });
-    };
-
-    createApi();
+    this._createApi(metadata, (api) => {
+      restApi = api;
+    });
 
     waitLevel1.push(() => {
       return restApi !== null;
@@ -210,21 +152,27 @@ export class APIGatewayService extends AbstractService {
 
     return (callback) => {
       return waitLevel1.ready(() => {
-        createApiResources(resourcePaths, restApi.id);
+        this._createApiResources(resourcePaths, restApi.id, (responseFlag) => {
+          restResourcesCreated = responseFlag;
+        });
 
         waitLevel2.push(() => {
           return restResourcesCreated;
         });
 
         return waitLevel2.ready(() => {
-          listApiResources(restApi.id);
+          this._listApiResources(restApi.id, (resources) => {
+            restResources = resources;
+          });
 
           waitLevel3.push(() => {
             return restResources !== null;
           });
 
           return waitLevel3.ready(() => {
-            createApiIamRole();
+            this._createApiIamRole((role) => {
+              restApiIamRole = role;
+            });
 
             waitLevel4.push(() => {
               return restApiIamRole !== null;
@@ -481,6 +429,88 @@ export class APIGatewayService extends AbstractService {
       });
     };
   }
+
+  /**
+   * @param {Object} metadata
+   * @param {Function} callback
+   * @private
+   */
+  _createApi(metadata, callback) {
+    let apiGateway = this.provisioning.apiGateway;
+
+    apiGateway.createRestapi(metadata).then((api) => {
+      callback(api.source);
+    }, (error) => {
+
+      if (error) {
+        throw new FailedToCreateApiGatewayException(metadata.name, error);
+      }
+    });
+  }
+
+  /**
+   * @param {Array} resourcePaths
+   * @param {String} restApiId
+   * @param {Function} callback
+   */
+  _createApiResources(resourcePaths, restApiId, callback) {
+    let apiGateway = this.provisioning.apiGateway;
+    let params = {
+      paths: resourcePaths,
+      restapiId: restApiId,
+    };
+
+    apiGateway.createResources(params).then(() => {
+      callback(true);
+    }, (error) => {
+
+      if (error) {
+        throw new FailedToCreateApiResourcesException(resourcePaths, error);
+      }
+    });
+  }
+
+  /**
+   * @param {String} restApiId
+   * @param {Function} callback
+   */
+  _listApiResources(restApiId, callback) {
+    let apiGateway = this.provisioning.apiGateway;
+
+    apiGateway.listResources({restapiId: restApiId}).then((resources) => {
+      callback(resources);
+    }, (error) => {
+
+      if (error) {
+        throw new FailedToListApiResourcesException(restApiId, error);
+      }
+    });
+  }
+
+  /**
+   * @param {Function} callback
+   * @private
+   */
+  _createApiIamRole(callback) {
+    let iam = this.provisioning.iam;
+    let roleName = this.generateAwsResourceName(
+      `${APIGatewayService.API_NAME_PREFIX}InvokeLambda`,
+      Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
+    );
+
+    let params = {
+      AssumeRolePolicyDocument: IAMService.getAssumeRolePolicy(Core.AWS.Service.API_GATEWAY).toString(),
+      RoleName: roleName,
+    };
+
+    iam.createRole(params, (error, data) => {
+      if (error) {
+        throw new FailedToCreateIamRoleException(roleName, error);
+      }
+
+      callback(data.Role);
+    });
+  };
 
   /**
    * All resources to be created in API Gateway
