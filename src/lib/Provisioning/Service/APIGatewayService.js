@@ -362,7 +362,8 @@ export class APIGatewayService extends AbstractService {
           methodParams.resourceId = apiResource.id;
           methodParams.restapiId = apiId;
 
-          methodParams.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
+          //methodParams.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
+          methodParams.credentials = 'arn:aws:iam::*:user/*'; // @todo - find a smarter way to enable "Invoke with caller credentials" option
 
           apiGateway.putIntegration(methodParams).then((integration) => {
             stackSizeLevel3--;
