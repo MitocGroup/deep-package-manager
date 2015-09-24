@@ -283,7 +283,7 @@ export class CognitoIdentityService extends AbstractService {
         continue;
       }
 
-      let policy = CognitoIdentityService.getAccessPolicyForResources(lambdasForRole);
+      let policy = LambdaService.generateAllowInvokeFunctionPolicy(lambdasForRole);
 
       let params = {
         PolicyDocument: policy.toString(),
@@ -308,35 +308,6 @@ export class CognitoIdentityService extends AbstractService {
         callback(policies);
       }.bind(this));
     }.bind(this);
-  }
-
-  /**
-   * Allow Cognito users to invoke these lambdas
-   *
-   * @param {Object} lambdaARNs
-   * @returns {Core.AWS.IAM.Policy}
-   */
-  static getAccessPolicyForResources(lambdaARNs) {
-    let policy = new Core.AWS.IAM.Policy();
-
-    let statement = policy.statement.add();
-    let action = statement.action.add();
-
-    action.service = Core.AWS.Service.LAMBDA;
-    action.action = 'InvokeFunction';
-
-    for (let lambdaArnKey in lambdaARNs) {
-      if (!lambdaARNs.hasOwnProperty(lambdaArnKey)) {
-        continue;
-      }
-
-      let lambdaArn = lambdaARNs[lambdaArnKey];
-      let resource = statement.resource.add();
-
-      resource.updateFromArn(lambdaArn);
-    }
-
-    return policy;
   }
 
   /**

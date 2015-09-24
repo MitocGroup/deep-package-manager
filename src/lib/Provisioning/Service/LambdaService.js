@@ -388,4 +388,34 @@ export class LambdaService extends AbstractService {
 
     return lambdaArns;
   }
+
+
+  /**
+   * Allow Cognito users to invoke these lambdas
+   *
+   * @param {Object} lambdaARNs
+   * @returns {Core.AWS.IAM.Policy}
+   */
+  static generateAllowInvokeFunctionPolicy(lambdaARNs) {
+    let policy = new Core.AWS.IAM.Policy();
+
+    let statement = policy.statement.add();
+    let action = statement.action.add();
+
+    action.service = Core.AWS.Service.LAMBDA;
+    action.action = 'InvokeFunction';
+
+    for (let lambdaArnKey in lambdaARNs) {
+      if (!lambdaARNs.hasOwnProperty(lambdaArnKey)) {
+        continue;
+      }
+
+      let lambdaArn = lambdaARNs[lambdaArnKey];
+      let resource = statement.resource.add();
+
+      resource.updateFromArn(lambdaArn);
+    }
+
+    return policy;
+  }
 }
