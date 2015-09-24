@@ -5,23 +5,24 @@ import {CognitoIdentityService} from '../../../lib.compiled/Provisioning/Service
 import Core from '@mitocgroup/deep-core';
 
 suite('Provisioning/Service/CognitoIdentityService', function() {
-  let cognitoIdentityService = new CognitoIdentityService();
+  let cognitoIdentityServiceInstance = new CognitoIdentityService();
 
   test('Class CognitoIdentityService exists in Provisioning/Service/CognitoIdentityService', function() {
     chai.expect(typeof CognitoIdentityService).to.equal('function');
   });
 
   test('Check constructor sets valid default values', function() {
-    chai.expect(cognitoIdentityService._readyTeardown).to.be.equal(false);
-    chai.expect(cognitoIdentityService._ready).to.be.equal(false);
+    chai.expect(cognitoIdentityServiceInstance._readyTeardown).to.be.equal(false);
+    chai.expect(cognitoIdentityServiceInstance._ready).to.be.equal(false);
   });
 
   test('Check name() method returns \'cognito-identity\'', function() {
-    chai.expect(cognitoIdentityService.name()).to.be.equal('cognito-identity');
+    chai.expect(cognitoIdentityServiceInstance.name()).to.be.equal('cognito-identity');
   });
 
   //todo - TBD
   test('Check AVAILABLE_REGIONS() static method returns array of available regions', function() {
+    chai.expect(CognitoIdentityService.AVAILABLE_REGIONS).to.be.an('array');
     chai.expect(CognitoIdentityService.AVAILABLE_REGIONS.length).to.be.equal(2);
     chai.expect(CognitoIdentityService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.US_EAST_N_VIRGINIA);
     chai.expect(CognitoIdentityService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.EU_IRELAND);
