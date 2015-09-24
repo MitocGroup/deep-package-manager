@@ -125,6 +125,7 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _createApiResources(metadata, resourcePaths) {
+    var _this = this;
     var restApi = null;
     var restResourcesCreated = false;
     var restResources = null;
@@ -175,7 +176,7 @@ export class APIGatewayService extends AbstractService {
     }
 
     function createApiIamRole() {
-      let roleName = this.generateAwsResourceName(
+      let roleName = _this.generateAwsResourceName(
         metadata.name + 'InvokeLambda',
         Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
       );
@@ -192,7 +193,7 @@ export class APIGatewayService extends AbstractService {
 
         restApiIamRole = data.Role;
       });
-    }
+    };
 
     createApi();
 
@@ -238,6 +239,7 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _putApiIntegrations(apiId, apiResources, apiRole, lambdasArn, integrationMetadata) {
+    let _this = this;
     let apiGateway = this.provisioning.apiGateway;
     let iam = this.provisioning.iam;
     var waitLevel1 = new WaitFor();
@@ -411,7 +413,7 @@ export class APIGatewayService extends AbstractService {
 
       let params = {
         PolicyDocument: policy.toString(),
-        PolicyName: this.generateAwsResourceName(
+        PolicyName: _this.generateAwsResourceName(
           'InvokeLambdaPolicy',
           Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
         ),
@@ -423,7 +425,7 @@ export class APIGatewayService extends AbstractService {
           throw new FailedAttachingPolicyToRoleException(params.PolicyName, params.RoleName, error);
         }
 
-        rolePolicy = data;
+        rolePolicy = params.PolicyDocument;
       });
     }
 
