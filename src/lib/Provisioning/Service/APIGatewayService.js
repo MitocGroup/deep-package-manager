@@ -35,6 +35,13 @@ export class APIGatewayService extends AbstractService {
   /**
    * @returns {String}
    */
+  static get API_NAME_PREFIX() {
+    return 'Api';
+  }
+
+  /**
+   * @returns {String}
+   */
   name() {
     return Core.AWS.Service.API_GATEWAY;
   }
@@ -46,7 +53,7 @@ export class APIGatewayService extends AbstractService {
    */
   get apiMetadata() {
     return {
-      name: this.generateAwsResourceName('Api', Core.AWS.Service.API_GATEWAY),
+      name: this.generateAwsResourceName(APIGatewayService.API_NAME_PREFIX, Core.AWS.Service.API_GATEWAY),
     };
   }
 
@@ -177,7 +184,7 @@ export class APIGatewayService extends AbstractService {
 
     function createApiIamRole() {
       let roleName = _this.generateAwsResourceName(
-        metadata.name + 'InvokeLambda',
+        `${APIGatewayService.API_NAME_PREFIX}InvokeLambda`,
         Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
       );
 
@@ -414,7 +421,7 @@ export class APIGatewayService extends AbstractService {
       let params = {
         PolicyDocument: policy.toString(),
         PolicyName: _this.generateAwsResourceName(
-          'InvokeLambdaPolicy',
+          `${APIGatewayService.API_NAME_PREFIX}InvokeLambdaPolicy`,
           Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
         ),
         RoleName: apiRole.RoleName,
