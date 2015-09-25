@@ -435,7 +435,7 @@ export class APIGatewayService extends AbstractService {
       let microservice = microservices[microserviceKey];
 
       if (microservice.resources.actions.length > 0) {
-        resourcePaths.push(this._pathfy(microservice.identifier));
+        resourcePaths.push(this._pathify(microservice.identifier));
       }
 
       for (let actionKey in microservice.resources.actions) {
@@ -444,7 +444,7 @@ export class APIGatewayService extends AbstractService {
         }
 
         let action = microservice.resources.actions[actionKey];
-        let resourcePath = this._pathfy(microservice.identifier, action.resourceName);
+        let resourcePath = this._pathify(microservice.identifier, action.resourceName);
 
         // push actions parent resource only once
         if (resourcePaths.indexOf(resourcePath) === -1) {
@@ -452,7 +452,7 @@ export class APIGatewayService extends AbstractService {
         }
 
         resourcePaths.push(
-          this._pathfy(microservice.identifier, action.resourceName, action.name)
+          this._pathify(microservice.identifier, action.resourceName, action.name)
         );
       }
     }
@@ -468,7 +468,7 @@ export class APIGatewayService extends AbstractService {
    * @return {String}
    * @private
    */
-  _pathfy(microserviceIdentifier, resourceName = '', actionName = '') {
+  _pathify(microserviceIdentifier, resourceName = '', actionName = '') {
     let path = `/${microserviceIdentifier}`;
 
     if (resourceName) {
@@ -537,7 +537,7 @@ export class APIGatewayService extends AbstractService {
           }
 
           let action = resourceActions[actionName];
-          let resourceApiPath = this._pathfy(microserviceIdentifier, resourceName, actionName);
+          let resourceApiPath = this._pathify(microserviceIdentifier, resourceName, actionName);
           integrationParams[resourceApiPath] = {};
           var httpMethod = null;
 
