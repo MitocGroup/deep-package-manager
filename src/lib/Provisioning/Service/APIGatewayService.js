@@ -434,7 +434,9 @@ export class APIGatewayService extends AbstractService {
 
       let microservice = microservices[microserviceKey];
 
-      resourcePaths.push(this._pathfy(microservice.identifier));
+      if (microservice.resources.actions.length > 0) {
+        resourcePaths.push(this._pathfy(microservice.identifier));
+      }
 
       for (let actionKey in microservice.resources.actions) {
         if (!microservice.resources.actions.hasOwnProperty(actionKey)) {
