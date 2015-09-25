@@ -175,7 +175,7 @@ export class Instance {
       let microservice = this._config.microservices[microserviceIdentifier];
 
       for (let lambdaIdentifier in microservice.raw.lambdas) {
-        if (!microservice.raw.lambdas.hasOwnProperty(lambdaIdentifier)) {
+        if (!microservice.raw.lambdas.hasOwnProperty(lambdaIdentifier) || lambdaIdentifier === '_') {
           continue;
         }
 
@@ -323,7 +323,7 @@ export class Instance {
       let microservice = this._config.microservices[microserviceIdentifier];
 
       for (let lambdaIdentifier in microservice.raw.lambdas) {
-        if (!microservice.raw.lambdas.hasOwnProperty(lambdaIdentifier)) {
+        if (!microservice.raw.lambdas.hasOwnProperty(lambdaIdentifier) || lambdaIdentifier === '_') {
           continue;
         }
 
