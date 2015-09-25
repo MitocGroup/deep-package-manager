@@ -17,8 +17,8 @@ export default Joi.object().keys({
 
   // Lambda config
   engine: Joi.object().optional().keys({
-    memory: Joi.number().integer().min(128).max(1536).default(Lambda.DEFAULT_MEMORY_LIMIT),
-    timeout: Joi.number().integer().min(1).max(Lambda.MAX_TIMEOUT).default(Lambda.DEFAULT_TIMEOUT),
+    memory: Joi.number().optional().integer().min(128).max(1536).default(Lambda.DEFAULT_MEMORY_LIMIT),
+    timeout: Joi.number().optional().integer().min(1).max(Lambda.MAX_TIMEOUT).default(Lambda.DEFAULT_TIMEOUT),
     runtime: Joi.string().optional().allow(Lambda.RUNTIMES).default(Lambda.DEFAULT_RUNTIME),
   }).default({
     memory: Lambda.DEFAULT_MEMORY_LIMIT,
