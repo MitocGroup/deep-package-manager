@@ -130,52 +130,21 @@ export class APIGatewayService extends AbstractService {
    */
   _provisionApiResources(metadata, resourcePaths) {
     var restApi = null;
-    var restResourcesCreated = false;
     var restResources = null;
     var restApiIamRole = null;
 
-    let waitLevel1 = new WaitFor();
-    let waitLevel2 = new WaitFor();
-    let waitLevel3 = new WaitFor();
-    let waitLevel4 = new WaitFor();
-
-    this._createApi(metadata, (api) => {
-      restApi = api;
-    });
-
-    waitLevel1.push(() => {
-      return restApi !== null;
-    });
-
     return (callback) => {
-      return waitLevel1.ready(() => {
-        this._createApiResources(resourcePaths, restApi.id, (responseFlag) => {
-          restResourcesCreated = responseFlag;
-        });
+      this._createApi(metadata, (api) => {
+        restApi = api;
 
-        waitLevel2.push(() => {
-          return restResourcesCreated;
-        });
+        this._createApiResources(resourcePaths, restApi.id, () => {
 
-        return waitLevel2.ready(() => {
           this._listApiResources(restApi.id, (resources) => {
             restResources = resources;
-          });
 
-          waitLevel3.push(() => {
-            return restResources !== null;
-          });
-
-          return waitLevel3.ready(() => {
             this._createApiIamRole((role) => {
               restApiIamRole = role;
-            });
 
-            waitLevel4.push(() => {
-              return restApiIamRole !== null;
-            });
-
-            return waitLevel4.ready(() => {
               callback(restApi, this._extractApiResourcesMetadata(restResources), restApiIamRole);
             });
           });
