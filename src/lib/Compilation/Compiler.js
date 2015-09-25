@@ -33,13 +33,16 @@ export class Compiler {
   static buildLambdas(microservice)
   {
     let backendPath = microservice.autoload.backend;
-    let lambdas = {};
+    let lambdas = {
+      _: {}, // @todo: move config somewhere...
+    };
 
     for (let action of microservice.resources.actions) {
       if (action.type === Action.LAMBDA) {
         let source = StringUtils.trim(action.source, '/');
 
         lambdas[action.identifier] = `${backendPath}/${source}`;
+        lambdas._[action.identifier] = action.engine;
       }
     }
 

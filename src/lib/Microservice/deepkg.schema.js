@@ -42,6 +42,7 @@ export default Joi.object().keys({
     models: MODELS,
   }),
   frontendEngine: Joi.array()
+    .unique()
     .items(Joi.string())
     .allow(FrontendEngine.engines)
     .default([FrontendEngine.ANGULAR_ENGINE]),

@@ -180,6 +180,7 @@ export class Instance {
         }
 
         let lambdaPath = microservice.raw.lambdas[lambdaIdentifier];
+        let lambdaOptions = microservice.raw.lambdas._[lambdaIdentifier];
         let lambdaExecRole = '';
 
         let lambdaInstance = new Lambda(
@@ -190,6 +191,10 @@ export class Instance {
           lambdaExecRole,
           lambdaPath
         );
+
+        lambdaInstance.memorySize = lambdaOptions.memory;
+        lambdaInstance.timeout = lambdaOptions.timeout;
+        lambdaInstance.runtime = lambdaOptions.runtime;
 
         this._config
           .microservices[microserviceIdentifier]
@@ -323,6 +328,8 @@ export class Instance {
         }
 
         let lambdaPath = microservice.raw.lambdas[lambdaIdentifier];
+        let lambdaOptions = microservice.raw.lambdas._[lambdaIdentifier];
+
         let lambdaExecRole = lambdaExecRoles[microserviceIdentifier][lambdaIdentifier];
         let lambdaName = lambdaNames[microserviceIdentifier][lambdaIdentifier];
 
@@ -334,6 +341,10 @@ export class Instance {
           lambdaExecRole,
           lambdaPath
         );
+
+        lambdaInstance.memorySize = lambdaOptions.memory;
+        lambdaInstance.timeout = lambdaOptions.timeout;
+        lambdaInstance.runtime = lambdaOptions.runtime;
 
         this._config
           .microservices[microserviceIdentifier]
