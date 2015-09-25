@@ -20,6 +20,7 @@ import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingP
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
+import Utils from 'util';
 
 /**
  * APIGateway service
@@ -510,7 +511,74 @@ export class APIGatewayService extends AbstractService {
 
       callback(data.Role);
     });
-  };
+  }
+
+  /**
+   * @param {String} method
+   * @param {Object} apiResources
+   * @param {Object} integrationParams
+   * @returns {Array}
+   * @private
+   */
+  _methodParamsGenerator(method, apiId, apiResources, integrationParams) {
+    let paramsArr = [];
+
+    for (let resourcePath in integrationParams) {
+      if (!integrationParams.hasOwnProperty(resourcePath)) {
+        continue;
+      }
+
+      let resourceMethods = integrationParams[resourcePath];
+      let apiResource = apiResources[resourcePath];
+
+      for (let resourceMethod in resourceMethods) {
+        if (!resourceMethods.hasOwnProperty(resourceMethod)) {
+          continue;
+        }
+
+        let commonParams = {
+          resourcePath: resourcePath,
+          httpMethod: resourceMethod,
+          restapiId: apiId,
+          resourceId: apiResource.id,
+        };
+        let params = {};
+
+        switch (method) {
+          case 'putMethod':
+            params = {
+              authorizationType: 'AWS_IAM',
+              requestModels: this.jsonEmptyModel,
+            };
+            break;
+          case 'putMethodResponse':
+            params = {
+              statusCode: 200,
+              responseModels: this.jsonEmptyModel,
+            };
+            break;
+          case 'putIntegration':
+            params = resourceMethods[resourceMethod];
+
+            //methodParams.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
+            params.credentials = 'arn:aws:iam::*:user/*'; // @todo - find a smarter way to enable "Invoke with caller credentials" option
+            break;
+          case 'putIntegrationResponse':
+            params = {
+              statusCode: 200,
+              responseTemplates: this.jsonEmptyTemplate,
+            };
+            break;
+          default:
+            throw new Exception(`Unknown api method ${method}.`);
+        }
+
+        paramsArr.push(Utils._extend(commonParams, params));
+      }
+    }
+
+    return paramsArr;
+  }
 
   /**
    * All resources to be created in API Gateway
@@ -651,7 +719,7 @@ export class APIGatewayService extends AbstractService {
                   type: 'AWS',
                   integrationHttpMethod: 'POST',
                   uri: uri,
-                  requestTemplates: this.requestTemplates,
+                  requestTemplates: this.jsonEmptyTemplate,
                 };
 
                 integrationsCount++;
@@ -664,7 +732,7 @@ export class APIGatewayService extends AbstractService {
                   type: 'HTTP',
                   integrationHttpMethod: httpMethod,
                   uri: action.source,
-                  requestTemplates: this.requestTemplates,
+                  requestTemplates: this.jsonEmptyTemplate,
                 };
 
                 integrationsCount++;
@@ -713,9 +781,18 @@ export class APIGatewayService extends AbstractService {
   /**
    * @returns {Object}
    */
-  get requestTemplates() {
+  get jsonEmptyTemplate() {
     return {
       'application/json': '',
+    };
+  }
+
+  /**
+   * @returns {Object}
+   */
+  get jsonEmptyModel() {
+    return {
+      'application/json': 'Empty',
     };
   }
 }
