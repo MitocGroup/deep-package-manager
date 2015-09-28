@@ -1,6 +1,6 @@
 {
   "name": "@mitocgroup/deep-package-manager",
-  "version": "0.1.64",
+  "version": "0.1.65",
   "description": "Package manager used to setup and deploy DEEP infrastructure",
   "author": {
     "name": "Mitoc Group",

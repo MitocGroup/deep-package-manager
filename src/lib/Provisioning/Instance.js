@@ -268,7 +268,8 @@ export class Instance {
 
     for (let service of servicesVector) {
       service.postDeployProvision(services).ready(function() {
-        this._config[service.name()] = service.config();
+        // @todo: why is this resetting the object?
+        //this._config[service.name()] = service.config();
         remaining--;
       }.bind(this));
     }
