@@ -49,14 +49,23 @@ export class Instance {
     this._microservices = null;
     this._localDeploy = false;
     this._provisioning = new Provisioning(this);
+    this._isUpdate = false;
   }
 
   /**
    * Max number of concurrent async processes to run
-   * @returns {number}
+   *
+   * @returns {Number}
    */
   static get concurrentAsyncCount() {
     return 3;
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  get isUpdate() {
+    return this._isUpdate;
   }
 
   /**
@@ -224,10 +233,12 @@ export class Instance {
    * @param {Boolean} skipProvision
    * @returns {Instance}
    */
-  build(callback, skipProvision) {
+  build(callback, skipProvision = false) {
     if (!(callback instanceof Function)) {
       throw new InvalidArgumentException(callback, 'Function');
     }
+
+    let isUpdate = this._isUpdate;
 
     console.log(`- Start building property: ${new Date().toTimeString()}`);
 
@@ -285,7 +296,7 @@ export class Instance {
     if (skipProvision) {
       callback();
     } else {
-      console.log(`- Start provisioning: ${new Date().toTimeString()}`);
+      console.log(`- Start ${isUpdate ? 'updating' : 'creating'} provisioning: ${new Date().toTimeString()}`);
 
       this.provisioning.create(function(config) {
         this._config.provisioning = config;
@@ -293,7 +304,7 @@ export class Instance {
         console.log(`- Provisioning is done!: ${new Date().toTimeString()}`);
 
         callback();
-      }.bind(this));
+      }.bind(this), isUpdate);
     }
 
     return this;
@@ -301,10 +312,11 @@ export class Instance {
 
   /**
    * @param {Function} callback
-   * @param {Boolean} isUpdate
    * @returns {Instance}
    */
-  deploy(callback, isUpdate = false) {
+  deploy(callback) {
+    let isUpdate = this._isUpdate;
+
     if (!(callback instanceof Function)) {
       throw new InvalidArgumentException(callback, 'Function');
     }
@@ -438,35 +450,28 @@ export class Instance {
 
   /**
    * @param {Function} callback
-   * @param {Boolean} isUpdate
    * @returns {Instance}
    * @private
    */
-  _postDeploy(callback, isUpdate = false) {
+  _postDeploy(callback) {
     if (!(callback instanceof Function)) {
       throw new InvalidArgumentException(callback, 'Function');
     }
 
-    if (isUpdate) {
-      this._runPostDeployMsHooks(callback, true);
-    } else {
-      this.provisioning.postDeployProvision(function(config) {
-        this._config.provisioning = config;
-
-        this._runPostDeployMsHooks(callback);
-      }.bind(this));
-    }
+    this.provisioning.postDeployProvision(function(config) {
+      this._config.provisioning = config;
+      this._runPostDeployMsHooks(callback);
+    }.bind(this), this._isUpdate);
 
     return this;
   }
 
   /**
    * @param {Function} callback
-   * @param {Boolean} isUpdate
    * @returns {Instance}
    * @private
    */
-  _runPostDeployMsHooks(callback, isUpdate = false) {
+  _runPostDeployMsHooks(callback) {
     let wait = new WaitFor();
     let microservices = this.microservices;
     let remaining = microservices.length;
@@ -486,7 +491,7 @@ export class Instance {
 
       console.log(`- Running post deploy hook for microservice ${microservice.identifier}`);
 
-      hook(this._config.provisioning, isUpdate, function() {
+      hook(this._config.provisioning, this._isUpdate, function() {
         remaining--;
       }.bind(this));
     }
@@ -505,8 +510,13 @@ export class Instance {
    */
   update(propertyConfigSnapshot, callback) {
     this._config = propertyConfigSnapshot;
+    this._isUpdate = true;
 
-    return this.install(callback, true);
+    return this.install((...args) => {
+      this._isUpdate = false;
+
+      callback(...args);
+    });
   }
 
   /**
@@ -514,19 +524,21 @@ export class Instance {
    * @param {Boolean} skipProvision
    * @returns {Instance}
    */
-  install(callback, skipProvision) {
+  install(callback, skipProvision = false) {
     if (!(callback instanceof Function)) {
       throw new InvalidArgumentException(callback, 'Function');
     }
 
-    console.log(`- Start ${skipProvision ? 'updating' : 'installing'} property: ${new Date().toTimeString()}`);
+    console.log(`- Start ${this._isUpdate ? 'updating' : 'installing'} property: ${new Date().toTimeString()}`);
 
     return this.build(function() {
+      console.log(`- Build is done!: ${new Date().toTimeString()}`);
+
       this.deploy(function() {
         console.log(`- Deploy is done!: ${new Date().toTimeString()}`);
 
-        this._postDeploy(callback, skipProvision);
-      }.bind(this), skipProvision);
+        this._postDeploy(callback);
+      }.bind(this));
     }.bind(this), skipProvision);
   }
 

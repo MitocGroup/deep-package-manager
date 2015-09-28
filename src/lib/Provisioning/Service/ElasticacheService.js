@@ -42,6 +42,12 @@ export class ElasticacheService extends AbstractService {
    * @returns {ElasticacheService}
    */
   _setup(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._ready = true;
+      return this;
+    }
+
     //this._createCluster(
     //    this.awsAccountId,
     //    this.appIdentifier
@@ -63,6 +69,12 @@ export class ElasticacheService extends AbstractService {
    * @returns {ElasticacheService}
    */
   _postProvision(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._readyTeardown = true;
+      return this;
+    }
+
     this._readyTeardown = true;
 
     return this;
@@ -73,6 +85,12 @@ export class ElasticacheService extends AbstractService {
    * @returns {ElasticacheService}
    */
   _postDeployProvision(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._ready = true;
+      return this;
+    }
+
     this._ready = true;
 
     return this;

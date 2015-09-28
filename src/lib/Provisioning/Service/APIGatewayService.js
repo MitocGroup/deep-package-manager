@@ -56,6 +56,12 @@ export class APIGatewayService extends AbstractService {
    * @returns {APIGatewayService}
    */
   _setup(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._ready = true;
+      return this;
+    }
+
     this._createApiResources(
       this.apiMetadata,
       this._getResourcePaths(this.provisioning.property.microservices)
@@ -76,6 +82,12 @@ export class APIGatewayService extends AbstractService {
    * @returns {APIGatewayService}
    */
   _postProvision(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._readyTeardown = true;
+      return this;
+    }
+
     this._readyTeardown = true;
 
     return this;
@@ -86,6 +98,12 @@ export class APIGatewayService extends AbstractService {
    * @returns {APIGatewayService}
    */
   _postDeployProvision(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._ready = true;
+      return this;
+    }
+
     this._ready = true;
 
     return this;
