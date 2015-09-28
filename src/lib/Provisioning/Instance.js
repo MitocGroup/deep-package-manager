@@ -87,6 +87,13 @@ export class Instance {
   }
 
   /**
+   * @param {Object} cfg
+   */
+  set config(cfg) {
+    this._config = cfg;
+  }
+
+  /**
    * @returns {PropertyInstance}
    */
   get property() {

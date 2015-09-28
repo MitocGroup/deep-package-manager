@@ -491,7 +491,7 @@ export class Instance {
 
       console.log(`- Running post deploy hook for microservice ${microservice.identifier}`);
 
-      hook(this._config.provisioning, this._isUpdate, function() {
+      hook(this._provisioning, this._isUpdate, function() {
         remaining--;
       }.bind(this));
     }
@@ -509,8 +509,10 @@ export class Instance {
    * @returns {Instance}
    */
   update(propertyConfigSnapshot, callback) {
-    this._config = propertyConfigSnapshot;
     this._isUpdate = true;
+    this._config = propertyConfigSnapshot;
+    // @todo: does it work?
+    this._provisioning.config = this._config.provisioning;
 
     return this.install((...args) => {
       this._isUpdate = false;
