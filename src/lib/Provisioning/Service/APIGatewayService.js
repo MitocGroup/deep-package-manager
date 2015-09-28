@@ -239,8 +239,14 @@ export class APIGatewayService extends AbstractService {
    */
   _listApiResources(restApiId, callback) {
     let apiGateway = this.provisioning.apiGateway;
+    let params = {
+      restapiId: restApiId,
+      qsParams: {
+        limit: 500, // max limit allowed
+      },
+    };
 
-    apiGateway.listResources({restapiId: restApiId}).then((resources) => {
+    apiGateway.listResources(params).then((resources) => {
       callback(resources);
     }, (error) => {
 
