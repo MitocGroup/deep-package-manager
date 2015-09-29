@@ -40,6 +40,12 @@ export class IAMService extends AbstractService {
    * @returns {IAMService}
    */
   _setup(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._ready = true;
+      return this;
+    }
+
     this._ready = true;
 
     return this;
@@ -50,6 +56,12 @@ export class IAMService extends AbstractService {
    * @returns {IAMService}
    */
   _postProvision(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._readyTeardown = true;
+      return this;
+    }
+
     this._readyTeardown = true;
 
     return this;
@@ -60,6 +72,12 @@ export class IAMService extends AbstractService {
    * @returns {IAMService}
    */
   _postDeployProvision(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._ready = true;
+      return this;
+    }
+
     this._ready = true;
 
     return this;

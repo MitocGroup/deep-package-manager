@@ -79,6 +79,12 @@ export class CognitoIdentityService extends AbstractService {
    * @returns {CognitoIdentityService}
    */
   _setup(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._ready = true;
+      return this;
+    }
+
     let globalsConfig = this.property.config.globals;
     let identityProviders = globalsConfig.security && globalsConfig.security.identityProviders
       ? globalsConfig.security.identityProviders : {};
@@ -98,13 +104,17 @@ export class CognitoIdentityService extends AbstractService {
    * @returns {CognitoIdentityService}
    */
   _postProvision(services) {
-    this._readyTeardown = true;
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._readyTeardown = true;
+      return this;
+    }
 
     this._setIdentityPoolRoles(
       this.config().identityPool
     )(function(roles) {
+      this._readyTeardown = true;
       this._config.roles = roles;
-      this._ready = true;
     }.bind(this));
 
     return this;
@@ -115,8 +125,14 @@ export class CognitoIdentityService extends AbstractService {
    * @returns {CognitoIdentityService}
    */
   _postDeployProvision(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._ready = true;
+      return this;
+    }
+    
     let lambdaArns = LambdaService.getAllLambdasArn(this.property.config.microservices);
-
+    
     this._updateCognitoRolesPolicy(
       this._config.roles,
       lambdaArns

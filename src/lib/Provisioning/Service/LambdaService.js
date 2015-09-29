@@ -50,6 +50,12 @@ export class LambdaService extends AbstractService {
    * @returns {LambdaService}
    */
   _setup(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._ready = true;
+      return this;
+    }
+
     let microservices = this.provisioning.property.microservices;
 
     this._createExecRoles(
@@ -70,7 +76,11 @@ export class LambdaService extends AbstractService {
    * @returns {LambdaService}
    */
   _postProvision(services) {
-    this._readyTeardown = true;
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._readyTeardown = true;
+      return this;
+    }
 
     let buckets = services.find(S3Service).config().buckets;
     let dynamoDbTablesNames = services.find(DynamoDBService).config().tablesNames;
@@ -81,7 +91,7 @@ export class LambdaService extends AbstractService {
       dynamoDbTablesNames
     )(function(policies) {
       this._config.executionRolesPolicies = policies;
-      this._ready = true;
+      this._readyTeardown = true;
     }.bind(this));
 
     this._ready = true;
@@ -91,9 +101,15 @@ export class LambdaService extends AbstractService {
 
   /**
    * @parameter {Core.Generic.ObjectStorage} services
-   * @returns {CloudFrontService}
+   * @returns {LambdaService}
    */
   _postDeployProvision(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._ready = true;
+      return this;
+    }
+
     this._ready = true;
 
     return this;
