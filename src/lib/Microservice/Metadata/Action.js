@@ -122,7 +122,7 @@ export class Action {
       type: this.type,
       source: this.source,
       methods: this.methods,
-      engine: this.engine
+      engine: this.engine,
     };
   }
 }

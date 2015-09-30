@@ -11,6 +11,11 @@ suite('Microservice/Metadata/Action', function() {
     source: 'src/Property/RetrieveCounts',
     resourceName: 'testResourceName',
     name: 'testActionName',
+    engine: {
+      memory: 120,
+      timeout: 60,
+      runtime: 'nodejs',
+    },
   };
 
   let action = new Action(configInput.resourceName, configInput.name, configInput);
