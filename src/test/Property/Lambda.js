@@ -34,7 +34,7 @@ suite('Property/Lambda', function() {
     statusCode: 404,
   };
   let expectedResult = null;
-  let timeoutInput = 120;
+  let timeoutInput = 128;
 
   test('Class Lambda exists in Property/Lambda', function() {
     chai.expect(typeof Lambda).to.equal('function');
@@ -117,12 +117,12 @@ suite('Property/Lambda', function() {
     chai.expect(Lambda.DEFAULT_MEMORY_LIMIT).to.be.above(0);
   });
 
-  test('Check HANDLER static getter returns \'bootstrap.handler\'', function() {
-    chai.expect(Lambda.HANDLER).to.be.equal('bootstrap.handler');
+  test('Check default runtime handler returns \'bootstrap.handler\'', function() {
+    chai.expect(lambda.handler).to.be.equal('bootstrap.handler');
   });
 
-  test('Check RUNTIME static getter returns \'nodejs\'', function() {
-    chai.expect(Lambda.RUNTIME).to.be.equal('nodejs');
+  test('Check DEFAULT_RUNTIME static getter returns \'nodejs\'', function() {
+    chai.expect(Lambda.DEFAULT_RUNTIME).to.be.equal('nodejs');
   });
 
   test('Check CONFIG_FILE static getter returns \'_config.json\'', function() {
