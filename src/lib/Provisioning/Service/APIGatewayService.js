@@ -220,8 +220,8 @@ export class APIGatewayService extends AbstractService {
     let apiGateway = this.provisioning.apiGateway;
 
     apiGateway.createRestapi(metadata).then((api) => {
-      callback(api.source);
-    }, (error) => {
+      callback(api.source.body);
+    }).catch((error) => {
 
       if (error) {
         throw new FailedToCreateApiGatewayException(metadata.name, error);
@@ -243,7 +243,7 @@ export class APIGatewayService extends AbstractService {
 
     apiGateway.createResources(params).then(() => {
       callback(true);
-    }, (error) => {
+    }).catch((error) => {
 
       if (error) {
         throw new FailedToCreateApiResourcesException(resourcePaths, error);
@@ -266,7 +266,7 @@ export class APIGatewayService extends AbstractService {
 
     apiGateway.listResources(params).then((resources) => {
       callback(resources);
-    }, (error) => {
+    }).catch((error) => {
 
       if (error) {
         throw new FailedToListApiResourcesException(restApiId, error);
@@ -324,7 +324,7 @@ export class APIGatewayService extends AbstractService {
       apiGateway[method](params).then((resource) => {
         stackSize--;
         resources[params.resourcePath][params.httpMethod] = resource;
-      }, (error) => {
+      }).catch((error) => {
 
         stackSize--;
         if (error) {
