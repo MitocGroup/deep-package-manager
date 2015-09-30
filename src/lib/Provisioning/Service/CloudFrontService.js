@@ -100,9 +100,12 @@ export class CloudFrontService extends AbstractService {
             },
             QueryString: true,
           },
+
+          // @todo: fine tune cache behavior
           MinTTL: 0,
-          MaxTTL: 31536000,
-          DefaultTTL: 86400,
+          MaxTTL: 60,// 31536000,
+          DefaultTTL: 60,// 86400,
+
           TargetOriginId: originId,
           TrustedSigners: {
             Enabled: false,

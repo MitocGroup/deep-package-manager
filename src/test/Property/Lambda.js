@@ -83,11 +83,11 @@ suite('Property/Lambda', function() {
       Description: '',
       FunctionArn: `arn:aws:lambda:${lambda.region}:${lambda.awsAccountId}:function:${lambda.functionName}`,
       FunctionName: lambda.functionName,
-      Handler: Lambda.HANDLER,
+      Handler: 'bootstrap.handler',
       LastModified: new Date().toISOString(),
       MemorySize: Lambda.DEFAULT_MEMORY_LIMIT,
       Role: lambda._execRole.Arn,
-      Runtime: Lambda.RUNTIME,
+      Runtime: Lambda.DEFAULT_RUNTIME,
       Timeout: Lambda.DEFAULT_TIMEOUT,
     };
     chai.expect(lambda.createConfigHookData.CodeSize).to.be.equal(configHookDataExpectedResult.CodeSize);
