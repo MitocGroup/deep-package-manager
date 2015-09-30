@@ -184,11 +184,11 @@ export class Instance {
         new SNSService(this),
         new IAMService(this),
         new CognitoIdentityService(this),
-        //new CloudFrontService(this),
+        new CloudFrontService(this),
         new LambdaService(this),
 
         // @todo - activate it when implementation is done
-         new APIGatewayService(this),
+        //new APIGatewayService(this),
       ]);
     }
 
