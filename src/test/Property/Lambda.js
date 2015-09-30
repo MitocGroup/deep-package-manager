@@ -61,6 +61,7 @@ suite('Property/Lambda', function() {
     chai.expect(lambda.timeout).to.be.equal(Lambda.DEFAULT_TIMEOUT);
     lambda.timeout = timeoutInput;
     chai.expect(lambda.timeout).to.be.equal(timeoutInput);
+    lambda.timeout = Lambda.DEFAULT_TIMEOUT;
   });
 
   test('Check memorySize getter returns valid value', function() {
