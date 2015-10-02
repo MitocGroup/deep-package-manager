@@ -42,6 +42,12 @@ export class CloudFrontService extends AbstractService {
    * @returns {CloudFrontService}
    */
   _setup(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._ready = true;
+      return this;
+    }
+
     this._config = {};
 
     this._ready = true;
@@ -54,6 +60,12 @@ export class CloudFrontService extends AbstractService {
    * @returns {CloudFrontService}
    */
   _postProvision(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._readyTeardown = true;
+      return this;
+    }
+
     this._createDistribution(services, function(cfData) {
       this._config.id = cfData.Distribution.Id;
       this._config.domain = cfData.Distribution.DomainName;
@@ -88,9 +100,12 @@ export class CloudFrontService extends AbstractService {
             },
             QueryString: true,
           },
+
+          // @todo: fine tune cache behavior
           MinTTL: 0,
-          MaxTTL: 31536000,
-          DefaultTTL: 86400,
+          MaxTTL: 60,// 31536000,
+          DefaultTTL: 60,// 86400,
+
           TargetOriginId: originId,
           TrustedSigners: {
             Enabled: false,
@@ -147,6 +162,12 @@ export class CloudFrontService extends AbstractService {
    * @returns {CloudFrontService}
    */
   _postDeployProvision(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._ready = true;
+      return this;
+    }
+
     this._ready = true;
 
     return this;

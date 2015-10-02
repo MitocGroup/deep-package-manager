@@ -20,6 +20,7 @@ export class Action {
     this._type = config.type;
     this._methods = config.methods.map(m => m.toUpperCase());
     this._source = config.source;
+    this._engine = config.engine;
   }
 
   /**
@@ -41,6 +42,13 @@ export class Action {
    */
   static get EXTERNAL() {
     return 'external';
+  }
+
+  /**
+   * @returns {Object}
+   */
+  get engine() {
+    return this._engine;
   }
 
   /**
@@ -104,6 +112,7 @@ export class Action {
       type: this.type,
       source: this.source,
       methods: this.methods,
+      engine: this.engine
     };
   }
 }

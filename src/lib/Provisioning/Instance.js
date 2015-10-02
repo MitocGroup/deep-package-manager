@@ -87,6 +87,13 @@ export class Instance {
   }
 
   /**
+   * @param {Object} cfg
+   */
+  set config(cfg) {
+    this._config = cfg;
+  }
+
+  /**
    * @returns {PropertyInstance}
    */
   get property() {
@@ -189,18 +196,29 @@ export class Instance {
   }
 
   /**
+   * @todo: split update into a separate method
+   *
    * @param {Function} callback
+   * @param {Boolean} isUpdate
    */
-  create(callback) {
+  create(callback, isUpdate = false) {
     if (!(callback instanceof Function)) {
       throw new InvalidArgumentException(callback, 'Function');
     }
 
     let services = this.services;
     let wait = new WaitFor();
-    let remaining = services.iterator.length;
+    let servicesVector = services.iterator;
+    let remaining = servicesVector.length;
 
-    for (let service of services.iterator) {
+    // @todo: improve this
+    if (isUpdate) {
+      for (let service of servicesVector) {
+        service.isUpdate = true;
+      }
+    }
+
+    for (let service of servicesVector) {
       service.setup(services).ready(function() {
         this._config[service.name()] = service.config();
         remaining--;
@@ -214,15 +232,19 @@ export class Instance {
     wait.ready(function() {
       let subWait = new WaitFor();
 
-      let subRemaining = services.iterator.length;
+      let subRemaining = servicesVector.length;
 
-      for (let service of services.iterator) {
+      for (let service of servicesVector) {
         service.postProvision(services).ready(function() {
           // @todo: why is this resetting the object?
           //this._config[service.name()] = service.config();
           subRemaining--;
         }.bind(this));
       }
+
+      subWait.push(function() {
+        return subRemaining <= 0;
+      }.bind(this));
 
       subWait.ready(function() {
         callback(this._config);
@@ -232,19 +254,29 @@ export class Instance {
 
   /**
    * @param {Function} callback
+   * @param {Boolean} isUpdate
    */
-  postDeployProvision(callback) {
+  postDeployProvision(callback, isUpdate = false) {
     if (!(callback instanceof Function)) {
       throw new InvalidArgumentException(callback, 'Function');
     }
 
     let services = this.services;
     let wait = new WaitFor();
-    let remaining = services.iterator.length;
+    let servicesVector = services.iterator;
+    let remaining = servicesVector.length;
 
-    for (let service of services.iterator) {
+    // @todo: improve this
+    if (isUpdate) {
+      for (let service of servicesVector) {
+        service.isUpdate = true;
+      }
+    }
+
+    for (let service of servicesVector) {
       service.postDeployProvision(services).ready(function() {
-        this._config[service.name()] = service.config();
+        // @todo: why is this resetting the object?
+        //this._config[service.name()] = service.config();
         remaining--;
       }.bind(this));
     }

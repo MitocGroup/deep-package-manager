@@ -23,6 +23,21 @@ export class AbstractService extends Core.OOP.Interface {
     this._provisioning = provisioning;
     this._ready = false;
     this._readyTeardown = false;
+    this._isUpdate = false;
+  }
+
+  /**
+   * @param {Boolean} state
+   */
+  set isUpdate(state) {
+    this._isUpdate = state;
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  get isUpdate() {
+    return this._isUpdate;
   }
 
   /**
