@@ -5,12 +5,14 @@ import {Action} from '../../../lib.compiled/Microservice/Metadata/Action';
 
 suite('Microservice/Metadata/Action', function() {
   let configInput = {
-    description: 'Lambda for retrieve counts',
-    type: 'lambda',
-    methods: ['GET', 'POST'],
-    source: 'src/Property/RetrieveCounts',
+    identifier: 'test identifier',
     resourceName: 'testResourceName',
     name: 'testActionName',
+    description: 'Lambda for retrieve counts',
+    type: 'lambda',
+    source: 'src/Property/RetrieveCounts',
+    methods: ['GET', 'POST'],
+    engine: 'nodejs',
   };
 
   let action = new Action(configInput.resourceName, configInput.name, configInput);
