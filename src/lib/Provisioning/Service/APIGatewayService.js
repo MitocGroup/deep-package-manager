@@ -220,7 +220,7 @@ export class APIGatewayService extends AbstractService {
     let apiGateway = this.provisioning.apiGateway;
 
     apiGateway.createRestapi(metadata).then((api) => {
-      callback(api.source.body);
+      callback(api.source);
     }).catch((error) => {
 
       if (error) {
