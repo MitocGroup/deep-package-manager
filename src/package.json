@@ -1,36 +1,54 @@
 {
   "name": "@mitocgroup/deep-package-manager",
-  "version": "0.1.67",
-  "description": "Package manager used to setup and deploy DEEP infrastructure",
-  "author": {
-    "name": "Mitoc Group",
-    "email": "hello@mitocgroup.com",
-    "website": "www.mitocgroup.com"
-  },
-  "contributors": [
-    {
-      "name": "DEEP Dev Team",
-      "email": "hello@deep.mg",
-      "website": "www.deep.mg"
-    }
+  "version": "0.1.68",
+  "description": "DEEP Package Manager",
+  "keywords": [
+    "Digital Enterprise End-To-End Platform",
+    "Amazon Web Services",
+    "Platform-as-a-Service",
+    "DEEP",
+    "AWS",
+    "PaaS",
+    "Cloud",
+    "Computing",
+    "Microservices",
+    "Architecture",
+    "Serverless",
+    "Abstracted",
+    "Package",
+    "Manager"
   ],
+  "homepage": "https://github.com/MitocGroup/deep-package-manager",
   "bugs": {
     "url": "https://github.com/MitocGroup/deep-package-manager/issues"
   },
-  "keywords": [
-    "DEEP",
-    "Digital Enterprise End-To-End Platform",
-    "Deep Core Services",
-    "Package Manager"
-  ],
-  "os": [
-    "!win32"
-  ],
-  "engines": {
-    "node": ">=0.12",
-    "npm": ">=2.10"
+  "license": "MIT",
+  "author": {
+    "name": "Mitoc Group",
+    "email": "hello@mitocgroup.com",
+    "url": "http://www.mitocgroup.com"
   },
+  "contributors": [
+    {
+      "name": "AlexanderC",
+      "email": "alexanderc@mitocgroup.com"
+    },
+    {
+      "name": "Marcel Goria",
+      "email": "mgoria@mitocgroup.com"
+    }
+  ],
   "main": "lib.compiled/bootstrap.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MitocGroup/deep-package-manager.git"
+  },
+  "scripts": {
+    "coverage": "babel-node `which istanbul` cover --report lcov _mocha -- --ui tdd --recursive --reporter spec",
+    "test": "mocha --ui tdd --compilers js:mocha-babel --recursive --reporter spec",
+    "compile": "if [ -d 'lib/' ]; then BABEL_ENV=production babel lib/ --out-dir lib.compiled/; fi",
+    "prepublish": "npm run compile"
+  },
   "dependencies": {
     "@mitocgroup/deep-db": "*",
     "@mitocgroup/deep-core": "*",
@@ -59,12 +77,13 @@
     "chai": "3.2.*",
     "aws-sdk": "2.1.*"
   },
-  "scripts": {
-    "coverage": "babel-node `which istanbul` cover --report lcov _mocha -- --ui tdd --recursive --reporter spec",
-    "test": "mocha --ui tdd --compilers js:mocha-babel --recursive --reporter spec",
-    "compile": "if [ -d 'lib/' ]; then BABEL_ENV=production babel lib/ --out-dir lib.compiled/; fi",
-    "prepublish": "npm run compile"
+  "engines": {
+    "node": ">=0.12",
+    "npm": ">=2.10"
   },
+  "os": [
+    "!win32"
+  ],
   "preferGlobal": true,
   "analyze": true
 }
