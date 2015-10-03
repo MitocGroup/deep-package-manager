@@ -13,7 +13,7 @@ import {AwsRequestSyncStack} from '../Helpers/AwsRequestSyncStack';
 import {WaitFor} from '../Helpers/WaitFor';
 import Path from 'path';
 import {Frontend} from './Frontend';
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 import JsonFile from 'jsonfile';
 import {S3Service} from '../Provisioning/Service/S3Service';
 import Mime from 'mime';

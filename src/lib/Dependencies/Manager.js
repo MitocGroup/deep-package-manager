@@ -5,7 +5,7 @@
 'use strict';
 
 import {AbstractDriver} from './Driver/AbstractDriver';
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 import {Resolver} from './Resolver';
 import {Uploader} from './Uploader';
 import {WaitFor} from '../Helpers/WaitFor';

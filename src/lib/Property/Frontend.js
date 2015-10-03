@@ -14,7 +14,7 @@ import {MissingRootIndexException} from './Exception/MissingRootIndexException';
 import {FailedUploadingFileToS3Exception} from './Exception/FailedUploadingFileToS3Exception';
 import {AwsRequestSyncStack} from '../Helpers/AwsRequestSyncStack';
 import {Action} from '../Microservice/Metadata/Action';
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 import Tmp from 'tmp';
 import OS from 'os';
 

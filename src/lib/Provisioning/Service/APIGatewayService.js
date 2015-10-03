@@ -5,7 +5,7 @@
 'use strict';
 
 import {AbstractService} from './AbstractService';
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 import {WaitFor} from '../../Helpers/WaitFor';
 import {FailedToCreateApiGatewayException} from './Exception/FailedToCreateApiGatewayException';
 import {FailedToCreateApiResourcesException} from './Exception/FailedToCreateApiResourcesException';
