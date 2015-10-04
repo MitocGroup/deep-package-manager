@@ -13,6 +13,7 @@ import {FailedToCreateApiResourcesException} from './Exception/FailedToCreateApi
 import {FailedToListApiResourcesException} from './Exception/FailedToListApiResourcesException';
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
+import {FailedToDeployApiGatewayException} from './Exception/FailedToDeployApiGatewayException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
@@ -128,11 +129,12 @@ export class APIGatewayService extends AbstractService {
       this._config.api.role,
       lambdasArn,
       integrationParams
-    )(function(methods, integrations, rolePolicy) {
+    )(function(methods, integrations, rolePolicy, deployedApi) {
       this._config.postDeploy = {
         methods: methods,
         integrations: integrations,
         rolePolicy: rolePolicy,
+        deployedApi: deployedApi,
       };
       this._ready = true;
     }.bind(this));
@@ -182,6 +184,7 @@ export class APIGatewayService extends AbstractService {
     var integrations = null;
     var integrationsResponse = null;
     var rolePolicy = null;
+    var deployedApi = null;
 
     return (callback) => {
       this._executeProvisionMethod('putMethod', apiId, apiResources, integrationParams, (data) => {
@@ -199,7 +202,11 @@ export class APIGatewayService extends AbstractService {
               this._addPolicyToApiRole(apiRole, lambdasArn, (data) => {
                 rolePolicy = data;
 
-                callback(methods, integrations, rolePolicy);
+                this._deployApi(apiId, (data) => {
+                  deployedApi = data;
+
+                  callback(methods, integrations, rolePolicy, deployedApi);
+                });
               });
             });
           });
@@ -313,6 +320,31 @@ export class APIGatewayService extends AbstractService {
 
     wait.ready(() => {
       callback(resources);
+    });
+  }
+
+  /**
+   * @param {String} apiId
+   * @param {Function} callback
+   * @private
+   */
+  _deployApi(apiId, callback) {
+    let apiGateway = this.provisioning.apiGateway;
+
+    let params = {
+      restapiId: apiId,
+      stageName: this.env,
+      stageDescription: `Stage for "${this.env}" environment`,
+      description: `Deployed on ${new Date().toTimeString()}`,
+    };
+
+    apiGateway.createDeployment(params).then((deployment) => {
+      callback(deployment);
+    }).catch((error) => {
+
+      if (error) {
+        throw new FailedToDeployApiGatewayException(apiId, error);
+      }
     });
   }
 
