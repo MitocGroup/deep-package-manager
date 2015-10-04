@@ -2,9 +2,9 @@ deep-package-manager
 ====================
 
 [![NPM Version](https://img.shields.io/npm/v/deep-package-manager.svg)](https://npmjs.org/package/deep-package-manager)
-[![Build Status](https://magnum.travis-ci.com/MitocGroup/deep.svg?token=K6deyi9kwkfxRyXwcv6c&branch=dev)](https://magnum.travis-ci.com/MitocGroup/deep)
-[![Coverage Status](https://coveralls.io/repos/MitocGroup/deep/badge.svg?branch=dev&service=github&t=3QEkFa)](https://coveralls.io/github/MitocGroup/deep)
-[![Codacy Badge](https://api.codacy.com/project/badge/46841776f9044f018f0a71b3e114299d)](https://www.codacy.com/app/MitocGroup/deep/dashboard)
+[![Build Status](https://magnum.travis-ci.com/MitocGroup/deep-package-manager.svg?token=sAyMHy4Uoefc2JPq5ZLc&branch=dev)](https://magnum.travis-ci.com/MitocGroup/deep-package-manager)
+[![Coverage Status](https://coveralls.io/repos/MitocGroup/deep-package-manager/badge.svg?branch=dev&service=github&t=J4nqoG)](https://coveralls.io/github/MitocGroup/deep-package-manager?branch=dev)
+[![Codacy Badge](https://api.codacy.com/project/badge/0695c0d184ed4afe9ac9110c13252aab)](https://www.codacy.com/app/deep/deep-package-manager/dashboard)
 [![API Docs](http://docs.deep.mg/badge.svg)](http://docs.deep.mg)
 
 [deep-package-manager](https://www.npmjs.com/package/deep-package-manager) is a node.js library, part of [DEEP Framework](https://github.com/MitocGroup/deep).
