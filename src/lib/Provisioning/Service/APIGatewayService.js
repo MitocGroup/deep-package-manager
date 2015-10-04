@@ -129,12 +129,13 @@ export class APIGatewayService extends AbstractService {
       this._config.api.role,
       lambdasArn,
       integrationParams
-    )(function(methods, integrations, rolePolicy, deployedApi) {
+    )(function(methods, integrations, rolePolicy, deployedApi, apiBaseUrl) {
       this._config.postDeploy = {
         methods: methods,
         integrations: integrations,
         rolePolicy: rolePolicy,
         deployedApi: deployedApi,
+        apiBaseUrl: apiBaseUrl,
       };
       this._ready = true;
     }.bind(this));
@@ -184,7 +185,6 @@ export class APIGatewayService extends AbstractService {
     var integrations = null;
     var integrationsResponse = null;
     var rolePolicy = null;
-    var deployedApi = null;
 
     return (callback) => {
       this._executeProvisionMethod('putMethod', apiId, apiResources, integrationParams, (data) => {
@@ -202,10 +202,8 @@ export class APIGatewayService extends AbstractService {
               this._addPolicyToApiRole(apiRole, lambdasArn, (data) => {
                 rolePolicy = data;
 
-                this._deployApi(apiId, (data) => {
-                  deployedApi = data;
-
-                  callback(methods, integrations, rolePolicy, deployedApi);
+                this._deployApi(apiId, (deployedApi, apiBaseUrl) => {
+                  callback(methods, integrations, rolePolicy, deployedApi, apiBaseUrl);
                 });
               });
             });
@@ -339,7 +337,7 @@ export class APIGatewayService extends AbstractService {
     };
 
     apiGateway.createDeployment(params).then((deployment) => {
-      callback(deployment);
+      callback(deployment, this._generateApiBaseUrl(apiId, apiGateway.region, params.stageName));
     }).catch((error) => {
 
       if (error) {
@@ -634,6 +632,17 @@ export class APIGatewayService extends AbstractService {
     awsResource.descriptor = resourceDescriptor;
 
     return awsResource.extract();
+  }
+
+  /**
+   * @param {String} apiId
+   * @param {String} region
+   * @param {String} stageName
+   * @returns {String}
+   * @private
+   */
+  _generateApiBaseUrl(apiId, region, stageName) {
+    return `https://${apiId}.execute-api.${region}.amazonaws.com/${stageName}`;
   }
 
   /**
