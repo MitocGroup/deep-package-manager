@@ -229,7 +229,7 @@ export class APIGatewayService extends AbstractService {
     let apiGateway = this.provisioning.apiGateway;
 
     apiGateway.createRestapi(metadata).then((api) => {
-      let apiSource = api;
+      let apiSource = api.source;
 
       // generate base url for created API coz it's not returned by createRestapi method
       apiSource.baseUrl = this._generateApiBaseUrl(apiSource.id, apiGateway.region, this.stageName);
