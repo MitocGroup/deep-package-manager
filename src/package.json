@@ -71,7 +71,7 @@
     "raml-sanitize": "1.0.*",
     "object-merge": "2.5.*",
     "prompt-sync": "3.0.*",
-    "amazon-api-gateway-client": "0.1.*"
+    "aws-api-gw-client": "0.1.*"
   },
   "devDependencies": {
     "chai": "3.2.*",

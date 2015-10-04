@@ -155,16 +155,13 @@ export class APIGatewayService extends AbstractService {
       this._createApi(metadata, (api) => {
         restApi = api;
 
-        this._createApiResources(resourcePaths, restApi.id, () => {
+        this._createApiResources(resourcePaths, restApi.id, (resources) => {
+          restResources = resources;
 
-          this._listApiResources(restApi.id, (resources) => {
-            restResources = resources;
+          this._createApiIamRole((role) => {
+            restApiIamRole = role;
 
-            this._createApiIamRole((role) => {
-              restApiIamRole = role;
-
-              callback(restApi, this._extractApiResourcesMetadata(restResources), restApiIamRole);
-            });
+            callback(restApi, this._extractApiResourcesMetadata(restResources), restApiIamRole);
           });
         });
       });
@@ -241,35 +238,12 @@ export class APIGatewayService extends AbstractService {
       restapiId: restApiId,
     };
 
-    apiGateway.createResources(params).then(() => {
-      callback(true);
-    }).catch((error) => {
-
-      if (error) {
-        throw new FailedToCreateApiResourcesException(resourcePaths, error);
-      }
-    });
-  }
-
-  /**
-   * @param {String} restApiId
-   * @param {Function} callback
-   */
-  _listApiResources(restApiId, callback) {
-    let apiGateway = this.provisioning.apiGateway;
-    let params = {
-      restapiId: restApiId,
-      qsParams: {
-        limit: 500, // max limit allowed
-      },
-    };
-
-    apiGateway.listResources(params).then((resources) => {
+    apiGateway.createResources(params).then((resources) => {
       callback(resources);
     }).catch((error) => {
 
       if (error) {
-        throw new FailedToListApiResourcesException(restApiId, error);
+        throw new FailedToCreateApiResourcesException(resourcePaths, error);
       }
     });
   }
