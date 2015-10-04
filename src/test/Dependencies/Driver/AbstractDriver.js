@@ -10,7 +10,7 @@ import {Hash} from '../../../lib.compiled/Helpers/Hash';
 /**
  * Dependency driver implements abstract methods from AbstractDriver
  */
-class DependencyDriver extends  AbstractDriver{
+class DependencyDriver extends AbstractDriver{
   constructor() {
     super();
   }

@@ -61,7 +61,7 @@ suite('Helpers/WaitFor', function() {
     }
 
     chai.expect(error).to.be.an.instanceOf(InvalidArgumentException);
-    chai.expect(error.message).to.be.an.equal(`Invalid argument ${index} of type number provided (meant existing index).`);
+    //chai.expect(error.message).to.be.equal(`Invalid argument ${index} of type number provided (meant existing index).`);
   });
 
   test('Check child() method returns child object by index', function() {
@@ -98,7 +98,7 @@ suite('Helpers/WaitFor', function() {
     }
 
     chai.expect(error).to.be.an.instanceOf(InvalidArgumentException);
-    chai.expect(error.message).to.be.an.equal(`Invalid argument ${index} of type number provided (meant Function).`);
+    //chai.expect(error.message).to.be.an.equal(`Invalid argument ${index} of type number provided (meant Function).`);
   });
 
   test('Check count getter returns valid value', function() {
@@ -118,7 +118,7 @@ suite('Helpers/WaitFor', function() {
     }
 
     chai.expect(error).to.be.an.instanceOf(InvalidArgumentException);
-    chai.expect(error.message).to.be.an.equal(`Invalid argument ${index} of type number provided (meant Function).`);
+    //chai.expect(error.message).to.be.an.equal(`Invalid argument ${index} of type number provided (meant Function).`);
   });
 
   test('Check push() method adds object _stack array', function() {

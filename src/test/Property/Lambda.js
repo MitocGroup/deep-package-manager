@@ -86,10 +86,10 @@ suite('Property/Lambda', function() {
       FunctionName: lambda.functionName,
       Handler: 'bootstrap.handler',
       LastModified: new Date().toISOString(),
-      MemorySize: Lambda.DEFAULT_MEMORY_LIMIT,
+      MemorySize: lambda._memorySize,
       Role: lambda._execRole.Arn,
-      Runtime: Lambda.DEFAULT_RUNTIME,
-      Timeout: Lambda.DEFAULT_TIMEOUT,
+      Runtime: lambda._runtime,
+      Timeout: lambda._timeout,
     };
     chai.expect(lambda.createConfigHookData.CodeSize).to.be.equal(configHookDataExpectedResult.CodeSize);
     chai.expect(lambda.createConfigHookData.Description).to.be.equal(configHookDataExpectedResult.Description);
@@ -118,12 +118,14 @@ suite('Property/Lambda', function() {
     chai.expect(Lambda.DEFAULT_MEMORY_LIMIT).to.be.above(0);
   });
 
-  test('Check default runtime handler returns \'bootstrap.handler\'', function() {
+  test('Check HANDLER static getter returns \'bootstrap.handler\'', function() {
     chai.expect(lambda.handler).to.be.equal('bootstrap.handler');
   });
 
-  test('Check DEFAULT_RUNTIME static getter returns \'nodejs\'', function() {
-    chai.expect(Lambda.DEFAULT_RUNTIME).to.be.equal('nodejs');
+  test('Check RUNTIMES static getter returns [\'nodejs\', \'java8\']', function() {
+    chai.expect(Lambda.RUNTIMES.length).to.be.equal(2);
+    chai.expect(Lambda.RUNTIMES).to.be.includes('nodejs');
+    chai.expect(Lambda.RUNTIMES).to.be.includes('java8');
   });
 
   test('Check CONFIG_FILE static getter returns \'_config.json\'', function() {
