@@ -185,6 +185,18 @@ export class AbstractService extends Core.OOP.Interface {
   }
 
   /**
+   * @param {String} service
+   * @returns {Array}
+   */
+  getApiVersions(service) {
+    try {
+      return this.property.AWS[service].apiVersions;
+    } catch (e) {
+      throw new Exception(`Failed to retrieve apiVersions for "${service}" AWS service. ${e.message}`);
+    }
+  }
+
+  /**
    * @param {String} microserviceIdentifier
    * @returns {String}
    */

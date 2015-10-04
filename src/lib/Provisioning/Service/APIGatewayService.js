@@ -7,9 +7,16 @@
 import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
 import {WaitFor} from '../../Helpers/WaitFor';
+import {Exception} from '../../Exception/Exception';
 import {FailedToCreateApiGatewayException} from './Exception/FailedToCreateApiGatewayException';
 import {FailedToCreateApiResourcesException} from './Exception/FailedToCreateApiResourcesException';
 import {FailedToListApiResourcesException} from './Exception/FailedToListApiResourcesException';
+import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
+import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
+import {Action} from '../../Microservice/Metadata/Action';
+import {IAMService} from './IAMService';
+import {LambdaService} from './LambdaService';
+import Utils from 'util';
 
 /**
  * APIGateway service
@@ -20,6 +27,13 @@ export class APIGatewayService extends AbstractService {
    */
   constructor(...args) {
     super(...args);
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get API_NAME_PREFIX() {
+    return 'Api';
   }
 
   /**
@@ -36,7 +50,7 @@ export class APIGatewayService extends AbstractService {
    */
   get apiMetadata() {
     return {
-      name: this.generateAwsResourceName('Api', Core.AWS.Service.API_GATEWAY),
+      name: this.generateAwsResourceName(APIGatewayService.API_NAME_PREFIX, Core.AWS.Service.API_GATEWAY),
     };
   }
 
@@ -61,15 +75,16 @@ export class APIGatewayService extends AbstractService {
       this._ready = true;
       return this;
     }
-
-    this._createApiResources(
+    
+    this._provisionApiResources(
       this.apiMetadata,
       this._getResourcePaths(this.provisioning.property.microservices)
-    )(function(api, resources) {
+    )(function(api, resources, role) {
       this._config.api = {
         id: api.id,
         name: api.name,
         resources: resources,
+        role: role,
       };
       this._ready = true;
     }.bind(this));
@@ -87,7 +102,7 @@ export class APIGatewayService extends AbstractService {
       this._readyTeardown = true;
       return this;
     }
-
+    
     this._readyTeardown = true;
 
     return this;
@@ -103,8 +118,24 @@ export class APIGatewayService extends AbstractService {
       this._ready = true;
       return this;
     }
+    
+    let integrationParams = this.getResourcesIntegrationParams(this.property.config.microservices);
+    let lambdasArn = LambdaService.getAllLambdasArn(this.property.config.microservices);
 
-    this._ready = true;
+    this._putApiIntegrations(
+      this._config.api.id,
+      this._config.api.resources,
+      this._config.api.role,
+      lambdasArn,
+      integrationParams
+    )(function(methods, integrations, rolePolicy) {
+      this._config.postDeploy = {
+        methods: methods,
+        integrations: integrations,
+        rolePolicy: rolePolicy,
+      };
+      this._ready = true;
+    }.bind(this));
 
     return this;
   }
@@ -115,66 +146,22 @@ export class APIGatewayService extends AbstractService {
    * @returns {function}
    * @private
    */
-  _createApiResources(metadata, resourcePaths) {
+  _provisionApiResources(metadata, resourcePaths) {
     var restApi = null;
-    var restResourcesCreated = false;
     var restResources = null;
-    let apiGateway = this.provisioning.apiGateway;
-    let wait = new WaitFor();
-
-    apiGateway.createRestapi(metadata).then(function(api) {
-      restApi = api.source;
-    }, function(error) {
-
-      if (error) {
-        throw new FailedToCreateApiGatewayException(metadata.name, error);
-      }
-    });
-
-    wait.push(() => {
-      return restApi !== null;
-    });
+    var restApiIamRole = null;
 
     return (callback) => {
-      return wait.ready(() => {
-        let secondLevelWait = new WaitFor();
+      this._createApi(metadata, (api) => {
+        restApi = api;
 
-        let params = {
-          paths: resourcePaths,
-          restapiId: restApi.id,
-        };
+        this._createApiResources(resourcePaths, restApi.id, (resources) => {
+          restResources = resources;
 
-        apiGateway.createResources(params).then(function() {
-          restResourcesCreated = true;
-        }, function(error) {
+          this._createApiIamRole((role) => {
+            restApiIamRole = role;
 
-          if (error) {
-            throw new FailedToCreateApiResourcesException(paths, error);
-          }
-        });
-
-        secondLevelWait.push(function() {
-          return restResourcesCreated;
-        }.bind(this));
-
-        return secondLevelWait.ready(() => {
-          let thirdLevelWait = new WaitFor();
-
-          apiGateway.listResources({restapiId: restApi.id}).then(function(resources) {
-            restResources = resources;
-          }, function(error) {
-
-            if (error) {
-              throw new FailedToListApiResourcesException(restApi.id, error);
-            }
-          });
-
-          thirdLevelWait.push(function() {
-            return restResources !== null;
-          }.bind(this));
-
-          return thirdLevelWait.ready(() => {
-            callback(restApi, this._extractResourcesMetadata(restResources));
+            callback(restApi, this._extractApiResourcesMetadata(restResources), restApiIamRole);
           });
         });
       });
@@ -182,6 +169,255 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
+   * @param {String} apiId
+   * @param {Object} apiResources
+   * @param {Object} apiRole
+   * @param {Array} lambdasArn
+   * @param {Object} integrationParams
+   * @private
+   */
+  _putApiIntegrations(apiId, apiResources, apiRole, lambdasArn, integrationParams) {
+    var methods = null;
+    var methodsResponse = null;
+    var integrations = null;
+    var integrationsResponse = null;
+    var rolePolicy = null;
+
+    return (callback) => {
+      this._executeProvisionMethod('putMethod', apiId, apiResources, integrationParams, (data) => {
+        methods = data;
+
+        this._executeProvisionMethod('putMethodResponse', apiId, apiResources, integrationParams, (data) => {
+          methodsResponse = data;
+
+          this._executeProvisionMethod('putIntegration', apiId, apiResources, integrationParams, (data) => {
+            integrations = data;
+
+            this._executeProvisionMethod('putIntegrationResponse', apiId, apiResources, integrationParams, (data) => {
+              integrationsResponse = data;
+
+              this._addPolicyToApiRole(apiRole, lambdasArn, (data) => {
+                rolePolicy = data;
+
+                callback(methods, integrations, rolePolicy);
+              });
+            });
+          });
+        });
+      });
+    };
+  }
+
+  /**
+   * @param {Object} metadata
+   * @param {Function} callback
+   * @private
+   */
+  _createApi(metadata, callback) {
+    let apiGateway = this.provisioning.apiGateway;
+
+    apiGateway.createRestapi(metadata).then((api) => {
+      callback(api.source);
+    }).catch((error) => {
+
+      if (error) {
+        throw new FailedToCreateApiGatewayException(metadata.name, error);
+      }
+    });
+  }
+
+  /**
+   * @param {Array} resourcePaths
+   * @param {String} restApiId
+   * @param {Function} callback
+   */
+  _createApiResources(resourcePaths, restApiId, callback) {
+    let apiGateway = this.provisioning.apiGateway;
+    let params = {
+      paths: resourcePaths,
+      restapiId: restApiId,
+    };
+
+    apiGateway.createResources(params).then((resources) => {
+      callback(resources);
+    }).catch((error) => {
+
+      if (error) {
+        throw new FailedToCreateApiResourcesException(resourcePaths, error);
+      }
+    });
+  }
+
+  /**
+   * @param {Function} callback
+   * @private
+   */
+  _createApiIamRole(callback) {
+    let iam = this.provisioning.iam;
+    let roleName = this.generateAwsResourceName(
+      `${APIGatewayService.API_NAME_PREFIX}InvokeLambda`,
+      Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
+    );
+
+    let params = {
+      AssumeRolePolicyDocument: IAMService.getAssumeRolePolicy(Core.AWS.Service.API_GATEWAY).toString(),
+      RoleName: roleName,
+    };
+
+    iam.createRole(params, (error, data) => {
+      if (error) {
+        throw new FailedToCreateIamRoleException(roleName, error);
+      }
+
+      callback(data.Role);
+    });
+  }
+
+  /**
+   * @param {Array} methodsParams
+   * @param {Function} callback
+   * @private
+   */
+  _executeProvisionMethod(method, apiId, apiResources, integrationParams, callback) {
+    let apiGateway = this.provisioning.apiGateway;
+    let wait = new WaitFor();
+
+    let methodsParams = this._methodParamsGenerator(method, apiId, apiResources, integrationParams);
+    let stackSize = methodsParams.length;
+    let resources = {};
+
+    for (let key in methodsParams) {
+      if (!methodsParams.hasOwnProperty(key)) {
+        continue;
+      }
+
+      let params = methodsParams[key];
+
+      resources[params.resourcePath] = {};
+
+      apiGateway[method](params).then((resource) => {
+        stackSize--;
+        resources[params.resourcePath][params.httpMethod] = resource;
+      }).catch((error) => {
+
+        stackSize--;
+        if (error) {
+          throw new FailedToExecuteApiGatewayMethodException(method, params.resourcePath, params.httpMethod, error);
+        }
+      });
+    }
+
+    wait.push(() => {
+      return stackSize === 0;
+    });
+
+    wait.ready(() => {
+      callback(resources);
+    });
+  }
+
+  /**
+   * @param {Object} apiRole
+   * @param {Array} lambdasArn
+   * @param {Function} callback
+   * @private
+   */
+  _addPolicyToApiRole(apiRole, lambdasArn, callback) {
+    let iam = this.provisioning.iam;
+    let policy = LambdaService.generateAllowInvokeFunctionPolicy(lambdasArn);
+
+    let params = {
+      PolicyDocument: policy.toString(),
+      PolicyName: this.generateAwsResourceName(
+        `${APIGatewayService.API_NAME_PREFIX}InvokeLambdaPolicy`,
+        Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
+      ),
+      RoleName: apiRole.RoleName,
+    };
+
+    iam.putRolePolicy(params, (error, data) => {
+      if (error) {
+        throw new FailedAttachingPolicyToRoleException(params.PolicyName, params.RoleName, error);
+      }
+
+      callback(params.PolicyDocument);
+    });
+  }
+
+  /**
+   * @param {String} method
+   * @param {Object} apiResources
+   * @param {Object} integrationParams
+   * @returns {Array}
+   * @private
+   */
+  _methodParamsGenerator(method, apiId, apiResources, integrationParams) {
+    let paramsArr = [];
+
+    for (let resourcePath in integrationParams) {
+      if (!integrationParams.hasOwnProperty(resourcePath)) {
+        continue;
+      }
+
+      let resourceMethods = integrationParams[resourcePath];
+      let apiResource = apiResources[resourcePath];
+
+      for (let resourceMethod in resourceMethods) {
+        if (!resourceMethods.hasOwnProperty(resourceMethod)) {
+          continue;
+        }
+
+        let commonParams = {
+          resourcePath: resourcePath,
+          httpMethod: resourceMethod,
+          restapiId: apiId,
+          resourceId: apiResource.id,
+        };
+        let params = {};
+
+        switch (method) {
+          case 'putMethod':
+            params = {
+              authorizationType: 'AWS_IAM',
+              requestModels: this.jsonEmptyModel,
+            };
+            break;
+          case 'putMethodResponse':
+            params = {
+              statusCode: 200,
+              responseModels: this.jsonEmptyModel,
+            };
+            break;
+          case 'putIntegration':
+            params = resourceMethods[resourceMethod];
+
+            //methodParams.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
+            params.credentials = 'arn:aws:iam::*:user/*'; // @todo - find a smarter way to enable "Invoke with caller credentials" option
+            break;
+          case 'putIntegrationResponse':
+            params = {
+              statusCode: 200,
+              responseTemplates: this.jsonEmptyTemplate,
+            };
+            break;
+          default:
+            throw new Exception(`Unknown api method ${method}.`);
+        }
+
+        paramsArr.push(Utils._extend(commonParams, params));
+      }
+    }
+
+    return paramsArr;
+  }
+
+  /**
+   * All resources to be created in API Gateway
+   *
+   * microservice_identifier
+   *    resource_name
+   *        action_name
+   *
    * @param {Object} microservices
    * @returns {Array}
    * @private
@@ -196,7 +432,9 @@ export class APIGatewayService extends AbstractService {
 
       let microservice = microservices[microserviceKey];
 
-      resourcePaths.push(this._pathfy(microservice.identifier));
+      if (microservice.resources.actions.length > 0) {
+        resourcePaths.push(this._pathify(microservice.identifier));
+      }
 
       for (let actionKey in microservice.resources.actions) {
         if (!microservice.resources.actions.hasOwnProperty(actionKey)) {
@@ -204,7 +442,7 @@ export class APIGatewayService extends AbstractService {
         }
 
         let action = microservice.resources.actions[actionKey];
-        let resourcePath = this._pathfy(microservice.identifier, action.resourceName);
+        let resourcePath = this._pathify(microservice.identifier, action.resourceName);
 
         // push actions parent resource only once
         if (resourcePaths.indexOf(resourcePath) === -1) {
@@ -212,7 +450,7 @@ export class APIGatewayService extends AbstractService {
         }
 
         resourcePaths.push(
-          this._pathfy(microservice.identifier, action.resourceName, action.name)
+          this._pathify(microservice.identifier, action.resourceName, action.name)
         );
       }
     }
@@ -228,7 +466,7 @@ export class APIGatewayService extends AbstractService {
    * @return {String}
    * @private
    */
-  _pathfy(microserviceIdentifier, resourceName = '', actionName = '') {
+  _pathify(microserviceIdentifier, resourceName = '', actionName = '') {
     let path = `/${microserviceIdentifier}`;
 
     if (resourceName) {
@@ -247,7 +485,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {Object}
    * @private
    */
-  _extractResourcesMetadata(rawResources) {
+  _extractApiResourcesMetadata(rawResources) {
     let resourcesMetadata = {};
 
     for (let rawResourceKey in rawResources) {
@@ -266,5 +504,120 @@ export class APIGatewayService extends AbstractService {
     }
 
     return resourcesMetadata;
+  }
+
+  /**
+   * Collect and compose microservice resources integration URIs
+   *
+   * @param {Object} microservicesConfig
+   * @returns {Object}
+   */
+  getResourcesIntegrationParams(microservicesConfig) {
+    let integrationParams = {};
+
+    for (let microserviceIdentifier in microservicesConfig) {
+      if (!microservicesConfig.hasOwnProperty(microserviceIdentifier)) {
+        continue;
+      }
+
+      let microservice = microservicesConfig[microserviceIdentifier];
+
+      for (let resourceName in microservice.resources) {
+        if (!microservice.resources.hasOwnProperty(resourceName)) {
+          continue;
+        }
+
+        let resourceActions = microservice.resources[resourceName];
+
+        for (let actionName in resourceActions) {
+          if (!resourceActions.hasOwnProperty(actionName)) {
+            continue;
+          }
+
+          let action = resourceActions[actionName];
+          let resourceApiPath = this._pathify(microserviceIdentifier, resourceName, actionName);
+          integrationParams[resourceApiPath] = {};
+          var httpMethod = null;
+
+          switch (action.type) {
+            case Action.LAMBDA:
+              let uri = this._composeLambdaIntegrationUri(
+                microservice.lambdas[action.identifier],
+                microservice.deployedServices.lambdas[action.identifier]
+              );
+
+              for (httpMethod of action.methods) {
+                integrationParams[resourceApiPath][httpMethod] = {
+                  type: 'AWS',
+                  integrationHttpMethod: 'POST',
+                  uri: uri,
+                  requestTemplates: this.jsonEmptyTemplate,
+                };
+              }
+
+              break;
+            case Action.EXTERNAL:
+              for (httpMethod of action.methods) {
+                integrationParams[resourceApiPath][httpMethod] = {
+                  type: 'HTTP',
+                  integrationHttpMethod: httpMethod,
+                  uri: action.source,
+                  requestTemplates: this.jsonEmptyTemplate,
+                };
+              }
+
+              break;
+            default:
+              throw new Exception(
+                `Unknown action type "${action.type}". Allowed types "${Action.TYPES.join(', ')}"`
+              );
+          }
+        }
+      }
+    }
+
+    return integrationParams;
+  }
+
+  /**
+   * @note - do ask AWS devs what is this, an arn or smth else
+   *
+   * @example arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:389617777922:function:DeepDevSampleSayHelloa24bd154/invocations
+   *
+   * @param {Object} builtLambdaConfig
+   * @param {Object} deployedLambdaConfig
+   * @returns {String}
+   * @private
+   */
+  _composeLambdaIntegrationUri(builtLambdaConfig, deployedLambdaConfig) {
+    let lambdaArn = deployedLambdaConfig.FunctionArn;
+    let lambdaApiVersion = this.getApiVersions('Lambda').pop();
+    let resourceDescriptor = `path/${lambdaApiVersion}/functions/${lambdaArn}/invocations`;
+
+    let awsResource = Core.AWS.IAM.Factory.create('resource');
+    awsResource.service = Core.AWS.Service.API_GATEWAY;
+    awsResource.region = builtLambdaConfig.region;
+    awsResource.accountId = 'lambda';
+    awsResource.descriptor = resourceDescriptor;
+
+    return awsResource.extract();
+  }
+
+  /**
+   * @returns {Object}
+   */
+  get jsonEmptyTemplate() {
+    return {
+      'application/json': '',
+    };
+  }
+
+  /**
+   * @returns {Object}
+   */
+  get jsonEmptyModel() {
+    return {
+      'application/json': 'Empty',
+    };
   }
 }

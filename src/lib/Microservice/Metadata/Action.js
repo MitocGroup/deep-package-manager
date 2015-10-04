@@ -52,6 +52,16 @@ export class Action {
   }
 
   /**
+   * @returns {Array}
+   */
+  static get TYPES() {
+    return [
+      Action.LAMBDA,
+      Action.EXTERNAL,
+    ];
+  }
+
+  /**
    * @returns {String}
    */
   get resourceName() {
@@ -112,7 +122,7 @@ export class Action {
       type: this.type,
       source: this.source,
       methods: this.methods,
-      engine: this.engine
+      engine: this.engine,
     };
   }
 }

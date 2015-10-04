@@ -34,7 +34,7 @@ suite('Property/Lambda', function() {
     statusCode: 404,
   };
   let expectedResult = null;
-  let timeoutInput = 120;
+  let timeoutInput = 128;
 
   test('Class Lambda exists in Property/Lambda', function() {
     chai.expect(typeof Lambda).to.equal('function');
@@ -61,6 +61,7 @@ suite('Property/Lambda', function() {
     chai.expect(lambda.timeout).to.be.equal(Lambda.DEFAULT_TIMEOUT);
     lambda.timeout = timeoutInput;
     chai.expect(lambda.timeout).to.be.equal(timeoutInput);
+    lambda.timeout = Lambda.DEFAULT_TIMEOUT;
   });
 
   test('Check memorySize getter returns valid value', function() {
@@ -85,10 +86,10 @@ suite('Property/Lambda', function() {
       FunctionName: lambda.functionName,
       Handler: 'bootstrap.handler',
       LastModified: new Date().toISOString(),
-      MemorySize: Lambda.DEFAULT_MEMORY_LIMIT,
+      MemorySize: lambda._memorySize,
       Role: lambda._execRole.Arn,
-      Runtime: Lambda.DEFAULT_RUNTIME,
-      Timeout: Lambda.DEFAULT_TIMEOUT,
+      Runtime: lambda._runtime,
+      Timeout: lambda._timeout,
     };
     chai.expect(lambda.createConfigHookData.CodeSize).to.be.equal(configHookDataExpectedResult.CodeSize);
     chai.expect(lambda.createConfigHookData.Description).to.be.equal(configHookDataExpectedResult.Description);
@@ -118,11 +119,13 @@ suite('Property/Lambda', function() {
   });
 
   test('Check HANDLER static getter returns \'bootstrap.handler\'', function() {
-    chai.expect(Lambda.HANDLER).to.be.equal('bootstrap.handler');
+    chai.expect(lambda.handler).to.be.equal('bootstrap.handler');
   });
 
-  test('Check RUNTIME static getter returns \'nodejs\'', function() {
-    chai.expect(Lambda.RUNTIME).to.be.equal('nodejs');
+  test('Check RUNTIMES static getter returns [\'nodejs\', \'java8\']', function() {
+    chai.expect(Lambda.RUNTIMES.length).to.be.equal(2);
+    chai.expect(Lambda.RUNTIMES).to.be.includes('nodejs');
+    chai.expect(Lambda.RUNTIMES).to.be.includes('java8');
   });
 
   test('Check CONFIG_FILE static getter returns \'_config.json\'', function() {
