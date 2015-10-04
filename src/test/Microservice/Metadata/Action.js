@@ -11,8 +11,12 @@ suite('Microservice/Metadata/Action', function() {
     description: 'Lambda for retrieve counts',
     type: 'lambda',
     source: 'src/Property/RetrieveCounts',
+    engine: {
+      memory: 120,
+      timeout: 60,
+      runtime: 'nodejs',
+    },
     methods: ['GET', 'POST'],
-    engine: 'nodejs',
   };
 
   let action = new Action(configInput.resourceName, configInput.name, configInput);

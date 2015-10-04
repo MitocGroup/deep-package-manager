@@ -13,6 +13,7 @@ import {FailedSettingIdentityPoolRolesException} from './Exception/FailedSetting
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
 import {Exception} from '../../Exception/Exception';
 import {Action} from '../../Microservice/Metadata/Action';
+import {LambdaService} from './LambdaService';
 
 /**
  * Cognito service
@@ -129,9 +130,9 @@ export class CognitoIdentityService extends AbstractService {
       this._ready = true;
       return this;
     }
-
-    let lambdaArns = this.getAllLambdasArn(this.property.config.microservices);
-
+    
+    let lambdaArns = LambdaService.getAllLambdasArn(this.property.config.microservices);
+    
     this._updateCognitoRolesPolicy(
       this._config.roles,
       lambdaArns
@@ -291,14 +292,14 @@ export class CognitoIdentityService extends AbstractService {
       }
 
       let cognitoRole = cognitoRoles[cognitoRoleType];
-      let lambdasForRole = lambdaARNs[cognitoRoleType];
+      let lambdasForRole = lambdaARNs;
 
       // skip role if there are no lambdas to add
       if (lambdasForRole.length <= 0) {
         continue;
       }
 
-      let policy = CognitoIdentityService.getAccessPolicyForResources(lambdasForRole);
+      let policy = LambdaService.generateAllowInvokeFunctionPolicy(lambdasForRole);
 
       let params = {
         PolicyDocument: policy.toString(),
@@ -323,85 +324,6 @@ export class CognitoIdentityService extends AbstractService {
         callback(policies);
       }.bind(this));
     }.bind(this);
-  }
-
-  /**
-   * Allow Cognito users to invoke these lambdas
-   *
-   * @param {Object} lambdaARNs
-   * @returns {Core.AWS.IAM.Policy}
-   */
-  static getAccessPolicyForResources(lambdaARNs) {
-    let policy = new Core.AWS.IAM.Policy();
-
-    let statement = policy.statement.add();
-    let action = statement.action.add();
-
-    action.service = Core.AWS.Service.LAMBDA;
-    action.action = 'InvokeFunction';
-
-    for (let lambdaArnKey in lambdaARNs) {
-      if (!lambdaARNs.hasOwnProperty(lambdaArnKey)) {
-        continue;
-      }
-
-      let lambdaArn = lambdaARNs[lambdaArnKey];
-      let resource = statement.resource.add();
-
-      resource.updateFromArn(lambdaArn);
-    }
-
-    return policy;
-  }
-
-  /**
-   * @temp - allow all lambdas to be invoked by unauth users
-   *
-   * Collect all lambdas arn from all microservices
-   *
-   * @param {Object} microservicesConfig
-   * @returns {Object}
-   */
-  getAllLambdasArn(microservicesConfig) {
-    let lambdaArns = {};
-    lambdaArns[CognitoIdentityService.ROLE_AUTH] = [];
-    lambdaArns[CognitoIdentityService.ROLE_UNAUTH] = [];
-
-    for (let microserviceIdentifier in microservicesConfig) {
-      if (!microservicesConfig.hasOwnProperty(microserviceIdentifier)) {
-        continue;
-      }
-
-      let microservice = microservicesConfig[microserviceIdentifier];
-
-      for (let resourceName in microservice.resources) {
-        if (!microservice.resources.hasOwnProperty(resourceName)) {
-          continue;
-        }
-
-        let resourceActions = microservice.resources[resourceName];
-
-        for (let actionName in resourceActions) {
-          if (!resourceActions.hasOwnProperty(actionName)) {
-            continue;
-          }
-
-          let action = resourceActions[actionName];
-
-          if (action.type !== Action.LAMBDA) {
-            continue;
-          }
-
-          let actionIdentifier = `${resourceName}-${action.name}`;
-          let lambdaArn = microservice.deployedServices.lambdas[actionIdentifier].FunctionArn;
-
-          lambdaArns[CognitoIdentityService.ROLE_UNAUTH].push(lambdaArn);
-          lambdaArns[CognitoIdentityService.ROLE_AUTH].push(lambdaArn);
-        }
-      }
-    }
-
-    return lambdaArns;
   }
 
   /**

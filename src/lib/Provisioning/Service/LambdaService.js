@@ -13,6 +13,7 @@ import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleE
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {Lambda} from '../../Property/Lambda';
+import {IAMService} from './IAMService';
 
 /**
  * Lambda service
@@ -126,7 +127,7 @@ export class LambdaService extends AbstractService {
     let iam = this.provisioning.iam;
     let syncStack = new AwsRequestSyncStack();
     let execRoles = {};
-    let execRolePolicy = LambdaService.getExecRolePolicy(); // role policy (definition) is common for all lambdas
+    let execRolePolicy = IAMService.getAssumeRolePolicy(Core.AWS.Service.LAMBDA); // role policy (definition) is common for all lambdas
 
     for (let microserviceKey in microservices) {
       if (!microservices.hasOwnProperty(microserviceKey)) {
@@ -276,26 +277,6 @@ export class LambdaService extends AbstractService {
   }
 
   /**
-   * Creates lambda execution role default definition without access policy
-   *
-   * @returns {Policy}
-   */
-  static getExecRolePolicy() {
-    let execRolePolicy = new Core.AWS.IAM.Policy();
-
-    let statement = execRolePolicy.statement.add();
-    statement.principal = {
-      Service: Core.AWS.Service.identifier(Core.AWS.Service.LAMBDA),
-    };
-
-    let action = statement.action.add();
-    action.service = Core.AWS.Service.SECURITY_TOKEN_SERVICE;
-    action.action = 'AssumeRole';
-
-    return execRolePolicy;
-  }
-
-  /**
    * Allows lambda function access to all microservice resources (FS s3 buckets, DynamoDD tables, etc.)
    *
    * @param {String} microserviceIdentifier
@@ -380,5 +361,77 @@ export class LambdaService extends AbstractService {
     });
 
     return pascalCase;
+  }
+
+  /**
+   * Collect all lambdas arn from all microservices
+   *
+   * @param {Object} microservicesConfig
+   * @returns {Array}
+   */
+  static getAllLambdasArn(microservicesConfig) {
+    let lambdaArns = [];
+
+    for (let microserviceIdentifier in microservicesConfig) {
+      if (!microservicesConfig.hasOwnProperty(microserviceIdentifier)) {
+        continue;
+      }
+
+      let microservice = microservicesConfig[microserviceIdentifier];
+
+      for (let resourceName in microservice.resources) {
+        if (!microservice.resources.hasOwnProperty(resourceName)) {
+          continue;
+        }
+
+        let resourceActions = microservice.resources[resourceName];
+
+        for (let actionName in resourceActions) {
+          if (!resourceActions.hasOwnProperty(actionName)) {
+            continue;
+          }
+
+          let action = resourceActions[actionName];
+
+          if (action.type !== Action.LAMBDA) {
+            continue;
+          }
+
+          lambdaArns.push(microservice.deployedServices.lambdas[action.identifier].FunctionArn);
+        }
+      }
+    }
+
+    return lambdaArns;
+  }
+
+
+  /**
+   * Allow Cognito users to invoke these lambdas
+   *
+   * @param {Object} lambdaARNs
+   * @returns {Core.AWS.IAM.Policy}
+   */
+  static generateAllowInvokeFunctionPolicy(lambdaARNs) {
+    let policy = new Core.AWS.IAM.Policy();
+
+    let statement = policy.statement.add();
+    let action = statement.action.add();
+
+    action.service = Core.AWS.Service.LAMBDA;
+    action.action = 'InvokeFunction';
+
+    for (let lambdaArnKey in lambdaARNs) {
+      if (!lambdaARNs.hasOwnProperty(lambdaArnKey)) {
+        continue;
+      }
+
+      let lambdaArn = lambdaARNs[lambdaArnKey];
+      let resource = statement.resource.add();
+
+      resource.updateFromArn(lambdaArn);
+    }
+
+    return policy;
   }
 }

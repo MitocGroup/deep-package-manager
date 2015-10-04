@@ -18,7 +18,7 @@ import {ElasticacheService} from './Service/ElasticacheService';
 import {APIGatewayService} from './Service/APIGatewayService';
 import {Instance as PropertyInstance} from '../Property/Instance';
 import {WaitFor} from '../Helpers/WaitFor';
-import {Client as AwsApiGatewayClient} from 'amazon-api-gateway-client';
+import {Client as AwsApiGatewayClient} from 'aws-api-gw-client';
 
 /**
  * Provisioning instance
@@ -186,9 +186,7 @@ export class Instance {
         new CognitoIdentityService(this),
         new CloudFrontService(this),
         new LambdaService(this),
-
-        // @todo - activate it when implementation is done
-        // new APIGatewayService(this),
+        new APIGatewayService(this),
       ]);
     }
 
