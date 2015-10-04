@@ -17,7 +17,7 @@ import {Action} from '../Microservice/Metadata/Action';
 import Core from 'deep-core';
 import Tmp from 'tmp';
 import OS from 'os';
-import APIGatewayService from '../Provisioning/Service/APIGatewayService';
+import {APIGatewayService} from '../Provisioning/Service/APIGatewayService';
 import path from 'path';
 
 /**
