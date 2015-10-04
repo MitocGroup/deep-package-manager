@@ -117,6 +117,20 @@ export class Lambda {
   /**
    * @returns {String}
    */
+  get functionName() {
+    return this._name;
+  }
+
+  /**
+   * @returns {String}
+   */
+  get arn() {
+    return `arn:aws:lambda:${this.region}:${this.awsAccountId}:function:${this.functionName}`;
+  }
+
+  /**
+   * @returns {String}
+   */
   get runtime() {
     return this._runtime;
   }
@@ -400,7 +414,7 @@ export class Lambda {
     return {
       CodeSize: 0,
       Description: '',
-      FunctionArn: `arn:aws:lambda:${this.region}:${this.awsAccountId}:function:${this.functionName}`,
+      FunctionArn: this.arn,
       FunctionName: this.functionName,
       Handler: this.handler,
       LastModified: new Date().toISOString(),
@@ -420,13 +434,6 @@ export class Lambda {
   static isErrorFalsePositive(error) {
     return (error.code === 'ResourceConflictException' || error.code === 'EntityAlreadyExists')
       && error.statusCode === 409;
-  }
-
-  /**
-   * @returns {String}
-   */
-  get functionName() {
-    return this._name;
   }
 
   /**

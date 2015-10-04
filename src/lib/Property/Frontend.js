@@ -17,6 +17,7 @@ import {Action} from '../Microservice/Metadata/Action';
 import Core from 'deep-core';
 import Tmp from 'tmp';
 import OS from 'os';
+import APIGatewayService from '../Provisioning/Service/APIGatewayService'
 
 /**
  * Frontend
@@ -85,14 +86,11 @@ export class Frontend {
           microserviceConfig.resources[resourceName][action.name] = {
             type: action.type,
             methods: action.methods,
-            source: action.source,
+            source: {
+              api: APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName),
+              original: action.type === Action.LAMBDA ? microservice.lambdas[action.identifier].arn : action.source,
+            },
           };
-
-          if (action.type === Action.LAMBDA) {
-            let lambdaConfig = microservice.lambdas[action.identifier];
-            microserviceConfig.resources[resourceName][action.name].source = lambdaConfig.name;
-            microserviceConfig.resources[resourceName][action.name].region = lambdaConfig.region;
-          }
         }
       }
 
