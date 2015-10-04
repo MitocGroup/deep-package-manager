@@ -59,7 +59,7 @@ export class Instance {
     this._apiGateway = new AwsApiGatewayClient({
       accessKeyId: property.AWS.config.credentials.accessKeyId,
       secretAccessKey: property.AWS.config.credentials.secretAccessKey,
-      region: this.getAwsServiceRegion(CognitoIdentityService, property.config.awsRegion),
+      region: this.getAwsServiceRegion(APIGatewayService, property.config.awsRegion),
     });
 
     this._config = {};

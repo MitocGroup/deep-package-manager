@@ -378,6 +378,7 @@ export class APIGatewayService extends AbstractService {
 
   /**
    * @param {String} method
+   * @param {String} apiId
    * @param {Object} apiResources
    * @param {Object} integrationParams
    * @returns {Array}
