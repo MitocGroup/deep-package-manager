@@ -1,6 +1,6 @@
 {
-  "name": "@mitocgroup/deep-package-manager",
-  "version": "0.1.68",
+  "name": "deep-package-manager",
+  "version": "0.1.69",
   "description": "DEEP Package Manager",
   "keywords": [
     "Digital Enterprise End-To-End Platform",
@@ -50,8 +50,8 @@
     "prepublish": "npm run compile"
   },
   "dependencies": {
-    "@mitocgroup/deep-db": "*",
-    "@mitocgroup/deep-core": "*",
+    "deep-db": "*",
+    "deep-core": "*",
     "joi": "6.4.*",
     "jsonfile": "1.1.*",
     "underscore.string": "2.3.*",

@@ -2,7 +2,7 @@
 
 import chai from 'chai';
 import {KinesisService} from '../../../lib.compiled/Provisioning/Service/KinesisService';
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 
 suite('Provisioning/Service/KinesisService', function() {
   let kinesisService = new KinesisService();

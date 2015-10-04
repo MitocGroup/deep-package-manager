@@ -4,7 +4,7 @@
 
 'use strict';
 
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
 import {S3Service} from './Service/S3Service';
 import {CognitoIdentityService} from './Service/CognitoIdentityService';

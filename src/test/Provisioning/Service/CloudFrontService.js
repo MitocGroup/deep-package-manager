@@ -2,7 +2,7 @@
 
 import chai from 'chai';
 import {CloudFrontService} from '../../../lib.compiled/Provisioning/Service/CloudFrontService';
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 
 suite('Provisioning/Service/CloudFrontService', function() {
   let cloudFrontService = new CloudFrontService();

@@ -5,7 +5,7 @@
 'use strict';
 
 import {AbstractService} from './AbstractService';
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 import {Exception} from '../../Exception/Exception';
 
 /**

@@ -2,7 +2,7 @@
 
 import chai from 'chai';
 import {LambdaService} from '../../../lib.compiled/Provisioning/Service/LambdaService';
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 
 suite('Provisioning/Service/LambdaService', function() {
   let lambdaService = new LambdaService();

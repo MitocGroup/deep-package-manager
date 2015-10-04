@@ -4,7 +4,7 @@
 
 'use strict';
 
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 import Path from 'path';
 import {Instance as Microservice} from '../Microservice/Instance';
 import FileSystem from 'fs';

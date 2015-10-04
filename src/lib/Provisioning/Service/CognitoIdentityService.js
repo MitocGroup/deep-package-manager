@@ -5,7 +5,7 @@
 'use strict';
 
 import {AbstractService} from './AbstractService';
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 import {FailedToCreateIdentityPoolException} from './Exception/FailedToCreateIdentityPoolException';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';

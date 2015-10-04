@@ -2,7 +2,7 @@
 
 import chai from 'chai';
 import {APIGatewayService} from '../../../lib.compiled/Provisioning/Service/APIGatewayService';
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 
 suite('Provisioning/Service/APIGatewayService', function() {
   let apiGatewayService = new APIGatewayService();

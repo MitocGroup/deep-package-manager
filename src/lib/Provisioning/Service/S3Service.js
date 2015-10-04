@@ -5,7 +5,7 @@
 'use strict';
 
 import {AbstractService} from './AbstractService';
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 import {FailedToCreateBucketException} from './Exception/FailedToCreateBucketException';
 import {FailedAttachingPolicyToBucketException} from './Exception/FailedAttachingPolicyToBucketException';
 import {FailedSettingBucketAsWebsiteException} from './Exception/FailedSettingBucketAsWebsiteException';

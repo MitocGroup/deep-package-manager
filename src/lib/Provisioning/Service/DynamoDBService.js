@@ -5,8 +5,8 @@
 'use strict';
 
 import {AbstractService} from './AbstractService';
-import Core from '@mitocgroup/deep-core';
-import DB from '@mitocgroup/deep-db';
+import Core from 'deep-core';
+import DB from 'deep-db';
 
 /**
  * DynamoDB service
