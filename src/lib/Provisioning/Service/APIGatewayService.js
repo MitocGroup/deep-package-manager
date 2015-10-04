@@ -370,7 +370,7 @@ export class APIGatewayService extends AbstractService {
         throw new FailedAttachingPolicyToRoleException(params.PolicyName, params.RoleName, error);
       }
 
-      callback(params.PolicyDocument);
+      callback(policy);
     });
   }
 
