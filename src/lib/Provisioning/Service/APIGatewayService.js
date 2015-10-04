@@ -279,7 +279,10 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
-   * @param {Array} methodsParams
+   * @param {String} method
+   * @param {String} apiId
+   * @param {Object} apiResources
+   * @param {Object} integrationParams
    * @param {Function} callback
    * @private
    */
@@ -464,7 +467,7 @@ export class APIGatewayService extends AbstractService {
       let microservice = microservices[microserviceKey];
 
       if (microservice.resources.actions.length > 0) {
-        resourcePaths.push(this._pathify(microservice.identifier));
+        resourcePaths.push(APIGatewayService.pathify(microservice.identifier));
       }
 
       for (let actionKey in microservice.resources.actions) {
@@ -473,7 +476,7 @@ export class APIGatewayService extends AbstractService {
         }
 
         let action = microservice.resources.actions[actionKey];
-        let resourcePath = this._pathify(microservice.identifier, action.resourceName);
+        let resourcePath = APIGatewayService.pathify(microservice.identifier, action.resourceName);
 
         // push actions parent resource only once
         if (resourcePaths.indexOf(resourcePath) === -1) {
@@ -481,7 +484,7 @@ export class APIGatewayService extends AbstractService {
         }
 
         resourcePaths.push(
-          this._pathify(microservice.identifier, action.resourceName, action.name)
+          APIGatewayService.pathify(microservice.identifier, action.resourceName, action.name)
         );
       }
     }
@@ -497,7 +500,7 @@ export class APIGatewayService extends AbstractService {
    * @return {String}
    * @private
    */
-  _pathify(microserviceIdentifier, resourceName = '', actionName = '') {
+  static pathify(microserviceIdentifier, resourceName = '', actionName = '') {
     let path = `/${microserviceIdentifier}`;
 
     if (resourceName) {
@@ -566,7 +569,7 @@ export class APIGatewayService extends AbstractService {
           }
 
           let action = resourceActions[actionName];
-          let resourceApiPath = this._pathify(microserviceIdentifier, resourceName, actionName);
+          let resourceApiPath = APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName);
           integrationParams[resourceApiPath] = {};
           var httpMethod = null;
 
