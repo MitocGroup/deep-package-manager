@@ -38,7 +38,7 @@ DEEP is enabling developers and architects to:
 - Run in the cloud the software that was built by distributed teams and served self-service in large organizations
 - Monetize their work of art by uploading microservices to [DEEP Marketplace](https://www.deep.mg)
 
-> [DEEP Microservice](https://github.com/MitocGroup/deep/blob/master/docs/microservice.md) is the predefined structure of a microservice (an application) in DEEP. There is clear separation between frontend, backend and database, as well as unit tests and documentation. Developers are encouraged to try out our [DEEP Microservices HelloWorld](https://github.com/MitocGroup/deep-microservices-helloworld) example to get started, as well as [DEEP Package Manager](https://github.com/MitocGroup/deep-package-manager) called [`deepify`](https://github.com/MitocGroup/deepify).
+> [DEEP Microservice](https://github.com/MitocGroup/deep/blob/master/docs/microservice.md) is the predefined structure of a microservice (an application) in DEEP. There is clear separation between frontend, backend and database, as well as unit tests and documentation. Developers are encoraged to get started with [DEEP Microservices HelloWorld](https://github.com/MitocGroup/deep-microservices-helloworld) or [DEEP Microservices ToDo App](https://github.com/MitocGroup/deep-microservices-todo-app), as well as DEEP Development Tools called [`deepify`](https://www.npmjs.com/package/deepify).
 
 > [DEEP Marketplace](https://www.deep.mg) (aka [www.deep.mg](https://www.deep.mg)) is a web application built using DEEP and published on serverless environment from [Amazon Web Services](https://aws.amazon.com) (aka [aws.amazon.com](https://aws.amazon.com)). We make it faster and easier for developers to build and publish their software, as well as for businesses to discover and test applications they are looking for. Our goal is to connect businesses with developers, and empower technical teams to build self-service software that none technical teams could use. The marketplace is like Apple's App Store or Google's Play for web applications that run natively on cloud providers like AWS.
 
@@ -50,19 +50,19 @@ DEEP is using [microservices architecture](https://en.wikipedia.org/wiki/Microse
 
 DEEP Abstracted Library | Description | AWS Abstracted Service(s)
 -------------|---------------------|--------------------------
-deep-asset | Assets Management Library | TBU
-deep-cache | Cache Management Library | TBU
-deep-core | Core Management Library | TBU
-deep-db | Database Management Library | TBU
-deep-di | Dependency Injection Management Library | TBU
-deep-event | Events Management Library | TBU
-deep-fs | File System Management Library | TBU
-deep-kernel | Kernel Management Library | TBU
-deep-log | Logs Management Library | TBU
-deep-notification | Notifications Management Library | TBU
-deep-resource | Resouces Management Library | TBU
-deep-security | Security Management Library | TBU
-deep-validation | Validation Management Library | TBU
+deep-asset | Assets Management Library | Amazon S3
+deep-cache | Cache Management Library | Amazon ElastiCache
+deep-core | Core Management Library | -
+deep-db | Database Management Library | Amazon DynamoDB, Amazon SQS
+deep-di | Dependency Injection Management Library | -
+deep-event | Events Management Library | Amazon Kinesis
+deep-fs | File System Management Library | Amazon S3
+deep-kernel | Kernel Management Library | -
+deep-log | Logs Management Library | Amazon CloudWatch Logs
+deep-notification | Notifications Management Library | Amazon SNS
+deep-resource | Resouces Management Library | AWS Lambda, Amazon API Gateway
+deep-security | Security Management Library | AWS IAM, Amazon Cognito
+deep-validation | Validation Management Library | -
 
 ## License
 
