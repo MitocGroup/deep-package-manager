@@ -219,11 +219,9 @@ export class Instance {
 
     let lambdas = {};
     for (let lambdaInstance of lambdaInstances) {
-      lambdas[lambdaInstance.functionName] = lambdaInstance.createConfig(this._config);
-
-      // @todo: remove this hook?
-      lambdas[lambdaInstance.functionName].name = lambdaInstance.functionName;
-      lambdas[lambdaInstance.functionName].path = Path.join(lambdaInstance.path, 'bootstrap.js');
+      lambdas[lambdaInstance.arn] = lambdaInstance.createConfig(this._config);
+      lambdas[lambdaInstance.arn].name = lambdaInstance.functionName;
+      lambdas[lambdaInstance.arn].path = Path.join(lambdaInstance.path, 'bootstrap.js');
     }
 
     return lambdas;
