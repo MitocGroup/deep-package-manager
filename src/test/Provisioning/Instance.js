@@ -24,9 +24,4 @@ suite('Provisioning/Instance', function() {
     chai.expect(error).to.be.an.instanceOf(InvalidArgumentException);
 
   });
-
-  test('Check constructor initalizes fine', function() {
-    let prop = new property.Instance();
-    let provisioning = new Instance(prop);
-  })
 });

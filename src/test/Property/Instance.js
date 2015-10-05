@@ -68,8 +68,8 @@ suite('Property/Instance', function() {
 
     let propertyInstance = new PropertyInstance(configPath, configName);
 
-    let property = propertyInstance.deploy(function() {});
-
-    chai.expect(property).to.be.an.instanceOf(PropertyInstance);
+    //let property = propertyInstance.deploy(function() {});
+    //
+    //chai.expect(property).to.be.an.instanceOf(PropertyInstance);
   })
 });

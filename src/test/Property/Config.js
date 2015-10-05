@@ -5,7 +5,7 @@ import {Config} from '../../lib.compiled/Property/Config';
 
 suite('Property/Config', function() {
   let config = new Config();
-  let configName = 'test/Property/deeploy.test.json';
+  let configName = './test/testMaterials/Property/deeploy.test.json';
 
   test('Class Config exists in Property/Config', function() {
     chai.expect(typeof Config).to.equal('function');
@@ -33,17 +33,17 @@ suite('Property/Config', function() {
 
   test('Check createFromJsonFile() static method returns valid istance of Config class', function() {
     let extpectedResult = {
-      aws: {
-        accessKeyId: null,
-        region: null,
-        secretAccessKey: null,
+      "aws": {
+        "accessKeyId": "to_pass_string_validation",
+        "region": "region",
+        "secretAccessKey": "to_pass_string_validation"
       },
-      dependencies: {
-        bucket: 'testbucket',
+      "dependencies": {
+        "bucket": "testbucket"
       },
-      env: 'test',
-      awsAccountId: 123456789012,
-      appIdentifier: 'generated',
+      "env": "test",
+      "awsAccountId": 123456789012,
+      "appIdentifier": "generated"
     };
 
     chai.expect(Config.createFromJsonFile(configName).rawConfig).to.be.eql(extpectedResult);
