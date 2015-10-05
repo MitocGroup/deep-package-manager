@@ -7,7 +7,7 @@ deep-package-manager
 [![Codacy Badge](https://api.codacy.com/project/badge/0695c0d184ed4afe9ac9110c13252aab)](https://www.codacy.com/app/deep/deep-package-manager)
 [![API Docs](http://docs.deep.mg/badge.svg)](http://docs.deep.mg)
 
-[deep-package-manager](https://www.npmjs.com/package/deep-package-manager) is a node.js library, part of [DEEP Framework](https://github.com/MitocGroup/deep).
+[deep-package-manager](https://www.npmjs.com/package/deep-package-manager) is a node.js library, part of [DEEP Framework](https://github.com/MitocGroup/deep-framework).
 
 ![Digital Enterprise End-to-end Platform, aka DEEP](https://github.com/MitocGroup/deep-framework/blob/master/docs/deep-ecosystem.png)
 
