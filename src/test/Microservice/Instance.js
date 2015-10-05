@@ -2,6 +2,8 @@
 
 import chai from 'chai';
 import {Instance} from '../../lib.compiled/Microservice/Instance';
+import {FrontendEngine} from '../../lib.compiled/Microservice/FrontendEngine';
+import {InvalidArgumentException} from '../../lib.compiled/Exception/InvalidArgumentException';
 import {Parameters} from '../../lib.compiled/Microservice/Parameters';
 import {Config} from '../../lib.compiled/Microservice/Config';
 
@@ -29,8 +31,41 @@ suite('Microservice/Instance', function() {
     chai.expect(typeof Instance).to.equal('function');
   });
 
+  test('Contructor throws TypeError when called as a function', function() {
+    let e = null;
+    try {
+      Instance(config, parameters, basePath);
+    } catch(exception) {
+      e = exception;
+    }
+
+    chai.expect(e).to.be.an.instanceOf(TypeError);
+  });
+
+  test('Constructor throws InvalidArgumentException when config is not instance of config', function () {
+    let e = null;
+    try {
+      new Instance({}, parameters, basePath);
+    } catch(exception) {
+      e = exception
+    }
+
+    chai.expect(e).to.be.an.instanceOf(InvalidArgumentException);
+  });
+
   test('Check constructor sets valid default values', function() {
     chai.expect(instance._resources).to.be.equal(null);
+  });
+
+  test('Constructor throws InvalidArgumentException when parameters is not instance of parameters', function () {
+    let e = null;
+    try {
+      new Instance(config, {}, basePath);
+    } catch(exception) {
+      e = exception
+    }
+
+    chai.expect(e).to.be.an.instanceOf(InvalidArgumentException);
   });
 
   test('Check CONFIG_FILE static getter returns \'deepkg.json\'', function() {
@@ -75,5 +110,13 @@ suite('Microservice/Instance', function() {
 
   test('Check resources getter returns valid parameters object', function() {
     chai.expect(instance.resources).to.be.equal(instance._resources);
+  });
+
+  test('Check frontendEngine getter returns an instance of frontendEngine', function() {
+    chai.expect(instance.frontendEngine).to.be.an.instanceOf(FrontendEngine);
+  });
+
+  test('Check postDeployHook getter returns null when no hook exists', function (){
+    chai.expect(instance.postDeployHook).to.be.equal(null);
   });
 });
