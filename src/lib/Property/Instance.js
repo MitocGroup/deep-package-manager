@@ -361,6 +361,8 @@ export class Instance {
         this._config
           .microservices[microserviceIdentifier]
           .lambdas[lambdaIdentifier] = {
+            name: lambdaInstance.functionName,
+            region: lambdaInstance.region,
             arn: lambdaInstance.arn,
           };
 
