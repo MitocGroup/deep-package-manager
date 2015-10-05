@@ -100,7 +100,7 @@ export class Frontend {
           microserviceConfig.resources[resourceName][action.name] = {
             type: action.type,
             methods: action.methods,
-            region: action.region,
+            region: propertyConfig.awsRegion, // @todo: set it from lambda provision
             source: {
               api: apiEndpoint,
               original: originalSource,
