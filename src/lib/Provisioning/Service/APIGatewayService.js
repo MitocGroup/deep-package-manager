@@ -580,6 +580,7 @@ export class APIGatewayService extends AbstractService {
           }
 
           let action = resourceActions[actionName];
+          let actionMethods = action.methods.push('OPTIONS'); // adding OPTIONS method for CORS
           let resourceApiPath = APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName);
           integrationParams[resourceApiPath] = {};
           var httpMethod = null;
@@ -590,7 +591,7 @@ export class APIGatewayService extends AbstractService {
                 microservice.deployedServices.lambdas[action.identifier].FunctionArn
               );
 
-              for (httpMethod of action.methods) {
+              for (httpMethod of actionMethods) {
                 integrationParams[resourceApiPath][httpMethod] = {
                   type: 'AWS',
                   integrationHttpMethod: 'POST',
@@ -601,7 +602,7 @@ export class APIGatewayService extends AbstractService {
 
               break;
             case Action.EXTERNAL:
-              for (httpMethod of action.methods) {
+              for (httpMethod of actionMethods) {
                 integrationParams[resourceApiPath][httpMethod] = {
                   type: 'HTTP',
                   integrationHttpMethod: httpMethod,
