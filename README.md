@@ -64,14 +64,6 @@ deep-resource | Resouces Management Library | AWS Lambda, Amazon API Gateway
 deep-security | Security Management Library | AWS IAM, Amazon Cognito
 deep-validation | Validation Management Library | -
 
-## Running tests
-To run tests you should have globally installed the following npm packages:
-> mocha
-> chai
-> mocha-babel
-> babel
-
-After installing the specified packages you can run from `./src` folder `npm run test`
 ## License
 
 This repository can be used under the MIT license.
