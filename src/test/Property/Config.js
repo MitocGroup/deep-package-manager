@@ -33,17 +33,17 @@ suite('Property/Config', function() {
 
   test('Check createFromJsonFile() static method returns valid istance of Config class', function() {
     let extpectedResult = {
-      "aws": {
-        "accessKeyId": "to_pass_string_validation",
-        "region": "region",
-        "secretAccessKey": "to_pass_string_validation"
+      aws: {
+        accessKeyId: 'to_pass_string_validation',
+        region: 'region',
+        secretAccessKey: 'to_pass_string_validation',
       },
-      "dependencies": {
-        "bucket": "testbucket"
+      dependencies: {
+        bucket: 'testbucket',
       },
-      "env": "test",
-      "awsAccountId": 123456789012,
-      "appIdentifier": "generated"
+      env: 'test',
+      awsAccountId: 123456789012,
+      appIdentifier: 'generated',
     };
 
     chai.expect(Config.createFromJsonFile(configName).rawConfig).to.be.eql(extpectedResult);

@@ -93,9 +93,10 @@ suite('Provisioning/Service/AbstractService', function() {
     let e = null;
     try {
       service.getApiVersions('S3');
-    } catch(exception) {
+    } catch (exception) {
       e = exception;
     }
+
     chai.expect(e).to.be.an.instanceOf(Exception);
-  })
+  });
 });

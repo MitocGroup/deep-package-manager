@@ -43,11 +43,11 @@ suite('Property/Model', function() {
     chai.expect(models.pop()).to.be.an.instanceof(Model);
   });
 
-  test('Check create() static method throws SyntaxError on invalid model', function () {
+  test('Check create() static method throws SyntaxError on invalid model', function() {
     let exception = null;
     try {
       let models = Model.create('./test/Property/badModel');
-    } catch(e) {
+    } catch (e) {
       exception = e;
     }
 

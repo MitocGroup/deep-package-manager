@@ -81,7 +81,7 @@ suite('Property/Instance', function() {
     chai.expect(e).to.be.an.instanceOf(MissingRootException);
   });
 
-  test('Check build() method', function () {
+  test('Check build() method', function() {
     let propertyInstance = new PropertyInstance('./test/testMaterials/Property1', 'deeploy.test.json');
 
     chai.expect(propertyInstance.build(function() {})).to.be.an.instanceOf(PropertyInstance);
@@ -142,11 +142,12 @@ suite('Property/Instance', function() {
     let propertyInstance = new PropertyInstance('./test/testMaterials/Property2', 'deeploy.test.json');
 
     propertyInstance.build(function() {
-      try{
-        propertyInstance.deploy(function() {})
-      } catch(exception) {
+      try {
+        propertyInstance.deploy(function() {});
+      } catch (exception) {
         e = exception;
       }
+
       chai.expect(propertyInstance).to.be.an.instanceOf(PropertyInstance);
       chai.expect(e).to.be.an.instanceOf(TypeError);
     }, true);
@@ -159,5 +160,5 @@ suite('Property/Instance', function() {
     propertyInstance.install(function() {
       chai.expect(propertyInstance).to.be.an.instanceOf(PropertyInstance);
     });
-  })
+  });
 });

@@ -2,24 +2,24 @@
  * Created by Stefan Hariton on 10/5/15.
  */
 
-"use strict";
+'use strict';
 
-import chai from 'chai'
+import chai from 'chai';
 import {DuplicateRootException} from '../../../lib.compiled/Property/Exception/DuplicateRootException';
 
 suite('Property/Exception/DuplicateRootException', function() {
 
-  test('Class DuplicateRootException', function () {
+  test('Class DuplicateRootException', function() {
     let rootMicroservice = {
       config: {
-        identifier: "Root"
-      }
+        identifier: 'Root',
+      },
     };
 
     let microservice = {
       config: {
-        identifier: "Another microservice"
-      }
+        identifier: 'Another microservice',
+      },
     };
 
     let e = new DuplicateRootException(rootMicroservice, microservice);

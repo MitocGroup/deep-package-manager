@@ -35,19 +35,19 @@ suite('Microservice/Instance', function() {
     let e = null;
     try {
       Instance(config, parameters, basePath);
-    } catch(exception) {
+    } catch (exception) {
       e = exception;
     }
 
     chai.expect(e).to.be.an.instanceOf(TypeError);
   });
 
-  test('Constructor throws InvalidArgumentException when config is not instance of config', function () {
+  test('Constructor throws InvalidArgumentException when config is not instance of config', function() {
     let e = null;
     try {
       new Instance({}, parameters, basePath);
-    } catch(exception) {
-      e = exception
+    } catch (exception) {
+      e = exception;
     }
 
     chai.expect(e).to.be.an.instanceOf(InvalidArgumentException);
@@ -57,12 +57,12 @@ suite('Microservice/Instance', function() {
     chai.expect(instance._resources).to.be.equal(null);
   });
 
-  test('Constructor throws InvalidArgumentException when parameters is not instance of parameters', function () {
+  test('Constructor throws InvalidArgumentException when parameters is not instance of parameters', function() {
     let e = null;
     try {
       new Instance(config, {}, basePath);
-    } catch(exception) {
-      e = exception
+    } catch (exception) {
+      e = exception;
     }
 
     chai.expect(e).to.be.an.instanceOf(InvalidArgumentException);
@@ -116,7 +116,7 @@ suite('Microservice/Instance', function() {
     chai.expect(instance.frontendEngine).to.be.an.instanceOf(FrontendEngine);
   });
 
-  test('Check postDeployHook getter returns null when no hook exists', function (){
+  test('Check postDeployHook getter returns null when no hook exists', function() {
     chai.expect(instance.postDeployHook).to.be.equal(null);
   });
 });
