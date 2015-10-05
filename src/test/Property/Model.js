@@ -38,6 +38,19 @@ suite('Property/Model', function() {
   });
 
   test('Check create() static method creates valid models', function() {
-    chai.expect(modelInstance.create(['.'])).to.be.an('array');
+    let models = Model.create('./test/Property/goodModel');
+    chai.expect(models).to.be.an('array');
+    chai.expect(models.pop()).to.be.an.instanceof(Model);
+  });
+
+  test('Check create() static method throws SyntaxError on invalid model', function () {
+    let exception = null;
+    try {
+      let models = Model.create('./test/Property/badModel');
+    } catch(e) {
+      exception = e;
+    }
+
+    chai.expect(exception).to.be.an.instanceof(SyntaxError);
   });
 });
