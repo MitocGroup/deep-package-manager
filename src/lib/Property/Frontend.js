@@ -14,9 +14,11 @@ import {MissingRootIndexException} from './Exception/MissingRootIndexException';
 import {FailedUploadingFileToS3Exception} from './Exception/FailedUploadingFileToS3Exception';
 import {AwsRequestSyncStack} from '../Helpers/AwsRequestSyncStack';
 import {Action} from '../Microservice/Metadata/Action';
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 import Tmp from 'tmp';
 import OS from 'os';
+import {APIGatewayService} from '../Provisioning/Service/APIGatewayService';
+import path from 'path';
 
 /**
  * Frontend
@@ -47,11 +49,15 @@ export class Frontend {
       globals: propertyConfig.globals,
     };
 
+    let apiGatewayBaseUrl = '';
+
     if (propertyConfig.provisioning) {
       let cognitoConfig = propertyConfig.provisioning[Core.AWS.Service.COGNITO_IDENTITY];
 
       config.identityPoolId = cognitoConfig.identityPool.IdentityPoolId;
       config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders;
+
+      apiGatewayBaseUrl = propertyConfig.provisioning[Core.AWS.Service.API_GATEWAY].api.baseUrl;
     }
 
     for (let microserviceIdentifier in propertyConfig.microservices) {
@@ -82,17 +88,23 @@ export class Frontend {
 
           let action = resourceActions[actionName];
 
+          let apiEndpoint = path.join(
+            apiGatewayBaseUrl,
+            APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName)
+          );
+
+          let originalSource = (action.type === Action.LAMBDA) ?
+            microservice.lambdas[action.identifier].arn :
+            action.source;
+
           microserviceConfig.resources[resourceName][action.name] = {
             type: action.type,
             methods: action.methods,
-            source: action.source,
+            source: {
+              api: apiEndpoint,
+              original: originalSource,
+            },
           };
-
-          if (action.type === Action.LAMBDA) {
-            let lambdaConfig = microservice.lambdas[action.identifier];
-            microserviceConfig.resources[resourceName][action.name].source = lambdaConfig.name;
-            microserviceConfig.resources[resourceName][action.name].region = lambdaConfig.region;
-          }
         }
       }
 

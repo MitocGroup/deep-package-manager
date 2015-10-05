@@ -4,7 +4,7 @@
 
 'use strict';
 
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 import {WaitFor} from '../../Helpers/WaitFor';
 import {Hash} from '../../Helpers/Hash';
 import {Exception} from '../../Exception/Exception';
@@ -23,6 +23,21 @@ export class AbstractService extends Core.OOP.Interface {
     this._provisioning = provisioning;
     this._ready = false;
     this._readyTeardown = false;
+    this._isUpdate = false;
+  }
+
+  /**
+   * @param {Boolean} state
+   */
+  set isUpdate(state) {
+    this._isUpdate = state;
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  get isUpdate() {
+    return this._isUpdate;
   }
 
   /**
@@ -167,6 +182,18 @@ export class AbstractService extends Core.OOP.Interface {
    */
   get env() {
     return this.property.config.env;
+  }
+
+  /**
+   * @param {String} service
+   * @returns {Array}
+   */
+  getApiVersions(service) {
+    try {
+      return this.property.AWS[service].apiVersions;
+    } catch (e) {
+      throw new Exception(`Failed to retrieve apiVersions for "${service}" AWS service. ${e.message}`);
+    }
   }
 
   /**

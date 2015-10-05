@@ -2,7 +2,7 @@
 
 import chai from 'chai';
 import {CognitoIdentityService} from '../../../lib.compiled/Provisioning/Service/CognitoIdentityService';
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 
 suite('Provisioning/Service/CognitoIdentityService', function() {
   let cognitoIdentityServiceInstance = new CognitoIdentityService();

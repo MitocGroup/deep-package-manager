@@ -2,7 +2,7 @@
 
 import chai from 'chai';
 import {IAMService} from '../../../lib.compiled/Provisioning/Service/IAMService';
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 
 suite('Provisioning/Service/IAMService', function() {
   let iamService = new IAMService();

@@ -13,7 +13,7 @@ import {AwsRequestSyncStack} from '../Helpers/AwsRequestSyncStack';
 import {WaitFor} from '../Helpers/WaitFor';
 import Path from 'path';
 import {Frontend} from './Frontend';
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 import JsonFile from 'jsonfile';
 import {S3Service} from '../Provisioning/Service/S3Service';
 import Mime from 'mime';
@@ -45,6 +45,7 @@ export class Lambda {
 
     this._memorySize = Lambda.DEFAULT_MEMORY_LIMIT;
     this._timeout = Lambda.DEFAULT_TIMEOUT;
+    this._runtime = Lambda.DEFAULT_RUNTIME;
 
     this._uploadedLambda = null;
   }
@@ -111,6 +112,34 @@ export class Lambda {
    */
   get region() {
     return this._property.provisioning.lambda.config.region;
+  }
+
+  /**
+   * @returns {String}
+   */
+  get functionName() {
+    return this._name;
+  }
+
+  /**
+   * @returns {String}
+   */
+  get arn() {
+    return `arn:aws:lambda:${this.region}:${this.awsAccountId}:function:${this.functionName}`;
+  }
+
+  /**
+   * @returns {String}
+   */
+  get runtime() {
+    return this._runtime;
+  }
+
+  /**
+   * @param {String} runtime
+   */
+  set runtime(runtime) {
+    this._runtime = runtime;
   }
 
   /**
@@ -346,9 +375,9 @@ export class Lambda {
             S3ObjectVersion: data.VersionId,
           },
           FunctionName: this.functionName,
-          Handler: Lambda.HANDLER,
+          Handler: this.handler,
           Role: this._execRole.Arn,
-          Runtime: Lambda.RUNTIME,
+          Runtime: this._runtime,
           MemorySize: this._memorySize,
           Timeout: this._timeout,
         };
@@ -385,14 +414,14 @@ export class Lambda {
     return {
       CodeSize: 0,
       Description: '',
-      FunctionArn: `arn:aws:lambda:${this.region}:${this.awsAccountId}:function:${this.functionName}`,
+      FunctionArn: this.arn,
       FunctionName: this.functionName,
-      Handler: Lambda.HANDLER,
+      Handler: this.handler,
       LastModified: new Date().toISOString(),
-      MemorySize: Lambda.DEFAULT_MEMORY_LIMIT,
+      MemorySize: this._memorySize,
       Role: this._execRole.Arn,
-      Runtime: Lambda.RUNTIME,
-      Timeout: Lambda.DEFAULT_TIMEOUT,
+      Runtime: this._runtime,
+      Timeout: this._timeout,
     };
   }
 
@@ -408,13 +437,6 @@ export class Lambda {
   }
 
   /**
-   * @returns {String}
-   */
-  get functionName() {
-    return this._name;
-  }
-
-  /**
    * @returns {Lambda}
    */
   persistConfig() {
@@ -424,6 +446,22 @@ export class Lambda {
     );
 
     return this;
+  }
+
+  /**
+   * @returns {String}
+   */
+  get handler() {
+    return this._runtime === 'nodejs'
+      ? 'bootstrap.handler'
+      : 'bootstrap.handler::handle';
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get CONFIG_FILE() {
+    return '_config.json';
   }
 
   /**
@@ -441,23 +479,23 @@ export class Lambda {
   }
 
   /**
-   * @returns {String}
+   * @returns {Number}
    */
-  static get HANDLER() {
-    return 'bootstrap.handler';
+  static get MAX_TIMEOUT() {
+    return 60;
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get RUNTIMES() {
+    return ['nodejs', 'java8'];
   }
 
   /**
    * @returns {String}
    */
-  static get RUNTIME() {
-    return 'nodejs';
-  }
-
-  /**
-   * @returns {String}
-   */
-  static get CONFIG_FILE() {
-    return '_config.json';
+  static get DEFAULT_RUNTIME() {
+    return Lambda.RUNTIMES[0];
   }
 }

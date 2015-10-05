@@ -25,7 +25,7 @@ suite('Property/Instance', function() {
     }
 
     chai.expect(error).to.be.an.instanceOf(Exception);
-    //chai.expect(error.message).to.be.equal(`Missing ${invalidConfigName} configuration file from ${invalidConfigPath}.`);
+    chai.expect(error.message).to.be.equal(`Missing ${invalidConfigName} configuration file from ${invalidConfigPath}.`);
   });
 
   test('Check constructor sets valid default values', function() {

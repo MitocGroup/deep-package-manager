@@ -5,7 +5,7 @@
 'use strict';
 
 import {AbstractService} from './AbstractService';
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 import {FailedToCreateBucketException} from './Exception/FailedToCreateBucketException';
 import {FailedAttachingPolicyToBucketException} from './Exception/FailedAttachingPolicyToBucketException';
 import {FailedSettingBucketAsWebsiteException} from './Exception/FailedSettingBucketAsWebsiteException';
@@ -100,6 +100,12 @@ export class S3Service extends AbstractService {
    * @returns {S3Service}
    */
   _setup(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._ready = true;
+      return this;
+    }
+
     this._createFsBuckets(
       S3Service.FS_BUCKETS_SUFFIX
     )(function(buckets) {
@@ -117,6 +123,12 @@ export class S3Service extends AbstractService {
    * @returns {S3Service}
    */
   _postProvision(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._readyTeardown = true;
+      return this;
+    }
+
     this._readyTeardown = true;
 
     return this;
@@ -127,6 +139,12 @@ export class S3Service extends AbstractService {
    * @returns {S3Service}
    */
   _postDeployProvision(services) {
+    // @todo: implement!
+    if (this._isUpdate) {
+      this._ready = true;
+      return this;
+    }
+
     this._ready = true;
 
     return this;

@@ -4,7 +4,7 @@
 
 'use strict';
 
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
 import {S3Service} from './Service/S3Service';
 import {CognitoIdentityService} from './Service/CognitoIdentityService';
@@ -18,7 +18,7 @@ import {ElasticacheService} from './Service/ElasticacheService';
 import {APIGatewayService} from './Service/APIGatewayService';
 import {Instance as PropertyInstance} from '../Property/Instance';
 import {WaitFor} from '../Helpers/WaitFor';
-import {Client as AwsApiGatewayClient} from 'amazon-api-gateway-client';
+import {Client as AwsApiGatewayClient} from 'aws-api-gw-client';
 
 /**
  * Provisioning instance
@@ -59,7 +59,7 @@ export class Instance {
     this._apiGateway = new AwsApiGatewayClient({
       accessKeyId: property.AWS.config.credentials.accessKeyId,
       secretAccessKey: property.AWS.config.credentials.secretAccessKey,
-      region: this.getAwsServiceRegion(CognitoIdentityService, property.config.awsRegion),
+      region: this.getAwsServiceRegion(APIGatewayService, property.config.awsRegion),
     });
 
     this._config = {};
@@ -84,6 +84,13 @@ export class Instance {
    */
   get config() {
     return this._config;
+  }
+
+  /**
+   * @param {Object} cfg
+   */
+  set config(cfg) {
+    this._config = cfg;
   }
 
   /**
@@ -179,9 +186,7 @@ export class Instance {
         new CognitoIdentityService(this),
         new CloudFrontService(this),
         new LambdaService(this),
-
-        // @todo - activate it when implementation is done
-        // new APIGatewayService(this),
+        new APIGatewayService(this),
       ]);
     }
 
@@ -189,18 +194,29 @@ export class Instance {
   }
 
   /**
+   * @todo: split update into a separate method
+   *
    * @param {Function} callback
+   * @param {Boolean} isUpdate
    */
-  create(callback) {
+  create(callback, isUpdate = false) {
     if (!(callback instanceof Function)) {
       throw new InvalidArgumentException(callback, 'Function');
     }
 
     let services = this.services;
     let wait = new WaitFor();
-    let remaining = services.iterator.length;
+    let servicesVector = services.iterator;
+    let remaining = servicesVector.length;
 
-    for (let service of services.iterator) {
+    // @todo: improve this
+    if (isUpdate) {
+      for (let service of servicesVector) {
+        service.isUpdate = true;
+      }
+    }
+
+    for (let service of servicesVector) {
       service.setup(services).ready(function() {
         this._config[service.name()] = service.config();
         remaining--;
@@ -214,15 +230,19 @@ export class Instance {
     wait.ready(function() {
       let subWait = new WaitFor();
 
-      let subRemaining = services.iterator.length;
+      let subRemaining = servicesVector.length;
 
-      for (let service of services.iterator) {
+      for (let service of servicesVector) {
         service.postProvision(services).ready(function() {
           // @todo: why is this resetting the object?
           //this._config[service.name()] = service.config();
           subRemaining--;
         }.bind(this));
       }
+
+      subWait.push(function() {
+        return subRemaining <= 0;
+      }.bind(this));
 
       subWait.ready(function() {
         callback(this._config);
@@ -232,19 +252,29 @@ export class Instance {
 
   /**
    * @param {Function} callback
+   * @param {Boolean} isUpdate
    */
-  postDeployProvision(callback) {
+  postDeployProvision(callback, isUpdate = false) {
     if (!(callback instanceof Function)) {
       throw new InvalidArgumentException(callback, 'Function');
     }
 
     let services = this.services;
     let wait = new WaitFor();
-    let remaining = services.iterator.length;
+    let servicesVector = services.iterator;
+    let remaining = servicesVector.length;
 
-    for (let service of services.iterator) {
+    // @todo: improve this
+    if (isUpdate) {
+      for (let service of servicesVector) {
+        service.isUpdate = true;
+      }
+    }
+
+    for (let service of servicesVector) {
       service.postDeployProvision(services).ready(function() {
-        this._config[service.name()] = service.config();
+        // @todo: why is this resetting the object?
+        //this._config[service.name()] = service.config();
         remaining--;
       }.bind(this));
     }

@@ -2,7 +2,7 @@
 
 import chai from 'chai';
 import {DynamoDBService} from '../../../lib.compiled/Provisioning/Service/DynamoDBService';
-import Core from '@mitocgroup/deep-core';
+import Core from 'deep-core';
 
 suite('Provisioning/Service/DynamoDBService', function() {
   let dynamoDBService = new DynamoDBService();
