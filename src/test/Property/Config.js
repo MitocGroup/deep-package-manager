@@ -5,7 +5,7 @@ import {Config} from '../../lib.compiled/Property/Config';
 
 suite('Property/Config', function() {
   let config = new Config();
-  let configName = './test/testMaterials/Property/deeploy.test.json';
+  let configName = './test/testMaterials/Property1/deeploy.test.json';
 
   test('Class Config exists in Property/Config', function() {
     chai.expect(typeof Config).to.equal('function');
