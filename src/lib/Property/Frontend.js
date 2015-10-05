@@ -100,6 +100,7 @@ export class Frontend {
           microserviceConfig.resources[resourceName][action.name] = {
             type: action.type,
             methods: action.methods,
+            region: action.region,
             source: {
               api: apiEndpoint,
               original: originalSource,
