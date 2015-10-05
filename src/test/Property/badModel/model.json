@@ -2,7 +2,7 @@
   "UserId":    "string",
   "AccountId":  "string",
   "URL":        "string",
-  "Metadata":   "map",
+  "Metadata":   "integer"
   "Size": {
     "Width": "number",
     "Height": "number"
