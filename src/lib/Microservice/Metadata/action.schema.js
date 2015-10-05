@@ -25,7 +25,7 @@ export default Joi.object().keys({
     timeout: Lambda.DEFAULT_TIMEOUT,
     runtime: Lambda.DEFAULT_RUNTIME,
   }).when('type', {
-    is: Action.LAMBDA,
+    is: Action.LAMBDA, // @todo - this condition doesn't work, default engine settings are applied for external resources also
     otherwise: Joi.any().forbidden(),
   }),
 });
