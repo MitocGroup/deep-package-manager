@@ -56,6 +56,13 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
+   * @returns {String}
+   */
+  get stageName() {
+    return this.env;
+  }
+
+  /**
    * @returns {String[]}
    */
   static get AVAILABLE_REGIONS() {
@@ -84,6 +91,7 @@ export class APIGatewayService extends AbstractService {
       this._config.api = {
         id: api.id,
         name: api.name,
+        baseUrl: api.baseUrl,
         resources: resources,
         role: role,
       };
@@ -129,13 +137,12 @@ export class APIGatewayService extends AbstractService {
       this._config.api.role,
       lambdasArn,
       integrationParams
-    )(function(methods, integrations, rolePolicy, deployedApi, apiBaseUrl) {
+    )(function(methods, integrations, rolePolicy, deployedApi) {
       this._config.postDeploy = {
         methods: methods,
         integrations: integrations,
         rolePolicy: rolePolicy,
-        deployedApi: deployedApi,
-        apiBaseUrl: apiBaseUrl,
+        deployedApi: deployedApi
       };
       this._ready = true;
     }.bind(this));
@@ -202,8 +209,8 @@ export class APIGatewayService extends AbstractService {
               this._addPolicyToApiRole(apiRole, lambdasArn, (data) => {
                 rolePolicy = data;
 
-                this._deployApi(apiId, (deployedApi, apiBaseUrl) => {
-                  callback(methods, integrations, rolePolicy, deployedApi, apiBaseUrl);
+                this._deployApi(apiId, (deployedApi) => {
+                  callback(methods, integrations, rolePolicy, deployedApi);
                 });
               });
             });
@@ -222,7 +229,12 @@ export class APIGatewayService extends AbstractService {
     let apiGateway = this.provisioning.apiGateway;
 
     apiGateway.createRestapi(metadata).then((api) => {
-      callback(api.source);
+      let apiSource = api.source;
+
+      // generate base url for created API coz it's not returned by createRestapi method
+      apiSource.baseUrl = this._generateApiBaseUrl(apiSource.id, apiGateway.region, this.stageName);
+
+      callback(apiSource);
     }).catch((error) => {
 
       if (error) {
@@ -279,7 +291,10 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
-   * @param {Array} methodsParams
+   * @param {String} method
+   * @param {String} apiId
+   * @param {Object} apiResources
+   * @param {Object} integrationParams
    * @param {Function} callback
    * @private
    */
@@ -331,13 +346,13 @@ export class APIGatewayService extends AbstractService {
 
     let params = {
       restapiId: apiId,
-      stageName: this.env,
+      stageName: this.stageName,
       stageDescription: `Stage for "${this.env}" environment`,
       description: `Deployed on ${new Date().toTimeString()}`,
     };
 
     apiGateway.createDeployment(params).then((deployment) => {
-      callback(deployment, this._generateApiBaseUrl(apiId, apiGateway.region, params.stageName));
+      callback(deployment);
     }).catch((error) => {
 
       if (error) {
@@ -370,7 +385,7 @@ export class APIGatewayService extends AbstractService {
         throw new FailedAttachingPolicyToRoleException(params.PolicyName, params.RoleName, error);
       }
 
-      callback(params.PolicyDocument);
+      callback(policy);
     });
   }
 
@@ -464,7 +479,7 @@ export class APIGatewayService extends AbstractService {
       let microservice = microservices[microserviceKey];
 
       if (microservice.resources.actions.length > 0) {
-        resourcePaths.push(this._pathify(microservice.identifier));
+        resourcePaths.push(APIGatewayService.pathify(microservice.identifier));
       }
 
       for (let actionKey in microservice.resources.actions) {
@@ -473,7 +488,7 @@ export class APIGatewayService extends AbstractService {
         }
 
         let action = microservice.resources.actions[actionKey];
-        let resourcePath = this._pathify(microservice.identifier, action.resourceName);
+        let resourcePath = APIGatewayService.pathify(microservice.identifier, action.resourceName);
 
         // push actions parent resource only once
         if (resourcePaths.indexOf(resourcePath) === -1) {
@@ -481,7 +496,7 @@ export class APIGatewayService extends AbstractService {
         }
 
         resourcePaths.push(
-          this._pathify(microservice.identifier, action.resourceName, action.name)
+          APIGatewayService.pathify(microservice.identifier, action.resourceName, action.name)
         );
       }
     }
@@ -495,9 +510,8 @@ export class APIGatewayService extends AbstractService {
    * @param {String} actionName
    *
    * @return {String}
-   * @private
    */
-  _pathify(microserviceIdentifier, resourceName = '', actionName = '') {
+  static pathify(microserviceIdentifier, resourceName = '', actionName = '') {
     let path = `/${microserviceIdentifier}`;
 
     if (resourceName) {
@@ -566,15 +580,14 @@ export class APIGatewayService extends AbstractService {
           }
 
           let action = resourceActions[actionName];
-          let resourceApiPath = this._pathify(microserviceIdentifier, resourceName, actionName);
+          let resourceApiPath = APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName);
           integrationParams[resourceApiPath] = {};
           var httpMethod = null;
 
           switch (action.type) {
             case Action.LAMBDA:
               let uri = this._composeLambdaIntegrationUri(
-                microservice.lambdas[action.identifier],
-                microservice.deployedServices.lambdas[action.identifier]
+                microservice.deployedServices.lambdas[action.identifier].FunctionArn
               );
 
               for (httpMethod of action.methods) {
@@ -615,19 +628,20 @@ export class APIGatewayService extends AbstractService {
    *
    * @example arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:389617777922:function:DeepDevSampleSayHelloa24bd154/invocations
    *
-   * @param {Object} builtLambdaConfig
-   * @param {Object} deployedLambdaConfig
+   * @param {String} lambdaArn
    * @returns {String}
    * @private
    */
-  _composeLambdaIntegrationUri(builtLambdaConfig, deployedLambdaConfig) {
-    let lambdaArn = deployedLambdaConfig.FunctionArn;
+  _composeLambdaIntegrationUri(lambdaArn) {
     let lambdaApiVersion = this.getApiVersions('Lambda').pop();
     let resourceDescriptor = `path/${lambdaApiVersion}/functions/${lambdaArn}/invocations`;
 
+    let lambdaResource = Core.AWS.IAM.Factory.create('resource');
+    lambdaResource.updateFromArn(lambdaArn);
+
     let awsResource = Core.AWS.IAM.Factory.create('resource');
     awsResource.service = Core.AWS.Service.API_GATEWAY;
-    awsResource.region = builtLambdaConfig.region;
+    awsResource.region = lambdaResource.region;
     awsResource.accountId = 'lambda';
     awsResource.descriptor = resourceDescriptor;
 
