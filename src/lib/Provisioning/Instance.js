@@ -218,7 +218,8 @@ export class Instance {
 
     for (let service of servicesVector) {
       service.setup(services).ready(function() {
-        this._config[service.name()] = service.config();
+        // @temp keep old provisioned config in case of update
+        this._config[service.name()] = isUpdate ? this.property.config.provisioning[service.name()] : service.config();
         remaining--;
       }.bind(this));
     }
