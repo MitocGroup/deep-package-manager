@@ -9,7 +9,7 @@ export class FrontendEngine {
    * @param {String[]} engines
    */
   constructor(...engines) {
-    this._rawEngines = engines || FrontendEngine.engines;
+    this._rawEngines = engines.length ? engines : FrontendEngine.engines;
     this._engines = this._rawEngines.map(FrontendEngine.getRealEngine);
   }
 
@@ -54,15 +54,15 @@ export class FrontendEngine {
    */
   findSuitable(...microservices) {
     let engines = microservices.map((microservice) => microservice.frontendEngine);
-    let plainEngines = [];
+    let plainEnginesBatch = [];
 
-    for (let engine of engines) {
-      plainEngines.concat(engine.engines);
+    for (let frontendEngine of engines) {
+      plainEnginesBatch.concat(frontendEngine.engines);
     }
 
-    plainEngineLoop: for (let plainEngine of plainEngines) {
-      for (let engine of engines) {
-        if (!engine.match(plainEngine)) {
+    plainEngineLoop: for (let plainEngine of this._rawEngines) {
+      for (let plainEngines of plainEnginesBatch) {
+        if (plainEngines.indexOf(plainEngine) === -1) {
           continue plainEngineLoop;
         }
       }
@@ -78,9 +78,17 @@ export class FrontendEngine {
    * @returns {Boolean}
    */
   match(engine) {
-    let realEngines = FrontendEngine.getRealEngine(engine);
+    let realEngine = FrontendEngine.getRealEngine(engine);
 
-    return this._engines.indexOf(realEngines) !== -1;
+    return this._engines.indexOf(realEngine) !== -1;
+  }
+
+  /**
+   * @param {String} engine
+   * @returns {String}
+   */
+  static getEngineRepository(engine) {
+    return FrontendEngine.REPOSITORIES[engine];
   }
 
   /**
@@ -109,5 +117,16 @@ export class FrontendEngine {
    */
   static get ANGULAR_ENGINE() {
     return 'angular';
+  }
+
+  /**
+   * @returns {Object}
+   */
+  static get REPOSITORIES() {
+    let repos = {};
+
+    repos[FrontendEngine.ANGULAR_ENGINE] = 'https://github.com/MitocGroup/deep-microservices-root-angularjs.git';
+
+    return repos;
   }
 }

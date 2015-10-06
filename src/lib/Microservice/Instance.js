@@ -12,6 +12,7 @@ import {ResourceCollection} from './Metadata/ResourceCollection';
 import {Compiler} from '../Compilation/Compiler';
 import StringUtils from 'underscore.string';
 import {PostDeployHook} from './PostDeployHook';
+import {InitHook} from './InitHook';
 import {FrontendEngine} from './FrontendEngine';
 
 /**
@@ -39,6 +40,7 @@ export class Instance {
     this._resources = null;
 
     this._postDeployHook = new PostDeployHook(this);
+    this._initHook = new InitHook(this);
   }
 
   /**
@@ -148,6 +150,13 @@ export class Instance {
    */
   get autoload() {
     return this._autoload;
+  }
+
+  /**
+   * @returns {Function}
+   */
+  get initHook() {
+    return this._initHook.getHook();
   }
 
   /**
