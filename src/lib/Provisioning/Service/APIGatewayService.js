@@ -444,14 +444,17 @@ export class APIGatewayService extends AbstractService {
             break;
           case 'putIntegration':
             params = resourceMethods[resourceMethod];
+            params.requestParameters = this._getMethodRequestParameters(resourceMethod, Object.keys(resourceMethods));
 
             //methodParams.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
-            params.credentials = resourceMethod === 'OPTIONS' ? null : 'arn:aws:iam::*:user/*'; // @todo - find a smarter way to enable "Invoke with caller credentials" option
+            // @todo - find a smarter way to enable "Invoke with caller credentials" option
+            params.credentials = resourceMethod === 'OPTIONS' ? null : 'arn:aws:iam::*:user/*';
             break;
           case 'putIntegrationResponse':
             params = {
               statusCode: 200,
               responseTemplates: this.jsonEmptyTemplate,
+              responseParameters: this._getMethodResponseParameters(resourceMethod, Object.keys(resourceMethods)),
             };
             break;
           default:
@@ -689,45 +692,36 @@ export class APIGatewayService extends AbstractService {
 
   /**
    * @param {String} httpMethod
+   * @param {Array|null} resourceMethods
    * @returns {Object}
    */
-  _getMethodResponseParameters(httpMethod) {
-    let prefix = 'method.response.header';
-
-    let params = {};
-    this._getMethodCorsHeaders(httpMethod).forEach((header) => {
-      params[`${prefix}.${header}`] = true;
-    });
-
-    return params;
+  _getMethodResponseParameters(httpMethod, resourceMethods = null) {
+    return _getMethodCorsHeaders('method.response.header', httpMethod, resourceMethods);
   }
 
   /**
    * @param {String} httpMethod
+   * @param {Array|null} resourceMethods
    * @returns {Object}
    */
-  _getMethodRequestParameters(httpMethod) {
-    let prefix = 'method.request.header';
-
-    let params = {};
-    this._getMethodCorsHeaders(httpMethod).forEach((header) => {
-      params[`${prefix}.${header}`] = true;
-    });
-
-    return params;
+  _getMethodRequestParameters(httpMethod, resourceMethods = null) {
+    return _getMethodCorsHeaders('method.request.header', httpMethod, resourceMethods);
   }
 
   /**
+   * @param {String} prefix
    * @param {String} httpMethod
-   * @returns {Array}
+   * @param {Array|null} resourceMethods
+   * @returns {Object}
    */
-  _getMethodCorsHeaders(httpMethod) {
-    let headers = [
-      'Access-Control-Allow-Origin',
-    ];
+  _getMethodCorsHeaders(prefix, httpMethod, resourceMethods = null) {
+    let headers = {};
+
+    headers[`${prefix}.Access-Control-Allow-Origin`] = resourceMethods ? '*' : true;
 
     if (httpMethod === 'OPTIONS') {
-      headers.push('Access-Control-Allow-Headers', 'Access-Control-Allow-Methods');
+      headers[`${prefix}.Access-Control-Allow-Headers`] = resourceMethods ? 'Content-Type,X-Amz-Date,Authorization' : true;
+      headers[`${prefix}.Access-Control-Allow-Methods`] = resourceMethods ? resourceMethods.join(',') : true;
     }
 
     return headers;
