@@ -13,7 +13,7 @@ deep-package-manager
 
 Digital Enterprise End-to-end Platform (also known as DEEP) is low cost and low maintenance digital platform powered by abstracted services from AWS. We enable businesses and developers to achieve more by doing less.
 
-## DEEP for Businesses
+## DEEP for Businesses [![Join char on gitter.im](https://img.shields.io/badge/%E2%8A%AA%20gitter%20-join%20chat%20%E2%86%92-brightgreen.svg)](https://gitter.im/MitocGroup/deep-framework)
 
 #### User Guide Documentation (to be updated later)
 
@@ -26,7 +26,7 @@ DEEP is enabling small and medium businesses, as well as enterprises to:
 
 > [DEEP Marketplace](https://www.deep.mg) (aka [www.deep.mg](https://www.deep.mg)) is a web application built using DEEP and published on serverless environment from [Amazon Web Services](https://aws.amazon.com) (aka [aws.amazon.com](https://aws.amazon.com)). We make it faster and easier for developers to build and publish their software, as well as for businesses to discover and test applications they are looking for. Our goal is to connect businesses with developers, and empower technical teams to build self-service software that none technical teams could use. The marketplace is like Apple's App Store for web applications that run natively on cloud providers like AWS.
 
-## DEEP for Developers
+## DEEP for Developers [![Join char on gitter.im](https://img.shields.io/badge/%E2%8A%AA%20gitter%20-join%20chat%20%E2%86%92-brightgreen.svg)](https://gitter.im/MitocGroup/deep-framework)
 
 #### [API Guide Documentation](http://docs.deep.mg)
 #### [Developer Guide Documentation](https://github.com/MitocGroup/deep-framework/blob/master/docs/index.md)
@@ -43,7 +43,7 @@ DEEP is enabling developers and architects to:
 
 > [DEEP Marketplace](https://www.deep.mg) (aka [www.deep.mg](https://www.deep.mg)) is a web application built using DEEP and published on serverless environment from [Amazon Web Services](https://aws.amazon.com) (aka [aws.amazon.com](https://aws.amazon.com)). We make it faster and easier for developers to build and publish their software, as well as for businesses to discover and test applications they are looking for. Our goal is to connect businesses with developers, and empower technical teams to build self-service software that none technical teams could use. The marketplace is like Apple's App Store for web applications that run natively on cloud providers like AWS.
 
-## DEEP Architecture on AWS
+## DEEP Architecture on AWS [![Join char on gitter.im](https://img.shields.io/badge/%E2%8A%AA%20gitter%20-join%20chat%20%E2%86%92-brightgreen.svg)](https://gitter.im/MitocGroup/deep-framework)
 
 ![Digital Enterprise End-to-end Platform, aka DEEP](https://github.com/MitocGroup/deep-framework/blob/master/docs/deep-architecture.png)
 
@@ -51,19 +51,26 @@ DEEP is using [microservices architecture](https://en.wikipedia.org/wiki/Microse
 
 DEEP Abstracted Library | Description | AWS Abstracted Service(s)
 -------------|---------------------|--------------------------
-deep-asset | Assets Management Library | Amazon S3
-deep-cache | Cache Management Library | Amazon ElastiCache
-deep-core | Core Management Library | -
-deep-db | Database Management Library | Amazon DynamoDB, Amazon SQS
-deep-di | Dependency Injection Management Library | -
-deep-event | Events Management Library | Amazon Kinesis
-deep-fs | File System Management Library | Amazon S3
-deep-kernel | Kernel Management Library | -
-deep-log | Logs Management Library | Amazon CloudWatch Logs
-deep-notification | Notifications Management Library | Amazon SNS
-deep-resource | Resouces Management Library | AWS Lambda, Amazon API Gateway
-deep-security | Security Management Library | AWS IAM, Amazon Cognito
-deep-validation | Validation Management Library | -
+[deep-asset](http://docs.deep.mg/deep-asset) | Assets Management Library | Amazon S3
+[deep-cache](http://docs.deep.mg/deep-cache) | Cache Management Library | Amazon ElastiCache
+[deep-core](http://docs.deep.mg/deep-core) | Core Management Library | -
+[deep-db](http://docs.deep.mg/deep-db) | Database Management Library | Amazon DynamoDB, Amazon SQS
+[deep-di](http://docs.deep.mg/deep-di) | Dependency Injection Management Library | -
+[deep-event](http://docs.deep.mg/deep-event) | Events Management Library | Amazon Kinesis
+[deep-fs](http://docs.deep.mg/deep-fs) | File System Management Library | Amazon S3
+[deep-kernel](http://docs.deep.mg/deep-kernel) | Kernel Management Library | -
+[deep-log](http://docs.deep.mg/deep-log) | Logs Management Library | Amazon CloudWatch Logs
+[deep-notification](http://docs.deep.mg/deep-notification) | Notifications Management Library | Amazon SNS
+[deep-resource](http://docs.deep.mg/deep-resource) | Resouces Management Library | AWS Lambda, Amazon API Gateway
+[deep-security](http://docs.deep.mg/deep-security) | Security Management Library | AWS IAM, Amazon Cognito
+[deep-validation](http://docs.deep.mg/deep-validation) | Validation Management Library | -
+
+## Feedback
+
+We are eager to get your feedback, so please use whatever communication channel you prefer:
+- [github issues](https://github.com/MitocGroup/deep-framework/issues)
+- [gitter chat room](https://gitter.im/MitocGroup/deep-framework)
+- [deep email address](mailto:feedback@deep.mg)
 
 ## License
 
