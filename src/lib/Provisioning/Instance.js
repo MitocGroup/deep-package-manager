@@ -213,6 +213,9 @@ export class Instance {
     if (isUpdate) {
       for (let service of servicesVector) {
         service.isUpdate = true;
+
+        // @temp keep old provisioned config in case of update
+        service._config = this.property.config.provisioning[service.name()];
       }
     }
 

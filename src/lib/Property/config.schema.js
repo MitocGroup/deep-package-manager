@@ -39,7 +39,7 @@ function buildAppId() {
   );
 
   return result.status === 0
-    ? result.stdout.toString().replace(/[^a-zA-Z0-9_\.-]+/, '')
+    ? result.stdout.toString().replace(/[^a-z0-9_\.-]+/gi, '')
     : `your-unique-app-identifier-${new Date().getTime()}`;
 }
 
