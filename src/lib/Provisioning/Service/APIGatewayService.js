@@ -444,9 +444,8 @@ export class APIGatewayService extends AbstractService {
             break;
           case 'putIntegration':
             params = resourceMethods[resourceMethod];
-            params.requestParameters = this._getMethodRequestParameters(resourceMethod, Object.keys(resourceMethods));
 
-            //methodParams.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
+            //params.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
             // @todo - find a smarter way to enable "Invoke with caller credentials" option
             params.credentials = resourceMethod === 'OPTIONS' ? null : 'arn:aws:iam::*:user/*';
             break;
@@ -595,7 +594,6 @@ export class APIGatewayService extends AbstractService {
 
           let resourceApiPath = APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName);
           integrationParams[resourceApiPath] = {};
-          var httpMethod = null;
 
           switch (action.type) {
             case Action.LAMBDA:
@@ -604,23 +602,17 @@ export class APIGatewayService extends AbstractService {
               );
 
               action.methods.forEach((httpMethod) => {
-                integrationParams[resourceApiPath][httpMethod] = {
-                  type: 'AWS',
-                  integrationHttpMethod: 'POST',
-                  uri: uri,
-                  requestTemplates: this.jsonEmptyTemplate,
-                };
+                integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams('AWS', httpMethod, uri);
               });
 
               break;
             case Action.EXTERNAL:
               action.methods.forEach((httpMethod) => {
-                integrationParams[resourceApiPath][httpMethod] = {
-                  type: 'HTTP',
-                  integrationHttpMethod: httpMethod,
-                  uri: action.source,
-                  requestTemplates: this.jsonEmptyTemplate,
-                };
+                integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams(
+                  'HTTP',
+                  httpMethod,
+                  action.source
+                );
               });
 
               break;
@@ -634,6 +626,28 @@ export class APIGatewayService extends AbstractService {
     }
 
     return integrationParams;
+  }
+
+  /**
+   * @param {String} type (AWS or HTTP)
+   * @param {String} httpMethod
+   * @param {String} uri
+   * @returns {Object}
+   * @private
+   */
+  _getIntegrationTypeParams(type, httpMethod, uri) {
+    let params = {
+      type: 'MOCK',
+      requestTemplates: this.jsonEmptyTemplate,
+    };
+
+    if (httpMethod !== 'OPTIONS') {
+      params.type = type;
+      params.integrationHttpMethod = (type === 'AWS') ? 'POST' : httpMethod;
+      params.uri = uri;
+    }
+
+    return params;
   }
 
   /**
@@ -696,7 +710,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {Object}
    */
   _getMethodResponseParameters(httpMethod, resourceMethods = null) {
-    return _getMethodCorsHeaders('method.response.header', httpMethod, resourceMethods);
+    return this._getMethodCorsHeaders('method.response.header', httpMethod, resourceMethods);
   }
 
   /**
@@ -705,7 +719,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {Object}
    */
   _getMethodRequestParameters(httpMethod, resourceMethods = null) {
-    return _getMethodCorsHeaders('method.request.header', httpMethod, resourceMethods);
+    return this._getMethodCorsHeaders('method.request.header', httpMethod, resourceMethods);
   }
 
   /**
@@ -717,11 +731,11 @@ export class APIGatewayService extends AbstractService {
   _getMethodCorsHeaders(prefix, httpMethod, resourceMethods = null) {
     let headers = {};
 
-    headers[`${prefix}.Access-Control-Allow-Origin`] = resourceMethods ? '*' : true;
+    headers[`${prefix}.Access-Control-Allow-Origin`] = resourceMethods ? "'*'" : true;
 
     if (httpMethod === 'OPTIONS') {
-      headers[`${prefix}.Access-Control-Allow-Headers`] = resourceMethods ? 'Content-Type,X-Amz-Date,Authorization' : true;
-      headers[`${prefix}.Access-Control-Allow-Methods`] = resourceMethods ? resourceMethods.join(',') : true;
+      headers[`${prefix}.Access-Control-Allow-Headers`] = resourceMethods ? "'Content-Type,X-Amz-Date,Authorization'" : true;
+      headers[`${prefix}.Access-Control-Allow-Methods`] = resourceMethods ? `'${resourceMethods.join(',')}'` : true;
     }
 
     return headers;
