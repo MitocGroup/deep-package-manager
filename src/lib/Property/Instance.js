@@ -471,6 +471,43 @@ export class Instance {
    * @returns {Instance}
    * @private
    */
+  runInitMsHooks(callback) {
+    let wait = new WaitFor();
+    let microservices = this.microservices;
+    let remaining = microservices.length;
+
+    wait.push(function() {
+      return remaining <= 0;
+    }.bind(this));
+
+    for (let microservice of microservices) {
+      let hook = microservice.initHook;
+
+      if (!hook) {
+        console.log(`- No init hook found for microservice ${microservice.identifier}`);
+        remaining--;
+        continue;
+      }
+
+      console.log(`- Running init hook for microservice ${microservice.identifier}`);
+
+      hook(function() {
+        remaining--;
+      }.bind(this));
+    }
+
+    wait.ready(function() {
+      callback();
+    }.bind(this));
+
+    return this;
+  }
+
+  /**
+   * @param {Function} callback
+   * @returns {Instance}
+   * @private
+   */
   _runPostDeployMsHooks(callback) {
     let wait = new WaitFor();
     let microservices = this.microservices;
