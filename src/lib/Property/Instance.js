@@ -21,6 +21,10 @@ import {Model} from './Model';
 import {S3Service} from '../Provisioning/Service/S3Service';
 import {Config} from './Config';
 import {Hash} from '../Helpers/Hash';
+import {FrontendEngine} from '../Microservice/FrontendEngine';
+import {NoMatchingFrontendEngineException} from '../Dependencies/Exception/NoMatchingFrontendEngineException';
+import {exec} from 'child_process';
+import OS from 'os';
 
 /**
  * Property instance
@@ -243,7 +247,7 @@ export class Instance {
 
     let microservicesConfig = {};
     let microservices = this.microservices;
-    var rootMicroservice;
+    let rootMicroservice;
 
     for (let microservice of microservices) {
       if (microservice.isRoot) {
@@ -579,6 +583,65 @@ export class Instance {
         this._postDeploy(callback);
       }.bind(this));
     }.bind(this), skipProvision);
+  }
+
+  /**
+   * @param {Function} callback
+   * @returns {Instance}
+   */
+  assureFrontendEngine(callback) {
+    let microservices = this.microservices;
+    let rootMicroservice = null;
+
+    for (let microservice of microservices) {
+      if (microservice.isRoot) {
+        callback(null, null);
+        return this;
+      }
+    }
+
+    return this.fetchFrontendEngine(callback);
+  }
+
+  /**
+   * @todo: force it for local use only?
+   *
+   * @param {Function} callback
+   * @returns {Instance}
+   */
+  fetchFrontendEngine(callback) {
+    let frontendEngineManager = new FrontendEngine();
+    let microservices = this.microservices;
+
+    let suitableEngine = frontendEngineManager.findSuitable(...microservices);
+
+    if (!suitableEngine) {
+      throw new NoMatchingFrontendEngineException(frontendEngineManager.rawEngines);
+    }
+
+    let engineRepo = FrontendEngine.getEngineRepository(suitableEngine);
+
+    console.log(`- Checking out the frontend engine '${suitableEngine}' from '${engineRepo}'`);
+
+    let tmpDir = OS.tmpdir();
+    let repoName = engineRepo.replace(/^.+\/([^\/]+)\.git$/i, '$1');
+    let repoDir = Path.join(tmpDir, repoName);
+
+    // @todo: replace it with https://www.npmjs.com/package/nodegit
+    exec(`rm -rf ${repoDir}; git clone --depth=1 ${engineRepo} ${repoDir}`, (error, stdout, stderr) => {
+      if (error) {
+        callback(error, engineRepo);
+        return;
+      }
+
+      exec(`cp -R ${repoDir}/src/* ${this._path}/`, (error, stdout, stderr) => {
+        this._microservices = null; // @todo: reset microservices?
+
+        callback(error, engineRepo);
+      });
+    });
+
+    return this;
   }
 
   /**
