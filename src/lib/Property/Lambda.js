@@ -223,7 +223,7 @@ export class Lambda {
    */
   deploy(callback) {
     this.pack().ready(function() {
-      console.log(`- Lambda ${this._identifier} packing is ready!: ${new Date().toTimeString()}`);
+      console.log(`${new Date().toTimeString()} Lambda ${this._identifier} packing is ready`);
 
       this.upload().ready(callback);
     }.bind(this));
@@ -303,14 +303,14 @@ export class Lambda {
    * @returns {WaitFor}
    */
   pack() {
-    console.log(`- Start packing lambda ${this._identifier}!: ${new Date().toTimeString()}`);
+    console.log(`${new Date().toTimeString()} Start packing lambda ${this._identifier}`);
 
     this.persistConfig();
 
     let buildFile = `${this._path}.zip`;
 
     if (FileSystem.existsSync(buildFile)) {
-      console.log(`- Lambda prebuilt in ${buildFile}`);
+      console.log(`${new Date().toTimeString()} Lambda prebuilt in ${buildFile}`);
 
       FileSystemExtra.copySync(buildFile, this._zipPath);
 
@@ -332,7 +332,7 @@ export class Lambda {
    * @returns {AwsRequestSyncStack}
    */
   upload(update = false) {
-    console.log(`- Start uploading lambda ${this._identifier}!: ${new Date().toTimeString()}`);
+    console.log(`${new Date().toTimeString()} Start uploading lambda ${this._identifier}`);
 
     let lambda = this._property.provisioning.lambda;
     let s3 = this._property.provisioning.s3;
@@ -356,7 +356,7 @@ export class Lambda {
 
       let request = null;
 
-      console.log(`- Lambda ${this._identifier} uploaded!: ${new Date().toTimeString()}`);
+      console.log(`${new Date().toTimeString()} Lambda ${this._identifier} uploaded`);
 
       if (update) {
         let params = {
