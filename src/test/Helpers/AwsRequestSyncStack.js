@@ -6,7 +6,7 @@ import chai from 'chai';
 import {AwsRequestSyncStack} from '../../lib.compiled/Helpers/AwsRequestSyncStack';
 
 // @todo: Add more advanced tests
-suite("Helpers/AwsRequestSyncStack", function() {
+suite('Helpers/AwsRequestSyncStack', function() {
   test('Class AwsRequestSyncStack exists in Helpers/AwsRequestSyncStack', function() {
     chai.expect(typeof AwsRequestSyncStack).to.equal('function');
   });

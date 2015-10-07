@@ -1,6 +1,7 @@
 'use strict';
 
 import chai from 'chai';
+import * as property  from '../../lib.compiled/Property/Instance';
 import {Instance} from '../../lib.compiled/Provisioning/Instance';
 import {InvalidArgumentException} from '../../lib.compiled/Exception/InvalidArgumentException';
 
