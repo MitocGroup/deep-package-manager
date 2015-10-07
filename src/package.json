@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "0.1.91",
+  "version": "1.0.1",
   "description": "DEEP Package Manager",
   "keywords": [
     "Digital Enterprise End-To-End Platform",
@@ -51,8 +51,8 @@
     "prepublish": "npm run compile && npm run obfuscate-compiled"
   },
   "dependencies": {
-    "deep-db": "*",
-    "deep-core": "*",
+    "deep-db": "1.0.*",
+    "deep-core": "1.0.*",
     "joi": "6.4.*",
     "jsonfile": "1.1.*",
     "underscore.string": "2.3.*",
