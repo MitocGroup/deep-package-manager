@@ -11,6 +11,6 @@ import {Exception} from '../../Exception/Exception';
  */
 export class MissingRootException extends Exception {
     constructor() {
-        super('Missing property root');
+        super('Missing application root');
     }
 }
