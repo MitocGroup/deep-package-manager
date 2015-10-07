@@ -63,9 +63,8 @@ function guessAwsAccountId(awsCredentials) {
     let getUserCommand = `export AWS_CONFIG_FILE=${credentialsFile}; `;
     getUserCommand += `aws --profile deep iam get-user 2>/dev/null`;
 
-    let userInfoRaw = exec(getUserCommand).stdout.toString().trim();
-
     try {
+      let userInfoRaw = exec(getUserCommand).stdout.toString().trim();
       let userInfo = JSON.parse(userInfoRaw);
 
       if (userInfo) {
