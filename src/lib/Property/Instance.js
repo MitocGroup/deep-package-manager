@@ -243,7 +243,7 @@ export class Instance {
 
     let isUpdate = this._isUpdate;
 
-    console.log(`- Start building property: ${new Date().toTimeString()}`);
+    console.log(`${new Date().toTimeString()} Start building application`);
 
     let microservicesConfig = {};
     let microservices = this.microservices;
@@ -299,12 +299,12 @@ export class Instance {
     if (skipProvision) {
       callback();
     } else {
-      console.log(`- Start ${isUpdate ? 'updating' : 'creating'} provisioning: ${new Date().toTimeString()}`);
+      console.log(`${new Date().toTimeString()} Start ${isUpdate ? 'updating' : 'creating'} provisioning`);
 
       this.provisioning.create(function(config) {
         this._config.provisioning = config;
 
-        console.log(`- Provisioning is done!: ${new Date().toTimeString()}`);
+        console.log(`${new Date().toTimeString()} Provisioning is done`);
 
         callback();
       }.bind(this), isUpdate);
@@ -324,7 +324,7 @@ export class Instance {
       throw new InvalidArgumentException(callback, 'Function');
     }
 
-    console.log(`- Start deploying!: ${new Date().toTimeString()}`);
+    console.log(`${new Date().toTimeString()} Start deploying backend`);
 
     let lambdas = [];
     let lambdaExecRoles = this._config.provisioning.lambda.executionRoles;
@@ -444,7 +444,7 @@ export class Instance {
       if (isUpdate && this._localDeploy) {
         callback();
       } else {
-        console.log(`- Start deploying frontend!: ${new Date().toTimeString()}`);
+        console.log(`${new Date().toTimeString()} Start deploying frontend`);
         frontend.deploy(this._aws, publicBucket).ready(callback);
       }
     }.bind(this));
@@ -488,12 +488,12 @@ export class Instance {
       let hook = microservice.initHook;
 
       if (!hook) {
-        console.log(`- No init hook found for microservice ${microservice.identifier}`);
+        console.log(`${new Date().toTimeString()} No init hook found for microservice ${microservice.identifier}`);
         remaining--;
         continue;
       }
 
-      console.log(`- Running init hook for microservice ${microservice.identifier}`);
+      console.log(`${new Date().toTimeString()} Running init hook for microservice ${microservice.identifier}`);
 
       hook(function() {
         remaining--;
@@ -525,12 +525,12 @@ export class Instance {
       let hook = microservice.postDeployHook;
 
       if (!hook) {
-        console.log(`- No post deploy hook found for microservice ${microservice.identifier}`);
+        console.log(`${new Date().toTimeString()} No post deploy hook found for microservice ${microservice.identifier}`);
         remaining--;
         continue;
       }
 
-      console.log(`- Running post deploy hook for microservice ${microservice.identifier}`);
+      console.log(`${new Date().toTimeString()} Running post deploy hook for microservice ${microservice.identifier}`);
 
       hook(this._provisioning, this._isUpdate, function() {
         remaining--;
@@ -572,13 +572,13 @@ export class Instance {
       throw new InvalidArgumentException(callback, 'Function');
     }
 
-    console.log(`- Start ${this._isUpdate ? 'updating' : 'installing'} property: ${new Date().toTimeString()}`);
+    console.log(`${new Date().toTimeString()} Start ${this._isUpdate ? 'updating' : 'installing'} application`);
 
     return this.build(function() {
-      console.log(`- Build is done!: ${new Date().toTimeString()}`);
+      console.log(`${new Date().toTimeString()} Build is done`);
 
       this.deploy(function() {
-        console.log(`- Deploy is done!: ${new Date().toTimeString()}`);
+        console.log(`${new Date().toTimeString()} Deploy is done`);
 
         this._postDeploy(callback);
       }.bind(this));
@@ -621,7 +621,7 @@ export class Instance {
 
     let engineRepo = FrontendEngine.getEngineRepository(suitableEngine);
 
-    console.log(`- Checking out the frontend engine '${suitableEngine}' from '${engineRepo}'`);
+    console.log(`${new Date().toTimeString()} Checking out the frontend engine '${suitableEngine}' from '${engineRepo}'`);
 
     let tmpDir = OS.tmpdir();
     let repoName = engineRepo.replace(/^.+\/([^\/]+)\.git$/i, '$1');
