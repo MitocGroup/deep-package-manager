@@ -6,7 +6,7 @@ import chai from 'chai';
 import {JoiHelper} from '../../lib.compiled/Helpers/JoiHelper';
 
 // @todo: Add more advanced tests
-suite("Helpers/JoiHelper", function() {
+suite('Helpers/JoiHelper', function() {
   test('Class JoiHelper exists in Helpers/JoiHelper', function() {
     chai.expect(typeof JoiHelper).to.equal('function');
   });

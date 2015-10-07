@@ -7,7 +7,7 @@ suite('Microservice/Metadata/ResourceCollection', function() {
   let configInput = {};
   let resourceCollection = new ResourceCollection(configInput);
 
-  test('Class ResourceCollection exists in Microservice/Metadata/ResourceCollection', function () {
+  test('Class ResourceCollection exists in Microservice/Metadata/ResourceCollection', function() {
     chai.expect(typeof ResourceCollection).to.equal('function');
   });
 

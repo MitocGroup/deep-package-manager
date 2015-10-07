@@ -4,7 +4,7 @@ import chai from 'chai';
 import {Config} from '../../lib.compiled/Microservice/Config';
 import {InvalidConfigException} from '../../lib.compiled/Microservice/Exception/InvalidConfigException';
 
-suite('Microservice/Config', function () {
+suite('Microservice/Config', function() {
   let configInput = {
     name: 'config',
     propertyRoot: false,

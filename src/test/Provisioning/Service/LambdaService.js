@@ -37,5 +37,5 @@ suite('Provisioning/Service/LambdaService', function() {
 
   test('Check getExecRolePolicy() method', () => {
     //chai.expect(lambdaServiceInstance.getExecRolePolicy()).to.be.an.instanceOf(Core.AWS.IAM.Policy);
-  })
+  });
 });

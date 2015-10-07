@@ -1,0 +1,12 @@
+{
+  "test-resource" : {
+    "test": {
+      "description": "Just a test resource",
+      "type": "lambda",
+      "methods": [
+        "POST"
+      ],
+      "source": "src/TestResource/Test"
+    }
+  }
+}
