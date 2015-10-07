@@ -64,10 +64,14 @@ function guessAwsAccountId(awsCredentials) {
     getUserCommand += `aws --profile deep iam get-user 2>/dev/null`;
 
     let userInfoRaw = exec(getUserCommand).stdout.toString().trim();
-    let userInfo = JSON.parse(userInfoRaw);
 
-    if (userInfo) {
-      return userInfo.User.Arn.replace(/^.*:(\d+):user\/SecureUser.*$/i, '$1') || defaultUserId;
+    try {
+      let userInfo = JSON.parse(userInfoRaw);
+
+      if (userInfo) {
+        return userInfo.User.Arn.replace(/^.*:(\d+):user\/SecureUser.*$/i, '$1') || defaultUserId;
+      }
+    } catch (e) {
     }
   }
 
