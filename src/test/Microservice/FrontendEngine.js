@@ -30,7 +30,7 @@ suite('Microservice/FrontendEngine', function() {
     chai.expect(frontendEngine.rawEngines).to.be.eql(enginesNew);
   });
 
-  test('Check findSuitable() method for default engine equals angular', function() {
+  test('Check findSuitable() method for default engine returns \'angular\'', function() {
     let frontendEmptyEngine = new FrontendEngine();
     chai.expect(frontendEmptyEngine.engines).to.be.eql(['deep.ng.root']);
     chai.expect(frontendEmptyEngine.findSuitable()).to.be.equal('angular');
