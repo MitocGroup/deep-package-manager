@@ -30,10 +30,11 @@ suite('Microservice/FrontendEngine', function() {
     chai.expect(frontendEngine.rawEngines).to.be.eql(enginesNew);
   });
 
-  // @todo - fix "AssertionError: expected 'engine2' to equal null"
-  //test('Check findSuitable() method returns null', function() {
-  //  chai.expect(frontendEngine.findSuitable()).to.be.equal(null);
-  //});
+  test('Check findSuitable() method for default engine equals angular', function() {
+    let frontendEmptyEngine = new FrontendEngine();
+    chai.expect(frontendEmptyEngine.engines).to.be.eql(['deep.ng.root']);
+    chai.expect(frontendEmptyEngine.findSuitable()).to.be.equal('angular');
+  });
 
   test('Check match() method returns false', function() {
     chai.expect(frontendEngine.match()).to.be.equal(false);
