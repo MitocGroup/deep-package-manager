@@ -68,7 +68,7 @@ function guessAwsAccountId(awsCredentials) {
       let userInfo = JSON.parse(userInfoRaw);
 
       if (userInfo) {
-        return userInfo.User.Arn.replace(/^.*:(\d+):user\/SecureUser.*$/i, '$1') || defaultUserId;
+        return userInfo.User.Arn.replace(/^.*:(\d+):(root|(user\/.*))$/i, '$1') || defaultUserId;
       }
     } catch (e) {
     }

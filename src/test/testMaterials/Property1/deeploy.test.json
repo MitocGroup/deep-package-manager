@@ -1,8 +1,8 @@
 {
   "aws": {
-    "accessKeyId": null,
-    "region": null,
-    "secretAccessKey": null
+    "accessKeyId": "to_pass_string_validation",
+    "region": "region",
+    "secretAccessKey": "to_pass_string_validation"
   },
   "dependencies": {
     "bucket": "testbucket"

@@ -143,14 +143,14 @@ export class Frontend {
     credentials += `aws_secret_access_key=${AWS.config.credentials.secretAccessKey}${OS.EOL}`;
     credentials += `region=${AWS.config.region}${OS.EOL}`;
 
-    console.log(`- dump AWS tmp credentials into ${credentialsFile}`);
+    console.log(`${new Date().toTimeString()} dump AWS tmp credentials into ${credentialsFile}`);
 
     FileSystem.writeFileSync(credentialsFile, credentials);
 
     let syncCommand = `export AWS_CONFIG_FILE=${credentialsFile}; `;
     syncCommand += `aws s3 sync --profile deep --storage-class REDUCED_REDUNDANCY '${this.path}' 's3://${bucketName}'`;
 
-    console.log(`- running tmp hook ${syncCommand}`);
+    console.log(`${new Date().toTimeString()} running tmp hook ${syncCommand}`);
 
     let syncResult = exec(syncCommand);
 

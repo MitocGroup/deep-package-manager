@@ -21,7 +21,7 @@ export class NodePackageManagerCompiler extends AbstractCompiler {
    * @param {Instance} microservice
    */
   static compile(microservice) {
-    console.log(`- Compile ${microservice.identifier} microservice: ${new Date().toTimeString()}`);
+    console.log(`${new Date().toTimeString()} Compile ${microservice.identifier} microservice`);
     NodePackageManagerCompiler._compileBackend(microservice.autoload.backend, microservice.resources.actions);
   }
 
@@ -34,7 +34,7 @@ export class NodePackageManagerCompiler extends AbstractCompiler {
   static _compileBackend(backendPath, actions) {
     for (let action of actions) {
       if (action.type === Action.LAMBDA) {
-        console.log(`- Compile ${action.source} lambda: ${new Date().toTimeString()}`);
+        console.log(`${new Date().toTimeString()} Compile ${action.source} lambda`);
         let source = StringUtils.trim(action.source, '/');
         source = `${backendPath}/${source}`;
 

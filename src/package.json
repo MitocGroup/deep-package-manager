@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "1.0.4",
+  "version": "1.0.7",
   "description": "DEEP Package Manager",
   "keywords": [
     "Digital Enterprise End-To-End Platform",
@@ -47,7 +47,7 @@
     "coverage": "babel-node `which istanbul` cover --report lcov _mocha -- --ui tdd --recursive --reporter spec",
     "test": "mocha --ui tdd --compilers js:mocha-babel --recursive --reporter spec",
     "compile": "if [ -d 'lib/' ]; then BABEL_ENV=production babel lib/ --out-dir lib.compiled/; fi",
-    "obfuscate-compiled": "if [ -d 'lib/' ]; then npm info -g uglify --loglevel silent > /dev/null || npm install uglify -g; for f in $(find lib.compiled -type f -name *.js); do uglify -s ${f} -o ${f}; done; fi",
+    "obfuscate-compiled": "if [ -d 'lib/' ]; then npm list -g --depth 1 uglify > /dev/null 2>&1 || npm install uglify -g; for f in $(find lib.compiled -type f -name *.js); do uglify -s ${f} -o ${f}; done; fi",
     "prepublish": "npm run compile && npm run obfuscate-compiled"
   },
   "dependencies": {
