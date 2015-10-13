@@ -452,7 +452,7 @@ export class APIGatewayService extends AbstractService {
           case 'putIntegrationResponse':
             params = {
               statusCode: 200,
-              responseTemplates: this.jsonEmptyTemplate,
+              responseTemplates: this.getMethodJsonTemplate(resourceMethod),
               responseParameters: this._getMethodResponseParameters(resourceMethod, Object.keys(resourceMethods)),
             };
             break;
@@ -638,7 +638,7 @@ export class APIGatewayService extends AbstractService {
   _getIntegrationTypeParams(type, httpMethod, uri) {
     let params = {
       type: 'MOCK',
-      requestTemplates: this.jsonEmptyTemplate,
+      requestTemplates: this.getMethodJsonTemplate(httpMethod),
     };
 
     if (httpMethod !== 'OPTIONS') {
@@ -687,11 +687,13 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
+   * @param {String} httpMethod
+   *
    * @returns {Object}
    */
-  get jsonEmptyTemplate() {
+  getMethodJsonTemplate(httpMethod) {
     return {
-      'application/json': '',
+      'application/json': (httpMethod === 'OPTIONS') ? '{"statusCode": 200}' : '',
     };
   }
 
