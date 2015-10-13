@@ -452,9 +452,23 @@ export class Lambda {
    * @returns {String}
    */
   get handler() {
-    return this._runtime === 'nodejs'
-      ? 'bootstrap.handler'
-      : 'bootstrap.handler::handle';
+    let handler = null;
+
+    switch(this._runtime) {
+      case 'nodejs':
+        handler = 'bootstrap.handler';
+        break;
+      case 'java8':
+        handler = 'bootstrap.handler::handle';
+        break;
+      case 'python2.7':
+        handler = 'bootstrap.handler';
+        break;
+      default:
+        throw new Error(`The Lambda runtime ${this._runtime} is not supported yet`);
+    }
+
+    return handler;
   }
 
   /**
@@ -468,7 +482,7 @@ export class Lambda {
    * @returns {Number}
    */
   static get DEFAULT_TIMEOUT() {
-    return 60;
+    return Lambda.MAX_TIMEOUT;
   }
 
   /**
@@ -481,15 +495,22 @@ export class Lambda {
   /**
    * @returns {Number}
    */
+  static get MAX_MEMORY_LIMIT() {
+    return 1536;
+  }
+
+  /**
+   * @returns {Number}
+   */
   static get MAX_TIMEOUT() {
-    return 60;
+    return 60 * 5;
   }
 
   /**
    * @returns {String[]}
    */
   static get RUNTIMES() {
-    return ['nodejs', 'java8'];
+    return ['nodejs', 'java8', 'python2.7'];
   }
 
   /**
