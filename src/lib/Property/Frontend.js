@@ -88,11 +88,6 @@ export class Frontend {
 
           let action = resourceActions[actionName];
 
-          let apiEndpoint = path.join(
-            apiGatewayBaseUrl,
-            APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName)
-          );
-
           let originalSource = (action.type === Action.LAMBDA) ?
             microservice.lambdas[action.identifier].arn :
             action.source;
@@ -102,7 +97,7 @@ export class Frontend {
             methods: action.methods,
             region: propertyConfig.awsRegion, // @todo: set it from lambda provision
             source: {
-              api: apiEndpoint,
+              api: apiGatewayBaseUrl + APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName),
               original: originalSource,
             },
           };
