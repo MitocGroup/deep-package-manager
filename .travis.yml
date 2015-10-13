@@ -14,7 +14,7 @@ branches:
   - stage
   - test
   - dev
-  - unit-testing
+  - updates
 env:
   global:
   # CODACY_PROJECT_TOKEN
