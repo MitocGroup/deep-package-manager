@@ -122,10 +122,11 @@ suite('Property/Lambda', function() {
     chai.expect(lambda.handler).to.be.equal('bootstrap.handler');
   });
 
-  test('Check RUNTIMES static getter returns [\'nodejs\', \'java8\']', function() {
-    chai.expect(Lambda.RUNTIMES.length).to.be.equal(2);
+  test('Check RUNTIMES static getter returns [\'nodejs\', \'java8\', \'python2.7\']', function() {
+    chai.expect(Lambda.RUNTIMES.length).to.be.equal(3);
     chai.expect(Lambda.RUNTIMES).to.be.includes('nodejs');
     chai.expect(Lambda.RUNTIMES).to.be.includes('java8');
+    chai.expect(Lambda.RUNTIMES).to.be.includes('python2.7');
   });
 
   test('Check CONFIG_FILE static getter returns \'_config.json\'', function() {
