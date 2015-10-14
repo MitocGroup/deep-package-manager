@@ -749,4 +749,43 @@ export class APIGatewayService extends AbstractService {
 
     return headers;
   }
+
+  /**
+   * Collect all endpoints arn from deployed methods (apigateway.postDeploy.methods)
+   *
+   * @param {Object} deployedMethods
+   * @returns {Array}
+   */
+  static getAllEndpointsArn(deployedMethods) {
+    // @todo: build API endpoints ARNs (e.g. arn:aws:apigateway:us-east-1::my-api-id:/test/petstorewalkthrough/pets)
+  }
+
+  /**
+   * Allow Cognito users to invoke these endpoints
+   *
+   * @param {Object} endpointsARNs
+   * @returns {Core.AWS.IAM.Policy}
+   */
+  static generateAllowInvokeMethodPolicy(endpointsARNs) {
+    let policy = new Core.AWS.IAM.Policy();
+
+    let statement = policy.statement.add();
+    let action = statement.action.add();
+
+    action.service = Core.AWS.Service.API_GATEWAY;
+    action.action = '*';
+
+    for (let endpointArnKey in endpointsARNs) {
+      if (!endpointsARNs.hasOwnProperty(endpointArnKey)) {
+        continue;
+      }
+
+      let endpointArn = endpointsARNs[endpointArnKey];
+      let resource = statement.resource.add();
+
+      resource.updateFromArn(endpointArn);
+    }
+
+    return policy;
+  }
 }

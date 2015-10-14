@@ -274,6 +274,8 @@ export class CognitoIdentityService extends AbstractService {
   }
 
   /**
+   * @todo - add API endpoints ARNs to cognito role policy
+   *
    * Adds inline policies to Cognito auth and unauth roles
    *
    * @param {Object} cognitoRoles

@@ -405,7 +405,6 @@ export class LambdaService extends AbstractService {
     return lambdaArns;
   }
 
-
   /**
    * Allow Cognito users to invoke these lambdas
    *
