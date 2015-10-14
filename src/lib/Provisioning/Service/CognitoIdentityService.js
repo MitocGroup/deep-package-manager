@@ -14,6 +14,7 @@ import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingP
 import {Exception} from '../../Exception/Exception';
 import {Action} from '../../Microservice/Metadata/Action';
 import {LambdaService} from './LambdaService';
+import {APIGatewayService} from './APIGatewayService';
 
 /**
  * Cognito service
@@ -130,12 +131,14 @@ export class CognitoIdentityService extends AbstractService {
       this._ready = true;
       return this;
     }
-    
+
+    let apiGatewayInstance = services.find(APIGatewayService);
     let lambdaArns = LambdaService.getAllLambdasArn(this.property.config.microservices);
-    
+
     this._updateCognitoRolesPolicy(
       this._config.roles,
-      lambdaArns
+      lambdaArns,
+      apiGatewayInstance.getAllEndpointsArn()
     )(function(policies) {
       this._config.postDeploy = {
         inlinePolicies: policies,
@@ -274,16 +277,15 @@ export class CognitoIdentityService extends AbstractService {
   }
 
   /**
-   * @todo - add API endpoints ARNs to cognito role policy
-   *
    * Adds inline policies to Cognito auth and unauth roles
    *
    * @param {Object} cognitoRoles
    * @param {Object} lambdaARNs
+   * @param {Object} endpointsARNs
    * @returns {function}
    * @private
    */
-  _updateCognitoRolesPolicy(cognitoRoles, lambdaARNs) {
+  _updateCognitoRolesPolicy(cognitoRoles, lambdaARNs, endpointsARNs) {
     let iam = this.provisioning.iam;
     let policies = {};
     let syncStack = new AwsRequestSyncStack();
@@ -302,6 +304,9 @@ export class CognitoIdentityService extends AbstractService {
       }
 
       let policy = LambdaService.generateAllowInvokeFunctionPolicy(lambdasForRole);
+
+      // @todo - concatenate statements from both policies
+      let apiPolicy = APIGatewayService.generateAllowInvokeMethodPolicy(endpointsARNs);
 
       let params = {
         PolicyDocument: policy.toString(),

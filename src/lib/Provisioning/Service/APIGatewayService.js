@@ -751,13 +751,20 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
-   * Collect all endpoints arn from deployed methods (apigateway.postDeploy.methods)
+   * Collect all endpoints arn from deployed resources
    *
-   * @param {Object} deployedMethods
    * @returns {Array}
    */
-  static getAllEndpointsArn(deployedMethods) {
-    // @todo: build API endpoints ARNs (e.g. arn:aws:apigateway:us-east-1::my-api-id:/test/petstorewalkthrough/pets)
+  getAllEndpointsArn() {
+    let apiId = this._config.api.id;
+    let resourcesPaths = this._config.postDeploy.methods ? Object.keys(this._config.postDeploy.methods) : [];
+    let arns = [];
+
+    resourcesPaths.forEach((resourcePath) => {
+      arns.push(`arn:aws:apigateway:us-east-1::${apiId}:${resourcePath}`);
+    });
+
+    return arns;
   }
 
   /**
