@@ -14,6 +14,7 @@ import {FailedToListApiResourcesException} from './Exception/FailedToListApiReso
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
 import {FailedToDeployApiGatewayException} from './Exception/FailedToDeployApiGatewayException';
+import {FailedToExecuteApiGatewayMethodException} from './Exception/FailedToExecuteApiGatewayMethodException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
@@ -305,6 +306,7 @@ export class APIGatewayService extends AbstractService {
     let methodsParams = this._methodParamsGenerator(method, apiId, apiResources, integrationParams);
     let stackSize = methodsParams.length;
     let resources = {};
+    let delay = 0;
 
     for (let key in methodsParams) {
       if (!methodsParams.hasOwnProperty(key)) {
@@ -313,18 +315,22 @@ export class APIGatewayService extends AbstractService {
 
       let params = methodsParams[key];
 
-      resources[params.resourcePath] = {};
+      setTimeout(() => {
+        resources[params.resourcePath] = {};
 
-      apiGateway[method](params).then((resource) => {
-        stackSize--;
-        resources[params.resourcePath][params.httpMethod] = resource;
-      }).catch((error) => {
+        apiGateway[method](params).then((resource) => {
+          stackSize--;
+          resources[params.resourcePath][params.httpMethod] = resource;
+        }).catch((error) => {
 
-        stackSize--;
-        if (error) {
-          throw new FailedToExecuteApiGatewayMethodException(method, params.resourcePath, params.httpMethod, error);
-        }
-      });
+          stackSize--;
+          if (error) {
+            throw new FailedToExecuteApiGatewayMethodException(method, params.resourcePath, params.httpMethod, error);
+          }
+        });
+      }, delay);
+
+      delay += 300; // ApiGateway api returns an 500 Internal server error when calls to the same endpoint are 'simultaneously'
     }
 
     wait.push(() => {
@@ -424,26 +430,30 @@ export class APIGatewayService extends AbstractService {
         switch (method) {
           case 'putMethod':
             params = {
-              authorizationType: 'AWS_IAM',
+              authorizationType: resourceMethod === 'OPTIONS' ? 'NONE' : 'AWS_IAM',
               requestModels: this.jsonEmptyModel,
+              requestParameters: this._getMethodRequestParameters(resourceMethod),
             };
             break;
           case 'putMethodResponse':
             params = {
               statusCode: 200,
               responseModels: this.jsonEmptyModel,
+              responseParameters: this._getMethodResponseParameters(resourceMethod),
             };
             break;
           case 'putIntegration':
             params = resourceMethods[resourceMethod];
 
-            //methodParams.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
-            params.credentials = 'arn:aws:iam::*:user/*'; // @todo - find a smarter way to enable "Invoke with caller credentials" option
+            //params.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
+            // @todo - find a smarter way to enable "Invoke with caller credentials" option
+            params.credentials = resourceMethod === 'OPTIONS' ? null : 'arn:aws:iam::*:user/*';
             break;
           case 'putIntegrationResponse':
             params = {
               statusCode: 200,
-              responseTemplates: this.jsonEmptyTemplate,
+              responseTemplates: this.getMethodJsonTemplate(resourceMethod),
+              responseParameters: this._getMethodResponseParameters(resourceMethod, Object.keys(resourceMethods)),
             };
             break;
           default:
@@ -580,9 +590,10 @@ export class APIGatewayService extends AbstractService {
           }
 
           let action = resourceActions[actionName];
+          action.methods.unshift('OPTIONS'); // adding OPTIONS method for CORS
+
           let resourceApiPath = APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName);
           integrationParams[resourceApiPath] = {};
-          var httpMethod = null;
 
           switch (action.type) {
             case Action.LAMBDA:
@@ -590,25 +601,19 @@ export class APIGatewayService extends AbstractService {
                 microservice.deployedServices.lambdas[action.identifier].FunctionArn
               );
 
-              for (httpMethod of action.methods) {
-                integrationParams[resourceApiPath][httpMethod] = {
-                  type: 'AWS',
-                  integrationHttpMethod: 'POST',
-                  uri: uri,
-                  requestTemplates: this.jsonEmptyTemplate,
-                };
-              }
+              action.methods.forEach((httpMethod) => {
+                integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams('AWS', httpMethod, uri);
+              });
 
               break;
             case Action.EXTERNAL:
-              for (httpMethod of action.methods) {
-                integrationParams[resourceApiPath][httpMethod] = {
-                  type: 'HTTP',
-                  integrationHttpMethod: httpMethod,
-                  uri: action.source,
-                  requestTemplates: this.jsonEmptyTemplate,
-                };
-              }
+              action.methods.forEach((httpMethod) => {
+                integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams(
+                  'HTTP',
+                  httpMethod,
+                  action.source
+                );
+              });
 
               break;
             default:
@@ -621,6 +626,28 @@ export class APIGatewayService extends AbstractService {
     }
 
     return integrationParams;
+  }
+
+  /**
+   * @param {String} type (AWS or HTTP)
+   * @param {String} httpMethod
+   * @param {String} uri
+   * @returns {Object}
+   * @private
+   */
+  _getIntegrationTypeParams(type, httpMethod, uri) {
+    let params = {
+      type: 'MOCK',
+      requestTemplates: this.getMethodJsonTemplate(httpMethod),
+    };
+
+    if (httpMethod !== 'OPTIONS') {
+      params.type = type;
+      params.integrationHttpMethod = (type === 'AWS') ? 'POST' : httpMethod;
+      params.uri = uri;
+    }
+
+    return params;
   }
 
   /**
@@ -660,11 +687,13 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
+   * @param {String} httpMethod
+   *
    * @returns {Object}
    */
-  get jsonEmptyTemplate() {
+  getMethodJsonTemplate(httpMethod) {
     return {
-      'application/json': '',
+      'application/json': (httpMethod === 'OPTIONS') ? '{"statusCode": 200}' : '',
     };
   }
 
@@ -675,5 +704,42 @@ export class APIGatewayService extends AbstractService {
     return {
       'application/json': 'Empty',
     };
+  }
+
+  /**
+   * @param {String} httpMethod
+   * @param {Array|null} resourceMethods
+   * @returns {Object}
+   */
+  _getMethodResponseParameters(httpMethod, resourceMethods = null) {
+    return this._getMethodCorsHeaders('method.response.header', httpMethod, resourceMethods);
+  }
+
+  /**
+   * @param {String} httpMethod
+   * @param {Array|null} resourceMethods
+   * @returns {Object}
+   */
+  _getMethodRequestParameters(httpMethod, resourceMethods = null) {
+    return this._getMethodCorsHeaders('method.request.header', httpMethod, resourceMethods);
+  }
+
+  /**
+   * @param {String} prefix
+   * @param {String} httpMethod
+   * @param {Array|null} resourceMethods
+   * @returns {Object}
+   */
+  _getMethodCorsHeaders(prefix, httpMethod, resourceMethods = null) {
+    let headers = {};
+
+    headers[`${prefix}.Access-Control-Allow-Origin`] = resourceMethods ? "'*'" : true;
+
+    if (httpMethod === 'OPTIONS') {
+      headers[`${prefix}.Access-Control-Allow-Headers`] = resourceMethods ? "'Content-Type,X-Amz-Date,Authorization'" : true;
+      headers[`${prefix}.Access-Control-Allow-Methods`] = resourceMethods ? `'${resourceMethods.join(',')}'` : true;
+    }
+
+    return headers;
   }
 }
