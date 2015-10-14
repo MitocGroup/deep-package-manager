@@ -41,6 +41,13 @@ export class APIGatewayService extends AbstractService {
   /**
    * @returns {String}
    */
+  static get ALLOWED_CORS_HEADERS() {
+    return "'Content-Type,X-Amz-Date,X-Amz-Security-Token,Authorization'";
+  }
+
+  /**
+   * @returns {String}
+   */
   name() {
     return Core.AWS.Service.API_GATEWAY;
   }
@@ -736,7 +743,7 @@ export class APIGatewayService extends AbstractService {
     headers[`${prefix}.Access-Control-Allow-Origin`] = resourceMethods ? "'*'" : true;
 
     if (httpMethod === 'OPTIONS') {
-      headers[`${prefix}.Access-Control-Allow-Headers`] = resourceMethods ? "'Content-Type,X-Amz-Date,Authorization'" : true;
+      headers[`${prefix}.Access-Control-Allow-Headers`] = resourceMethods ? APIGatewayService.ALLOWED_CORS_HEADERS : true;
       headers[`${prefix}.Access-Control-Allow-Methods`] = resourceMethods ? `'${resourceMethods.join(',')}'` : true;
     }
 
