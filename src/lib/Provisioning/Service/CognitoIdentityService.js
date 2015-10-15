@@ -304,9 +304,17 @@ export class CognitoIdentityService extends AbstractService {
       }
 
       let policy = LambdaService.generateAllowInvokeFunctionPolicy(lambdasForRole);
-
-      // @todo - concatenate statements from both policies
       let apiPolicy = APIGatewayService.generateAllowInvokeMethodPolicy(endpointsARNs);
+
+      console.log('policy - ', policy.toString());
+      console.log('apiPolicy - ', apiPolicy.toString());
+
+      apiPolicy.statement.list().forEach((statementInstance) => {
+        policy.statement.add(statementInstance);
+      });
+
+
+      console.log('merged policy - ', policy.toString());
 
       let params = {
         PolicyDocument: policy.toString(),

@@ -94,8 +94,6 @@ export class LambdaService extends AbstractService {
       this._readyTeardown = true;
     }.bind(this));
 
-    this._ready = true;
-
     return this;
   }
 

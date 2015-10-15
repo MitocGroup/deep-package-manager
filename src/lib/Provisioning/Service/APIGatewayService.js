@@ -119,8 +119,24 @@ export class APIGatewayService extends AbstractService {
       this._readyTeardown = true;
       return this;
     }
-    
-    this._readyTeardown = true;
+
+    let integrationParams = this.getResourcesIntegrationParams(this.property.config.microservices);
+    let lambdasArn = LambdaService.getAllLambdasArn(this.property.config.microservices);
+
+    this._putApiIntegrations(
+      this._config.api.id,
+      this._config.api.resources,
+      this._config.api.role,
+      lambdasArn,
+      integrationParams
+    )(function(methods, integrations, rolePolicy, deployedApi) {
+      this._config.api.methods = methods;
+      this._config.api.integrations = integrations;
+      this._config.api.rolePolicy = rolePolicy;
+      this._config.api.deployedApi = deployedApi;
+
+      this._readyTeardown = true;
+    }.bind(this));
 
     return this;
   }
@@ -135,25 +151,8 @@ export class APIGatewayService extends AbstractService {
       this._ready = true;
       return this;
     }
-    
-    let integrationParams = this.getResourcesIntegrationParams(this.property.config.microservices);
-    let lambdasArn = LambdaService.getAllLambdasArn(this.property.config.microservices);
 
-    this._putApiIntegrations(
-      this._config.api.id,
-      this._config.api.resources,
-      this._config.api.role,
-      lambdasArn,
-      integrationParams
-    )(function(methods, integrations, rolePolicy, deployedApi) {
-      this._config.postDeploy = {
-        methods: methods,
-        integrations: integrations,
-        rolePolicy: rolePolicy,
-        deployedApi: deployedApi
-      };
-      this._ready = true;
-    }.bind(this));
+    this._ready = true;
 
     return this;
   }
@@ -605,7 +604,7 @@ export class APIGatewayService extends AbstractService {
           switch (action.type) {
             case Action.LAMBDA:
               let uri = this._composeLambdaIntegrationUri(
-                microservice.deployedServices.lambdas[action.identifier].FunctionArn
+                microservice.lambdas[action.identifier].arn
               );
 
               action.methods.forEach((httpMethod) => {
@@ -757,7 +756,7 @@ export class APIGatewayService extends AbstractService {
    */
   getAllEndpointsArn() {
     let apiId = this._config.api.id;
-    let resourcesPaths = this._config.postDeploy.methods ? Object.keys(this._config.postDeploy.methods) : [];
+    let resourcesPaths = this._config.api.hasOwnProperty('methods') ? Object.keys(this._config.api.methods) : [];
     let arns = [];
 
     resourcesPaths.forEach((resourcePath) => {
