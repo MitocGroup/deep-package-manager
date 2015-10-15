@@ -689,6 +689,7 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _generateApiBaseUrl(apiId, region, stageName) {
+    // @todo - replace 'execute-api' this legacy name with Core.AWS.Service.API_GATEWAY when it will be released by API Gateway team
     return `https://${apiId}.execute-api.${region}.amazonaws.com/${stageName}`;
   }
 
@@ -756,15 +757,20 @@ export class APIGatewayService extends AbstractService {
    */
   getAllEndpointsArn() {
     let apiId = this._config.api.id;
+    let apiRegion = this.provisioning.apiGateway.region;
     let resourcesPaths = this._config.api.hasOwnProperty('resources') ? Object.keys(this._config.api.resources) : [];
     let arns = [];
 
-    resourcesPaths.forEach((resourcePath) => {
-      // add only resource action (e.g. /hello-world-example/sample/say-hello)
-      if (resourcePath.split('/').length >= 4) {
-        arns.push(`arn:aws:apigateway:us-east-1::${apiId}:${resourcePath}`);
-      }
-    });
+    // @todo - waiting for http://docs.aws.amazon.com/apigateway/latest/developerguide/permissions.html
+    //resourcesPaths.forEach((resourcePath) => {
+    //  // add only resource action (e.g. /hello-world-example/sample/say-hello)
+    //  if (resourcePath.split('/').length >= 4) {
+    //    // @todo - replace 'execute-api' this legacy name with Core.AWS.Service.API_GATEWAY when it will be released by API Gateway team
+    //    arns.push(`arn:aws:execute-api:${apiRegion}::${apiId}/${this.stageName}/${resourcePath}`);
+    //  }
+    //});
+
+    arns.push(`arn:aws:execute-api:${apiRegion}::${apiId}/*`);
 
     return arns;
   }
@@ -781,8 +787,9 @@ export class APIGatewayService extends AbstractService {
     let statement = policy.statement.add();
     let action = statement.action.add();
 
-    action.service = Core.AWS.Service.API_GATEWAY;
-    action.action = '*';
+    // @todo - replace this legacy name with Core.AWS.Service.API_GATEWAY when it will be released by API Gateway team
+    action.service = 'execute-api';
+    action.action = 'Invoke';
 
     for (let endpointArnKey in endpointsARNs) {
       if (!endpointsARNs.hasOwnProperty(endpointArnKey)) {
