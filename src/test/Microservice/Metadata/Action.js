@@ -19,7 +19,6 @@ suite('Microservice/Metadata/Action', function() {
       runtime: 'nodejs',
     },
     methods: ['GET', 'POST'],
-
   };
 
   let action = new Action(configInput.resourceName, configInput.name, configInput);
