@@ -5,6 +5,8 @@ import {Action} from '../../../lib.compiled/Microservice/Metadata/Action';
 
 suite('Microservice/Metadata/Action', function() {
   let configInput = {
+    cacheTtl: 60,
+    hasToCache: true,
     identifier: 'test identifier',
     resourceName: 'testResourceName',
     name: 'testActionName',
@@ -73,7 +75,12 @@ suite('Microservice/Metadata/Action', function() {
     chai.expect(action.source).to.equal(configInput.source);
   });
 
-  test('Check extract method returns valid action object', function() {
+  test('Check extract() method returns valid action object', function() {
     chai.expect(action.extract()).to.eql(configInput);
+  });
+
+  test('Check NO_CACHE static getter returns number', function() {
+    let actualResult = (typeof Action.NO_CACHE === 'number' && isFinite(Action.NO_CACHE))
+    chai.expect(actualResult).to.be.equal(true);
   });
 });
