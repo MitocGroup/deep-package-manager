@@ -5,13 +5,15 @@ node_js:
 cache:
   directories:
   - "$(npm root -g)"
+notifications:
+  email:
+  - devs-deep@mitocgroup.com
 branches:
   only:
   - master
   - stage
   - test
   - dev
-  - updates
 env:
   global:
   # CODACY_PROJECT_TOKEN
