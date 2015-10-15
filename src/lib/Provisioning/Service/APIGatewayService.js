@@ -672,13 +672,8 @@ export class APIGatewayService extends AbstractService {
     let lambdaResource = Core.AWS.IAM.Factory.create('resource');
     lambdaResource.updateFromArn(lambdaArn);
 
-    let awsResource = Core.AWS.IAM.Factory.create('resource');
-    awsResource.service = Core.AWS.Service.API_GATEWAY;
-    awsResource.region = lambdaResource.region;
-    awsResource.accountId = 'lambda';
-    awsResource.descriptor = resourceDescriptor;
-
-    return awsResource.extract();
+    // @todo - replace 'apigateway' with Core.AWS.Service.API_GATEWAY when API Gateway will get rid of 'execute-api' legacy name
+    return `arn:aws:apigateway:${lambdaResource.region}:lambda:${resourceDescriptor}`;
   }
 
   /**
@@ -689,8 +684,7 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _generateApiBaseUrl(apiId, region, stageName) {
-    // @todo - replace 'execute-api' this legacy name with Core.AWS.Service.API_GATEWAY when it will be released by API Gateway team
-    return `https://${apiId}.execute-api.${region}.amazonaws.com/${stageName}`;
+    return `https://${apiId}.${Core.AWS.Service.API_GATEWAY}.${region}.amazonaws.com/${stageName}`;
   }
 
   /**
@@ -761,16 +755,15 @@ export class APIGatewayService extends AbstractService {
     let resourcesPaths = this._config.api.hasOwnProperty('resources') ? Object.keys(this._config.api.resources) : [];
     let arns = [];
 
-    // @todo - waiting for http://docs.aws.amazon.com/apigateway/latest/developerguide/permissions.html
+    // @todo - waiting for http://docs.aws.amazon.com/apigateway/latest/developerguide/permissions.html to allow access to specific api resources
     //resourcesPaths.forEach((resourcePath) => {
     //  // add only resource action (e.g. /hello-world-example/sample/say-hello)
     //  if (resourcePath.split('/').length >= 4) {
-    //    // @todo - replace 'execute-api' this legacy name with Core.AWS.Service.API_GATEWAY when it will be released by API Gateway team
-    //    arns.push(`arn:aws:execute-api:${apiRegion}::${apiId}/${this.stageName}/${resourcePath}`);
+    //    arns.push(`arn:aws:${Core.AWS.Service.API_GATEWAY}:${apiRegion}::${apiId}/${this.stageName}/${resourcePath}`);
     //  }
     //});
 
-    arns.push(`arn:aws:execute-api:${apiRegion}::${apiId}/*`);
+    arns.push(`arn:aws:${Core.AWS.Service.API_GATEWAY}:${apiRegion}::${apiId}/*`);
 
     return arns;
   }
@@ -787,8 +780,7 @@ export class APIGatewayService extends AbstractService {
     let statement = policy.statement.add();
     let action = statement.action.add();
 
-    // @todo - replace this legacy name with Core.AWS.Service.API_GATEWAY when it will be released by API Gateway team
-    action.service = 'execute-api';
+    action.service = Core.AWS.Service.API_GATEWAY;
     action.action = 'Invoke';
 
     for (let endpointArnKey in endpointsARNs) {

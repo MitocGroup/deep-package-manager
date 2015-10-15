@@ -16,8 +16,8 @@ suite('Provisioning/Service/APIGatewayService', function() {
     chai.expect(apiGatewayService._ready).to.be.equal(false);
   });
 
-  test('Check name() method returns \'apigateway\'', function() {
-    chai.expect(apiGatewayService.name()).to.be.equal('apigateway');
+  test('Check name() method returns \'execute-api\'', function() {
+    chai.expect(apiGatewayService.name()).to.be.equal('execute-api');
   });
 
   //todo - TBD
