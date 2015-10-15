@@ -14,6 +14,7 @@ export default Joi.object().keys({
   type: JoiHelper.stringEnum([Action.LAMBDA, Action.EXTERNAL]),
   methods: JoiHelper.listEnum(Action.HTTP_VERBS),
   source: JoiHelper.string(),
+  cacheTtl: Joi.number().optional().integer().min(Action.NO_CACHE).default(Action.NO_CACHE),
 
   // Lambda config
   engine: Joi.object().optional().keys({
