@@ -453,6 +453,18 @@ export class Instance {
   }
 
   /**
+   * @param {String} dumpPath
+   * @returns {Instance}
+   */
+  buildFrontend(dumpPath = null) {
+    let frontend = new Frontend(this._config.microservices, dumpPath || this._path);
+
+    frontend.build(Frontend.createConfig(this._config));
+
+    return this;
+  }
+
+  /**
    * @param {Function} callback
    * @returns {Instance}
    * @private
