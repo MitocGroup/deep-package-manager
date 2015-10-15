@@ -120,23 +120,7 @@ export class APIGatewayService extends AbstractService {
       return this;
     }
 
-    let integrationParams = this.getResourcesIntegrationParams(this.property.config.microservices);
-    let lambdasArn = LambdaService.getAllLambdasArn(this.property.config.microservices);
-
-    this._putApiIntegrations(
-      this._config.api.id,
-      this._config.api.resources,
-      this._config.api.role,
-      lambdasArn,
-      integrationParams
-    )(function(methods, integrations, rolePolicy, deployedApi) {
-      this._config.api.methods = methods;
-      this._config.api.integrations = integrations;
-      this._config.api.rolePolicy = rolePolicy;
-      this._config.api.deployedApi = deployedApi;
-
-      this._readyTeardown = true;
-    }.bind(this));
+    this._readyTeardown = true;
 
     return this;
   }
@@ -152,7 +136,23 @@ export class APIGatewayService extends AbstractService {
       return this;
     }
 
-    this._ready = true;
+    let integrationParams = this.getResourcesIntegrationParams(this.property.config.microservices);
+    let lambdasArn = LambdaService.getAllLambdasArn(this.property.config.microservices);
+
+    this._putApiIntegrations(
+      this._config.api.id,
+      this._config.api.resources,
+      this._config.api.role,
+      lambdasArn,
+      integrationParams
+    )(function(methods, integrations, rolePolicy, deployedApi) {
+      this._config.api.methods = methods;
+      this._config.api.integrations = integrations;
+      this._config.api.rolePolicy = rolePolicy;
+      this._config.api.deployedApi = deployedApi;
+
+      this._ready = true;
+    }.bind(this));
 
     return this;
   }
@@ -756,11 +756,14 @@ export class APIGatewayService extends AbstractService {
    */
   getAllEndpointsArn() {
     let apiId = this._config.api.id;
-    let resourcesPaths = this._config.api.hasOwnProperty('methods') ? Object.keys(this._config.api.methods) : [];
+    let resourcesPaths = this._config.api.hasOwnProperty('resources') ? Object.keys(this._config.api.resources) : [];
     let arns = [];
 
     resourcesPaths.forEach((resourcePath) => {
-      arns.push(`arn:aws:apigateway:us-east-1::${apiId}:${resourcePath}`);
+      // add only resource action (e.g. /hello-world-example/sample/say-hello)
+      if (resourcePath.split('/').length >= 4) {
+        arns.push(`arn:aws:apigateway:us-east-1::${apiId}:${resourcePath}`);
+      }
     });
 
     return arns;

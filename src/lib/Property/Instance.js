@@ -330,7 +330,6 @@ export class Instance {
     let lambdaExecRoles = this._config.provisioning.lambda.executionRoles;
     let lambdaNames = this._config.provisioning.lambda.names;
 
-    // @todo - move lambda instances creation into build method
     for (let microserviceIdentifier in this._config.microservices) {
       if (!this._config.microservices.hasOwnProperty(microserviceIdentifier)) {
         continue;
