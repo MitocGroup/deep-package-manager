@@ -180,9 +180,7 @@ export class Frontend {
       throw new InvalidArgumentException(propertyConfig, 'Object');
     }
 
-    let basePath = this.path;
-
-    FileSystem.mkdirSync(basePath);
+    FileSystem.mkdirSync(this.path);
     JsonFile.writeFileSync(this.configPath, propertyConfig);
 
     for (let identifier in this._microservicesConfig) {

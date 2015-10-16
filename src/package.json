@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "1.0.7",
+  "version": "1.0.11",
   "description": "DEEP Package Manager",
   "keywords": [
     "Digital Enterprise End-To-End Platform",
@@ -75,8 +75,10 @@
     "aws-api-gw-client": "0.1.*"
   },
   "devDependencies": {
+    "aws-sdk": "2.1.*",
     "chai": "3.2.*",
-    "aws-sdk": "2.1.*"
+    "sinon": "1.17.*",
+    "sinon-chai": "2.8.*"
   },
   "engines": {
     "node": ">=0.12",
