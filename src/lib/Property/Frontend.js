@@ -95,6 +95,7 @@ export class Frontend {
           microserviceConfig.resources[resourceName][action.name] = {
             type: action.type,
             methods: action.methods,
+            forceUserIdentity: action.forceUserIdentity,
             region: propertyConfig.awsRegion, // @todo: set it from lambda provision
             source: {
               api: apiGatewayBaseUrl + APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName),
