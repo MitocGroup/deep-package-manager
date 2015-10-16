@@ -75,7 +75,6 @@
     "aws-api-gw-client": "0.1.*"
   },
   "devDependencies": {
-    "chai": "3.2.*",
     "aws-sdk": "2.1.*"
   },
   "engines": {
