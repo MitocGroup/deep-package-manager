@@ -21,6 +21,7 @@ export class Action {
     this._methods = config.methods.map(m => m.toUpperCase());
     this._source = config.source;
     this._engine = config.engine;
+    this._cacheTtl = config.cacheTtl;
   }
 
   /**
@@ -45,13 +46,6 @@ export class Action {
   }
 
   /**
-   * @returns {Object}
-   */
-  get engine() {
-    return this._engine;
-  }
-
-  /**
    * @returns {Array}
    */
   static get TYPES() {
@@ -59,6 +53,27 @@ export class Action {
       Action.LAMBDA,
       Action.EXTERNAL,
     ];
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  get hasToCache() {
+    return this._cacheTtl !== Action.NO_CACHE;
+  }
+
+  /**
+   * @returns {Number}
+   */
+  get cacheTtl() {
+    return this._cacheTtl;
+  }
+
+  /**
+   * @returns {Object}
+   */
+  get engine() {
+    return this._engine;
   }
 
   /**
@@ -111,6 +126,22 @@ export class Action {
   }
 
   /**
+   * @returns {Number}
+   * @constructor
+   */
+  static get CACHE_FOREVER() {
+    return 0;
+  }
+
+  /**
+   * @returns {Number}
+   * @constructor
+   */
+  static get NO_CACHE() {
+    return -1;
+  }
+
+  /**
    * @returns {Object}
    */
   extract() {
@@ -123,6 +154,8 @@ export class Action {
       source: this.source,
       methods: this.methods,
       engine: this.engine,
+      hasToCache: this.hasToCache,
+      cacheTtl: this.cacheTtl,
     };
   }
 }

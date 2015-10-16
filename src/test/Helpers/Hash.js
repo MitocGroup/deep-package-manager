@@ -6,7 +6,6 @@ import Crc from 'crc';
 import Crypto from 'crypto';
 
 suite('Helpers/Hash', function() {
-  let inputDataObject = { keyToCrc: 'value'};
   let inputDataString = 'string_value';
   let actualResult = null;
 
@@ -15,7 +14,7 @@ suite('Helpers/Hash', function() {
   });
 
   test('Check crc32() static method returns crc32 value', function() {
-    chai.expect(Hash.crc32(inputDataObject)).to.be.equal(Crc.crc32(inputDataObject).toString(16));
+    chai.expect(Hash.crc32(inputDataString)).to.be.equal(Crc.crc32(inputDataString).toString(16));
   });
 
   test('Check sha1() static method returns crc32 value', function() {

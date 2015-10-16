@@ -4,7 +4,6 @@ import chai from 'chai';
 import {WaitFor} from '../../lib.compiled/Helpers/WaitFor';
 import {InvalidArgumentException} from '../../lib.compiled/Exception/InvalidArgumentException';
 
-
 suite('Helpers/WaitFor', function() {
   let waitFor = new WaitFor();
   let waitForChild = new WaitFor();
@@ -61,6 +60,7 @@ suite('Helpers/WaitFor', function() {
     }
 
     chai.expect(error).to.be.an.instanceOf(InvalidArgumentException);
+
     //chai.expect(error.message).to.be.equal(`Invalid argument ${index} of type number provided (meant existing index).`);
   });
 
@@ -98,6 +98,7 @@ suite('Helpers/WaitFor', function() {
     }
 
     chai.expect(error).to.be.an.instanceOf(InvalidArgumentException);
+
     //chai.expect(error.message).to.be.an.equal(`Invalid argument ${index} of type number provided (meant Function).`);
   });
 
@@ -118,6 +119,7 @@ suite('Helpers/WaitFor', function() {
     }
 
     chai.expect(error).to.be.an.instanceOf(InvalidArgumentException);
+
     //chai.expect(error.message).to.be.an.equal(`Invalid argument ${index} of type number provided (meant Function).`);
   });
 

@@ -199,8 +199,7 @@ export class S3Service extends AbstractService {
               throw new FailedSettingBucketAsWebsiteException(bucketName, error);
             }
 
-            // @todo - create website base url from bucketName + region etc
-            //buckets[bucketSuffix].website = data;
+            buckets[bucketSuffix].website = this.getWebsiteAddress(bucketName);
           }.bind(this));
         } else if (S3Service.isBucketTmp(bucketName)) {
           tmpBucket = bucketName;
@@ -234,6 +233,16 @@ export class S3Service extends AbstractService {
         }.bind(this));
       }.bind(this));
     }.bind(this);
+  }
+
+  /**
+   * @param {String} bucketName
+   * @returns {String}
+   */
+  getWebsiteAddress(bucketName) {
+    let region = this.provisioning.s3.config.region;
+
+    return `${bucketName}.s3-website-${region}.amazonaws.com`;
   }
 
   /**

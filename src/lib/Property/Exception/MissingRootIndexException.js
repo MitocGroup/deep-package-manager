@@ -14,6 +14,6 @@ export class MissingRootIndexException extends Exception {
    * @param {String} identifier
    */
   constructor(identifier) {
-    super(`Missing root property (${identifier}) index.html bootstrap file (application entry point)`);
+    super(`Missing root application (${identifier}) index.html bootstrap file (application entry point)`);
   }
 }

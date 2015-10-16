@@ -223,7 +223,7 @@ export class Lambda {
    */
   deploy(callback) {
     this.pack().ready(function() {
-      console.log(`- Lambda ${this._identifier} packing is ready!: ${new Date().toTimeString()}`);
+      console.log(`${new Date().toTimeString()} Lambda ${this._identifier} packing is ready`);
 
       this.upload().ready(callback);
     }.bind(this));
@@ -303,14 +303,14 @@ export class Lambda {
    * @returns {WaitFor}
    */
   pack() {
-    console.log(`- Start packing lambda ${this._identifier}!: ${new Date().toTimeString()}`);
+    console.log(`${new Date().toTimeString()} Start packing lambda ${this._identifier}`);
 
     this.persistConfig();
 
     let buildFile = `${this._path}.zip`;
 
     if (FileSystem.existsSync(buildFile)) {
-      console.log(`- Lambda prebuilt in ${buildFile}`);
+      console.log(`${new Date().toTimeString()} Lambda prebuilt in ${buildFile}`);
 
       FileSystemExtra.copySync(buildFile, this._zipPath);
 
@@ -332,7 +332,7 @@ export class Lambda {
    * @returns {AwsRequestSyncStack}
    */
   upload(update = false) {
-    console.log(`- Start uploading lambda ${this._identifier}!: ${new Date().toTimeString()}`);
+    console.log(`${new Date().toTimeString()} Start uploading lambda ${this._identifier}`);
 
     let lambda = this._property.provisioning.lambda;
     let s3 = this._property.provisioning.s3;
@@ -356,7 +356,7 @@ export class Lambda {
 
       let request = null;
 
-      console.log(`- Lambda ${this._identifier} uploaded!: ${new Date().toTimeString()}`);
+      console.log(`${new Date().toTimeString()} Lambda ${this._identifier} uploaded`);
 
       if (update) {
         let params = {
@@ -452,9 +452,23 @@ export class Lambda {
    * @returns {String}
    */
   get handler() {
-    return this._runtime === 'nodejs'
-      ? 'bootstrap.handler'
-      : 'bootstrap.handler::handle';
+    let handler = null;
+
+    switch(this._runtime) {
+      case 'nodejs':
+        handler = 'bootstrap.handler';
+        break;
+      case 'java8':
+        handler = 'bootstrap.handler::handle';
+        break;
+      case 'python2.7':
+        handler = 'bootstrap.handler';
+        break;
+      default:
+        throw new Error(`The Lambda runtime ${this._runtime} is not supported yet`);
+    }
+
+    return handler;
   }
 
   /**
@@ -468,7 +482,7 @@ export class Lambda {
    * @returns {Number}
    */
   static get DEFAULT_TIMEOUT() {
-    return 60;
+    return Lambda.MAX_TIMEOUT;
   }
 
   /**
@@ -481,15 +495,22 @@ export class Lambda {
   /**
    * @returns {Number}
    */
+  static get MAX_MEMORY_LIMIT() {
+    return 1536;
+  }
+
+  /**
+   * @returns {Number}
+   */
   static get MAX_TIMEOUT() {
-    return 60;
+    return 60 * 5;
   }
 
   /**
    * @returns {String[]}
    */
   static get RUNTIMES() {
-    return ['nodejs', 'java8'];
+    return ['nodejs', 'java8', 'python2.7'];
   }
 
   /**

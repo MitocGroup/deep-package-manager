@@ -95,6 +95,12 @@ export class IAMService extends AbstractService {
 
     let rolePolicy = new Core.AWS.IAM.Policy();
 
+    // @temp - hack to avoid "Invalid AssumeRole service principal: execute-api.amazonaws.com"
+    // @todo - remove this hack when legacy name 'execute-api' will be replaced by 'apigateway'
+    if (serviceIdentifier === 'execute-api') {
+      serviceIdentifier = 'apigateway';
+    }
+
     let statement = rolePolicy.statement.add();
     statement.principal = {
       Service: Core.AWS.Service.identifier(serviceIdentifier),

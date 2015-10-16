@@ -85,14 +85,14 @@ export class CloudFrontService extends AbstractService {
 
     let idPrefix = `${this.awsAccountId}-${this.env}-`;
 
-    let bucketName = services.find(S3Service).config().buckets[S3Service.PUBLIC_BUCKET].name;
-    let environmentPath = `${idPrefix}${Hash.crc32(this.appIdentifier)}${Hash.crc32(bucketName)}`;
-    let originId = `${bucketName}.s3.amazonaws.com`;
+    let bucketConfig = services.find(S3Service).config().buckets[S3Service.PUBLIC_BUCKET];
+    let bucketWebsite = bucketConfig.website;
+    let bucketName = bucketConfig.name;
 
     let payload = {
       DistributionConfig: {
-        CallerReference: environmentPath,
-        Comment: environmentPath,
+        CallerReference: bucketWebsite,
+        Comment: bucketName,
         DefaultCacheBehavior: {
           ForwardedValues: {
             Cookies: {
@@ -106,7 +106,7 @@ export class CloudFrontService extends AbstractService {
           MaxTTL: 60,// 31536000,
           DefaultTTL: 60,// 86400,
 
-          TargetOriginId: originId,
+          TargetOriginId: bucketWebsite,
           TrustedSigners: {
             Enabled: false,
             Quantity: 0,
@@ -118,11 +118,13 @@ export class CloudFrontService extends AbstractService {
           Quantity: 1,
           Items: [
             {
-              Id: originId,
-              DomainName: originId,
+              Id: bucketWebsite,
+              DomainName: bucketWebsite,
               OriginPath: '',
-              S3OriginConfig: {
-                OriginAccessIdentity: '',
+              CustomOriginConfig: {
+                HTTPPort: 80,
+                HTTPSPort: 443,
+                OriginProtocolPolicy: 'match-viewer',
               },
             },
           ],

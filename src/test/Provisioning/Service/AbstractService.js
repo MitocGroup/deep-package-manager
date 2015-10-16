@@ -2,6 +2,7 @@
 
 import chai from 'chai';
 import {AbstractService} from '../../../lib.compiled/Provisioning/Service/AbstractService';
+import {Exception} from '../../../lib.compiled/Exception/Exception';
 
 /**
  * Provisioning service
@@ -86,5 +87,16 @@ suite('Provisioning/Service/AbstractService', function() {
 
   test('Check AWS_RESOURCES_PREFIX static getter returns \'deep\'', function() {
     chai.expect(AbstractService.AWS_RESOURCES_PREFIX).to.be.equal('deep');
+  });
+
+  test('Check getApiVersions for a service throws an exception when something is not ok an array', function() {
+    let e = null;
+    try {
+      service.getApiVersions('S3');
+    } catch (exception) {
+      e = exception;
+    }
+
+    chai.expect(e).to.be.an.instanceOf(Exception);
   });
 });

@@ -5,7 +5,7 @@ import {Config} from '../../lib.compiled/Property/Config';
 
 suite('Property/Config', function() {
   let config = new Config();
-  let configName = './test/Property/deeploy.test.json';
+  let configName = './test/testMaterials/Property1/deeploy.test.json';
 
   test('Class Config exists in Property/Config', function() {
     chai.expect(typeof Config).to.equal('function');
@@ -34,9 +34,9 @@ suite('Property/Config', function() {
   test('Check createFromJsonFile() static method returns valid istance of Config class', function() {
     let extpectedResult = {
       aws: {
-        accessKeyId: null,
-        region: null,
-        secretAccessKey: null,
+        accessKeyId: 'to_pass_string_validation',
+        region: 'region',
+        secretAccessKey: 'to_pass_string_validation',
       },
       dependencies: {
         bucket: 'testbucket',
@@ -61,18 +61,14 @@ suite('Property/Config', function() {
     let generatedConfig = {
       aws: {
         accessKeyId: null,
-        region: null,
+        region: 'us-west-2',
         secretAccessKey: null,
       },
       awsAccountId: 123456789012,
       env: 'dev',
       appIdentifier: 'randomly generated',
     };
-    chai.expect(Config.generate().aws.accessKeyId).to.be.equal(generatedConfig.aws.accessKeyId);
-    chai.expect(Config.generate().aws.region).to.be.equal(generatedConfig.aws.region);
-    chai.expect(Config.generate().aws.secretAccessKey).to.be.equal(generatedConfig.aws.secretAccessKey);
     chai.expect(Config.generate().awsAccountId).to.be.equal(generatedConfig.awsAccountId);
     chai.expect(Config.generate().env).to.be.equal(generatedConfig.env);
-    chai.expect(Config.generate().aws.appIdentifier).to.be.not.equal('');
   });
 });
