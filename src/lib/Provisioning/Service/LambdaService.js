@@ -94,8 +94,6 @@ export class LambdaService extends AbstractService {
       this._readyTeardown = true;
     }.bind(this));
 
-    this._ready = true;
-
     return this;
   }
 
@@ -404,7 +402,6 @@ export class LambdaService extends AbstractService {
 
     return lambdaArns;
   }
-
 
   /**
    * Allow Cognito users to invoke these lambdas
