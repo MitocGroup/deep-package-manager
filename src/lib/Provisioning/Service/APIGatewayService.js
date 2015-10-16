@@ -759,11 +759,11 @@ export class APIGatewayService extends AbstractService {
     //resourcesPaths.forEach((resourcePath) => {
     //  // add only resource action (e.g. /hello-world-example/sample/say-hello)
     //  if (resourcePath.split('/').length >= 4) {
-    //    arns.push(`arn:aws:${Core.AWS.Service.API_GATEWAY}:${apiRegion}::${apiId}/${this.stageName}/${resourcePath}`);
+    //    arns.push(`arn:aws:${Core.AWS.Service.API_GATEWAY}:${apiRegion}:${this.awsAccountId}:${apiId}/${this.stageName}/${resourcePath}`);
     //  }
     //});
 
-    arns.push(`arn:aws:${Core.AWS.Service.API_GATEWAY}:${apiRegion}::${apiId}/*`);
+    arns.push(`arn:aws:${Core.AWS.Service.API_GATEWAY}:${apiRegion}:${this.awsAccountId}:${apiId}/*`);
 
     return arns;
   }
