@@ -12,6 +12,37 @@ import Crc from 'crc';
  */
 export class Hash {
   /**
+   * The simplest "lose lose" algo
+   * with small improvements for
+   * a smaller hash
+   *
+   * @todo: test collisions using "birthday paradox"
+   *
+   * @param {String} str
+   * @returns {String}
+   */
+  static loseLoseMod(str){
+    let hash = 0;
+    let len = str.length;
+
+    if (len <= 0) {
+      return hash;
+    }
+
+    for (let i = 0; i < len; i++) {
+      hash += str.charCodeAt(i);
+    }
+
+    // here's where modification starts
+    hash /= (str.charCodeAt(0) - str.charCodeAt(len - 1));
+    hash = Math.ceil(hash);
+
+    return hash < 0
+      ? `0${Math.abs(hash)}`
+      : hash.toString();
+  }
+
+  /**
    * @param {*} data
    * @returns {String}
    */
