@@ -26,7 +26,7 @@ export class Hash {
     let len = str.length;
 
     if (len <= 0) {
-      return hash;
+      return hash.toString();
     }
 
     for (let i = 0; i < len; i++) {
