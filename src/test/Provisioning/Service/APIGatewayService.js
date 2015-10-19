@@ -41,21 +41,56 @@ suite('Provisioning/Service/APIGatewayService', function() {
     //chai.expect(actualResult._ready).to.be.equal(true);
   });
 
-  test('Check getMethodJsonTemplate() method returns valid object', function() {
+  test('Check getMethodJsonTemplate() method returns {\'application/json\':\'\'}', function() {
     let expectedResult = {
       'application/json': '',
     };
     chai.expect(apiGatewayService.getMethodJsonTemplate()).to.be.eql(expectedResult);
   });
 
+  test('Check getMethodJsonTemplate() method returns valid object', function() {
+    let expectedResult = {
+      'application/json': '{"statusCode": 200}',
+    };
+    chai.expect(apiGatewayService.getMethodJsonTemplate('OPTIONS')).to.be.eql(expectedResult);
+  });
+
   test('Check ALLOWED_CORS_HEADERS static getter returns valid string', function() {
     chai.expect(APIGatewayService.ALLOWED_CORS_HEADERS).to.be.equal("'Content-Type,X-Amz-Date,X-Amz-Security-Token,Authorization'");
   });
 
-  test('Check jsonEmptyModel getter returns valid object', function() {
+  test('Check jsonEmptyModel getter returns valid { "application/json": "Empty" }', function() {
     let expectedResult = {
       'application/json': 'Empty',
     };
     chai.expect(apiGatewayService.jsonEmptyModel).to.be.eql(expectedResult);
+  });
+
+  test('Check _getIntegrationTypeParams getter for httpMethod === "OPTIONS"', function() {
+    let expectedResult = {
+      type: 'MOCK',
+      requestTemplates: {
+        'application/json':  '{"statusCode": 200}',
+      },
+    };
+    let type = 'testType';
+    let httpMethod = 'OPTIONS';
+    let uri = 'http://deep.mg';
+    chai.expect(apiGatewayService._getIntegrationTypeParams(type, httpMethod, uri)).to.be.eql(expectedResult);
+  });
+
+  test('Check _getIntegrationTypeParams getter for httpMethod !== "OPTIONS"', function() {
+    let type = 'testType';
+    let httpMethod = 'GET';
+    let uri = 'http://deep.mg';
+    let expectedResult = {
+      type: type,
+      uri: uri,
+      integrationHttpMethod: httpMethod,
+      requestTemplates: {
+        'application/json': '',
+      },
+    };
+    chai.expect(apiGatewayService._getIntegrationTypeParams(type, httpMethod, uri)).to.be.eql(expectedResult);
   });
 });
