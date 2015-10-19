@@ -9,7 +9,7 @@ import {Instance} from '../../lib.compiled/Property/Instance';
 /**
  * Property instance
  */
-export class InstanceMock extends Instance {
+export class PropertyInstanceMock extends Instance {
   /**
    * @param {String} path
    * @param {String} configFileName

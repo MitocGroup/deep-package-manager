@@ -24,7 +24,7 @@ class AbstractServiceTest extends AbstractService {
    * @returns {Service}
    */
   _setup(services) {
-    super.setup(services);
+    return services;
   }
 
   /**
@@ -32,7 +32,7 @@ class AbstractServiceTest extends AbstractService {
    * @returns {Service}
    */
   _postProvision(services) {
-    super.setup(services);
+    return services;
   }
 
   /**
@@ -40,7 +40,7 @@ class AbstractServiceTest extends AbstractService {
    * @returns {CloudFrontService}
    */
   _postDeployProvision(services) {
-    super.postDeployProvision(services);
+    return services;
   }
 }
 
@@ -58,6 +58,10 @@ suite('Provisioning/Service/AbstractService', function() {
 
   test('Check AbstractService constructor sets valid default values for _ready=false', function() {
     chai.expect(service.ready).to.equal(false);
+  });
+
+  test('Check AbstractService constructor sets valid default values for _isUpdate=false', function() {
+    chai.expect(service.isUpdate).to.equal(false);
   });
 
   test('Check AbstractService constructor sets valid default values for _provisioning', function() {
@@ -93,5 +97,25 @@ suite('Provisioning/Service/AbstractService', function() {
     }
 
     chai.expect(e).to.be.an.instanceOf(Exception);
+  });
+
+  test('Check postProvision() method', function() {
+    let e = null;
+    try {
+      service.postProvision('services');
+    } catch (exception) {
+      e = exception;
+    }
+
+    chai.expect(e).to.be.equal(null);
+  });
+
+  test('Check isUpdate setter ', function() {
+    service.isUpdate = false;
+    chai.expect(service.isUpdate).to.equal(false);
+    service.isUpdate = true;
+    chai.expect(service.isUpdate).to.equal(true);
+    service.isUpdate = false;
+    chai.expect(service.isUpdate).to.equal(false);
   });
 });

@@ -14,8 +14,4 @@ export class AbstractServiceMock extends AbstractService {
   constructor(provisioning) {
     super(provisioning);
   }
-
-  mockedMethod() {
-    return 'mock';
-  }
 }

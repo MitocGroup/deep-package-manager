@@ -2,6 +2,8 @@
 
 import chai from 'chai';
 import {APIGatewayService} from '../../../lib.compiled/Provisioning/Service/APIGatewayService';
+import {ProvisioningInstanceMock} from '../../../mock/Provisioning/ProvisioningInstanceMock';
+import {PropertyInstanceMock} from '../../../mock/Property/PropertyInstanceMock';
 import Core from 'deep-core';
 
 suite('Provisioning/Service/APIGatewayService', function() {
@@ -12,6 +14,18 @@ suite('Provisioning/Service/APIGatewayService', function() {
   });
 
   test('Check constructor sets valid default values', function() {
+    let error = null;
+    let propertyInstance;
+    let provisioningInstance;
+    try {
+      propertyInstance = new PropertyInstanceMock('./test/testMaterials/Property2', 'deeploy.test.json');
+      provisioningInstance = new ProvisioningInstanceMock(propertyInstance);
+      apiGatewayService = new APIGatewayService(provisioningInstance);
+    } catch (e) {
+      error = e;
+    }
+
+    chai.expect(error).to.be.equal(null);
     chai.expect(apiGatewayService._readyTeardown).to.be.equal(false);
     chai.expect(apiGatewayService._ready).to.be.equal(false);
   });
@@ -20,7 +34,6 @@ suite('Provisioning/Service/APIGatewayService', function() {
     chai.expect(apiGatewayService.name()).to.be.equal(Core.AWS.Service.API_GATEWAY);
   });
 
-  //todo - TBD
   test('Check AVAILABLE_REGIONS() static method returns array of available regions', function() {
     chai.expect(APIGatewayService.AVAILABLE_REGIONS.length).to.be.equal(3);
     chai.expect(APIGatewayService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.US_EAST_N_VIRGINIA);
@@ -94,18 +107,7 @@ suite('Provisioning/Service/APIGatewayService', function() {
     chai.expect(apiGatewayService._getIntegrationTypeParams(type, httpMethod, uri)).to.be.eql(expectedResult);
   });
 
-  test('Check stageName getter returns valid value', function () {
-
-    //let error = null;
-    //let propertyInstance = null;
-    //
-    //try {
-    //  propertyInstance = new PropertyInstance('./test/testMaterials/Property2', 'deeploy.test.json');
-    //} catch (e) {
-    //  error = e;
-    //}
-    //
-    //chai.expect(error).to.be.equal(null);
-    //chai.expect(apiGatewayService.stageName).to.be.eql('dsfds');
+  test('Check stageName getter returns valid value', function() {
+    chai.expect(apiGatewayService.stageName).to.be.eql('test');
   });
 });
