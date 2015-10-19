@@ -16,8 +16,8 @@ suite('Provisioning/Service/APIGatewayService', function() {
     chai.expect(apiGatewayService._ready).to.be.equal(false);
   });
 
-  test('Check name() method returns \'execute-api\'', function() {
-    chai.expect(apiGatewayService.name()).to.be.equal('execute-api');
+  test(`Check name() method returns \'${Core.AWS.Service.API_GATEWAY}\'`, function() {
+    chai.expect(apiGatewayService.name()).to.be.equal(Core.AWS.Service.API_GATEWAY);
   });
 
   //todo - TBD
@@ -39,5 +39,23 @@ suite('Provisioning/Service/APIGatewayService', function() {
     //apiGatewayService._ready = false;
     //let actualResult = apiGatewayService._postDeployProvision('service');
     //chai.expect(actualResult._ready).to.be.equal(true);
+  });
+
+  test('Check getMethodJsonTemplate() method returns valid object', function() {
+    let expectedResult = {
+      'application/json': '',
+    };
+    chai.expect(apiGatewayService.getMethodJsonTemplate()).to.be.eql(expectedResult);
+  });
+
+  test('Check ALLOWED_CORS_HEADERS static getter returns valid string', function() {
+    chai.expect(APIGatewayService.ALLOWED_CORS_HEADERS).to.be.equal("'Content-Type,X-Amz-Date,X-Amz-Security-Token,Authorization'");
+  });
+
+  test('Check jsonEmptyModel getter returns valid object', function() {
+    let expectedResult = {
+      'application/json': 'Empty',
+    };
+    chai.expect(apiGatewayService.jsonEmptyModel).to.be.eql(expectedResult);
   });
 });
