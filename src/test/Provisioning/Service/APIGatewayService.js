@@ -93,4 +93,19 @@ suite('Provisioning/Service/APIGatewayService', function() {
     };
     chai.expect(apiGatewayService._getIntegrationTypeParams(type, httpMethod, uri)).to.be.eql(expectedResult);
   });
+
+  test('Check stageName getter returns valid value', function () {
+
+    //let error = null;
+    //let propertyInstance = null;
+    //
+    //try {
+    //  propertyInstance = new PropertyInstance('./test/testMaterials/Property2', 'deeploy.test.json');
+    //} catch (e) {
+    //  error = e;
+    //}
+    //
+    //chai.expect(error).to.be.equal(null);
+    //chai.expect(apiGatewayService.stageName).to.be.eql('dsfds');
+  });
 });

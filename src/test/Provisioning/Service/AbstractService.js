@@ -4,11 +4,7 @@ import chai from 'chai';
 import {AbstractService} from '../../../lib.compiled/Provisioning/Service/AbstractService';
 import {Exception} from '../../../lib.compiled/Exception/Exception';
 
-/**
- * Provisioning service
- * @description implements AbstractService to test it
- */
-class ProvisioningService extends AbstractService {
+class AbstractServiceTest extends AbstractService {
   /**
    * @param {Instance} provisioning
    */
@@ -46,15 +42,14 @@ class ProvisioningService extends AbstractService {
   _postDeployProvision(services) {
     super.postDeployProvision(services);
   }
-
 }
 
 suite('Provisioning/Service/AbstractService', function() {
   let provisioningInput = 'provisioning';
-  let service = new ProvisioningService(provisioningInput);
+  let service = new AbstractServiceTest(provisioningInput);
 
   test('Class AbstractService exists in Provisioning/Service/AbstractService', function() {
-    chai.expect(typeof AbstractService).to.equal('function');
+    chai.expect(typeof AbstractServiceTest).to.equal('function');
   });
 
   test('Check AbstractService constructor sets valid default values for _readyTeardown=false', function() {
@@ -74,19 +69,19 @@ suite('Provisioning/Service/AbstractService', function() {
   });
 
   test('Check DELIMITER_UPPER_CASE static getter returns \'upperCase\'', function() {
-    chai.expect(AbstractService.DELIMITER_UPPER_CASE).to.be.equal('upperCase');
+    chai.expect(AbstractServiceTest.DELIMITER_UPPER_CASE).to.be.equal('upperCase');
   });
 
   test('Check DELIMITER_DOT static getter returns \'.\'', function() {
-    chai.expect(AbstractService.DELIMITER_DOT).to.be.equal('.');
+    chai.expect(AbstractServiceTest.DELIMITER_DOT).to.be.equal('.');
   });
 
   test('Check DELIMITER_UNDERSCORE static getter returns \'_\'', function() {
-    chai.expect(AbstractService.DELIMITER_UNDERSCORE).to.be.equal('_');
+    chai.expect(AbstractServiceTest.DELIMITER_UNDERSCORE).to.be.equal('_');
   });
 
   test('Check AWS_RESOURCES_PREFIX static getter returns \'deep\'', function() {
-    chai.expect(AbstractService.AWS_RESOURCES_PREFIX).to.be.equal('deep');
+    chai.expect(AbstractServiceTest.AWS_RESOURCES_PREFIX).to.be.equal('deep');
   });
 
   test('Check getApiVersions for a service throws an exception when something is not ok an array', function() {

@@ -28,8 +28,15 @@ suite('Property/Instance', function() {
   });
 
   test('Check constructor sets valid default values', function() {
-    let propertyInstance = new PropertyInstance('./test/testMaterials/Property2', 'deeploy.test.json');
+    let error = null;
+    let propertyInstance = null;
+    try {
+      propertyInstance = new PropertyInstance('./test/testMaterials/Property2', 'deeploy.test.json');
+    } catch (e) {
+      error = e;
+    }
 
+    chai.expect(error).to.be.equal(null);
     chai.expect(propertyInstance.path).to.be.equal('./test/testMaterials/Property2');
     chai.expect(propertyInstance._microservices).to.be.equal(null);
     chai.expect(propertyInstance.localDeploy).to.be.equal(false);
