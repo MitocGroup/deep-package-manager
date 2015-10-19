@@ -123,8 +123,8 @@ export class CloudFrontService extends AbstractService {
               OriginPath: '',
               CustomOriginConfig: {
                 HTTPPort: 80,
-                HTTPSPort: 443,
-                OriginProtocolPolicy: 'match-viewer',
+                HTTPSPort: 443, // useless in our case
+                OriginProtocolPolicy: 'http-only',
               },
             },
           ],
