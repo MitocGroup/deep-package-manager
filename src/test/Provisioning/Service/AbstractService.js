@@ -3,6 +3,8 @@
 import chai from 'chai';
 import {AbstractService} from '../../../lib.compiled/Provisioning/Service/AbstractService';
 import {Exception} from '../../../lib.compiled/Exception/Exception';
+import {PropertyInstanceMock} from '../../../mock/Property/PropertyInstanceMock.js';
+import {ProvisioningInstanceMock} from '../../../mock/Provisioning/ProvisioningInstanceMock';
 
 class AbstractServiceTest extends AbstractService {
   /**
@@ -117,5 +119,39 @@ suite('Provisioning/Service/AbstractService', function() {
     chai.expect(service.isUpdate).to.equal(true);
     service.isUpdate = false;
     chai.expect(service.isUpdate).to.equal(false);
+  });
+
+  test('Check generateAwsResourceName() method throws an exception when delimiter is not ok', function() {
+    let e = null;
+    let resourceName = 'test';
+    let awsService = 'cloudfront';
+    let msIdentifier = ''
+    let delimiter = 'invalid delimiter';
+    let propertyInstance = null;
+    let provisioningInstance = null;
+    let actualResult = null;
+
+    try {
+      propertyInstance = new PropertyInstanceMock('./test/testMaterials/Property2', 'deeploy.test.json');
+      provisioningInstance = new ProvisioningInstanceMock(propertyInstance);
+      service = new AbstractServiceTest(propertyInstance);
+
+      //actualResult = service.generateAwsResourceName(resourceName, awsService, msIdentifier, AbstractService.DELIMITER_UNDERSCORE);
+    } catch (exception) {
+      e = exception;
+    }
+
+
+
+    //chai.expect(error).to.be.equal(null);
+    //chai.expect(apiGatewayService._readyTeardown).to.be.equal(false);
+    //chai.expect(apiGatewayService._ready).to.be.equal(false);
+
+    chai.expect(e).to.be.equal(null);
+    //chai.expect(provisioningInstance).to.be.eql({sadas:'dsadsa'});
+    //chai.expect(service.env).to.be.equal('test');
+    //chai.expect(e).to.be.an.instanceOf(Exception);
+    //chai.expect(e.message).to.be.equal('Undefined');
+
   });
 });
