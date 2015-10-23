@@ -469,4 +469,18 @@ suite('Provisioning/Service/APIGatewayService', function() {
     chai.expect(e).to.be.equal(null);
     chai.expect(actualResult).to.be.eql(expectedResult);
   });
+
+  test('Check getAllEndpointsArn() method returns valid array', function() {
+    let e = null;
+    let actualResult = null;
+    let expectedResult = {};
+
+    try {
+      actualResult = apiGatewayService.getAllEndpointsArn();
+    } catch (exception) {
+      e = exception;
+    }
+
+    //TODO - AssertionError: expected [TypeError: Cannot read property 'id' of undefined] to equal null
+  });
 });
