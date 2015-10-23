@@ -119,4 +119,8 @@ suite('Microservice/Instance', function() {
   test('Check postDeployHook getter returns null when no hook exists', function() {
     chai.expect(instance.postDeployHook).to.be.equal(null);
   });
+
+  test('Check initHook getter returns initHook()', function() {
+    chai.expect(typeof instance.initHook).to.be.equal('object');
+  });
 });

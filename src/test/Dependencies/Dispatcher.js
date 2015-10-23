@@ -1,7 +1,11 @@
 'use strict';
 
 import chai from 'chai';
+import sinon from 'sinon';
+import sinonChai from 'sinon-chai';
 import {Dispatcher} from '../../lib.compiled/Dependencies/Dispatcher';
+
+chai.use(sinonChai);
 
 /**
  * Dependency dispatcher implements abstract method from Dispatcher
@@ -19,9 +23,6 @@ class DependencyDispatcher extends Dispatcher {
 suite('Dependencies/Dispatcher', function() {
   let driver = 'driverTest';
   let dispatcher = new DependencyDispatcher(driver);
-  let callbackFunction = function() {
-    return 'callbackValue';
-  };
 
   test('Class Dispatcher exists in Dependencies/Dispatcher', function() {
     chai.expect(typeof Dispatcher).to.equal('function');
@@ -41,8 +42,9 @@ suite('Dependencies/Dispatcher', function() {
   });
 
   test('Check dispatchBatch() method', function() {
-    //todo
-    chai.expect(dispatcher.dispatch(callbackFunction)).to.be.not.equal(null);
+    let spyCallback = sinon.spy();
+
+    chai.expect(dispatcher.dispatch(spyCallback)).to.be.not.equal(null);
     //error = null;
     //try {
     //  waitFor.ready(callbackFunction);
