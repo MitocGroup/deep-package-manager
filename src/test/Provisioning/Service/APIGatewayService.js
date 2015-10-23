@@ -85,7 +85,7 @@ suite('Provisioning/Service/APIGatewayService', function() {
     let expectedResult = {
       type: 'MOCK',
       requestTemplates: {
-        'application/json':  '{"statusCode": 200}',
+        'application/json': '{"statusCode": 200}',
       },
     };
     let type = 'testType';
@@ -118,7 +118,7 @@ suite('Provisioning/Service/APIGatewayService', function() {
     let actualResult = null;
 
     try {
-      actualResult =  apiGatewayService._createApiResources('resourcePaths', 'restApiId', 'callback');
+      actualResult = apiGatewayService._createApiResources('resourcePaths', 'restApiId', 'callback');
     } catch (exception) {
       e = exception;
     }
@@ -133,7 +133,7 @@ suite('Provisioning/Service/APIGatewayService', function() {
     let actualResult = null;
 
     try {
-      actualResult =  apiGatewayService._setup(objectStorage);
+      actualResult = apiGatewayService._setup(objectStorage);
     } catch (exception) {
       e = exception;
     }
@@ -149,7 +149,7 @@ suite('Provisioning/Service/APIGatewayService', function() {
     let actualResult = null;
 
     try {
-      actualResult =  apiGatewayService._postProvision(objectStorage);
+      actualResult = apiGatewayService._postProvision(objectStorage);
     } catch (exception) {
       e = exception;
     }
@@ -158,13 +158,70 @@ suite('Provisioning/Service/APIGatewayService', function() {
     chai.expect(actualResult._readyTeardown).to.be.equal(true);
   });
 
+  test('Check _getMethodCorsHeaders() method returns method cors headers', function() {
+    let e = null;
+    let actualResult = null;
+    let httpMethod = 'OPTIONS';
+    let prefix = 'testPrefix';
+    let expectedResult = {
+      'testPrefix.Access-Control-Allow-Origin': true,
+      'testPrefix.Access-Control-Allow-Headers': true,
+      'testPrefix.Access-Control-Allow-Methods': true,
+    };
+
+    try {
+      actualResult = apiGatewayService._getMethodCorsHeaders(prefix, httpMethod);
+    } catch (exception) {
+      e = exception;
+    }
+
+    chai.expect(e).to.be.equal(null);
+    chai.expect(actualResult).to.be.eql(expectedResult);
+  });
+
+  test('Check _getMethodResponseParameters() method returns response parameters', function() {
+    let e = null;
+    let actualResult = null;
+    let httpMethod = 'GET';
+    let expectedResult = {
+      'method.response.header.Access-Control-Allow-Origin': true,
+    };
+
+    try {
+      actualResult = apiGatewayService._getMethodResponseParameters(httpMethod);
+    } catch (exception) {
+      e = exception;
+    }
+
+    chai.expect(e).to.be.equal(null);
+    chai.expect(actualResult).to.be.eql(expectedResult);
+  });
+
+  test('Check _getMethodRequestParameters() method returns request parameters', function() {
+    let e = null;
+    let actualResult = null;
+    let httpMethod = 'GET';
+    let expectedResult = {
+      'method.request.header.Access-Control-Allow-Origin': true,
+    };
+
+    try {
+      actualResult = apiGatewayService._getMethodRequestParameters(httpMethod);
+    } catch (exception) {
+      e = exception;
+    }
+
+    chai.expect(e).to.be.equal(null);
+    chai.expect(actualResult).to.be.eql(expectedResult);
+  });
+
   test('Check _createApiIamRole() method', function() {
     let e = null;
     let actualResult = null;
     let spyCallback = sinon.spy();
 
     try {
-      actualResult =  apiGatewayService._createApiIamRole(spyCallback);
+      actualResult = apiGatewayService._createApiIamRole(spyCallback);
     } catch (exception) {
       e = exception;
     }
@@ -180,7 +237,7 @@ suite('Provisioning/Service/APIGatewayService', function() {
     let apiId = 'apiId_test';
 
     try {
-      actualResult =  apiGatewayService._deployApi(apiId, spyCallback);
+      actualResult = apiGatewayService._deployApi(apiId, spyCallback);
     } catch (exception) {
       e = exception;
     }
@@ -210,7 +267,7 @@ suite('Provisioning/Service/APIGatewayService', function() {
       'arn:aws:lambda:us-west-2:test_awsAccountId:function:testFunctionName2'];
 
     try {
-      actualResult =  apiGatewayService._addPolicyToApiRole(apiRole, lambdaARNs, spyCallback);
+      actualResult = apiGatewayService._addPolicyToApiRole(apiRole, lambdaARNs, spyCallback);
     } catch (exception) {
       e = exception;
     }
@@ -280,11 +337,136 @@ suite('Provisioning/Service/APIGatewayService', function() {
     };
 
     try {
-      actualResult =  apiGatewayService.getResourcesIntegrationParams(microservicesConfig);
+      actualResult = apiGatewayService.getResourcesIntegrationParams(microservicesConfig);
     } catch (exception) {
       e = exception;
     }
 
     // todo - need to add smart checks
+  });
+
+
+  test('Check _composeLambdaIntegrationUri() method returns valid object', function() {
+    let e = null;
+    let actualResult = null;
+    let lambdaArn = 'arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:' +
+      'lambda:us-west-2:389617777922:function:DeepDevSampleSayHelloa24bd154/invocations'
+
+    try {
+      actualResult = apiGatewayService._composeLambdaIntegrationUri(lambdaArn);
+    } catch (exception) {
+      e = exception;
+    }
+
+    //todo - to be updated after code will be updated
+    //chai.expect(e).to.be.equal(null);
+  });
+
+  test('Check _methodParamsGenerator() method returns valid array', function() {
+    let e = null;
+    let actualResult = null;
+    let method = 'putMethod';
+    let expectedResult = {
+      authorizationType: 'AWS_IAM',
+      httpMethod: 'POST',
+      requestModels: {
+        'application/json': 'Empty',
+      },
+      requestParameters: {
+        'method.request.header.Access-Control-Allow-Origin': true
+      },
+      resourceId: 'test1Id',
+      resourcePath: 'testTesourcePath1',
+      restapiId: 'testApiId',
+    };
+    let integrationParams = {
+      testTesourcePath1: {
+        POST: 'src/Test/Create',
+        GET: 'src/Test/Retrieve',
+        PUT: 'src/Test/Update',
+        DELETE: 'src/Test/Delete',
+      },
+      testTesourcePath2: {
+        POST: 'src/Test/Create',
+        GET: 'src/Test/Retrieve',
+        PUT: 'src/Test/Update',
+        DELETE: 'src/Test/Delete',
+      },
+    };
+    let apiResource = {
+      testTesourcePath1: {
+        id: 'test1Id',
+      },
+      testTesourcePath2: {
+        id: 'test2Id',
+      },
+    };
+
+    try {
+      actualResult = apiGatewayService._methodParamsGenerator(method, 'testApiId', apiResource, integrationParams);
+    } catch (exception) {
+      e = exception;
+    }
+
+    chai.expect(e).to.be.equal(null);
+    chai.expect(actualResult.length).to.be.equal(8);
+    chai.expect(actualResult).to.be.contains(expectedResult);
+  });
+
+  test('Check _extractApiResourcesMetadata() method returns valid array', function() {
+    let e = null;
+    let actualResult = null;
+    let expectedResult = {
+      'src/Test/Create': {
+        id: 'createTestId',
+        parentId: 'parentCreateTestId',
+        path: 'src/Test/Create',
+        pathPart: 'createPathPart',
+      },
+      'src/Test/Update': {
+        id: 'updateTestId',
+        parentId: 'parentUpdateTestId',
+        path: 'src/Test/Update',
+        pathPart: 'updatePathPart',
+      },
+    };
+
+    let rawResources = {
+      create: {
+        description: 'Lambda for creating test',
+        type: 'lambda',
+        methods: [
+          'POST',
+        ],
+        source: {
+          id: 'createTestId',
+          parentId: 'parentCreateTestId',
+          path: 'src/Test/Create',
+          pathPart: 'createPathPart',
+        },
+      },
+      update: {
+        description: 'Lambda for updating test',
+        type: 'lambda',
+        methods: [
+          'PUT',
+        ],
+        source: {
+          id: 'updateTestId',
+          parentId: 'parentUpdateTestId',
+          path: 'src/Test/Update',
+          pathPart: 'updatePathPart',
+        },
+      },
+    };
+
+    try {
+      actualResult = apiGatewayService._extractApiResourcesMetadata(rawResources);
+    } catch (exception) {
+      e = exception;
+    }
+
+    chai.expect(e).to.be.equal(null);
+    chai.expect(actualResult).to.be.eql(expectedResult);
   });
 });
