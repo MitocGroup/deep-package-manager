@@ -161,7 +161,6 @@ suite('Property/Instance', function() {
   });
 
   test('Check install() method with correct property', function() {
-    let e = null;
     let propertyInstance = new PropertyInstance('./test/testMaterials/Property2', 'deeploy.test.json');
 
     propertyInstance.install(function() {

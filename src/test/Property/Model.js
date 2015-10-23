@@ -46,7 +46,7 @@ suite('Property/Model', function() {
   test('Check create() static method throws SyntaxError on invalid model', function() {
     let exception = null;
     try {
-      let models = Model.create('./test/Property/badModel');
+      Model.create('./test/Property/badModel');
     } catch (e) {
       exception = e;
     }

@@ -41,7 +41,7 @@ suite('Dependencies/Manager', function() {
   test('Check constructor throws exception for !(driver instanceof AbstractDriver)', function() {
     let error = null;
     try {
-      let invalidManager = new Manager();
+      new Manager();
     } catch (e) {
       error = e;
     }
