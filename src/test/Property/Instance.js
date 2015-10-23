@@ -1,50 +1,71 @@
 'use strict';
 
 import chai from 'chai';
+import sinon from 'sinon';
+import sinonChai from 'sinon-chai';
 import {Instance as PropertyInstance} from '../../lib.compiled/Property/Instance';
 import {Exception} from '../../lib.compiled/Exception/Exception';
 import {DuplicateRootException} from '../../lib.compiled/Property/Exception/DuplicateRootException';
 import {MissingRootException} from '../../lib.compiled/Property/Exception/MissingRootException';
 import {InvalidArgumentException} from '../../lib.compiled/Exception/InvalidArgumentException';
 
+chai.use(sinonChai);
+
 suite('Property/Instance', function() {
+  let propertyInstance = null;
 
   test('Class Instance exists in Property/Instance', function() {
     chai.expect(typeof PropertyInstance).to.equal('function');
   });
 
   test('Check constructor throws Exception if config file doesn\'t exist', function() {
-    let error = null;
+    let e = null;
     let configPath = 'invalidPath';
     let configName = 'invalidConfig.json';
     try {
       new PropertyInstance(configPath, configName);
-    } catch (e) {
-      error = e;
+    } catch (exception) {
+      e = exception;
     }
 
-    chai.expect(error).to.be.an.instanceOf(Exception);
-    chai.expect(error.message).to.be.equal(`Missing ${configName} configuration file from ${configPath}.`);
+    chai.expect(e).to.be.an.instanceOf(Exception);
+    chai.expect(e.message).to.be.equal(`Missing ${configName} configuration file from ${configPath}.`);
   });
 
   test('Check constructor sets valid default values', function() {
-    let error = null;
-    let propertyInstance = null;
+    let e = null;
     try {
       propertyInstance = new PropertyInstance('./test/testMaterials/Property2', 'deeploy.test.json');
-    } catch (e) {
-      error = e;
+    } catch (exception) {
+      e = exception;
     }
 
-    chai.expect(error).to.be.equal(null);
+    chai.expect(e).to.be.equal(null);
     chai.expect(propertyInstance.path).to.be.equal('./test/testMaterials/Property2');
     chai.expect(propertyInstance._microservices).to.be.equal(null);
     chai.expect(propertyInstance.localDeploy).to.be.equal(false);
     chai.expect(propertyInstance.path).to.be.an.equal('./test/testMaterials/Property2');
+    chai.expect(propertyInstance.isUpdate).to.be.an.equal(false);
   });
 
   test('Check concurrentAsyncCount static getter returns value more than 1', function() {
     chai.expect(PropertyInstance.concurrentAsyncCount).to.be.above(1);
+  });
+
+  test('Check isUpdate getter returns valid values', function() {
+    propertyInstance._isUpdate = false;
+    chai.expect(propertyInstance.isUpdate).to.be.an.equal(false);
+    propertyInstance._isUpdate = true;
+    chai.expect(propertyInstance.isUpdate).to.be.an.equal(true);
+    propertyInstance._isUpdate = false;
+  });
+
+  test('Check localDeploy setter sets value', function() {
+    propertyInstance.localDeploy = false;
+    chai.expect(propertyInstance.localDeploy).to.be.an.equal(false);
+    propertyInstance.localDeploy = true;
+    chai.expect(propertyInstance.localDeploy).to.be.an.equal(true);
+    propertyInstance.localDeploy = false;
   });
 
   test('Check fakeBuild() method', function() {
@@ -166,5 +187,89 @@ suite('Property/Instance', function() {
     propertyInstance.install(function() {
       chai.expect(propertyInstance).to.be.an.instanceOf(PropertyInstance);
     });
+  });
+
+  test('Check deploy() method throws InvalidArgumentException for invalid argument', function() {
+    let e = null;
+    let spyCallback = sinon.spy();
+
+    try {
+      propertyInstance.deploy();
+    } catch (exception) {
+      e = exception;
+    }
+
+    chai.expect(e).to.be.an.instanceOf(InvalidArgumentException);
+    chai.expect(spyCallback).to.not.have.been.calledWith();
+  });
+
+  test('Check _postDeploy() method throws InvalidArgumentException for invalid argument', function() {
+    let e = null;
+    let spyCallback = sinon.spy();
+
+    try {
+      propertyInstance._postDeploy();
+    } catch (exception) {
+      e = exception;
+    }
+
+    chai.expect(e).to.be.an.instanceOf(InvalidArgumentException);
+    chai.expect(spyCallback).to.not.have.been.calledWith();
+  });
+
+  test('Check install() method throws InvalidArgumentException for invalid argument', function() {
+    let e = null;
+    let spyCallback = sinon.spy();
+
+    try {
+      propertyInstance.install();
+    } catch (exception) {
+      e = exception;
+    }
+
+    chai.expect(e).to.be.an.instanceOf(InvalidArgumentException);
+    chai.expect(spyCallback).to.not.have.been.calledWith();
+  });
+
+  test('Check fetchFrontendEngine() method', function() {
+    let e = null;
+    let spyCallback = sinon.spy();
+
+    try {
+      propertyInstance.fetchFrontendEngine(spyCallback);
+    } catch (exception) {
+      e = exception;
+    }
+
+    chai.expect(e).to.be.equal(null);
+    chai.expect(spyCallback).to.not.have.been.calledWith();
+  });
+
+  test('Check runInitMsHooks() method', function() {
+    let e = null;
+    let spyCallback = sinon.spy();
+
+    try {
+      propertyInstance.runInitMsHooks(spyCallback);
+    } catch (exception) {
+      e = exception;
+    }
+
+    chai.expect(e).to.be.equal(null);
+    chai.expect(spyCallback).to.have.been.calledWith();
+  });
+
+  test('Check _runPostDeployMsHooks() method', function() {
+    let e = null;
+    let spyCallback = sinon.spy();
+
+    try {
+      propertyInstance._runPostDeployMsHooks(spyCallback);
+    } catch (exception) {
+      e = exception;
+    }
+
+    chai.expect(e).to.be.equal(null);
+    chai.expect(spyCallback).to.have.been.calledWith();
   });
 });
