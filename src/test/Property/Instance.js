@@ -272,4 +272,34 @@ suite('Property/Instance', function() {
     chai.expect(e).to.be.equal(null);
     chai.expect(spyCallback).to.have.been.calledWith();
   });
+
+  test('Check buildFrontend() method returns object', function() {
+    let e = null;
+    let actualResult = null;
+
+    try {
+      actualResult = propertyInstance.buildFrontend();
+    } catch (exception) {
+      e = exception;
+    }
+
+    //todo -  AssertionError: expected [Error: EEXIST, file already exists './test/testMaterials/Property2/_public'] to equal null
+    chai.expect(e).to.be.equal(null);
+    chai.expect(typeof actualResult).to.be.equal('object');
+  });
+
+  test('Check assureFrontendEngine() method', function() {
+    let e = null;
+    let spyCallback = sinon.spy();
+
+    try {
+      propertyInstance.assureFrontendEngine(spyCallback);
+    } catch (exception) {
+      e = exception;
+    }
+
+    chai.expect(e).to.be.equal(null);
+    chai.expect(spyCallback).to.have.been.calledWith();
+  });
+
 });
