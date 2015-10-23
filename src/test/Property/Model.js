@@ -5,7 +5,7 @@ import {Model} from '../../lib.compiled/Property/Model';
 
 suite('Property/Model', function() {
   let modelName = 'name';
-  let modelDefenition = 'definition';
+  let modelDefinition = 'definition';
   let modelInstance = new Model();
 
   test('Class Model exists in Property/Model', function() {
@@ -18,9 +18,9 @@ suite('Property/Model', function() {
   });
 
   test('Check constructor sets valid values', function() {
-    modelInstance = new Model(modelName, modelDefenition);
+    modelInstance = new Model(modelName, modelDefinition);
     chai.expect(modelInstance.name).to.be.equal(modelName);
-    chai.expect(modelInstance.definition).to.be.equal(modelDefenition);
+    chai.expect(modelInstance.definition).to.be.equal(modelDefinition);
   });
 
   test('Check EXTENSION static getter returns \'json\'', function() {
@@ -46,7 +46,7 @@ suite('Property/Model', function() {
   test('Check create() static method throws SyntaxError on invalid model', function() {
     let exception = null;
     try {
-      let models = Model.create('./test/Property/badModel');
+      Model.create('./test/Property/badModel');
     } catch (e) {
       exception = e;
     }

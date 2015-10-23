@@ -22,6 +22,7 @@ export class Action {
     this._source = config.source;
     this._engine = config.engine;
     this._cacheTtl = config.cacheTtl;
+    this._forceUserIdentity = config['force-user-identity'];
   }
 
   /**
@@ -60,6 +61,13 @@ export class Action {
    */
   get hasToCache() {
     return this._cacheTtl !== Action.NO_CACHE;
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  get forceUserIdentity() {
+    return this._forceUserIdentity;
   }
 
   /**
@@ -156,6 +164,7 @@ export class Action {
       engine: this.engine,
       hasToCache: this.hasToCache,
       cacheTtl: this.cacheTtl,
+      forceUserIdentity: this.forceUserIdentity,
     };
   }
 }

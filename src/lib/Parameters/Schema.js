@@ -9,7 +9,6 @@ import RamlSanitizer from 'raml-sanitize';
 import RamlValidator from 'raml-validate';
 import {PathTransformer} from './PathTransformer';
 import {prompt} from 'prompt-sync';
-import OS from 'os';
 import {_extend as extend} from 'util';
 
 export class Schema {

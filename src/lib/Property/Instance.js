@@ -603,7 +603,6 @@ export class Instance {
    */
   assureFrontendEngine(callback) {
     let microservices = this.microservices;
-    let rootMicroservice = null;
 
     for (let microservice of microservices) {
       if (microservice.isRoot) {

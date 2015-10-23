@@ -7,7 +7,6 @@
 import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
 import {S3Service} from './S3Service';
-import {Hash} from '../../Helpers/Hash';
 import {FailedToCreateCloudFrontDistributionException} from './Exception/FailedToCreateCloudFrontDistributionException';
 
 /**
@@ -123,8 +122,8 @@ export class CloudFrontService extends AbstractService {
               OriginPath: '',
               CustomOriginConfig: {
                 HTTPPort: 80,
-                HTTPSPort: 443,
-                OriginProtocolPolicy: 'match-viewer',
+                HTTPSPort: 443, // useless in our case
+                OriginProtocolPolicy: 'http-only',
               },
             },
           ],

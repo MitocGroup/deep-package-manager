@@ -10,7 +10,13 @@ import {FailedToListApiResourcesException} from '../../../../lib.compiled/Provis
 suite('Provisioning/Service/Exception/FailedToListApiResourcesException', function() {
 
   test('Class FailedToListApiResourcesException', function() {
-    let e = new FailedToListApiResourcesException('Test exception');
-    chai.expect(e).to.be.an.instanceof(FailedToListApiResourcesException);
+    let exception = null;
+    try {
+      exception = new FailedToListApiResourcesException('Test exception');
+    } catch (e) {
+      exception = e;
+    }
+
+    chai.expect(exception).to.be.an.instanceof(FailedToListApiResourcesException);
   });
 });

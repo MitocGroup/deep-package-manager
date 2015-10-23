@@ -10,7 +10,6 @@ import {WaitFor} from '../../Helpers/WaitFor';
 import {Exception} from '../../Exception/Exception';
 import {FailedToCreateApiGatewayException} from './Exception/FailedToCreateApiGatewayException';
 import {FailedToCreateApiResourcesException} from './Exception/FailedToCreateApiResourcesException';
-import {FailedToListApiResourcesException} from './Exception/FailedToListApiResourcesException';
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
 import {FailedToDeployApiGatewayException} from './Exception/FailedToDeployApiGatewayException';

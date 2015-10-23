@@ -40,12 +40,6 @@ export class DynamoDBService extends AbstractService {
    * @returns {DynamoDBService}
    */
   _setup(services) {
-    // @todo: implement!
-    if (this._isUpdate) {
-      this._ready = true;
-      return this;
-    }
-
     this._createDbTables(
       this._rawModels
     )(function(tablesNames) {
@@ -98,17 +92,76 @@ export class DynamoDBService extends AbstractService {
    */
   _createDbTables(models) {
     let tablesNames = this.generateTableNames(models);
+    let missingTablesNames = [];
+
+    if (this._isUpdate) {
+      let tablesNamesVector = DynamoDBService._objectValues(tablesNames);
+
+      missingTablesNames = DynamoDBService._objectValues(this._config.tablesNames)
+        .filter((x) => tablesNamesVector.indexOf(x) < 0);
+    }
 
     let deepDb = new DB(models, tablesNames);
 
-    // @temp (waiting for https://github.com/aws/aws-sdk-js/issues/710 fix)
+    // @todo waiting for https://github.com/aws/aws-sdk-js/issues/710 to be fixed
     deepDb._setVogelsDriver(this.provisioning.dynamoDB);
 
-    return function(callback) {
-      deepDb.assureTables(function() {
-        callback(tablesNames);
+    return (callback) => {
+      deepDb.assureTables(() => {
+        if (missingTablesNames.length <= 0) {
+          callback(tablesNames);
+          return;
+        }
+
+        this._removeMissingTables(missingTablesNames, () => {
+          callback(tablesNames);
+        });
       });
-    }.bind(this);
+    };
+  }
+
+  /**
+   * @param {Object} obj
+   * @returns {Array}
+   * @private
+   */
+  static _objectValues(obj) {
+    let values = [];
+
+    for (let tableId in obj) {
+      if (!obj.hasOwnProperty(tableId)) {
+        continue;
+      }
+
+      values.push(obj[tableId]);
+    }
+
+    return values;
+  }
+
+  /**
+   * @param {String[]} missingTablesNames
+   * @param {Function} callback
+   * @returns {DynamoDBService}
+   * @private
+   */
+  _removeMissingTables(missingTablesNames, callback) {
+    console.log(`${new Date().toTimeString()} Removing DynamoDB tables: ${missingTablesNames.join(', ')}`);
+
+    for (let tableName of missingTablesNames) {
+      this.provisioning.dynamoDB.deleteTable({
+        TableName: tableName,
+      }, (error, data) => {
+        if (error) {
+          console.error(`${new Date().toTimeString()} Error while deleting DynamoDB table ${tableName}: ${error}`);
+        }
+      });
+    }
+
+    // @todo: leave it async?
+    callback();
+
+    return this;
   }
 
   /**
