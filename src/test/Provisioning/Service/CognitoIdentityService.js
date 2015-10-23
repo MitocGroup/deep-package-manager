@@ -40,7 +40,6 @@ suite('Provisioning/Service/CognitoIdentityService', function() {
     chai.expect(cognitoIdentityServiceInstance.name()).to.be.equal('cognito-identity');
   });
 
-  //todo - TBD
   test('Check AVAILABLE_REGIONS() static method returns array of available regions', function() {
     chai.expect(CognitoIdentityService.AVAILABLE_REGIONS).to.be.an('array');
     chai.expect(CognitoIdentityService.AVAILABLE_REGIONS.length).to.be.equal(2);
@@ -134,11 +133,11 @@ suite('Provisioning/Service/CognitoIdentityService', function() {
     };
 
     let lambdaARNs = ['arn:aws:lambda:us-west-2:test_awsAccountId:function:testFunctionName1',
-      'arn:aws:lambda:us-west-2:test_awsAccountId:function:testFunctionName2'];
+      'arn:aws:lambda:us-west-2:test_awsAccountId:function:testFunctionName2',];
 
     let endpointsARNs = {
       endpointArnKey1: 'arn:aws:lambda:us-west-2:test_awsAccountId:function:testFunctionName1',
-      endpointArnKey2: 'arn:aws:lambda:us-west-2:test_awsAccountId:function:testFunctionName2'
+      endpointArnKey2: 'arn:aws:lambda:us-west-2:test_awsAccountId:function:testFunctionName2',
     };
 
     try {

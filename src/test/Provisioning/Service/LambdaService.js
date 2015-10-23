@@ -134,7 +134,7 @@ suite('Provisioning/Service/LambdaService', function() {
     let e = null;
     let actualResult = null;
     let lambdaARNs = ['arn:aws:lambda:us-west-2:test_awsAccountId:function:testFunctionName1',
-      'arn:aws:lambda:us-west-2:test_awsAccountId:function:testFunctionName2'];
+      'arn:aws:lambda:us-west-2:test_awsAccountId:function:testFunctionName2',];
 
     try {
       actualResult = LambdaService.generateAllowInvokeFunctionPolicy(lambdaARNs);
@@ -219,63 +219,6 @@ suite('Provisioning/Service/LambdaService', function() {
       microservicesConfig['deep.ng.test'].deployedServices.lambdas['create-test'].FunctionArn);
   });
 
-  test('Check _generateLambdasNames() method returns valid object', function() {
-    let e = null;
-    let actualResult = null;
-    let microservices = null;
-    let microserviceIdentifier = 'deep.test';
-    let microserviceRawResources = {
-      test: {
-        create: {
-          description: 'Lambda for creating test',
-            type: 'lambda',
-            methods: [
-            'POST',
-          ],
-            source: 'src/Test/Create',
-        },
-        retrieve: {
-          description: 'Retrieves test',
-            type: 'lambda',
-            methods: ['GET'],
-            source: 'src/Test/Retrieve',
-        },
-        delete: {
-          description: 'Lambda for deleting test',
-            type: 'lambda',
-            methods: ['DELETE'],
-            source: 'src/Test/Delete',
-        },
-        update: {
-          description: 'Update test',
-            type: 'lambda',
-            methods: ['PUT'],
-            source: 'src/Test/Update',
-        },
-      },
-    };
-
-    //todo
-    try {
-      //microservices = new InstanceMock(microserviceIdentifier, microserviceRawResources);
-      //actualResult = lambdaServiceInstance._generateLambdasNames(microservices);
-    } catch (exception) {
-      e = exception;
-    }
-
-    //chai.expect(e).to.be.equal(null);
-    //chai.expect(microservices).to.be.eql({});
-    //chai.expect(e.message).to.be.eql(null);
-    //chai.expect(actualResult).to.be.eql({});
-  });
-
-  //todo
-  test('Check getExecRolePolicy() method', () => {
-    //chai.expect(lambdaServiceInstance.getExecRolePolicy()).to.be.an.instanceOf(Core.AWS.IAM.Policy);
-  });
-
-
-
   test('Check getAllLambdasArn() method returns valid lambdaArns array', function() {
     let e = null;
     let actualResult = null;
@@ -306,7 +249,7 @@ suite('Provisioning/Service/LambdaService', function() {
       },
       public: {
         name: 'deep.dev.public.c516a862',
-      }
+      },
     };
     let dynamoDbTablesNames = {
       Account: 'DeepDevAccountc516a862',
@@ -323,6 +266,6 @@ suite('Provisioning/Service/LambdaService', function() {
       e = exception;
     }
 
-    //chai.expect(e).to.be.equal(null);
+    //todo - add smart checks
   });
 });

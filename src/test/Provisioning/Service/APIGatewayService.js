@@ -56,13 +56,6 @@ suite('Provisioning/Service/APIGatewayService', function() {
     chai.expect(actualResult._readyTeardown).to.be.equal(true);
   });
 
-  test('Check _postDeployProvision() method returns this._ready=\'true\'', function() {
-    // @todo - _postDeployProvision is an async call
-    //apiGatewayService._ready = false;
-    //let actualResult = apiGatewayService._postDeployProvision('service');
-    //chai.expect(actualResult._ready).to.be.equal(true);
-  });
-
   test('Check getMethodJsonTemplate() method returns {\'application/json\':\'\'}', function() {
     let expectedResult = {
       'application/json': '',
@@ -178,7 +171,6 @@ suite('Provisioning/Service/APIGatewayService', function() {
 
     //todo - need to create mocks for async methods
     chai.expect(e).to.be.equal(null);
-    //chai.expect(spyCallback).to.have.been.calledWith();
   });
 
   test('Check _deployApi() method', function() {
@@ -195,7 +187,6 @@ suite('Provisioning/Service/APIGatewayService', function() {
 
     //todo - need to create mocks for async methods
     chai.expect(e).to.be.equal(null);
-    //chai.expect(spyCallback).to.have.been.calledWith();
   });
 
   test('Check _addPolicyToApiRole() method', function() {
@@ -226,7 +217,6 @@ suite('Provisioning/Service/APIGatewayService', function() {
 
     //todo - need to create mocks for async methods
     chai.expect(e).to.be.equal(null);
-    //chai.expect(spyCallback).to.have.been.calledWith();
   });
 
   test('Check getResourcesIntegrationParams() method retrurns valid integrationParams', function() {
@@ -296,6 +286,5 @@ suite('Provisioning/Service/APIGatewayService', function() {
     }
 
     // todo - need to add smart checks
-    //chai.expect(e).to.be.equal(null);
   });
 });
