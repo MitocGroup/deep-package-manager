@@ -179,7 +179,7 @@ export class LambdaService extends AbstractService {
   }
 
   /**
-   * @param {Object} microservices
+   * @param {Object<Instance>} microservices
    * @returns {Object}
    * @private
    */

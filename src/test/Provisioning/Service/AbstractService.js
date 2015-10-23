@@ -141,8 +141,6 @@ suite('Provisioning/Service/AbstractService', function() {
       e = exception;
     }
 
-
-
     //chai.expect(error).to.be.equal(null);
     //chai.expect(apiGatewayService._readyTeardown).to.be.equal(false);
     //chai.expect(apiGatewayService._ready).to.be.equal(false);
