@@ -1,6 +1,5 @@
 'use strict';
 
-import chai from 'chai';
 import {AbstractService} from '../../../lib.compiled/Provisioning/Service/AbstractService';
 
 /**

@@ -1,6 +1,5 @@
 'use strict';
 
-
 import {Instance} from 'deep-db/node_modules/deep-kernel/lib.compiled/Microservice/Instance';
 
 /**

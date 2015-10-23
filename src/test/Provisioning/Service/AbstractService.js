@@ -125,8 +125,29 @@ suite('Provisioning/Service/AbstractService', function() {
     let e = null;
     let resourceName = 'test';
     let awsService = 'cloudfront';
-    let msIdentifier = ''
+    let msIdentifier = '';
     let delimiter = 'invalid delimiter';
+    let propertyInstance = null;
+    let provisioningInstance = null;
+
+    try {
+      propertyInstance = new PropertyInstanceMock('./test/testMaterials/Property2', 'deeploy.test.json');
+      provisioningInstance = new ProvisioningInstanceMock(propertyInstance);
+      service = new AbstractServiceTest(provisioningInstance);
+      service.generateAwsResourceName(resourceName, awsService, msIdentifier, delimiter);
+    } catch (exception) {
+      e = exception;
+    }
+
+    chai.expect(e).to.be.not.equal(null);
+    chai.expect(e).to.be.an.instanceOf(Exception);
+  });
+
+  test('Check generateAwsResourceName() method', function() {
+    let e = null;
+    let resourceName = 'test';
+    let awsService = 'cloudfront';
+    let msIdentifier = '';
     let propertyInstance = null;
     let provisioningInstance = null;
 
@@ -140,10 +161,5 @@ suite('Provisioning/Service/AbstractService', function() {
     }
 
     //todo -  AssertionError: expected 'Naming limits for aws service cloudfront are not defined.' to equal 'Undefined'
-    //chai.expect(e).to.be.equal(null);
-    //chai.expect(e).to.be.an.instanceOf(Exception);
-    //chai.expect(e.message).to.be.equal('Undefined');
-    //chai.expect(provisioningInstance).to.be.eql({sadas:'dsadsa'});
-    //chai.expect(service.env).to.be.equal('test');
   });
 });

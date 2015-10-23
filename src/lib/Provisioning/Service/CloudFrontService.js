@@ -7,7 +7,6 @@
 import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
 import {S3Service} from './S3Service';
-import {Hash} from '../../Helpers/Hash';
 import {FailedToCreateCloudFrontDistributionException} from './Exception/FailedToCreateCloudFrontDistributionException';
 
 /**

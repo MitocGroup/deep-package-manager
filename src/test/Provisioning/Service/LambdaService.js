@@ -5,7 +5,6 @@ import {LambdaService} from '../../../lib.compiled/Provisioning/Service/LambdaSe
 import Core from 'deep-core';
 import {ObjectStorage} from 'deep-core/lib.compiled/Generic/ObjectStorage';
 import {Policy} from 'deep-core/lib.compiled/AWS/IAM/Policy';
-import {InstanceMock} from '../../../mock/deep-kernel/Microservice/InstanceMock';
 import {PropertyInstanceMock} from '../../../mock/Property/PropertyInstanceMock.js';
 import {ProvisioningInstanceMock} from '../../../mock/Provisioning/ProvisioningInstanceMock';
 
@@ -21,7 +20,7 @@ suite('Provisioning/Service/LambdaService', function() {
   });
 
   test('Check constructor sets valid default values', function() {
-    objectStorageInput = [{firstItem: 'value0'}, {secondItem: 'value1'}];
+    objectStorageInput = [{firstItem: 'value0'}, {secondItem: 'value1'},];
     let e = null;
     try {
       objectStorage = new ObjectStorage(objectStorageInput);
