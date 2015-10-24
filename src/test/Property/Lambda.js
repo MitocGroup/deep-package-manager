@@ -88,7 +88,7 @@ suite('Property/Lambda', function() {
       LastModified: new Date().toISOString(),
       MemorySize: lambda._memorySize,
       Role: lambda._execRole.Arn,
-      Runtime: lambda._runtime,
+      Runtime: lambda.runtime,
       Timeout: lambda._timeout,
     };
     chai.expect(lambda.createConfigHookData.CodeSize).to.be.equal(configHookDataExpectedResult.CodeSize);

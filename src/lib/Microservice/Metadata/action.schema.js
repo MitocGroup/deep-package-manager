@@ -15,9 +15,10 @@ export default Joi.object().keys({
   methods: JoiHelper.listEnum(Action.HTTP_VERBS),
   source: JoiHelper.string(),
   cacheTtl: Joi.number().optional().integer().min(Action.NO_CACHE).default(Action.NO_CACHE),
+  'force-user-identity': assureTypeLambda(Joi.boolean().optional().default(true)),
 
   // Lambda config
-  engine: Joi.object().optional().keys({
+  engine: assureTypeLambda(Joi.object().optional().keys({
     memory: Joi.number().optional().integer().min(Lambda.DEFAULT_MEMORY_LIMIT).max(Lambda.MAX_MEMORY_LIMIT)
       .default(Lambda.DEFAULT_MEMORY_LIMIT),
     timeout: Joi.number().optional().integer().min(1).max(Lambda.MAX_TIMEOUT).default(Lambda.DEFAULT_TIMEOUT),
@@ -26,8 +27,14 @@ export default Joi.object().keys({
     memory: Lambda.DEFAULT_MEMORY_LIMIT,
     timeout: Lambda.DEFAULT_TIMEOUT,
     runtime: Lambda.DEFAULT_RUNTIME,
-  }).when('type', {
+  })),
+});
+
+function assureTypeLambda(joiObject) {
+  joiObject.when('type', {
     is: Action.LAMBDA, // @todo - this condition doesn't work, default engine settings are applied for external resources also
     otherwise: Joi.any().forbidden(),
-  }),
-});
+  });
+
+  return joiObject;
+}

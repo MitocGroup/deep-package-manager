@@ -35,7 +35,7 @@ suite('Property/Config', function() {
     let extpectedResult = {
       aws: {
         accessKeyId: 'to_pass_string_validation',
-        region: 'region',
+        region: 'us-west-2',
         secretAccessKey: 'to_pass_string_validation',
       },
       dependencies: {

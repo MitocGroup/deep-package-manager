@@ -12,7 +12,6 @@ import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleE
 import {FailedSettingIdentityPoolRolesException} from './Exception/FailedSettingIdentityPoolRolesException';
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
 import {Exception} from '../../Exception/Exception';
-import {Action} from '../../Microservice/Metadata/Action';
 import {LambdaService} from './LambdaService';
 import {APIGatewayService} from './APIGatewayService';
 

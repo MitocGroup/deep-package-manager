@@ -38,6 +38,17 @@ suite('Dependencies/Manager', function() {
     chai.expect(manager.driver).to.be.eql(dependencyDriver);
   });
 
+  test('Check constructor throws exception for !(driver instanceof AbstractDriver)', function() {
+    let error = null;
+    try {
+      new Manager();
+    } catch (e) {
+      error = e;
+    }
+
+    chai.expect(error).to.be.not.equal(null);
+  });
+
   test('Check constructor sets valid value for _uploader', function() {
     //todo
     chai.expect(manager.uploader).to.be.not.equal(null);

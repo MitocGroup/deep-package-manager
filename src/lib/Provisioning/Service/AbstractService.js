@@ -201,7 +201,9 @@ export class AbstractService extends Core.OOP.Interface {
    * @returns {String}
    */
   getUniqueHash(microserviceIdentifier = '') {
-    return Hash.crc32(this.awsAccountId + microserviceIdentifier + this.appIdentifier);
+    let globId = Hash.crc32(this.awsAccountId + this.appIdentifier);
+
+    return microserviceIdentifier ? `${Hash.loseLoseMod(microserviceIdentifier)}${globId}` : globId;
   }
 
   /**
@@ -218,7 +220,7 @@ export class AbstractService extends Core.OOP.Interface {
 
     switch (delimiter) {
       case AbstractService.DELIMITER_UPPER_CASE:
-        resourceName = this.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
+        resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
 
         name = AbstractService.capitalizeFirst(AbstractService.AWS_RESOURCES_PREFIX) +
           AbstractService.capitalizeFirst(this.env) +
@@ -228,14 +230,14 @@ export class AbstractService extends Core.OOP.Interface {
         break;
       case AbstractService.DELIMITER_DOT:
         nameTplLength += 3; // adding 3 dot delimiters
-        resourceName = this.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
+        resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
 
         name = `${AbstractService.AWS_RESOURCES_PREFIX}.${this.env}.${resourceName}.${uniqueHash}`;
 
         break;
       case AbstractService.DELIMITER_UNDERSCORE:
         nameTplLength += 3; // adding 3 underscore delimiters
-        resourceName = this.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
+        resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
 
         name = `${AbstractService.AWS_RESOURCES_PREFIX}_${this.env}_${resourceName}_${uniqueHash}`;
 
@@ -249,10 +251,25 @@ export class AbstractService extends Core.OOP.Interface {
 
   /**
    * @param {String} resourceName
+   * @returns {String}
+   */
+  static extractBaseHashFromResourceName(resourceName) {
+    let rawRegexp = `^${AbstractService.AWS_RESOURCES_PREFIX}.+([a-z0-9]{8})$`;
+    let matches = resourceName.match(new RegExp(rawRegexp, 'i'));
+
+    if (!matches) {
+      return null;
+    }
+
+    return matches[1];
+  }
+
+  /**
+   * @param {String} resourceName
    * @param {String} awsService
    * @param {Integer} nameTplLength
    */
-  sliceNameToAwsLimits(resourceName, awsService, nameTplLength) {
+  static sliceNameToAwsLimits(resourceName, awsService, nameTplLength) {
     let slicedName = resourceName;
     let totalLength = nameTplLength + resourceName.length;
     let awsServiceLimit = null;

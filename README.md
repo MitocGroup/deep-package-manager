@@ -3,8 +3,8 @@ deep-package-manager
 
 [![NPM Version](https://img.shields.io/npm/v/deep-package-manager.svg)](https://npmjs.org/package/deep-package-manager)
 [![Build Status](https://magnum.travis-ci.com/MitocGroup/deep-package-manager.svg?token=sAyMHy4Uoefc2JPq5ZLc)](https://magnum.travis-ci.com/MitocGroup/deep-package-manager)
-[![Coverage Status](https://coveralls.io/repos/MitocGroup/deep-package-manager/badge.svg?service=github&t=J4nqoG)](https://coveralls.io/github/MitocGroup/deep-package-manager)
 [![Codacy Badge](https://api.codacy.com/project/badge/0695c0d184ed4afe9ac9110c13252aab)](https://www.codacy.com/app/deep/deep-package-manager)
+[![Coverage Status](https://coveralls.io/repos/MitocGroup/deep-package-manager/badge.svg?service=github&t=J4nqoG)](https://coveralls.io/github/MitocGroup/deep-package-manager)
 [![API Docs](http://docs.deep.mg/badge.svg)](http://docs.deep.mg)
 
 [deep-package-manager](https://www.npmjs.com/package/deep-package-manager) is a node.js library, part of [DEEP Framework](https://github.com/MitocGroup/deep-framework).

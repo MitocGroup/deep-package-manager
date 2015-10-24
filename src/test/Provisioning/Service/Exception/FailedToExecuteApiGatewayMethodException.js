@@ -10,7 +10,13 @@ import {FailedToExecuteApiGatewayMethodException} from '../../../../lib.compiled
 suite('Provisioning/Service/Exception/FailedToExecuteApiGatewayMethodException', function() {
 
   test('Class FailedToExecuteApiGatewayMethodException', function() {
-    let e = new FailedToExecuteApiGatewayMethodException('Test exception');
-    chai.expect(e).to.be.an.instanceof(FailedToExecuteApiGatewayMethodException);
+    let exception = null;
+    try {
+      exception = new FailedToExecuteApiGatewayMethodException('Test exception');
+    } catch (e) {
+      exception = e;
+    }
+
+    chai.expect(exception).to.be.an.instanceof(FailedToExecuteApiGatewayMethodException);
   });
 });
