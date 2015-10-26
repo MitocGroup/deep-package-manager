@@ -671,8 +671,7 @@ export class APIGatewayService extends AbstractService {
     let lambdaResource = Core.AWS.IAM.Factory.create('resource');
     lambdaResource.updateFromArn(lambdaArn);
 
-    // @todo - replace 'apigateway' with Core.AWS.Service.API_GATEWAY when API Gateway will get rid of 'execute-api' legacy name
-    return `arn:aws:apigateway:${lambdaResource.region}:lambda:${resourceDescriptor}`;
+    return `arn:aws:${Core.AWS.Service.API_GATEWAY}:${lambdaResource.region}:lambda:${resourceDescriptor}`;
   }
 
   /**
@@ -683,7 +682,7 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _generateApiBaseUrl(apiId, region, stageName) {
-    return `https://${apiId}.${Core.AWS.Service.API_GATEWAY}.${region}.amazonaws.com/${stageName}`;
+    return `https://${apiId}.${Core.AWS.Service.API_GATEWAY_EXECUTE}.${region}.amazonaws.com/${stageName}`;
   }
 
   /**
@@ -758,11 +757,11 @@ export class APIGatewayService extends AbstractService {
     //resourcesPaths.forEach((resourcePath) => {
     //  // add only resource action (e.g. /hello-world-example/sample/say-hello)
     //  if (resourcePath.split('/').length >= 4) {
-    //    arns.push(`arn:aws:${Core.AWS.Service.API_GATEWAY}:${apiRegion}:${this.awsAccountId}:${apiId}/${this.stageName}/${resourcePath}`);
+    //    arns.push(`arn:aws:${Core.AWS.Service.API_GATEWAY_EXECUTE}:${apiRegion}:${this.awsAccountId}:${apiId}/${this.stageName}/${resourcePath}`);
     //  }
     //});
 
-    arns.push(`arn:aws:${Core.AWS.Service.API_GATEWAY}:${apiRegion}:${this.awsAccountId}:${apiId}/*`);
+    arns.push(`arn:aws:${Core.AWS.Service.API_GATEWAY_EXECUTE}:${apiRegion}:${this.awsAccountId}:${apiId}/*`);
 
     return arns;
   }
@@ -779,7 +778,7 @@ export class APIGatewayService extends AbstractService {
     let statement = policy.statement.add();
     let action = statement.action.add();
 
-    action.service = Core.AWS.Service.API_GATEWAY;
+    action.service = Core.AWS.Service.API_GATEWAY_EXECUTE;
     action.action = 'Invoke';
 
     for (let endpointArnKey in endpointsARNs) {
