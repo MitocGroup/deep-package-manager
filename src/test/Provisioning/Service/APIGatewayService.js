@@ -473,7 +473,6 @@ suite('Provisioning/Service/APIGatewayService', function() {
   test('Check getAllEndpointsArn() method returns valid array', function() {
     let e = null;
     let actualResult = null;
-    let expectedResult = {};
 
     try {
       actualResult = apiGatewayService.getAllEndpointsArn();
