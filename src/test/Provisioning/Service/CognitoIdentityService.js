@@ -146,6 +146,7 @@ suite('Provisioning/Service/CognitoIdentityService', function() {
       e = exception;
     }
 
-    chai.expect(e.message).to.be.equal(undefined);
+    //todo - need to add additional checks
+    chai.expect(e).to.be.equal(null);
   });
 });
