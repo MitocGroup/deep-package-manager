@@ -190,7 +190,7 @@ export class AbstractService extends Core.OOP.Interface {
    */
   getApiVersions(service) {
     try {
-      return this.property.AWS[service].apiVersions;
+      return this.property.AWS[service].apiVersions.slice(); // return an array clone
     } catch (e) {
       throw new Exception(`Failed to retrieve apiVersions for "${service}" AWS service. ${e.message}`);
     }
