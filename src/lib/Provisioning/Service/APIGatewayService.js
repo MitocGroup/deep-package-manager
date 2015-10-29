@@ -83,6 +83,8 @@ export class APIGatewayService extends AbstractService {
   /**
    * @parameter {Core.Generic.ObjectStorage} services
    * @returns {APIGatewayService}
+   *
+   * @todo: remove config.api key and put object to the root
    */
   _setup(services) {
     // @todo: implement!
@@ -95,13 +97,15 @@ export class APIGatewayService extends AbstractService {
       this.apiMetadata,
       this._getResourcePaths(this.provisioning.property.microservices)
     )(function(api, resources, role) {
-      this._config.api = {
-        id: api.id,
-        name: api.name,
-        baseUrl: api.baseUrl,
-        resources: resources,
-        role: role,
-      };
+      // @todo: remove this hook
+      this._config.api = this._config.api || {};
+
+      this._config.api.id = api.id;
+      this._config.api.name = api.name;
+      this._config.api.baseUrl = api.baseUrl;
+      this._config.api.resources = resources;
+      this._config.api.role = role;
+
       this._ready = true;
     }.bind(this));
 

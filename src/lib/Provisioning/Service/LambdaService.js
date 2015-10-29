@@ -14,6 +14,8 @@ import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingP
 import {Action} from '../../Microservice/Metadata/Action';
 import {Lambda} from '../../Property/Lambda';
 import {IAMService} from './IAMService';
+import objectMerge from 'object-merge';
+import {_extend as extend} from 'util';
 
 /**
  * Lambda service
@@ -25,6 +27,46 @@ export class LambdaService extends AbstractService {
   constructor(...args) {
     super(...args);
 
+    this._deployedRoles = [];
+  }
+
+  /**
+   * @private
+   */
+  _onConfigInject() {
+    this._deployedRoles = this._getDeployedRoles();
+  }
+
+  /**
+   * @returns {String[]}
+   * @private
+   */
+  _getDeployedRoles() {
+    let deployedRoles = [];
+
+    if (this.isUpdate) {
+      let execRoles = this._config.executionRoles;
+
+      for (let microserviceIdentifier in execRoles) {
+        if (!execRoles.hasOwnProperty(microserviceIdentifier)) {
+          continue;
+        }
+
+        let microserviceRoles = execRoles[microserviceIdentifier];
+
+        for (let lambdaIdentifier in microserviceRoles) {
+          if (!microserviceRoles.hasOwnProperty(lambdaIdentifier)) {
+            continue;
+          }
+
+          let execRole = microserviceRoles[lambdaIdentifier];
+
+          deployedRoles.push(execRole.RoleName);
+        }
+      }
+    }
+
+    return deployedRoles;
   }
 
   /**
@@ -50,21 +92,21 @@ export class LambdaService extends AbstractService {
    * @returns {LambdaService}
    */
   _setup(services) {
-    // @todo: implement!
-    if (this._isUpdate) {
-      this._ready = true;
-      return this;
-    }
-
     let microservices = this.provisioning.property.microservices;
 
     this._createExecRoles(
       microservices
     )(function(execRoles) {
-      this._config = {
-        names: this._generateLambdasNames(microservices),
-        executionRoles: execRoles,
-      };
+      let lambdaNames = this._generateLambdasNames(microservices);
+
+      this._config.names = this.isUpdate
+        ? objectMerge(this._config.names, lambdaNames)
+        : lambdaNames;
+
+      this._config.executionRoles = this.isUpdate
+        ? objectMerge(this._config.executionRoles, execRoles)
+        : execRoles;
+
       this._ready = true;
     }.bind(this));
 
@@ -76,12 +118,6 @@ export class LambdaService extends AbstractService {
    * @returns {LambdaService}
    */
   _postProvision(services) {
-    // @todo: implement!
-    if (this._isUpdate) {
-      this._readyTeardown = true;
-      return this;
-    }
-
     let buckets = services.find(S3Service).config().buckets;
     let dynamoDbTablesNames = services.find(DynamoDBService).config().tablesNames;
 
@@ -90,7 +126,10 @@ export class LambdaService extends AbstractService {
       this._config.executionRoles,
       dynamoDbTablesNames
     )(function(policies) {
-      this._config.executionRolesPolicies = policies;
+      this._config.executionRolesPolicies = this.isUpdate
+        ? extend(this._config.executionRolesPolicies, policies)
+        : policies;
+
       this._readyTeardown = true;
     }.bind(this));
 
@@ -111,6 +150,15 @@ export class LambdaService extends AbstractService {
     this._ready = true;
 
     return this;
+  }
+
+  /**
+   * @param {String} roleName
+   * @returns {Boolean}
+   * @private
+   */
+  _isIamRoleNew(roleName) {
+    return this._deployedRoles.indexOf(roleName) === -1;
   }
 
   /**
@@ -157,18 +205,20 @@ export class LambdaService extends AbstractService {
             RoleName: roleName,
           };
 
-          syncStack.push(iam.createRole(params), function(error, data) {
-            if (error) {
-              // @todo: remove this hook
-              if (Lambda.isErrorFalsePositive(error)) {
-                return;
+          if (this._isIamRoleNew(roleName)) {
+            syncStack.push(iam.createRole(params), function(error, data) {
+              if (error) {
+                // @todo: remove this hook
+                if (Lambda.isErrorFalsePositive(error)) {
+                  return;
+                }
+
+                throw new FailedToCreateIamRoleException(roleName, error);
               }
 
-              throw new FailedToCreateIamRoleException(roleName, error);
-            }
-
-            execRoles[microservice.identifier][action.identifier] = data.Role;
-          }.bind(this));
+              execRoles[microservice.identifier][action.identifier] = data.Role;
+            }.bind(this));
+          }
         }
       }
     }
@@ -245,27 +295,29 @@ export class LambdaService extends AbstractService {
 
         let execRole = microserviceRoles[lambdaIdentifier];
 
-        let policyName = this.generateAwsResourceName(
-          this._actionIdentifierToPascalCase(lambdaIdentifier) + 'Policy',
-          Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
-          microserviceIdentifier
-        );
+        if (this._isIamRoleNew(execRole.RoleName)) {
+          let policyName = this.generateAwsResourceName(
+            this._actionIdentifierToPascalCase(lambdaIdentifier) + 'Policy',
+            Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
+            microserviceIdentifier
+          );
 
-        let policy = LambdaService.getAccessPolicy(microserviceIdentifier, buckets, dynamoDbTablesNames, this.env);
+          let policy = LambdaService.getAccessPolicy(microserviceIdentifier, buckets, dynamoDbTablesNames, this.env);
 
-        let params = {
-          PolicyDocument: policy.toString(),
-          PolicyName: policyName,
-          RoleName: execRole.RoleName,
-        };
+          let params = {
+            PolicyDocument: policy.toString(),
+            PolicyName: policyName,
+            RoleName: execRole.RoleName,
+          };
 
-        syncStack.push(iam.putRolePolicy(params), function(error, data) {
-          if (error) {
-            throw new FailedAttachingPolicyToRoleException(policyName, execRole.RoleName, error);
-          }
+          syncStack.push(iam.putRolePolicy(params), function(error, data) {
+            if (error) {
+              throw new FailedAttachingPolicyToRoleException(policyName, execRole.RoleName, error);
+            }
 
-          policies[execRole.RoleName] = policy;
-        }.bind(this));
+            policies[execRole.RoleName] = policy;
+          }.bind(this));
+        }
       }
     }
 

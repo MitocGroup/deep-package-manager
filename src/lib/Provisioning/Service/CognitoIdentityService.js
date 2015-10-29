@@ -111,7 +111,7 @@ export class CognitoIdentityService extends AbstractService {
     }
 
     this._setIdentityPoolRoles(
-      this.config().identityPool
+      this._config.identityPool
     )(function(roles) {
       this._readyTeardown = true;
       this._config.roles = roles;

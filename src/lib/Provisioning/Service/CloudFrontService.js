@@ -47,8 +47,6 @@ export class CloudFrontService extends AbstractService {
       return this;
     }
 
-    this._config = {};
-
     this._ready = true;
 
     return this;

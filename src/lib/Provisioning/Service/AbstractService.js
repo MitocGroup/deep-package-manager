@@ -143,6 +143,23 @@ export class AbstractService extends Core.OOP.Interface {
   }
 
   /**
+   * @param {Object} config
+   */
+  injectConfig(config) {
+    this._config = config;
+
+    this._onConfigInject();
+  }
+
+  /**
+   * @todo: override this
+   *
+   * @private
+   */
+  _onConfigInject() {
+  }
+
+  /**
    * @returns {Object}
    */
   config() {
