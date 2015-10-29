@@ -461,7 +461,7 @@ export class APIGatewayService extends AbstractService {
           case 'putIntegrationResponse':
             params = {
               statusCode: 200,
-              responseTemplates: this.getMethodJsonTemplate(resourceMethod),
+              responseTemplates: this.getJsonResponseTemplate(resourceMethod),
               responseParameters: this._getMethodResponseParameters(resourceMethod, Object.keys(resourceMethods)),
             };
             break;
@@ -647,7 +647,7 @@ export class APIGatewayService extends AbstractService {
   _getIntegrationTypeParams(type, httpMethod, uri) {
     let params = {
       type: 'MOCK',
-      requestTemplates: this.getMethodJsonTemplate(httpMethod),
+      requestTemplates: this.getJsonRequestTemplate(httpMethod, type),
     };
 
     if (httpMethod !== 'OPTIONS') {
@@ -694,10 +694,51 @@ export class APIGatewayService extends AbstractService {
    *
    * @returns {Object}
    */
-  getMethodJsonTemplate(httpMethod) {
+  getJsonResponseTemplate(httpMethod) {
+    let tplVal = ''; // enables Output passthrough
+
+    if (httpMethod === 'OPTIONS') {
+      tplVal = this.templateForMockIntegration;
+    }
+
     return {
-      'application/json': (httpMethod === 'OPTIONS') ? '{"statusCode": 200}' : '',
+      'application/json': tplVal,
     };
+  }
+
+  /**
+   * @param {String} httpMethod
+   * @param {String|null} type
+   * @returns {Object}
+   */
+  getJsonRequestTemplate(httpMethod, type = null) {
+    let tplVal = ''; // enables Input passthrough
+
+    if (httpMethod === 'GET' && type === 'AWS') {
+      tplVal = this.qsToMapObjectMappingTpl;
+    } else if (httpMethod === 'OPTIONS') {
+      tplVal = this.templateForMockIntegration;
+    }
+
+    return {
+      'application/json': tplVal,
+    };
+  }
+
+  /**
+   * Velocity template to transform query string params to a map object that is passed via POST to a lambda function
+   *
+   * @returns {String}
+   */
+  get qsToMapObjectMappingTpl() {
+    return '{ #foreach($key in $input.params().querystring.keySet()) "$key": "$util.escapeJavaScript($input.params($key))"#if($foreach.hasNext),#end #end }';
+  }
+
+  /**
+   * @returns {string}
+   */
+  get templateForMockIntegration() {
+    return '{"statusCode": 200}';
   }
 
   /**
