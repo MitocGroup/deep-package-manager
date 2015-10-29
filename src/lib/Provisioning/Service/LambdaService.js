@@ -308,7 +308,6 @@ export class LambdaService extends AbstractService {
       dynamoDbAction.service = Core.AWS.Service.DYNAMO_DB;
       dynamoDbAction.action = Core.AWS.IAM.Policy.ANY;
 
-      // Adding general statement
       let firstTableName = dynamoDbTablesNames[Object.keys(dynamoDbTablesNames)[0]];
       let tablesUniqueHash = AbstractService.extractBaseHashFromResourceName(firstTableName);
       let tablesResourceMask = DynamoDBService.getTablesResourceMask(tablesUniqueHash, env);
@@ -319,21 +318,6 @@ export class LambdaService extends AbstractService {
       dynamoDbResource.region = Core.AWS.IAM.Policy.ANY;
       dynamoDbResource.accountId = Core.AWS.IAM.Policy.ANY;
       dynamoDbResource.descriptor = `table/${tablesResourceMask}`;
-
-      // @todo: remove when general statement tested
-      //for (let modelName in dynamoDbTablesNames) {
-      //  if (!dynamoDbTablesNames.hasOwnProperty(modelName)) {
-      //    continue;
-      //  }
-      //
-      //  let tableName = dynamoDbTablesNames[modelName];
-      //  let dynamoDbResource = dynamoDbStatement.resource.add();
-      //
-      //  dynamoDbResource.service = Core.AWS.Service.DYNAMO_DB;
-      //  dynamoDbResource.region = Core.AWS.IAM.Policy.ANY;
-      //  dynamoDbResource.accountId = Core.AWS.IAM.Policy.ANY;
-      //  dynamoDbResource.descriptor = `table/${tableName}`;
-      //}
     }
 
     let s3Statement = policy.statement.add();
