@@ -691,8 +691,14 @@ export class APIGatewayService extends AbstractService {
    * @returns {Object}
    */
   getJsonResponseTemplate(httpMethod) {
+    let tplVal = ''; // enables Output passthrough
+
+    if (httpMethod === 'OPTIONS') {
+      tplVal = this.templateForMockIntegration;
+    }
+
     return {
-      'application/json': (httpMethod === 'OPTIONS') ? '{"statusCode": 200}' : '', // '' -> enables Output passthrough
+      'application/json': tplVal,
     };
   }
 
@@ -702,8 +708,16 @@ export class APIGatewayService extends AbstractService {
    * @returns {Object}
    */
   getJsonRequestTemplate(httpMethod, type = null) {
+    let tplVal = ''; // enables Input passthrough
+
+    if (httpMethod === 'GET' && type === 'AWS') {
+      tplVal = this.qsToMapObjectMappingTpl;
+    } else if (httpMethod === 'OPTIONS') {
+      tplVal = this.templateForMockIntegration;
+    }
+
     return {
-      'application/json': (httpMethod === 'GET' && type === 'AWS') ? this.qsToMapObjectMappingTpl : '', // '' -> enables Input passthrough
+      'application/json': tplVal,
     };
   }
 
@@ -714,6 +728,13 @@ export class APIGatewayService extends AbstractService {
    */
   get qsToMapObjectMappingTpl() {
     return '{ #foreach($key in $input.params().querystring.keySet()) "$key": "$util.escapeJavaScript($input.params($key))"#if($foreach.hasNext),#end #end }';
+  }
+
+  /**
+   * @returns {string}
+   */
+  get templateForMockIntegration() {
+    return '{"statusCode": 200}';
   }
 
   /**
