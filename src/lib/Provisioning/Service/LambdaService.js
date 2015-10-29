@@ -125,7 +125,9 @@ export class LambdaService extends AbstractService {
     let iam = this.provisioning.iam;
     let syncStack = new AwsRequestSyncStack();
     let execRoles = {};
-    let execRolePolicy = IAMService.getAssumeRolePolicy(Core.AWS.Service.LAMBDA); // role policy (definition) is common for all lambdas
+
+    // role policy (definition) is common for all lambdas
+    let execRolePolicy = IAMService.getAssumeRolePolicy(Core.AWS.Service.LAMBDA);
 
     for (let microserviceKey in microservices) {
       if (!microservices.hasOwnProperty(microserviceKey)) {
