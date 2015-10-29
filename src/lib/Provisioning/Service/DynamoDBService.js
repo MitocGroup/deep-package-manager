@@ -173,6 +173,18 @@ export class DynamoDBService extends AbstractService {
   }
 
   /**
+   * @param {String} uniqueHash
+   * @param {String} env
+   * @returns {String}
+   */
+  static getTablesResourceMask(uniqueHash, env) {
+    return AbstractService.capitalizeFirst(AbstractService.AWS_RESOURCES_PREFIX) +
+      AbstractService.capitalizeFirst(env) +
+      '*' +
+      uniqueHash;
+  }
+
+  /**
    * @param {Object} models
    * @returns {Object}
    */
