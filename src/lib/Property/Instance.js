@@ -272,7 +272,7 @@ export class Instance {
     for (let microservice of microservices) {
       microservice.compile();
 
-      let microserviceConfig = {
+      let microserviceConfig = isUpdate ? microservicesConfig[microservice.config.identifier] : {
         identifier: microservice.config.identifier,
         localPath: microservice.basePath,
         resources: microservice.resources.extract(),
@@ -286,9 +286,7 @@ export class Instance {
         },
       };
 
-      microservicesConfig[microserviceConfig.identifier] = isUpdate
-        ? microserviceConfig
-        : objectMerge(microservicesConfig[microserviceConfig.identifier], microserviceConfig);
+      microservicesConfig[microserviceConfig.identifier] = microserviceConfig;
 
       modelsDirs.push(microservice.autoload.models);
     }

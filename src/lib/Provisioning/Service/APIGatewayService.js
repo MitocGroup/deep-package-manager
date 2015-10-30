@@ -18,6 +18,7 @@ import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
 import Utils from 'util';
+import objectMerge from 'object-merge';
 
 /**
  * APIGateway service
@@ -28,6 +29,8 @@ export class APIGatewayService extends AbstractService {
    */
   constructor(...args) {
     super(...args);
+
+    this._newApiResources = {};
   }
 
   /**
@@ -87,27 +90,42 @@ export class APIGatewayService extends AbstractService {
    * @todo: remove config.api key and put object to the root
    */
   _setup(services) {
-    // @todo: implement!
-    if (this._isUpdate) {
+    let oldResourcePaths = [];
+
+    if (this.isUpdate) {
+      // @todo: remove when fixed
       this._ready = true;
       return this;
+
+      oldResourcePaths = Object.keys(this._config.api.resources);
     }
-    
+
+    let resourcePaths = this._getResourcePaths(this.provisioning.property.microservices);
+    let newResourcePaths = resourcePaths.filter((i) => oldResourcePaths.indexOf(i) < 0);
+
+    if (newResourcePaths.length <= 0) {
+      this._ready = true;
+
+      return this;
+    }
+
     this._provisionApiResources(
       this.apiMetadata,
-      this._getResourcePaths(this.provisioning.property.microservices)
-    )(function(api, resources, role) {
+      newResourcePaths
+    )((api, resources, role) => {
+      this._newApiResources = resources;
+
       // @todo: remove this hook
       this._config.api = this._config.api || {};
 
       this._config.api.id = api.id;
       this._config.api.name = api.name;
       this._config.api.baseUrl = api.baseUrl;
-      this._config.api.resources = resources;
       this._config.api.role = role;
+      this._config.api.resources = objectMerge(this._config.api.resources, resources);
 
       this._ready = true;
-    }.bind(this));
+    });
 
     return this;
   }
@@ -163,15 +181,23 @@ export class APIGatewayService extends AbstractService {
   /**
    * @param {Object} metadata
    * @param {Array} resourcePaths
-   * @returns {function}
+   * @returns {Function}
    * @private
    */
   _provisionApiResources(metadata, resourcePaths) {
-    var restApi = null;
-    var restResources = null;
-    var restApiIamRole = null;
+    let restApi = this.isUpdate ? this._config.api : null;
+    let restApiIamRole = this.isUpdate ? this._config.api.role : null;
+    let restResources = null;
 
     return (callback) => {
+      if (this.isUpdate) {
+        this._createApiResources(resourcePaths, restApi.id, (resources) => {
+          callback(restApi, this._extractApiResourcesMetadata(restResources), restApiIamRole);
+        });
+
+        return;
+      }
+
       this._createApi(metadata, (api) => {
         restApi = api;
 
@@ -268,10 +294,7 @@ export class APIGatewayService extends AbstractService {
     apiGateway.createResources(params).then((resources) => {
       callback(resources);
     }).catch((error) => {
-
-      if (error) {
-        throw new FailedToCreateApiResourcesException(resourcePaths, error);
-      }
+      throw new FailedToCreateApiResourcesException(resourcePaths, error);
     });
   }
 
@@ -484,7 +507,7 @@ export class APIGatewayService extends AbstractService {
    *        action_name
    *
    * @param {Object} microservices
-   * @returns {Array}
+   * @returns {String[]}
    * @private
    */
   _getResourcePaths(microservices) {
