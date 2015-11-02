@@ -19,13 +19,13 @@ env:
     #CODACY_PROJECT_TOKEN =[secured]
     - secure: RnVAofBab0XlJOgTwutpJnbfhd/pJRyyT22+4itXXHuyWd2bXuM4QUjplF0O7z/TI+yqBi7CqqT2Fjo8W6cE6k47jyIgfIjOYiJeBAhzM3U1T5C3segGwiyoWzrEWIHNuwOMza5PLLZkUlw8AJsMZWHg+12uvE1Z1J+2zDrzygWiSq8jTFaV6oyg7c3mS+b+Xl+tP8eB67uy6LVVeQxKQj010re/taxgsFuE50yMbwCwwoR41HNeDh7MuBAgDwgNFopIG0r9/DGwtydIUH54xpXdWwOSrN8R91KyeqFQZkqRK6c4mxRUiyOT8awymYsSkEK8eValhiZLKgTr/Gayea8P9huayl8qTrnUl3ih38OYq8zzjgXNjiU6ejNBvJiePV+GZ1NZWLpntqjtOzcxKl8qMuxL6Aq9yfFg7Nzdol7fMkivuYwRk5UYgmcmKS4CMTgCJfVzhrECACGSia+TUb4+xJQMvoJewgBM7uNHUjK0zGkLvAJOR9D0JAi/5w8Ww0o5gNBdq1JtdES+eTDcesQUq8qCqtj5k4E4yDBv5ePsQzfAwG0QfavBmHGDMAqr1b9o8jO67RrFAgJhlyb5ap4p9XC+3gOx1a+SJ7M7iyC5VJQXK+4MwRyiCWcPYSepYCxVkJCTZwzLRYJIHiOaf1QTrOlrUxJOUNg05xgUUbw=
 before_install:
-  - npm install -g babel 5.8.19
-  - npm install -g browserify 11.2.0
-  - npm install -g mocha 2.3.3
-  - npm install -g mocha-babel 3.0.0
-  - npm install -g istanbul 0.3.21
-  - npm install -g istanbul-combine 0.3.0
-  - npm install -g codacy-coverage 1.1.3
+  - npm install -g babel@5.8.19
+  - npm install -g browserify@11.2.0
+  - npm install -g mocha@2.3.3
+  - npm install -g mocha-babel@3.0.0
+  - npm install -g istanbul@0.3.21
+  - npm install -g istanbul-combine@0.3.0
+  - npm install -g codacy-coverage@1.1.3
   - cp test/package.json .
 after_success:
-- npm run coverage
+  - npm run coverage
