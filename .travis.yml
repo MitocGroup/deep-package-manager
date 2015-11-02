@@ -1,10 +1,10 @@
 language: node_js
 sudo: false
 node_js:
-  - '0.12'
+- '0.12'
 cache:
   directories:
-  - "$(npm root -g)"
+  - $(npm root -g)
 notifications:
   email:
   - devs-deep@mitocgroup.com
@@ -16,22 +16,18 @@ branches:
   - dev
 env:
   global:
-  # CODACY_PROJECT_TOKEN
-  - secure: nmheN/6qJRg+Xc3MOJ8+ACBkSlWZVBEWd9qPrhpJCgzAfCeAmI4hiu1N/+FOSpOA38SMeDHO7Glo9C7QGgQHqiBr/mZ14JLS88IoyxDKnjt45ZSokTQZK7aIuY6WHlnRTh3qUDIih35zOJVety/RPlhwPLTgR1l4J5ecSjIfdFCCFD4IfbGcXh2C7wXohf527cSlDYQpsCZ8xL8OHbrSyc5NBmHDOEEOTUa6DNoDd99AxX/xE0szH12p6CyYmyUJ+oTG5fjPsanzi3WO+Vrwsfc+Er3meTDN9W/B8ARbaJgl+lnG/lJobiwZTQvugK0YlHRwuZ9Wz8xRyEy9H+XDz7UQbwGpqX5nmmKKbXtxWRBO14NmpDMr3jz9cWEbqJpyM6Fls+AYVKmdeuDhHENkBcXDXGhn42xB1hnqvVj952Ihc29W/B6Q+GJpm/xc9DirPBy6AhyZfBTtF7ukmwsnMIxGmDGGrcUP7rfB6OHbpvNrgdp0J/X10Bx7LYaPxyFIWtKLkVEPMxdhK7TQMMw76jXO9NtQhZF8l6pSSvmqElqguxDTycH6KSEjD95qYMdIIxpFdSXja7HLUikH4kpADj3r1CYRMUiVvGFB6ZlDrYXk/oe838ilDtv4C+MUuB7cC0nUtsE723FqJGgDc1LVsJlxaFRNORKlQmDNe4skZfE=
-  # COVERALLS_REPO_TOKEN
-  - secure: xclYD6G2Qs1JwbGICM56aVpGzk3Y0tB8RspermtJchqPJOtFH5+HpsuUKGWedN9F9tzwfAeLW3JeSgagoOp55vjWOIk1qmj7bWCZy5wz2ccTDwSNm99joUevf4tEoGZjrUmvko5/wppOdUw04+LqwQ8oAI1sj2z2iJ4BLz1LTMgSOm05hCObsajSySq5QiphUg6Ueyw+yEKDYbZsxVdsQStV2yMpNPBloSsY5hB8hgzROjJthoPtYHEBS6oT4P/FFrrJuqHB8O94bbQy8oXpdZ6idGbtB9ngQI4AiY77Yu2Vr6yEhnznSTzgBZGSEoYNx3GuhFESgFPGlLiDLPG7gaO13bR4moI4gGsRhawY+zmlaK1P7Sd5bCSb7uS4rGg1TeTDF7PWobmOx1eHM5fRxR4T7GNS3Pa3lod1MAPemJGtVHCD41xqF35jvTjPvoBInknMQZg9mV3llD9eNTl59NAbiYBANd0hGns6J6cYIWqSgAkhFNkK2DblkPBytnIWazaKoELNPhu1jlCZ/wOItaPZAyRo2ENA87hxs2Rxjp3FbeW7QcRcBPf3QIxZLO8vkt1NgSl2+Wz2tvWFKQjNCeinpdh8jiEx3apdWWwZW95o0U7lKJhcg4p3dyk8LsRi2cNLTi7+RtbAGW55HnSXuhmzIzZEmCDf/rZmERoJekM=
-  # COVERALLS_SERVICE_NAME
-  - secure: rUEqx7/9cFUuC1DnF8isvtmqf0RcOFoXULkW6g0bSb3X6HeLcc1ZhKRQp0iUTKbi6j8ZD1iAurmyUcrLExUkjvCpD5fQQ2c8IkEiEKkqnIkeccV0mKaYuwC7mr1sUMLeN4U92qKTLsZ3yXVp44SWlfzltTfrUOfiZaw2efFW8WGBiltxCp0n3pZ10F3Eo3NVkrlig1Q2d72w8GgaUoVk+k4hmvHbIfP9sLUkEf0xCALcMvi2Wupx6JqI7mxC8iG2vU1XnIUi9zTIeSpnd8tJJnOfP7dofwoa6RXPnQzcy0r+/Bu/2WMI8GmDd6EFB4v7qyAQOwVtaQIXm0A21n517A5yNuLE0/be6QNY+dfITAeDTcFB5YPGWyULpr2qYL85jSpyZeah25dRCDoE4JTbz/GT6TUk3YPnBe/VY6iELrCIQPgZt5+ZM8vApxfgO3D5U+eH4FSH/B+jEq5Xni+depU+PS1jSA9aaiMK5udaTqh1jZB5KRqrEXhvEwDLHvcVGgCW9GuMlxd4OsXOtnlZdbKQHoVnTqJ8/sxubSeYFqclPwNVFitFPy8VtCZBX3GaLlWns9NCUHLQDzt121CE2F3E6gFtQdTCRhf/k9+kICuY+Qi+3JiclJyIS1QKgcRTHmLkLrqfA8KzpjlpWWzPYxMCaQ8WQjWT+lS9+XbeeDY=
+  #CODACY_PROJECT_TOKEN =[secured]
+  - secure: RnVAofBab0XlJOgTwutpJnbfhd/pJRyyT22+4itXXHuyWd2bXuM4QUjplF0O7z/TI+yqBi7CqqT2Fjo8W6cE6k47jyIgfIjOYiJeBAhzM3U1T5C3segGwiyoWzrEWIHNuwOMza5PLLZkUlw8AJsMZWHg+12uvE1Z1J+2zDrzygWiSq8jTFaV6oyg7c3mS+b+Xl+tP8eB67uy6LVVeQxKQj010re/taxgsFuE50yMbwCwwoR41HNeDh7MuBAgDwgNFopIG0r9/DGwtydIUH54xpXdWwOSrN8R91KyeqFQZkqRK6c4mxRUiyOT8awymYsSkEK8eValhiZLKgTr/Gayea8P9huayl8qTrnUl3ih38OYq8zzjgXNjiU6ejNBvJiePV+GZ1NZWLpntqjtOzcxKl8qMuxL6Aq9yfFg7Nzdol7fMkivuYwRk5UYgmcmKS4CMTgCJfVzhrECACGSia+TUb4+xJQMvoJewgBM7uNHUjK0zGkLvAJOR9D0JAi/5w8Ww0o5gNBdq1JtdES+eTDcesQUq8qCqtj5k4E4yDBv5ePsQzfAwG0QfavBmHGDMAqr1b9o8jO67RrFAgJhlyb5ap4p9XC+3gOx1a+SJ7M7iyC5VJQXK+4MwRyiCWcPYSepYCxVkJCTZwzLRYJIHiOaf1QTrOlrUxJOUNg05xgUUbw=
 before_install:
-  - npm install -g babel
-  - npm install -g browserify
-  - npm install -g mocha
-  - npm install -g mocha-babel
-  - npm install -g istanbul
-  - npm install -g coveralls
-  - npm install -g codacy-coverage
-  - npm install -g istanbul-combine
-  - npm install -g isparta
-  - cp test/package.json .
+- npm install -g babel
+- npm install -g browserify
+- npm install -g mocha
+- npm install -g mocha-babel
+- npm install -g istanbul
+- npm install -g coveralls
+- npm install -g codacy-coverage
+- npm install -g istanbul-combine
+- npm install -g isparta
+- cp test/package.json .
 after_success:
-  - npm run coverage
+- npm run coverage
