@@ -4,7 +4,7 @@ node_js:
   - '0.12'
 cache:
   directories:
-  - $(npm root -g)
+  - "$(npm root -g)"
 notifications:
   email:
   - devs-deep@mitocgroup.com
