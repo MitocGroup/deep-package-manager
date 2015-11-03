@@ -272,7 +272,7 @@ export class Instance {
     for (let microservice of microservices) {
       microservice.compile();
 
-      let microserviceConfig = isUpdate ? microservicesConfig[microservice.config.identifier] : {
+      let microserviceConfig = {
         identifier: microservice.config.identifier,
         localPath: microservice.basePath,
         resources: microservice.resources.extract(),
@@ -285,6 +285,10 @@ export class Instance {
           lambdas: {},
         },
       };
+
+      if (isUpdate) {
+        microserviceConfig.deployedServices = microservicesConfig[microservice.config.identifier].deployedServices;
+      }
 
       microservicesConfig[microserviceConfig.identifier] = microserviceConfig;
 
