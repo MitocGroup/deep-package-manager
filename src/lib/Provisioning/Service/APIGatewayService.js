@@ -97,7 +97,7 @@ export class APIGatewayService extends AbstractService {
       this._ready = true;
       return this;
 
-      oldResourcePaths = Object.keys(this._config.api.resources);
+      oldResourcePaths = Object.keys(this._config.api.resources); // @todo - find out why it's not 'transpiled' by uglify
     }
 
     let resourcePaths = this._getResourcePaths(this.provisioning.property.microservices);
@@ -151,18 +151,12 @@ export class APIGatewayService extends AbstractService {
    * @returns {APIGatewayService}
    */
   _postDeployProvision(services) {
-    // @todo: implement!
-    if (this._isUpdate) {
-      this._ready = true;
-      return this;
-    }
-
     let integrationParams = this.getResourcesIntegrationParams(this.property.config.microservices);
     let lambdasArn = LambdaService.getAllLambdasArn(this.property.config.microservices);
 
     this._putApiIntegrations(
       this._config.api.id,
-      this._config.api.resources,
+      this._newApiResources,
       this._config.api.role,
       lambdasArn,
       integrationParams
@@ -192,7 +186,7 @@ export class APIGatewayService extends AbstractService {
     return (callback) => {
       if (this.isUpdate) {
         this._createApiResources(resourcePaths, restApi.id, (resources) => {
-          callback(restApi, this._extractApiResourcesMetadata(restResources), restApiIamRole);
+          callback(restApi, this._extractApiResourcesMetadata(resources), restApiIamRole);
         });
 
         return;
@@ -439,7 +433,7 @@ export class APIGatewayService extends AbstractService {
     let paramsArr = [];
 
     for (let resourcePath in integrationParams) {
-      if (!integrationParams.hasOwnProperty(resourcePath)) {
+      if (!integrationParams.hasOwnProperty(resourcePath) || !apiResources.hasOwnProperty(resourcePath)) {
         continue;
       }
 
