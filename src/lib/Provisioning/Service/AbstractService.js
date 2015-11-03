@@ -224,6 +224,37 @@ export class AbstractService extends Core.OOP.Interface {
   }
 
   /**
+   * @param {String} msIdentifier
+   * @param {String} delimiter
+   * @returns {String}
+   */
+  _getGlobalResourceMask(msIdentifier = '', delimiter = AbstractService.DELIMITER_UPPER_CASE) {
+    let mask = null;
+    let uniqueHash = this.getUniqueHash(msIdentifier);
+    let appendMatcher = msIdentifier ? '' : '*';
+
+    switch (delimiter) {
+      case AbstractService.DELIMITER_UPPER_CASE:
+        mask = AbstractService.capitalizeFirst(AbstractService.AWS_RESOURCES_PREFIX) +
+          AbstractService.capitalizeFirst(this.env) +
+          '*' +
+          uniqueHash +
+          appendMatcher;
+        break;
+      case AbstractService.DELIMITER_DOT:
+        mask = `${AbstractService.AWS_RESOURCES_PREFIX}.${this.env}.*.${uniqueHash}${appendMatcher}`;
+        break;
+      case AbstractService.DELIMITER_UNDERSCORE:
+        mask = `${AbstractService.AWS_RESOURCES_PREFIX}_${this.env}_*_${uniqueHash}${appendMatcher}`;
+        break;
+      default:
+        throw new Exception(`Undefined aws resource name delimiter ${delimiter}.`);
+    }
+
+    return mask;
+  }
+
+  /**
    * @param {String} resourceName
    * @param {String} awsService
    * @param {String} msIdentifier
@@ -315,7 +346,7 @@ export class AbstractService extends Core.OOP.Interface {
     }
 
     if (totalLength > awsServiceLimit) {
-      slicedName = resourceName.slice(0, -(totalLength - awsServiceLimit));
+      slicedName = resourceName.slice(0, - (totalLength - awsServiceLimit));
     }
 
     return slicedName;

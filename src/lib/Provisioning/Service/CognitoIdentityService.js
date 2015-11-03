@@ -132,11 +132,9 @@ export class CognitoIdentityService extends AbstractService {
     }
 
     let apiGatewayInstance = services.find(APIGatewayService);
-    let lambdaArns = LambdaService.getAllLambdasArn(this.property.config.microservices);
 
     this._updateCognitoRolesPolicy(
       this._config.roles,
-      lambdaArns,
       apiGatewayInstance.getAllEndpointsArn()
     )(function(policies) {
       this._config.postDeploy = {
@@ -279,12 +277,11 @@ export class CognitoIdentityService extends AbstractService {
    * Adds inline policies to Cognito auth and unauth roles
    *
    * @param {Object} cognitoRoles
-   * @param {Object} lambdaARNs
    * @param {Object} endpointsARNs
    * @returns {function}
    * @private
    */
-  _updateCognitoRolesPolicy(cognitoRoles, lambdaARNs, endpointsARNs) {
+  _updateCognitoRolesPolicy(cognitoRoles, endpointsARNs) {
     let iam = this.provisioning.iam;
     let policies = {};
     let syncStack = new AwsRequestSyncStack();
@@ -295,14 +292,10 @@ export class CognitoIdentityService extends AbstractService {
       }
 
       let cognitoRole = cognitoRoles[cognitoRoleType];
-      let lambdasForRole = lambdaARNs;
 
-      // skip role if there are no lambdas to add
-      if (lambdasForRole.length <= 0) {
-        continue;
-      }
-
-      let policy = LambdaService.generateAllowInvokeFunctionPolicy(lambdasForRole);
+      let policy = LambdaService.generateAllowInvokeFunctionPolicy([
+        this._getGlobalResourceMask()
+      ]);
       let apiPolicy = APIGatewayService.generateAllowInvokeMethodPolicy(endpointsARNs);
 
       // merge policies statements

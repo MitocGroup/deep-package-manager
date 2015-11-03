@@ -6,7 +6,6 @@
 
 import {AbstractService} from './AbstractService';
 import {S3Service} from './S3Service';
-import {DynamoDBService} from './DynamoDBService';
 import Core from 'deep-core';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
@@ -119,12 +118,10 @@ export class LambdaService extends AbstractService {
    */
   _postProvision(services) {
     let buckets = services.find(S3Service).config().buckets;
-    let dynamoDbTablesNames = services.find(DynamoDBService).config().tablesNames;
 
     this._attachPolicyToExecRoles(
       buckets,
-      this._config.executionRoles,
-      dynamoDbTablesNames
+      this._config.executionRoles
     )(function(policies) {
       this._config.executionRolesPolicies = this.isUpdate
         ? extend(this._config.executionRolesPolicies, policies)
@@ -272,11 +269,10 @@ export class LambdaService extends AbstractService {
    *
    * @param {Array} buckets
    * @param {String} roles
-   * @param {String} dynamoDbTablesNames
    * @returns {*}
    * @private
    */
-  _attachPolicyToExecRoles(buckets, roles, dynamoDbTablesNames) {
+  _attachPolicyToExecRoles(buckets, roles) {
     let iam = this.provisioning.iam;
     let policies = {};
     let syncStack = new AwsRequestSyncStack();
@@ -302,7 +298,7 @@ export class LambdaService extends AbstractService {
             microserviceIdentifier
           );
 
-          let policy = LambdaService.getAccessPolicy(microserviceIdentifier, buckets, dynamoDbTablesNames, this.env);
+          let policy = this._getAccessPolicy(microserviceIdentifier, buckets);
 
           let params = {
             PolicyDocument: policy.toString(),
@@ -333,12 +329,11 @@ export class LambdaService extends AbstractService {
    *
    * @param {String} microserviceIdentifier
    * @param {Array} buckets
-   * @param {String} dynamoDbTablesNames
-   * @param {String} env
    *
    * @returns {Policy}
    */
-  static getAccessPolicy(microserviceIdentifier, buckets, dynamoDbTablesNames, env) {
+  _getAccessPolicy(microserviceIdentifier, buckets) {
+    let env = this.env;
     let policy = new Core.AWS.IAM.Policy();
 
     let logsStatement = policy.statement.add();
@@ -354,25 +349,18 @@ export class LambdaService extends AbstractService {
     logsResource.accountId = Core.AWS.IAM.Policy.ANY;
     logsResource.descriptor = Core.AWS.IAM.Policy.ANY;
 
-    // avoid 'MalformedPolicyDocument: Policy statement must contain resources' error
-    if (Object.keys(dynamoDbTablesNames).length > 0) {
-      let dynamoDbStatement = policy.statement.add();
-      let dynamoDbAction = dynamoDbStatement.action.add();
+    let dynamoDbStatement = policy.statement.add();
+    let dynamoDbAction = dynamoDbStatement.action.add();
 
-      dynamoDbAction.service = Core.AWS.Service.DYNAMO_DB;
-      dynamoDbAction.action = Core.AWS.IAM.Policy.ANY;
+    dynamoDbAction.service = Core.AWS.Service.DYNAMO_DB;
+    dynamoDbAction.action = Core.AWS.IAM.Policy.ANY;
 
-      let firstTableName = dynamoDbTablesNames[Object.keys(dynamoDbTablesNames)[0]];
-      let tablesUniqueHash = AbstractService.extractBaseHashFromResourceName(firstTableName);
-      let tablesResourceMask = DynamoDBService.getTablesResourceMask(tablesUniqueHash, env);
+    let dynamoDbResource = dynamoDbStatement.resource.add();
 
-      let dynamoDbResource = dynamoDbStatement.resource.add();
-
-      dynamoDbResource.service = Core.AWS.Service.DYNAMO_DB;
-      dynamoDbResource.region = Core.AWS.IAM.Policy.ANY;
-      dynamoDbResource.accountId = Core.AWS.IAM.Policy.ANY;
-      dynamoDbResource.descriptor = `table/${tablesResourceMask}`;
-    }
+    dynamoDbResource.service = Core.AWS.Service.DYNAMO_DB;
+    dynamoDbResource.region = Core.AWS.IAM.Policy.ANY;
+    dynamoDbResource.accountId = Core.AWS.IAM.Policy.ANY;
+    dynamoDbResource.descriptor = `table/${this._getGlobalResourceMask()}`;
 
     let s3Statement = policy.statement.add();
 
@@ -414,45 +402,16 @@ export class LambdaService extends AbstractService {
   }
 
   /**
-   * Collect all lambdas arn from all microservices
-   *
-   * @param {Object} microservicesConfig
-   * @returns {Array}
+   * @param {String} uniqueHash
+   * @param {String} env
+   * @returns {String}
    */
-  static getAllLambdasArn(microservicesConfig) {
-    let lambdaArns = [];
-
-    for (let microserviceIdentifier in microservicesConfig) {
-      if (!microservicesConfig.hasOwnProperty(microserviceIdentifier)) {
-        continue;
-      }
-
-      let microservice = microservicesConfig[microserviceIdentifier];
-
-      for (let resourceName in microservice.resources) {
-        if (!microservice.resources.hasOwnProperty(resourceName)) {
-          continue;
-        }
-
-        let resourceActions = microservice.resources[resourceName];
-
-        for (let actionName in resourceActions) {
-          if (!resourceActions.hasOwnProperty(actionName)) {
-            continue;
-          }
-
-          let action = resourceActions[actionName];
-
-          if (action.type !== Action.LAMBDA) {
-            continue;
-          }
-
-          lambdaArns.push(microservice.deployedServices.lambdas[action.identifier].FunctionArn);
-        }
-      }
-    }
-
-    return lambdaArns;
+  static getLambdasResourceMask(uniqueHash, env) {
+    return AbstractService.capitalizeFirst(AbstractService.AWS_RESOURCES_PREFIX) +
+      AbstractService.capitalizeFirst(env) +
+      '*' +
+      uniqueHash +
+      '*';
   }
 
   /**

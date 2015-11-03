@@ -158,13 +158,11 @@ export class APIGatewayService extends AbstractService {
     }
 
     let integrationParams = this.getResourcesIntegrationParams(this.property.config.microservices);
-    let lambdasArn = LambdaService.getAllLambdasArn(this.property.config.microservices);
 
     this._putApiIntegrations(
       this._config.api.id,
       this._config.api.resources,
       this._config.api.role,
-      lambdasArn,
       integrationParams
     )(function(methods, integrations, rolePolicy, deployedApi) {
       this._config.api.methods = methods;
@@ -218,11 +216,10 @@ export class APIGatewayService extends AbstractService {
    * @param {String} apiId
    * @param {Object} apiResources
    * @param {Object} apiRole
-   * @param {Array} lambdasArn
    * @param {Object} integrationParams
    * @private
    */
-  _putApiIntegrations(apiId, apiResources, apiRole, lambdasArn, integrationParams) {
+  _putApiIntegrations(apiId, apiResources, apiRole, integrationParams) {
     var methods = null;
     var methodsResponse = null;
     var integrations = null;
@@ -242,7 +239,7 @@ export class APIGatewayService extends AbstractService {
             this._executeProvisionMethod('putIntegrationResponse', apiId, apiResources, integrationParams, (data) => {
               integrationsResponse = data;
 
-              this._addPolicyToApiRole(apiRole, lambdasArn, (data) => {
+              this._addPolicyToApiRole(apiRole, (data) => {
                 rolePolicy = data;
 
                 this._deployApi(apiId, (deployedApi) => {
@@ -401,13 +398,14 @@ export class APIGatewayService extends AbstractService {
 
   /**
    * @param {Object} apiRole
-   * @param {Array} lambdasArn
    * @param {Function} callback
    * @private
    */
-  _addPolicyToApiRole(apiRole, lambdasArn, callback) {
+  _addPolicyToApiRole(apiRole, callback) {
     let iam = this.provisioning.iam;
-    let policy = LambdaService.generateAllowInvokeFunctionPolicy(lambdasArn);
+    let policy = LambdaService.generateAllowInvokeFunctionPolicy([
+      this._getGlobalResourceMask()
+    ]);
 
     let params = {
       PolicyDocument: policy.toString(),
