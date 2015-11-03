@@ -93,11 +93,7 @@ export class APIGatewayService extends AbstractService {
     let oldResourcePaths = [];
 
     if (this.isUpdate) {
-      // @todo: remove when fixed
-      this._ready = true;
-      return this;
-
-      oldResourcePaths = Object.keys(this._config.api.resources); // @todo - find out why it's not 'transpiled' by uglify
+      oldResourcePaths = Object.keys(this._config.api.resources);
     }
 
     let resourcePaths = this._getResourcePaths(this.provisioning.property.microservices);
