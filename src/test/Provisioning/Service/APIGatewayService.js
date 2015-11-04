@@ -56,18 +56,18 @@ suite('Provisioning/Service/APIGatewayService', function() {
     chai.expect(actualResult._readyTeardown).to.be.equal(true);
   });
 
-  test('Check getMethodJsonTemplate() method returns {\'application/json\':\'\'}', function() {
+  test('Check getJsonResponseTemplate() method returns {\'application/json\':\'\'}', function() {
     let expectedResult = {
       'application/json': '',
     };
-    chai.expect(apiGatewayService.getMethodJsonTemplate()).to.be.eql(expectedResult);
+    chai.expect(apiGatewayService.getJsonResponseTemplate()).to.be.eql(expectedResult);
   });
 
-  test('Check getMethodJsonTemplate() method returns valid object', function() {
+  test('Check getJsonResponseTemplate() method returns valid object', function() {
     let expectedResult = {
       'application/json': '{"statusCode": 200}',
     };
-    chai.expect(apiGatewayService.getMethodJsonTemplate('OPTIONS')).to.be.eql(expectedResult);
+    chai.expect(apiGatewayService.getJsonResponseTemplate('OPTIONS')).to.be.eql(expectedResult);
   });
 
   test('Check ALLOWED_CORS_HEADERS static getter returns valid string', function() {
