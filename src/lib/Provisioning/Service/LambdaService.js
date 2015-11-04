@@ -394,7 +394,7 @@ export class LambdaService extends AbstractService {
   _actionIdentifierToPascalCase(actionName) {
     let pascalCase = '';
 
-    actionName.split('-').forEach(function(part) {
+    actionName.split('-').forEach((part) => {
       pascalCase += AbstractService.capitalizeFirst(part);
     });
 
@@ -402,25 +402,20 @@ export class LambdaService extends AbstractService {
   }
 
   /**
-   * @param {String} uniqueHash
-   * @param {String} env
+   * @param {String} functionIdentifier
    * @returns {String}
    */
-  static getLambdasResourceMask(uniqueHash, env) {
-    return AbstractService.capitalizeFirst(AbstractService.AWS_RESOURCES_PREFIX) +
-      AbstractService.capitalizeFirst(env) +
-      '*' +
-      uniqueHash +
-      '*';
+  _generateLambdaArn(functionIdentifier) {
+    let region = this.provisioning.lambda.config.region;
+
+    return `arn:aws:lambda:${region}:${this.awsAccountId}:function:${functionIdentifier}`;
   }
 
   /**
-   * Allow Cognito users to invoke these lambdas
-   *
-   * @param {Object} lambdaARNs
+   * Allow Cognito and ApiGateway users to invoke these lambdas
    * @returns {Core.AWS.IAM.Policy}
    */
-  static generateAllowInvokeFunctionPolicy(lambdaARNs) {
+  generateAllowInvokeFunctionPolicy() {
     let policy = new Core.AWS.IAM.Policy();
 
     let statement = policy.statement.add();
@@ -429,16 +424,11 @@ export class LambdaService extends AbstractService {
     action.service = Core.AWS.Service.LAMBDA;
     action.action = 'InvokeFunction';
 
-    for (let lambdaArnKey in lambdaARNs) {
-      if (!lambdaARNs.hasOwnProperty(lambdaArnKey)) {
-        continue;
-      }
+    let resource = statement.resource.add();
 
-      let lambdaArn = lambdaARNs[lambdaArnKey];
-      let resource = statement.resource.add();
-
-      resource.updateFromArn(lambdaArn);
-    }
+    resource.updateFromArn(
+      this._generateLambdaArn(this._getGlobalResourceMask())
+    );
 
     return policy;
   }

@@ -392,10 +392,10 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _addPolicyToApiRole(apiRole, callback) {
+    let lambdaService = this.provisioning.services.find(LambdaService);
+
     let iam = this.provisioning.iam;
-    let policy = LambdaService.generateAllowInvokeFunctionPolicy([
-      this._getGlobalResourceMask()
-    ]);
+    let policy = lambdaService.generateAllowInvokeFunctionPolicy();
 
     let params = {
       PolicyDocument: policy.toString(),

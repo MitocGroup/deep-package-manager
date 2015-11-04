@@ -293,9 +293,9 @@ export class CognitoIdentityService extends AbstractService {
 
       let cognitoRole = cognitoRoles[cognitoRoleType];
 
-      let policy = LambdaService.generateAllowInvokeFunctionPolicy([
-        this._getGlobalResourceMask()
-      ]);
+      let lambdaService = this.provisioning.services.find(LambdaService);
+
+      let policy = lambdaService.generateAllowInvokeFunctionPolicy();
       let apiPolicy = APIGatewayService.generateAllowInvokeMethodPolicy(endpointsARNs);
 
       // merge policies statements
