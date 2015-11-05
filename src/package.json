@@ -71,8 +71,7 @@
     "raml-validate": "1.0.*",
     "raml-sanitize": "1.0.*",
     "object-merge": "2.5.*",
-    "prompt-sync": "3.0.*",
-    "aws-api-gw-client": "0.1.*"
+    "prompt-sync": "3.0.*"
   },
   "devDependencies": {
     "aws-sdk": "2.2.*",

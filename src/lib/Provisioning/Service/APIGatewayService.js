@@ -62,6 +62,7 @@ export class APIGatewayService extends AbstractService {
   get apiMetadata() {
     return {
       name: this.generateAwsResourceName(APIGatewayService.API_NAME_PREFIX, Core.AWS.Service.API_GATEWAY),
+      description:`This API is generated automatically by DEEP for #${this.appIdentifier} app.`,
     };
   }
 
@@ -251,18 +252,15 @@ export class APIGatewayService extends AbstractService {
   _createApi(metadata, callback) {
     let apiGateway = this.provisioning.apiGateway;
 
-    apiGateway.createRestapi(metadata).then((api) => {
-      let apiSource = api.source;
-
-      // generate base url for created API coz it's not returned by createRestapi method
-      apiSource.baseUrl = this._generateApiBaseUrl(apiSource.id, apiGateway.region, this.stageName);
-
-      callback(apiSource);
-    }).catch((error) => {
-
+    apiGateway.createRestapi(metadata, (error, api) => {
       if (error) {
         throw new FailedToCreateApiGatewayException(metadata.name, error);
       }
+
+      // generate base url for created API coz it's not returned by createRestapi method
+      api.baseUrl = this._generateApiBaseUrl(api.id, apiGateway.region, this.stageName);
+
+      callback(api);
     });
   }
 
