@@ -47,11 +47,26 @@ export class Lambda {
     this._timeout = Lambda.DEFAULT_TIMEOUT;
     this._runtime = Lambda.DEFAULT_RUNTIME;
 
+    this._forceUserIdentity = false;
     this._wasPreviouslyDeployed = false;
     this._uploadedLambda = {};
 
     // @todo: find a better solution
     this._checkIfLambdaWasDeployedPreviously();
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  get forceUserIdentity() {
+    return this._forceUserIdentity;
+  }
+
+  /**
+   * @param {Boolean} state
+   */
+  set forceUserIdentity(state) {
+    this._forceUserIdentity = state;
   }
 
   /**
@@ -73,6 +88,7 @@ export class Lambda {
   createConfig(propertyConfig) {
     let config = Frontend.createConfig(propertyConfig);
 
+    config.forceUserIdentity = this._forceUserIdentity;
     config.microserviceIdentifier = this.microserviceIdentifier;
     config.awsAccountId = propertyConfig.awsAccountId;
     config.appIdentifier = propertyConfig.appIdentifier;
