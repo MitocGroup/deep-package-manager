@@ -1,5 +1,5 @@
 'use strict';
-import {Instance} from '../../lib.compiled/Provisioning/Instance';
+import {Instance} from '../../../lib.compiled/Provisioning/Instance';
 
 /**
  * Provisioning instance mock

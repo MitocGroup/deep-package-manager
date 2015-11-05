@@ -4,8 +4,8 @@ import chai from 'chai';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 import {APIGatewayService} from '../../../lib.compiled/Provisioning/Service/APIGatewayService';
-import {ProvisioningInstanceMock} from '../../../mock/Provisioning/ProvisioningInstanceMock';
-import {PropertyInstanceMock} from '../../../mock/Property/PropertyInstanceMock';
+import {ProvisioningInstanceMock} from '../../mock/Provisioning/ProvisioningInstanceMock';
+import {PropertyInstanceMock} from '../../mock/Property/PropertyInstanceMock';
 import Core from 'deep-core';
 import {ObjectStorage} from 'deep-core/lib.compiled/Generic/ObjectStorage';
 
