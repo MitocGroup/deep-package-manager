@@ -126,22 +126,6 @@ suite('Provisioning/Service/APIGatewayService', function() {
     chai.expect(e).to.be.equal(null);
   });
 
-  test('Check _setup() method returns this._ready="true" for isUpdate', function() {
-    let e = null;
-    apiGatewayService._ready = false;
-    apiGatewayService._isUpdate = true;
-    let actualResult = null;
-
-    try {
-      actualResult = apiGatewayService._setup(objectStorage);
-    } catch (exception) {
-      e = exception;
-    }
-
-    chai.expect(e).to.be.equal(null);
-    chai.expect(actualResult._ready).to.be.equal(true);
-  });
-
   test('Check _postProvision() method returns this._readyTeardown="true" for isUpdate', function() {
     let e = null;
     apiGatewayService._readyTeardown = false;
