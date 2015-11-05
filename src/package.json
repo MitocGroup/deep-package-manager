@@ -72,7 +72,8 @@
     "raml-sanitize": "1.0.*",
     "object-merge": "2.5.*",
     "prompt-sync": "3.0.*",
-    "aws-api-gw-client": "0.1.*"
+    "aws-api-gw-client": "0.1.*",
+    "node-version-assets": "0.2.*"
   },
   "devDependencies": {
     "aws-sdk": "2.2.*",

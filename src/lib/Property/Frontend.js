@@ -18,6 +18,7 @@ import Core from 'deep-core';
 import Tmp from 'tmp';
 import OS from 'os';
 import {APIGatewayService} from '../Provisioning/Service/APIGatewayService';
+import {DeployIdInjector} from '../Assets/DeployIdInjector';
 
 /**
  * Frontend
@@ -26,10 +27,19 @@ export class Frontend {
   /**
    * @param {Object} microservicesConfig
    * @param {String} basePath
+   * @param {String} deployId
    */
-  constructor(microservicesConfig, basePath) {
+  constructor(microservicesConfig, basePath, deployId) {
     this._microservicesConfig = microservicesConfig;
     this._basePath = StringUtils.rtrim(basePath, '/');
+    this._deployId = deployId;
+  }
+
+  /**
+   * @returns {String}
+   */
+  get deployId() {
+    return this._deployId;
   }
 
   /**
@@ -174,8 +184,9 @@ export class Frontend {
 
   /**
    * @param {Object} propertyConfig
+   * @param {Function} callback
    */
-  build(propertyConfig) {
+  build(propertyConfig, callback = () => {}) {
     if (!(propertyConfig instanceof Object)) {
       throw new InvalidArgumentException(propertyConfig, 'Object');
     }
@@ -218,6 +229,9 @@ export class Frontend {
         walker.copy(frontendPath, modulePath);
       }
     }
+
+    new DeployIdInjector(this.path, this._deployId)
+      .prepare(callback);
   }
 
   /**
