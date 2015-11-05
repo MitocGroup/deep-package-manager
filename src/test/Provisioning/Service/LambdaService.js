@@ -5,8 +5,8 @@ import {LambdaService} from '../../../lib.compiled/Provisioning/Service/LambdaSe
 import Core from 'deep-core';
 import {ObjectStorage} from 'deep-core/lib.compiled/Generic/ObjectStorage';
 import {Policy} from 'deep-core/lib.compiled/AWS/IAM/Policy';
-import {PropertyInstanceMock} from '../../../mock/Property/PropertyInstanceMock.js';
-import {ProvisioningInstanceMock} from '../../../mock/Provisioning/ProvisioningInstanceMock';
+import {PropertyInstanceMock} from '../../mock/Property/PropertyInstanceMock.js';
+import {ProvisioningInstanceMock} from '../../mock/Provisioning/ProvisioningInstanceMock';
 
 suite('Provisioning/Service/LambdaService', function() {
   let lambdaServiceInstance = null;

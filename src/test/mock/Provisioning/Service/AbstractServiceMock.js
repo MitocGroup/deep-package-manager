@@ -1,6 +1,6 @@
 'use strict';
 
-import {AbstractService} from '../../../lib.compiled/Provisioning/Service/AbstractService';
+import {AbstractService} from '../../../../lib.compiled/Provisioning/Service/AbstractService';
 
 /**
  * Provisioning service
