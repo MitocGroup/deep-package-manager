@@ -6,8 +6,8 @@ import sinonChai from 'sinon-chai';
 import {DynamoDBService} from '../../../lib.compiled/Provisioning/Service/DynamoDBService';
 import Core from 'deep-core';
 import {ObjectStorage} from 'deep-core/lib.compiled/Generic/ObjectStorage';
-import {PropertyInstanceMock} from '../../../mock/Property/PropertyInstanceMock.js';
-import {ProvisioningInstanceMock} from '../../../mock/Provisioning/ProvisioningInstanceMock';
+import {PropertyInstanceMock} from '../../mock/Property/PropertyInstanceMock.js';
+import {ProvisioningInstanceMock} from '../../mock/Provisioning/ProvisioningInstanceMock';
 
 chai.use(sinonChai);
 
