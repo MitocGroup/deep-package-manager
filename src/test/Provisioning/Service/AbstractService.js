@@ -3,8 +3,8 @@
 import chai from 'chai';
 import {AbstractService} from '../../../lib.compiled/Provisioning/Service/AbstractService';
 import {Exception} from '../../../lib.compiled/Exception/Exception';
-import {PropertyInstanceMock} from '../../../mock/Property/PropertyInstanceMock.js';
-import {ProvisioningInstanceMock} from '../../../mock/Provisioning/ProvisioningInstanceMock';
+import {PropertyInstanceMock} from '../../mock/Property/PropertyInstanceMock.js';
+import {ProvisioningInstanceMock} from '../../mock/Provisioning/ProvisioningInstanceMock';
 
 class AbstractServiceTest extends AbstractService {
   /**

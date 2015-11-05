@@ -5,7 +5,7 @@
 'use strict';
 
 import FileSystem from 'fs';
-import Path from 'path';
+import path from 'path';
 import StringUtils from 'underscore.string';
 import mkdirp from 'mkdirp';
 import ignore from 'ignore';
@@ -65,22 +65,19 @@ export class FileWalker {
    * @param {Function} filter
    * @returns {FileWalker}
    */
-  copy(source, destination, filter = null) {
-    filter = filter || function() {
-        return true;
-      };
-
+  copy(source, destination, filter = () => true) {
     source = StringUtils.rtrim(source, '/');
     destination = StringUtils.rtrim(destination, '/');
-    let skipDotFilter = FileWalker.skipDotsFilter(filter);
 
+    let skipDotFilter = FileWalker.skipDotsFilter(filter);
     let sourceOffset = source.length + 1;
 
-    for (let file of this.walk(source, skipDotFilter)) {
-      let relativePath = file.substring(sourceOffset);
-      let fileCopy = `${destination}/${relativePath}`;
+    let files = this.walk(source, skipDotFilter);
 
-      let fileDir = Path.dirname(fileCopy);
+    for (let file of files) {
+      let relativePath = file.substring(sourceOffset);
+      let fileCopy = path.join(destination, relativePath);
+      let fileDir = path.dirname(fileCopy);
 
       this.mkdir(fileDir);
 
@@ -95,23 +92,23 @@ export class FileWalker {
    * @param {Function} filter
    * @returns {Array}
    */
-  walk(dir, filter = null) {
-    filter = filter || function() {
-        return true;
-      };
-
+  walk(dir, filter = () => true) {
     let results = [];
     let list = FileSystem.readdirSync(dir);
+    let ignoreFilter = this._ignoreFile
+      ? this._buildIgnoreFilter(dir)
+      : () => true;
 
-    list = list.map((file) => `${dir}/${file}`);
-    list = this._ignoreFile ? this._buildIgnoreFilter(dir).filter(list) : list;
+    list = list
+      .map((file) => path.join(dir, file))
+      .filter(ignoreFilter);
 
     for (let file of list) {
       if (this._type === FileWalker.RECURSIVE) {
         let stat = FileSystem.statSync(file);
 
         if (stat && stat.isDirectory()) {
-          results = results.concat(this.walk(file));
+          results = results.concat(this.walk(file, filter));
         } else if (filter(file)) {
           results.push(file);
         }
@@ -120,26 +117,24 @@ export class FileWalker {
       }
     }
 
-    return results;
+    return results.filter(ignoreFilter); // assure global ignores
   }
 
   /**
    * @param {String} dir
-   * @returns {Object}
+   * @returns {Function}
    * @private
    */
   _buildIgnoreFilter(dir) {
-    let ignoreFile = Path.join(dir, this._ignoreFile);
+    let ignoreFile = path.join(dir, this._ignoreFile);
 
     if (FileSystem.existsSync(ignoreFile)) {
-      return ignore({}).addIgnoreFile(ignoreFile);
+      return ignore({})
+        .addIgnoreFile(ignoreFile)
+        .createFilter();
     }
 
-    return {
-      filter: function(list) {
-        return list;
-      },
-    };
+    return () => true;
   }
 
   /**
@@ -151,7 +146,7 @@ export class FileWalker {
     let extensionsPlain = extensions.join('|');
     let regex = new RegExp(`\.(${extensionsPlain})$`, 'i');
 
-    return function(file) {
+    return (file) => {
       return regex.test(file) && (!originalFilter || originalFilter(file));
     };
   }
@@ -161,8 +156,12 @@ export class FileWalker {
    * @returns {Function}
    */
   static skipDotsFilter(originalFilter) {
-    return function(file) {
-      return Path.basename(file).indexOf('.') !== 0 && (!originalFilter || originalFilter(file));
+    return (file) => {
+      let basename = path.basename(file);
+
+      return basename !== '.'
+          && basename !== '..'
+          && (!originalFilter || originalFilter(file));
     };
   }
 

@@ -43,9 +43,7 @@ export class DynamoDBService extends AbstractService {
     this._createDbTables(
       this._rawModels
     )(function(tablesNames) {
-      this._config = {
-        tablesNames: tablesNames,
-      };
+      this._config.tablesNames = tablesNames;
 
       this._ready = true;
     }.bind(this));

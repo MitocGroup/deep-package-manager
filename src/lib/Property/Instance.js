@@ -25,6 +25,7 @@ import {FrontendEngine} from '../Microservice/FrontendEngine';
 import {NoMatchingFrontendEngineException} from '../Dependencies/Exception/NoMatchingFrontendEngineException';
 import {exec} from 'child_process';
 import OS from 'os';
+import objectMerge from 'object-merge';
 
 /**
  * Property instance
@@ -43,8 +44,7 @@ export class Instance {
 
     this._config = Config.createFromJsonFile(configFile).extract();
 
-    // @todo: improve this!
-    this._config.deployId = Hash.md5(`${this._config.appIdentifier}#${new Date().getTime()}`);
+    this.deployId = Hash.md5(`${this._config.appIdentifier}#${new Date().getTime()}`);
 
     this._aws = AWS;
     AWS.config.update(this._config.aws);
@@ -54,6 +54,20 @@ export class Instance {
     this._localDeploy = false;
     this._provisioning = new Provisioning(this);
     this._isUpdate = false;
+  }
+
+  /**
+   * @returns {String}
+   */
+  get deployId() {
+    return this._config.deployId;
+  }
+
+  /**
+   * @param {String} id
+   */
+  set deployId(id) {
+    this._config.deployId = id;
   }
 
   /**
@@ -245,7 +259,7 @@ export class Instance {
 
     console.log(`${new Date().toTimeString()} Start building application`);
 
-    let microservicesConfig = {};
+    let microservicesConfig = isUpdate ? this._config.microservices : {};
     let microservices = this.microservices;
     let rootMicroservice;
 
@@ -284,6 +298,10 @@ export class Instance {
           lambdas: {},
         },
       };
+
+      if (isUpdate) {
+        microserviceConfig.deployedServices = microservicesConfig[microservice.config.identifier].deployedServices;
+      }
 
       microservicesConfig[microserviceConfig.identifier] = microserviceConfig;
 
@@ -436,17 +454,23 @@ export class Instance {
     }.bind(this));
 
     wait.ready(function() {
-      let frontend = new Frontend(this._config.microservices, this._path);
-      let publicBucket = this._config.provisioning.s3.buckets[S3Service.PUBLIC_BUCKET].name;
+      this.buildFrontend(this._path, (frontend, error) => {
+        if (error) {
+          console.error(
+            `${new Date().toTimeString()} Error while injecting deploy ID into the assets: ${error}`
+          );
+        }
 
-      frontend.build(Frontend.createConfig(this._config));
+        let publicBucket = this._config.provisioning.s3.buckets[S3Service.PUBLIC_BUCKET].name;
 
-      if (isUpdate && this._localDeploy) {
-        callback();
-      } else {
-        console.log(`${new Date().toTimeString()} Start deploying frontend`);
-        frontend.deploy(this._aws, publicBucket).ready(callback);
-      }
+        if (isUpdate && this._localDeploy) {
+          callback();
+        } else {
+          console.log(`${new Date().toTimeString()} Start deploying frontend`);
+
+          frontend.deploy(this._aws, publicBucket).ready(callback);
+        }
+      });
     }.bind(this));
 
     return this;
@@ -454,14 +478,15 @@ export class Instance {
 
   /**
    * @param {String} dumpPath
-   * @returns {Instance}
+   * @param {Function} callback
+   * @returns {Frontend}
    */
-  buildFrontend(dumpPath = null) {
-    let frontend = new Frontend(this._config.microservices, dumpPath || this._path);
+  buildFrontend(dumpPath = null, callback = () => {}) {
+    let frontend = new Frontend(this._config.microservices, dumpPath || this._path, this.deployId);
 
-    frontend.build(Frontend.createConfig(this._config));
+    frontend.build(Frontend.createConfig(this._config), callback.bind(this, frontend));
 
-    return this;
+    return frontend;
   }
 
   /**

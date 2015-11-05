@@ -109,9 +109,8 @@ export class S3Service extends AbstractService {
     this._createFsBuckets(
       S3Service.FS_BUCKETS_SUFFIX
     )(function(buckets) {
-      this._config = {
-        buckets: buckets,
-      };
+      this._config.buckets = buckets;
+
       this._ready = true;
     }.bind(this));
 
