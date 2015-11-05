@@ -18,6 +18,7 @@ import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
 import Utils from 'util';
+import objectMerge from 'object-merge';
 
 /**
  * APIGateway service
@@ -28,6 +29,8 @@ export class APIGatewayService extends AbstractService {
    */
   constructor(...args) {
     super(...args);
+
+    this._newApiResources = {};
   }
 
   /**
@@ -83,27 +86,42 @@ export class APIGatewayService extends AbstractService {
   /**
    * @parameter {Core.Generic.ObjectStorage} services
    * @returns {APIGatewayService}
+   *
+   * @todo: remove config.api key and put object to the root
    */
   _setup(services) {
-    // @todo: implement!
-    if (this._isUpdate) {
+    let oldResourcePaths = [];
+
+    if (this.isUpdate) {
+      oldResourcePaths = Object.keys(this._config.api.resources);
+    }
+
+    let resourcePaths = this._getResourcePaths(this.provisioning.property.microservices);
+    let newResourcePaths = resourcePaths.filter((i) => oldResourcePaths.indexOf(i) < 0);
+
+    if (newResourcePaths.length <= 0) {
       this._ready = true;
+
       return this;
     }
-    
+
     this._provisionApiResources(
       this.apiMetadata,
-      this._getResourcePaths(this.provisioning.property.microservices)
-    )(function(api, resources, role) {
-      this._config.api = {
-        id: api.id,
-        name: api.name,
-        baseUrl: api.baseUrl,
-        resources: resources,
-        role: role,
-      };
+      newResourcePaths
+    )((api, resources, role) => {
+      this._newApiResources = resources;
+
+      // @todo: remove this hook
+      this._config.api = this._config.api || {};
+
+      this._config.api.id = api.id;
+      this._config.api.name = api.name;
+      this._config.api.baseUrl = api.baseUrl;
+      this._config.api.role = role;
+      this._config.api.resources = objectMerge(this._config.api.resources, resources);
+
       this._ready = true;
-    }.bind(this));
+    });
 
     return this;
   }
@@ -129,20 +147,12 @@ export class APIGatewayService extends AbstractService {
    * @returns {APIGatewayService}
    */
   _postDeployProvision(services) {
-    // @todo: implement!
-    if (this._isUpdate) {
-      this._ready = true;
-      return this;
-    }
-
     let integrationParams = this.getResourcesIntegrationParams(this.property.config.microservices);
-    let lambdasArn = LambdaService.getAllLambdasArn(this.property.config.microservices);
 
     this._putApiIntegrations(
       this._config.api.id,
-      this._config.api.resources,
+      this._newApiResources,
       this._config.api.role,
-      lambdasArn,
       integrationParams
     )(function(methods, integrations, rolePolicy, deployedApi) {
       this._config.api.methods = methods;
@@ -159,15 +169,23 @@ export class APIGatewayService extends AbstractService {
   /**
    * @param {Object} metadata
    * @param {Array} resourcePaths
-   * @returns {function}
+   * @returns {Function}
    * @private
    */
   _provisionApiResources(metadata, resourcePaths) {
-    var restApi = null;
-    var restResources = null;
-    var restApiIamRole = null;
+    let restApi = this.isUpdate ? this._config.api : null;
+    let restApiIamRole = this.isUpdate ? this._config.api.role : null;
+    let restResources = null;
 
     return (callback) => {
+      if (this.isUpdate) {
+        this._createApiResources(resourcePaths, restApi.id, (resources) => {
+          callback(restApi, this._extractApiResourcesMetadata(resources), restApiIamRole);
+        });
+
+        return;
+      }
+
       this._createApi(metadata, (api) => {
         restApi = api;
 
@@ -188,11 +206,10 @@ export class APIGatewayService extends AbstractService {
    * @param {String} apiId
    * @param {Object} apiResources
    * @param {Object} apiRole
-   * @param {Array} lambdasArn
    * @param {Object} integrationParams
    * @private
    */
-  _putApiIntegrations(apiId, apiResources, apiRole, lambdasArn, integrationParams) {
+  _putApiIntegrations(apiId, apiResources, apiRole, integrationParams) {
     var methods = null;
     var methodsResponse = null;
     var integrations = null;
@@ -212,7 +229,7 @@ export class APIGatewayService extends AbstractService {
             this._executeProvisionMethod('putIntegrationResponse', apiId, apiResources, integrationParams, (data) => {
               integrationsResponse = data;
 
-              this._addPolicyToApiRole(apiRole, lambdasArn, (data) => {
+              this._addPolicyToApiRole(apiRole, (data) => {
                 rolePolicy = data;
 
                 this._deployApi(apiId, (deployedApi) => {
@@ -264,10 +281,7 @@ export class APIGatewayService extends AbstractService {
     apiGateway.createResources(params).then((resources) => {
       callback(resources);
     }).catch((error) => {
-
-      if (error) {
-        throw new FailedToCreateApiResourcesException(resourcePaths, error);
-      }
+      throw new FailedToCreateApiResourcesException(resourcePaths, error);
     });
   }
 
@@ -374,13 +388,14 @@ export class APIGatewayService extends AbstractService {
 
   /**
    * @param {Object} apiRole
-   * @param {Array} lambdasArn
    * @param {Function} callback
    * @private
    */
-  _addPolicyToApiRole(apiRole, lambdasArn, callback) {
+  _addPolicyToApiRole(apiRole, callback) {
+    let lambdaService = this.provisioning.services.find(LambdaService);
+
     let iam = this.provisioning.iam;
-    let policy = LambdaService.generateAllowInvokeFunctionPolicy(lambdasArn);
+    let policy = lambdaService.generateAllowInvokeFunctionPolicy();
 
     let params = {
       PolicyDocument: policy.toString(),
@@ -412,7 +427,7 @@ export class APIGatewayService extends AbstractService {
     let paramsArr = [];
 
     for (let resourcePath in integrationParams) {
-      if (!integrationParams.hasOwnProperty(resourcePath)) {
+      if (!integrationParams.hasOwnProperty(resourcePath) || !apiResources.hasOwnProperty(resourcePath)) {
         continue;
       }
 
@@ -480,7 +495,7 @@ export class APIGatewayService extends AbstractService {
    *        action_name
    *
    * @param {Object} microservices
-   * @returns {Array}
+   * @returns {String[]}
    * @private
    */
   _getResourcePaths(microservices) {

@@ -25,6 +25,7 @@ import {FrontendEngine} from '../Microservice/FrontendEngine';
 import {NoMatchingFrontendEngineException} from '../Dependencies/Exception/NoMatchingFrontendEngineException';
 import {exec} from 'child_process';
 import OS from 'os';
+import objectMerge from 'object-merge';
 
 /**
  * Property instance
@@ -258,7 +259,7 @@ export class Instance {
 
     console.log(`${new Date().toTimeString()} Start building application`);
 
-    let microservicesConfig = {};
+    let microservicesConfig = isUpdate ? this._config.microservices : {};
     let microservices = this.microservices;
     let rootMicroservice;
 
@@ -297,6 +298,10 @@ export class Instance {
           lambdas: {},
         },
       };
+
+      if (isUpdate) {
+        microserviceConfig.deployedServices = microservicesConfig[microservice.config.identifier].deployedServices;
+      }
 
       microservicesConfig[microserviceConfig.identifier] = microserviceConfig;
 

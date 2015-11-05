@@ -84,19 +84,6 @@ suite('Provisioning/Instance', function() {
     //chai.expect(error).to.be.equal(null);
   });
 
-  test('Check postDeployProvision() method call callback', function() {
-    let error = null;
-    let spyCallback = sinon.spy();
-
-    try {
-      provisioningInstance.postDeployProvision(spyCallback, true);
-    } catch (e) {
-      error = e;
-    }
-
-    chai.expect(error).to.be.equal(null);
-  });
-
   test('Check cloudFront getter returns', function() {
     chai.expect(provisioningInstance.cloudFront).to.be.not.eql({});
     chai.expect(provisioningInstance.cloudFront.config.endpoint).to.be.contains('cloudfront');
