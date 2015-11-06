@@ -33,16 +33,10 @@ import objectMerge from 'object-merge';
 export class Instance {
   /**
    * @param {String} path
-   * @param {String} configFileName
+   * @param {String|Object} config
    */
-  constructor(path, configFileName = Config.DEFAULT_FILENAME) {
-    let configFile = Path.join(path, configFileName);
-
-    if (!FileSystem.existsSync(configFile)) {
-      throw new Exception(`Missing ${configFileName} configuration file from ${path}.`);
-    }
-
-    this._config = Config.createFromJsonFile(configFile).extract();
+  constructor(path, config = Config.DEFAULT_FILENAME) {
+    this._config = Instance._createConfigObject(config, path).extract();
 
     this.deployId = Hash.md5(`${this._config.appIdentifier}#${new Date().getTime()}`);
 
@@ -54,6 +48,26 @@ export class Instance {
     this._localDeploy = false;
     this._provisioning = new Provisioning(this);
     this._isUpdate = false;
+  }
+
+  /**
+   * @param {String|Object} config
+   * @param {String} path
+   * @returns {Config}
+   * @private
+   */
+  static _createConfigObject(config, path) {
+    if (typeof config === 'string') {
+      let configFile = Path.join(path, config);
+
+      if (!FileSystem.existsSync(configFile)) {
+        throw new Exception(`Missing ${config} configuration file from ${path}.`);
+      }
+
+      return Config.createFromJsonFile(configFile);
+    }
+
+    return new Config(config);
   }
 
   /**
