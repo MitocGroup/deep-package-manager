@@ -236,7 +236,9 @@ export class Instance {
         lambdaInstance.memorySize = lambdaOptions.memory;
         lambdaInstance.timeout = lambdaOptions.timeout;
         lambdaInstance.runtime = lambdaOptions.runtime;
-        lambdaInstance.forceUserIdentity = lambdaOptions.forceUserIdentity;
+
+        // avoid authentication errors on local machine
+        lambdaInstance.forceUserIdentity = false;
 
         this._config
           .microservices[microserviceIdentifier]
