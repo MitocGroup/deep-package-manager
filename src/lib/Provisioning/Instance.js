@@ -209,13 +209,14 @@ export class Instance {
     let servicesVector = services.iterator;
     let remaining = servicesVector.length;
 
-    // @todo: improve this
     if (isUpdate) {
+      let propertyProvisioning = this.property.config.provisioning;
+
       for (let service of servicesVector) {
         service.isUpdate = true;
 
-        // @temp keep old provisioned config in case of update
-        service._config = this.property.config.provisioning[service.name()];
+        // keep old provisioned config in case of update
+        service.injectConfig(propertyProvisioning[service.name()]);
       }
     }
 
@@ -266,13 +267,6 @@ export class Instance {
     let wait = new WaitFor();
     let servicesVector = services.iterator;
     let remaining = servicesVector.length;
-
-    // @todo: improve this
-    if (isUpdate) {
-      for (let service of servicesVector) {
-        service.isUpdate = true;
-      }
-    }
 
     for (let service of servicesVector) {
       service.postDeployProvision(services).ready(function() {

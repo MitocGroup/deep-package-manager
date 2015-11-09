@@ -4,7 +4,7 @@
 
 'use strict';
 
-import {Instance} from '../../lib.compiled/Property/Instance';
+import {Instance} from '../../../lib.compiled/Property/Instance';
 
 /**
  * Property instance

@@ -6,7 +6,6 @@
 
 import {AbstractService} from './AbstractService';
 import {S3Service} from './S3Service';
-import {DynamoDBService} from './DynamoDBService';
 import Core from 'deep-core';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
@@ -14,6 +13,8 @@ import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingP
 import {Action} from '../../Microservice/Metadata/Action';
 import {Lambda} from '../../Property/Lambda';
 import {IAMService} from './IAMService';
+import objectMerge from 'object-merge';
+import {_extend as extend} from 'util';
 
 /**
  * Lambda service
@@ -25,6 +26,46 @@ export class LambdaService extends AbstractService {
   constructor(...args) {
     super(...args);
 
+    this._deployedRoles = [];
+  }
+
+  /**
+   * @private
+   */
+  _onConfigInject() {
+    this._deployedRoles = this._getDeployedRoles();
+  }
+
+  /**
+   * @returns {String[]}
+   * @private
+   */
+  _getDeployedRoles() {
+    let deployedRoles = [];
+
+    if (this.isUpdate) {
+      let execRoles = this._config.executionRoles;
+
+      for (let microserviceIdentifier in execRoles) {
+        if (!execRoles.hasOwnProperty(microserviceIdentifier)) {
+          continue;
+        }
+
+        let microserviceRoles = execRoles[microserviceIdentifier];
+
+        for (let lambdaIdentifier in microserviceRoles) {
+          if (!microserviceRoles.hasOwnProperty(lambdaIdentifier)) {
+            continue;
+          }
+
+          let execRole = microserviceRoles[lambdaIdentifier];
+
+          deployedRoles.push(execRole.RoleName);
+        }
+      }
+    }
+
+    return deployedRoles;
   }
 
   /**
@@ -50,21 +91,21 @@ export class LambdaService extends AbstractService {
    * @returns {LambdaService}
    */
   _setup(services) {
-    // @todo: implement!
-    if (this._isUpdate) {
-      this._ready = true;
-      return this;
-    }
-
     let microservices = this.provisioning.property.microservices;
 
     this._createExecRoles(
       microservices
     )(function(execRoles) {
-      this._config = {
-        names: this._generateLambdasNames(microservices),
-        executionRoles: execRoles,
-      };
+      let lambdaNames = this._generateLambdasNames(microservices);
+
+      this._config.names = this.isUpdate
+        ? objectMerge(this._config.names, lambdaNames)
+        : lambdaNames;
+
+      this._config.executionRoles = this.isUpdate
+        ? objectMerge(this._config.executionRoles, execRoles)
+        : execRoles;
+
       this._ready = true;
     }.bind(this));
 
@@ -76,21 +117,16 @@ export class LambdaService extends AbstractService {
    * @returns {LambdaService}
    */
   _postProvision(services) {
-    // @todo: implement!
-    if (this._isUpdate) {
-      this._readyTeardown = true;
-      return this;
-    }
-
     let buckets = services.find(S3Service).config().buckets;
-    let dynamoDbTablesNames = services.find(DynamoDBService).config().tablesNames;
 
     this._attachPolicyToExecRoles(
       buckets,
-      this._config.executionRoles,
-      dynamoDbTablesNames
+      this._config.executionRoles
     )(function(policies) {
-      this._config.executionRolesPolicies = policies;
+      this._config.executionRolesPolicies = this.isUpdate
+        ? extend(this._config.executionRolesPolicies, policies)
+        : policies;
+
       this._readyTeardown = true;
     }.bind(this));
 
@@ -114,6 +150,15 @@ export class LambdaService extends AbstractService {
   }
 
   /**
+   * @param {String} roleName
+   * @returns {Boolean}
+   * @private
+   */
+  _isIamRoleNew(roleName) {
+    return this._deployedRoles.indexOf(roleName) === -1;
+  }
+
+  /**
    * Creates execution roles for each lambda
    *
    * @param {Object} microservices
@@ -125,7 +170,9 @@ export class LambdaService extends AbstractService {
     let iam = this.provisioning.iam;
     let syncStack = new AwsRequestSyncStack();
     let execRoles = {};
-    let execRolePolicy = IAMService.getAssumeRolePolicy(Core.AWS.Service.LAMBDA); // role policy (definition) is common for all lambdas
+
+    // role policy (definition) is common for all lambdas
+    let execRolePolicy = IAMService.getAssumeRolePolicy(Core.AWS.Service.LAMBDA);
 
     for (let microserviceKey in microservices) {
       if (!microservices.hasOwnProperty(microserviceKey)) {
@@ -155,18 +202,20 @@ export class LambdaService extends AbstractService {
             RoleName: roleName,
           };
 
-          syncStack.push(iam.createRole(params), function(error, data) {
-            if (error) {
-              // @todo: remove this hook
-              if (Lambda.isErrorFalsePositive(error)) {
-                return;
+          if (this._isIamRoleNew(roleName)) {
+            syncStack.push(iam.createRole(params), function(error, data) {
+              if (error) {
+                // @todo: remove this hook
+                if (Lambda.isErrorFalsePositive(error)) {
+                  return;
+                }
+
+                throw new FailedToCreateIamRoleException(roleName, error);
               }
 
-              throw new FailedToCreateIamRoleException(roleName, error);
-            }
-
-            execRoles[microservice.identifier][action.identifier] = data.Role;
-          }.bind(this));
+              execRoles[microservice.identifier][action.identifier] = data.Role;
+            }.bind(this));
+          }
         }
       }
     }
@@ -220,11 +269,10 @@ export class LambdaService extends AbstractService {
    *
    * @param {Array} buckets
    * @param {String} roles
-   * @param {String} dynamoDbTablesNames
    * @returns {*}
    * @private
    */
-  _attachPolicyToExecRoles(buckets, roles, dynamoDbTablesNames) {
+  _attachPolicyToExecRoles(buckets, roles) {
     let iam = this.provisioning.iam;
     let policies = {};
     let syncStack = new AwsRequestSyncStack();
@@ -243,27 +291,29 @@ export class LambdaService extends AbstractService {
 
         let execRole = microserviceRoles[lambdaIdentifier];
 
-        let policyName = this.generateAwsResourceName(
-          this._actionIdentifierToPascalCase(lambdaIdentifier) + 'Policy',
-          Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
-          microserviceIdentifier
-        );
+        if (this._isIamRoleNew(execRole.RoleName)) {
+          let policyName = this.generateAwsResourceName(
+            this._actionIdentifierToPascalCase(lambdaIdentifier) + 'Policy',
+            Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
+            microserviceIdentifier
+          );
 
-        let policy = LambdaService.getAccessPolicy(microserviceIdentifier, buckets, dynamoDbTablesNames);
+          let policy = this._getAccessPolicy(microserviceIdentifier, buckets);
 
-        let params = {
-          PolicyDocument: policy.toString(),
-          PolicyName: policyName,
-          RoleName: execRole.RoleName,
-        };
+          let params = {
+            PolicyDocument: policy.toString(),
+            PolicyName: policyName,
+            RoleName: execRole.RoleName,
+          };
 
-        syncStack.push(iam.putRolePolicy(params), function(error, data) {
-          if (error) {
-            throw new FailedAttachingPolicyToRoleException(policyName, execRole.RoleName, error);
-          }
+          syncStack.push(iam.putRolePolicy(params), function(error, data) {
+            if (error) {
+              throw new FailedAttachingPolicyToRoleException(policyName, execRole.RoleName, error);
+            }
 
-          policies[execRole.RoleName] = policy;
-        }.bind(this));
+            policies[execRole.RoleName] = policy;
+          }.bind(this));
+        }
       }
     }
 
@@ -279,11 +329,11 @@ export class LambdaService extends AbstractService {
    *
    * @param {String} microserviceIdentifier
    * @param {Array} buckets
-   * @param {String} dynamoDbTablesNames
    *
    * @returns {Policy}
    */
-  static getAccessPolicy(microserviceIdentifier, buckets, dynamoDbTablesNames) {
+  _getAccessPolicy(microserviceIdentifier, buckets) {
+    let env = this.env;
     let policy = new Core.AWS.IAM.Policy();
 
     let logsStatement = policy.statement.add();
@@ -299,28 +349,18 @@ export class LambdaService extends AbstractService {
     logsResource.accountId = Core.AWS.IAM.Policy.ANY;
     logsResource.descriptor = Core.AWS.IAM.Policy.ANY;
 
-    // avoid 'MalformedPolicyDocument: Policy statement must contain resources' error
-    if (Object.keys(dynamoDbTablesNames).length > 0) {
-      let dynamoDbStatement = policy.statement.add();
-      let dynamoDbAction = dynamoDbStatement.action.add();
+    let dynamoDbStatement = policy.statement.add();
+    let dynamoDbAction = dynamoDbStatement.action.add();
 
-      dynamoDbAction.service = Core.AWS.Service.DYNAMO_DB;
-      dynamoDbAction.action = Core.AWS.IAM.Policy.ANY;
+    dynamoDbAction.service = Core.AWS.Service.DYNAMO_DB;
+    dynamoDbAction.action = Core.AWS.IAM.Policy.ANY;
 
-      for (let modelName in dynamoDbTablesNames) {
-        if (!dynamoDbTablesNames.hasOwnProperty(modelName)) {
-          continue;
-        }
+    let dynamoDbResource = dynamoDbStatement.resource.add();
 
-        let tableName = dynamoDbTablesNames[modelName];
-        let dynamoDbResource = dynamoDbStatement.resource.add();
-
-        dynamoDbResource.service = Core.AWS.Service.DYNAMO_DB;
-        dynamoDbResource.region = Core.AWS.IAM.Policy.ANY;
-        dynamoDbResource.accountId = Core.AWS.IAM.Policy.ANY;
-        dynamoDbResource.descriptor = `table/${tableName}`;
-      }
-    }
+    dynamoDbResource.service = Core.AWS.Service.DYNAMO_DB;
+    dynamoDbResource.region = Core.AWS.IAM.Policy.ANY;
+    dynamoDbResource.accountId = Core.AWS.IAM.Policy.ANY;
+    dynamoDbResource.descriptor = `table/${this._getGlobalResourceMask()}`;
 
     let s3Statement = policy.statement.add();
 
@@ -354,7 +394,7 @@ export class LambdaService extends AbstractService {
   _actionIdentifierToPascalCase(actionName) {
     let pascalCase = '';
 
-    actionName.split('-').forEach(function(part) {
+    actionName.split('-').forEach((part) => {
       pascalCase += AbstractService.capitalizeFirst(part);
     });
 
@@ -362,54 +402,20 @@ export class LambdaService extends AbstractService {
   }
 
   /**
-   * Collect all lambdas arn from all microservices
-   *
-   * @param {Object} microservicesConfig
-   * @returns {Array}
+   * @param {String} functionIdentifier
+   * @returns {String}
    */
-  static getAllLambdasArn(microservicesConfig) {
-    let lambdaArns = [];
+  _generateLambdaArn(functionIdentifier) {
+    let region = this.provisioning.lambda.config.region;
 
-    for (let microserviceIdentifier in microservicesConfig) {
-      if (!microservicesConfig.hasOwnProperty(microserviceIdentifier)) {
-        continue;
-      }
-
-      let microservice = microservicesConfig[microserviceIdentifier];
-
-      for (let resourceName in microservice.resources) {
-        if (!microservice.resources.hasOwnProperty(resourceName)) {
-          continue;
-        }
-
-        let resourceActions = microservice.resources[resourceName];
-
-        for (let actionName in resourceActions) {
-          if (!resourceActions.hasOwnProperty(actionName)) {
-            continue;
-          }
-
-          let action = resourceActions[actionName];
-
-          if (action.type !== Action.LAMBDA) {
-            continue;
-          }
-
-          lambdaArns.push(microservice.deployedServices.lambdas[action.identifier].FunctionArn);
-        }
-      }
-    }
-
-    return lambdaArns;
+    return `arn:aws:lambda:${region}:${this.awsAccountId}:function:${functionIdentifier}`;
   }
 
   /**
-   * Allow Cognito users to invoke these lambdas
-   *
-   * @param {Object} lambdaARNs
+   * Allow Cognito and ApiGateway users to invoke these lambdas
    * @returns {Core.AWS.IAM.Policy}
    */
-  static generateAllowInvokeFunctionPolicy(lambdaARNs) {
+  generateAllowInvokeFunctionPolicy() {
     let policy = new Core.AWS.IAM.Policy();
 
     let statement = policy.statement.add();
@@ -418,16 +424,11 @@ export class LambdaService extends AbstractService {
     action.service = Core.AWS.Service.LAMBDA;
     action.action = 'InvokeFunction';
 
-    for (let lambdaArnKey in lambdaARNs) {
-      if (!lambdaARNs.hasOwnProperty(lambdaArnKey)) {
-        continue;
-      }
+    let resource = statement.resource.add();
 
-      let lambdaArn = lambdaARNs[lambdaArnKey];
-      let resource = statement.resource.add();
-
-      resource.updateFromArn(lambdaArn);
-    }
+    resource.updateFromArn(
+      this._generateLambdaArn(this._getGlobalResourceMask())
+    );
 
     return policy;
   }

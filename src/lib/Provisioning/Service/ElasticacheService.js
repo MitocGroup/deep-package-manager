@@ -52,9 +52,7 @@ export class ElasticacheService extends AbstractService {
     //    this.awsAccountId,
     //    this.appIdentifier
     //)(function(dsn) {
-    //    this._config = {
-    //        dsn: dsn
-    //    };
+    //    this._config.dsn = dsn;
     //
     //    this._ready = true;
     //}.bind(this));

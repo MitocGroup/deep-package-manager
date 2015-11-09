@@ -25,6 +25,7 @@ import {FrontendEngine} from '../Microservice/FrontendEngine';
 import {NoMatchingFrontendEngineException} from '../Dependencies/Exception/NoMatchingFrontendEngineException';
 import {exec} from 'child_process';
 import OS from 'os';
+import objectMerge from 'object-merge';
 
 /**
  * Property instance
@@ -32,19 +33,12 @@ import OS from 'os';
 export class Instance {
   /**
    * @param {String} path
-   * @param {String} configFileName
+   * @param {String|Object} config
    */
-  constructor(path, configFileName = Config.DEFAULT_FILENAME) {
-    let configFile = Path.join(path, configFileName);
+  constructor(path, config = Config.DEFAULT_FILENAME) {
+    this._config = Instance._createConfigObject(config, path).extract();
 
-    if (!FileSystem.existsSync(configFile)) {
-      throw new Exception(`Missing ${configFileName} configuration file from ${path}.`);
-    }
-
-    this._config = Config.createFromJsonFile(configFile).extract();
-
-    // @todo: improve this!
-    this._config.deployId = Hash.md5(`${this._config.appIdentifier}#${new Date().getTime()}`);
+    this.deployId = Hash.md5(`${this._config.appIdentifier}#${new Date().getTime()}`);
 
     this._aws = AWS;
     AWS.config.update(this._config.aws);
@@ -54,6 +48,58 @@ export class Instance {
     this._localDeploy = false;
     this._provisioning = new Provisioning(this);
     this._isUpdate = false;
+
+    this._microservicesToUpdate = [];
+  }
+
+  /**
+   * @returns {Microservice[]}
+   */
+  get microservicesToUpdate() {
+    return this._microservicesToUpdate;
+  }
+
+  /**
+   * @param {Microservice[]} microservices
+   */
+  set microservicesToUpdate(microservices) {
+    this._microservicesToUpdate = microservices.map(
+      (ms) => typeof ms === 'string' ? this.microservice(ms) : ms
+    );
+  }
+
+  /**
+   * @param {String|Object} config
+   * @param {String} path
+   * @returns {Config}
+   * @private
+   */
+  static _createConfigObject(config, path) {
+    if (typeof config === 'string') {
+      let configFile = Path.join(path, config);
+
+      if (!FileSystem.existsSync(configFile)) {
+        throw new Exception(`Missing ${config} configuration file from ${path}.`);
+      }
+
+      return Config.createFromJsonFile(configFile);
+    }
+
+    return new Config(config);
+  }
+
+  /**
+   * @returns {String}
+   */
+  get deployId() {
+    return this._config.deployId;
+  }
+
+  /**
+   * @param {String} id
+   */
+  set deployId(id) {
+    this._config.deployId = id;
   }
 
   /**
@@ -209,6 +255,9 @@ export class Instance {
         lambdaInstance.timeout = lambdaOptions.timeout;
         lambdaInstance.runtime = lambdaOptions.runtime;
 
+        // avoid authentication errors on local machine
+        lambdaInstance.forceUserIdentity = false;
+
         this._config
           .microservices[microserviceIdentifier]
           .lambdas[lambdaIdentifier] = {
@@ -245,7 +294,7 @@ export class Instance {
 
     console.log(`${new Date().toTimeString()} Start building application`);
 
-    let microservicesConfig = {};
+    let microservicesConfig = isUpdate ? this._config.microservices : {};
     let microservices = this.microservices;
     let rootMicroservice;
 
@@ -263,7 +312,7 @@ export class Instance {
     }
 
     if (!rootMicroservice) {
-      throw new MissingRootException();
+        throw new MissingRootException();
     }
 
     let modelsDirs = [];
@@ -284,6 +333,10 @@ export class Instance {
           lambdas: {},
         },
       };
+
+      if (isUpdate) {
+        microserviceConfig.deployedServices = microservicesConfig[microservice.config.identifier].deployedServices;
+      }
 
       microservicesConfig[microserviceConfig.identifier] = microserviceConfig;
 
@@ -360,6 +413,7 @@ export class Instance {
         lambdaInstance.memorySize = lambdaOptions.memory;
         lambdaInstance.timeout = lambdaOptions.timeout;
         lambdaInstance.runtime = lambdaOptions.runtime;
+        lambdaInstance.forceUserIdentity = lambdaOptions.forceUserIdentity;
 
         this._config
           .microservices[microserviceIdentifier]
@@ -378,29 +432,34 @@ export class Instance {
     let remaining = 0;
 
     // @todo: setup lambda defaults (memory size, timeout etc.)
-    let asyncLambdaActions = lambdas.map(function(lambda) {
-      return function() {
+    let asyncLambdaActions = lambdas.map((lambda) => {
+      return () => {
         let deployedLambdasConfig = this._config.microservices[lambda.microserviceIdentifier].deployedServices.lambdas;
+
+        if (!this.isWorkingMicroservice(lambda.microserviceIdentifier)) {
+          remaining--;
+          return;
+        }
 
         if (isUpdate) {
           if (this._localDeploy) {
-            lambda.pack().ready(function() {
+            lambda.pack().ready(() => {
               remaining--;
-            }.bind(this));
+            });
           } else {
-            lambda.update(function() {
+            lambda.update(() => {
               deployedLambdasConfig[lambda.identifier] = lambda.uploadedLambda;
               remaining--;
-            }.bind(this));
+            });
           }
         } else {
-          lambda.deploy(function() {
+          lambda.deploy(() => {
             deployedLambdasConfig[lambda.identifier] = lambda.uploadedLambda;
             remaining--;
-          }.bind(this));
+          });
         }
-      }.bind(this);
-    }.bind(this));
+      };
+    });
 
     let hasNextBatch = !!asyncLambdaActions.length;
 
@@ -436,17 +495,23 @@ export class Instance {
     }.bind(this));
 
     wait.ready(function() {
-      let frontend = new Frontend(this._config.microservices, this._path);
-      let publicBucket = this._config.provisioning.s3.buckets[S3Service.PUBLIC_BUCKET].name;
+      this.buildFrontend(this._path, (frontend, error) => {
+        if (error) {
+          console.error(
+            `${new Date().toTimeString()} Error while injecting deploy ID into the assets: ${error}`
+          );
+        }
 
-      frontend.build(Frontend.createConfig(this._config));
+        let publicBucket = this._config.provisioning.s3.buckets[S3Service.PUBLIC_BUCKET].name;
 
-      if (isUpdate && this._localDeploy) {
-        callback();
-      } else {
-        console.log(`${new Date().toTimeString()} Start deploying frontend`);
-        frontend.deploy(this._aws, publicBucket).ready(callback);
-      }
+        if (isUpdate && this._localDeploy) {
+          callback();
+        } else {
+          console.log(`${new Date().toTimeString()} Start deploying frontend`);
+
+          frontend.deploy(this._aws, publicBucket).ready(callback);
+        }
+      });
     }.bind(this));
 
     return this;
@@ -454,14 +519,15 @@ export class Instance {
 
   /**
    * @param {String} dumpPath
-   * @returns {Instance}
+   * @param {Function} callback
+   * @returns {Frontend}
    */
-  buildFrontend(dumpPath = null) {
-    let frontend = new Frontend(this._config.microservices, dumpPath || this._path);
+  buildFrontend(dumpPath = null, callback = () => {}) {
+    let frontend = new Frontend(this._config.microservices, dumpPath || this._path, this.deployId);
 
-    frontend.build(Frontend.createConfig(this._config));
+    frontend.build(Frontend.createConfig(this._config), callback.bind(this, frontend));
 
-    return this;
+    return frontend;
   }
 
   /**
@@ -559,11 +625,14 @@ export class Instance {
   /**
    * @param {Object} propertyConfigSnapshot
    * @param {Function} callback
+   * @param {Microservice[]} microservicesToUpdate
    * @returns {Instance}
    */
-  update(propertyConfigSnapshot, callback) {
+  update(propertyConfigSnapshot, callback, microservicesToUpdate = []) {
     this._isUpdate = true;
+    this.microservicesToUpdate = microservicesToUpdate;
     this._config = propertyConfigSnapshot;
+
     // @todo: does it work?
     this._provisioning.config = this._config.provisioning;
 
@@ -656,6 +725,76 @@ export class Instance {
   }
 
   /**
+   * @param {String[]|String} identifiers
+   * @returns {Microservice[]|Microservice|null}
+   */
+  microservice(...identifiers) {
+    let matchedMicroservices = [];
+
+    for (let i in this.microservices) {
+      if (!this.microservices.hasOwnProperty(i)) {
+        continue;
+      }
+      
+      let microservice = this.microservices[i];
+      
+      if (identifiers.indexOf(microservice.identifier) !== -1) {
+        if (identifiers.length === 1) {
+          return microservice;
+        }
+
+        matchedMicroservices.push(microservice);
+      }
+    }
+
+    if (identifiers.length === 1 && matchedMicroservices.length <= 0) {
+      return null;
+    }
+
+    return identifiers.length === 1 ? matchedMicroservices[0] : matchedMicroservices;
+  }
+
+  /**
+   * @returns {Microservice[]}
+   */
+  get skippedMicroservices() {
+    if (this._microservicesToUpdate.length <= 0) {
+      return [];
+    }
+
+    return this.microservices
+      .filter(
+        (microserviceInstance) =>  this._microservicesToUpdate.indexOf(microserviceInstance) === -1
+      );
+  }
+
+  /**
+   * @param {String|Microservice} microservice
+   * @returns {Boolean}
+   */
+  isWorkingMicroservice(microservice) {
+    if (typeof microservice === 'string') {
+      microservice = this.microservice(microservice);
+    }
+
+    return this.workingMicroservices.indexOf(microservice) !== -1;
+  }
+
+  /**
+   * @returns {Microservice[]}
+   */
+  get workingMicroservices() {
+    if (this._microservicesToUpdate.length <= 0) {
+      return this.microservices;
+    }
+
+    return this.microservices
+      .filter(
+        (microserviceInstance) => this._microservicesToUpdate.indexOf(microserviceInstance) !== -1
+      );
+  }
+
+  /**
    * @returns {Microservice[]}
    */
   get microservices() {
@@ -667,8 +806,9 @@ export class Instance {
       for (let file of files) {
         let fullPath = Path.join(this._path, file);
 
-        if (FileSystem.statSync(fullPath).isDirectory()
-          && FileSystem.existsSync(Path.join(fullPath, Microservice.CONFIG_FILE))) {
+        if (FileSystem.statSync(fullPath).isDirectory() &&
+          FileSystem.existsSync(Path.join(fullPath, Microservice.CONFIG_FILE))) {
+
           this._microservices.push(Microservice.create(fullPath));
         }
       }

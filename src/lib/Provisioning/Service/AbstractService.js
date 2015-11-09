@@ -143,6 +143,23 @@ export class AbstractService extends Core.OOP.Interface {
   }
 
   /**
+   * @param {Object} config
+   */
+  injectConfig(config) {
+    this._config = config;
+
+    this._onConfigInject();
+  }
+
+  /**
+   * @todo: override this
+   *
+   * @private
+   */
+  _onConfigInject() {
+  }
+
+  /**
    * @returns {Object}
    */
   config() {
@@ -190,7 +207,7 @@ export class AbstractService extends Core.OOP.Interface {
    */
   getApiVersions(service) {
     try {
-      return this.property.AWS[service].apiVersions;
+      return this.property.AWS[service].apiVersions.slice(); // return an array clone
     } catch (e) {
       throw new Exception(`Failed to retrieve apiVersions for "${service}" AWS service. ${e.message}`);
     }
@@ -204,6 +221,37 @@ export class AbstractService extends Core.OOP.Interface {
     let globId = Hash.crc32(this.awsAccountId + this.appIdentifier);
 
     return microserviceIdentifier ? `${Hash.loseLoseMod(microserviceIdentifier)}${globId}` : globId;
+  }
+
+  /**
+   * @param {String} msIdentifier
+   * @param {String} delimiter
+   * @returns {String}
+   */
+  _getGlobalResourceMask(msIdentifier = '', delimiter = AbstractService.DELIMITER_UPPER_CASE) {
+    let mask = null;
+    let uniqueHash = this.getUniqueHash(msIdentifier);
+    let appendMatcher = msIdentifier ? '' : '*';
+
+    switch (delimiter) {
+      case AbstractService.DELIMITER_UPPER_CASE:
+        mask = AbstractService.capitalizeFirst(AbstractService.AWS_RESOURCES_PREFIX) +
+          AbstractService.capitalizeFirst(this.env) +
+          '*' +
+          uniqueHash +
+          appendMatcher;
+        break;
+      case AbstractService.DELIMITER_DOT:
+        mask = `${AbstractService.AWS_RESOURCES_PREFIX}.${this.env}.*.${uniqueHash}${appendMatcher}`;
+        break;
+      case AbstractService.DELIMITER_UNDERSCORE:
+        mask = `${AbstractService.AWS_RESOURCES_PREFIX}_${this.env}_*_${uniqueHash}${appendMatcher}`;
+        break;
+      default:
+        throw new Exception(`Undefined aws resource name delimiter ${delimiter}.`);
+    }
+
+    return mask;
   }
 
   /**
@@ -298,7 +346,7 @@ export class AbstractService extends Core.OOP.Interface {
     }
 
     if (totalLength > awsServiceLimit) {
-      slicedName = resourceName.slice(0, -(totalLength - awsServiceLimit));
+      slicedName = resourceName.slice(0, - (totalLength - awsServiceLimit));
     }
 
     return slicedName;

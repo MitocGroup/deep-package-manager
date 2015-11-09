@@ -43,6 +43,7 @@ export class Compiler {
 
         lambdas[action.identifier] = `${backendPath}/${source}`;
         lambdas._[action.identifier] = action.engine;
+        lambdas._[action.identifier].forceUserIdentity = action.forceUserIdentity; // @todo: =/
       }
     }
 

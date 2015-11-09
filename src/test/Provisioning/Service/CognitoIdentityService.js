@@ -4,8 +4,8 @@ import chai from 'chai';
 import {CognitoIdentityService} from '../../../lib.compiled/Provisioning/Service/CognitoIdentityService';
 import Core from 'deep-core';
 import {ObjectStorage} from 'deep-core/lib.compiled/Generic/ObjectStorage';
-import {PropertyInstanceMock} from '../../../mock/Property/PropertyInstanceMock.js';
-import {ProvisioningInstanceMock} from '../../../mock/Provisioning/ProvisioningInstanceMock';
+import {PropertyInstanceMock} from '../../mock/Property/PropertyInstanceMock';
+import {ProvisioningInstanceMock} from '../../mock/Provisioning/ProvisioningInstanceMock';
 
 
 suite('Provisioning/Service/CognitoIdentityService', function() {
@@ -146,6 +146,7 @@ suite('Provisioning/Service/CognitoIdentityService', function() {
       e = exception;
     }
 
+    //todo - need to add additional checks
     chai.expect(e).to.be.equal(null);
   });
 });

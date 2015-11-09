@@ -47,7 +47,38 @@ export class Lambda {
     this._timeout = Lambda.DEFAULT_TIMEOUT;
     this._runtime = Lambda.DEFAULT_RUNTIME;
 
-    this._uploadedLambda = null;
+    this._forceUserIdentity = false;
+    this._wasPreviouslyDeployed = false;
+    this._uploadedLambda = {};
+
+    // @todo: find a better solution
+    this._checkIfLambdaWasDeployedPreviously();
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  get forceUserIdentity() {
+    return this._forceUserIdentity;
+  }
+
+  /**
+   * @param {Boolean} state
+   */
+  set forceUserIdentity(state) {
+    this._forceUserIdentity = state;
+  }
+
+  /**
+   * @private
+   */
+  _checkIfLambdaWasDeployedPreviously() {
+    this._wasPreviouslyDeployed = this._property
+      .config
+      .microservices[this._microserviceIdentifier]
+      .deployedServices
+      .lambdas
+      .hasOwnProperty(this._identifier);
   }
 
   /**
@@ -57,6 +88,7 @@ export class Lambda {
   createConfig(propertyConfig) {
     let config = Frontend.createConfig(propertyConfig);
 
+    config.forceUserIdentity = this._forceUserIdentity;
     config.microserviceIdentifier = this.microserviceIdentifier;
     config.awsAccountId = propertyConfig.awsAccountId;
     config.appIdentifier = propertyConfig.appIdentifier;
@@ -349,7 +381,7 @@ export class Lambda {
 
     let syncStack = new AwsRequestSyncStack();
 
-    syncStack.push(s3.putObject(s3Params), function(error, data) {
+    syncStack.push(s3.putObject(s3Params), (error, data) => {
       if (error) {
         throw new FailedUploadingLambdaToS3Exception(objectKey, tmpBucket, error);
       }
@@ -358,7 +390,11 @@ export class Lambda {
 
       console.log(`${new Date().toTimeString()} Lambda ${this._identifier} uploaded`);
 
-      if (update) {
+      let params = {
+        FunctionName: this.functionName,
+      };
+
+      if (this._wasPreviouslyDeployed) {
         let params = {
           S3Bucket: tmpBucket,
           S3Key: objectKey,
@@ -385,7 +421,7 @@ export class Lambda {
         request = lambda.createFunction(params);
       }
 
-      syncStack.level(1).push(request, function(error, data) {
+      syncStack.level(1).push(request, (error, data) => {
         if (error) {
           // @todo: remove this hook
           if (Lambda.isErrorFalsePositive(error)) {
@@ -399,8 +435,8 @@ export class Lambda {
         }
 
         this._uploadedLambda = data;
-      }.bind(this));
-    }.bind(this));
+      });
+    });
 
     return syncStack.join();
   }
