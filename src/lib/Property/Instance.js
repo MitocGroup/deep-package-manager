@@ -756,8 +756,6 @@ export class Instance {
       return [];
     }
 
-    let workingMicroservices = this.workingMicroservices;
-
     return this.microservices
       .filter(
         (microserviceInstance) =>  this._microservicesToUpdate.indexOf(microserviceInstance) === -1
