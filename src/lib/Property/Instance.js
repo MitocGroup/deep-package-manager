@@ -731,7 +731,13 @@ export class Instance {
   microservice(...identifiers) {
     let matchedMicroservices = [];
 
-    for (let microservice of this.microservices) {
+    for (let i in this.microservices) {
+      if (!this.microservices.hasOwnProperty(i)) {
+        continue;
+      }
+      
+      let microservice = this.microservices[i];
+      
       if (identifiers.indexOf(microservice.identifier) !== -1) {
         if (identifiers.length === 1) {
           return microservice;
