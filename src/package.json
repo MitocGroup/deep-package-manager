@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "1.1.1",
+  "version": "1.1.3",
   "description": "DEEP Package Manager",
   "keywords": [
     "Digital Enterprise End-To-End Platform",
@@ -51,8 +51,8 @@
     "prepublish": "npm run compile && npm run obfuscate-compiled"
   },
   "dependencies": {
-    "deep-db": "1.0.*",
-    "deep-core": "1.0.*",
+    "deep-db": "1.1.*",
+    "deep-core": "1.1.*",
     "joi": "6.4.*",
     "jsonfile": "1.1.*",
     "underscore.string": "2.3.*",
@@ -73,7 +73,7 @@
     "object-merge": "2.5.*",
     "prompt-sync": "3.0.*",
     "aws-api-gw-client": "0.1.*",
-    "node-version-assets": "0.2.*"
+    "node-version-assets": "MitocGroup/node-version-assets"
   },
   "devDependencies": {
     "aws-sdk": "2.1.*",
