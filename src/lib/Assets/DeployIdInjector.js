@@ -33,7 +33,7 @@ export class DeployIdInjector {
     let greps = this._findGreps();
 
     console.log(
-      `${new Date().toTimeString()} Preparing to inject version #${this._deployId}` +
+      `Preparing to inject version #${this._deployId}` +
         `for ${assets.length} assets into ${greps.length} files`
     );
 

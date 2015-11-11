@@ -4,7 +4,7 @@
 
 'use strict';
 
-import FileSystem from 'fs';
+import FileSystem from 'graceful-fs';
 import path from 'path';
 import StringUtils from 'underscore.string';
 import mkdirp from 'mkdirp';
