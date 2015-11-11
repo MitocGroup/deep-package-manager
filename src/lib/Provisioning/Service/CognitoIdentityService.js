@@ -297,7 +297,9 @@ export class CognitoIdentityService extends AbstractService {
 
       let policy = lambdaService.generateAllowInvokeFunctionPolicy();
       let apiPolicy = APIGatewayService.generateAllowInvokeMethodPolicy(endpointsARNs);
-      let cognitoSyncPolicy = this.generateAllowCognitoSyncPolicy();
+      let cognitoSyncPolicy = this.generateAllowCognitoSyncPolicy(
+        ['ListRecords', 'UpdateRecords', 'ListDatasets']
+      );
 
       // merge policies statements
       apiPolicy.statement.list().forEach((statementInstance) => {
@@ -336,15 +338,17 @@ export class CognitoIdentityService extends AbstractService {
   /**
    * Allow Cognito users to list / push data to CognitoSync service
    *
+   * @param {Array} allowedActions
    * @returns {Core.AWS.IAM.Policy}
    */
-  generateAllowCognitoSyncPolicy() {
+  generateAllowCognitoSyncPolicy(allowedActions = [Core.AWS.IAM.Policy.ANY]) {
     let policy = new Core.AWS.IAM.Policy();
 
     let statement = policy.statement.add();
-    statement.action.add(Core.AWS.Service.COGNITO_SYNC, 'ListDatasets');
-    statement.action.add(Core.AWS.Service.COGNITO_SYNC, 'ListRecords');
-    statement.action.add(Core.AWS.Service.COGNITO_SYNC, 'UpdateRecords');
+
+    allowedActions.forEach((actionName) => {
+      statement.action.add(Core.AWS.Service.COGNITO_SYNC, actionName);
+    });
 
     // arn:aws:cognito-sync:us-east-1:389617777922:/identity/us-east-1:cf7b7880-f686-4aa3-9ebc-1a65000bb47c/dataset/deep_session
     statement.resource.add(
