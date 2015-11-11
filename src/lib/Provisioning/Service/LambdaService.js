@@ -363,11 +363,15 @@ export class LambdaService extends AbstractService {
     dynamoDbResource.descriptor = `table/${this._getGlobalResourceMask()}`;
 
     let s3Statement = policy.statement.add();
+    let s3ListBucketStatement = policy.statement.add();
 
     let s3Action = s3Statement.action.add();
+    let s3ListBucketAction = s3ListBucketStatement.action.add();
 
     s3Action.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
     s3Action.action = Core.AWS.IAM.Policy.ANY;
+    s3ListBucketAction.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
+    s3ListBucketAction.action = 'ListBucket';
 
     for (let bucketSuffix in buckets) {
       if (!buckets.hasOwnProperty(bucketSuffix)) {
@@ -375,10 +379,14 @@ export class LambdaService extends AbstractService {
       }
 
       let bucket = buckets[bucketSuffix];
+
       let s3Resource = s3Statement.resource.add();
+      let s3ListBucketResource = s3ListBucketStatement.resource.add();
 
       s3Resource.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
       s3Resource.descriptor = `${bucket.name}/${microserviceIdentifier}/${Core.AWS.IAM.Policy.ANY}`;
+      s3ListBucketResource.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
+      s3ListBucketResource.descriptor = bucket.name;
     }
 
     return policy;
