@@ -355,7 +355,7 @@ export class CognitoIdentityService extends AbstractService {
       Core.AWS.Service.COGNITO_SYNC,
       this.provisioning.cognitoIdentity.region,
       this.awsAccountId,
-      `identitypool/${this.config.identityPool.IdentityPoolId}/*` // @todo - find a way to add user identityId into arn
+      `identitypool/${this._config.identityPool.IdentityPoolId}/*` // @todo - find a way to add user identityId into arn
     );
 
     return policy;
