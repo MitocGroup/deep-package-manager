@@ -71,6 +71,14 @@ We are eager to get your feedback, so please use whatever communication channel 
 - [gitter chat room](https://gitter.im/MitocGroup/deep-framework)
 - [deep email address](mailto:feedback@deep.mg)
 
+### Roadmap
+
+Our short-to-medium-term roadmap items, in order of descending priority:
+
+Feature | Details | Owner
+--------|---------|------
+To be updated | To be updated | To be updated
+
 ## License
 
 This repository can be used under the MIT license.
