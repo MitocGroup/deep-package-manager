@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "DEEP Package Manager",
   "keywords": [
     "Digital Enterprise End-To-End Platform",
@@ -73,7 +73,7 @@
     "object-merge": "2.5.*",
     "prompt-sync": "3.0.*",
     "aws-api-gw-client": "0.1.*",
-    "node-version-assets": "MitocGroup/node-version-assets",
+    "node-version-assets": "git://github.com/MitocGroup/node-version-assets.git#graceful-fs",
     "graceful-fs": "4.1.*",
     "aws-sdk": "2.2.*"
   },
