@@ -230,8 +230,21 @@ export class Frontend {
       }
     }
 
+    if (Frontend._skipInjectDeployNumber) {
+      callback(null);
+      return;
+    }
+
     new DeployIdInjector(this.path, this._deployId)
       .prepare(callback);
+  }
+
+  /**
+   * @returns {Boolean}
+   * @private
+   */
+  static get _skipInjectDeployNumber() {
+    return process.env.hasOwnProperty('DEEP_SKIP_DEPLOY_ID_INJECT');
   }
 
   /**
