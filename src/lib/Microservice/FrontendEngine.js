@@ -43,7 +43,7 @@ export class FrontendEngine {
   static getLatestEngineVersion(engine) {
     let version = '0.0.1';
 
-    console.log(`${new Date().toTimeString()} Temporary use ${FrontendEngine.getRealEngine(engine)}@${version} statically...`);
+    console.log(`Temporary use ${FrontendEngine.getRealEngine(engine)}@${version} statically...`);
 
     return version;
   }

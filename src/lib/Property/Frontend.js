@@ -148,14 +148,14 @@ export class Frontend {
     credentials += `aws_secret_access_key=${AWS.config.credentials.secretAccessKey}${OS.EOL}`;
     credentials += `region=${AWS.config.region}${OS.EOL}`;
 
-    console.log(`${new Date().toTimeString()} dump AWS tmp credentials into ${credentialsFile}`);
+    console.log(`dump AWS tmp credentials into ${credentialsFile}`);
 
     FileSystem.writeFileSync(credentialsFile, credentials);
 
     let syncCommand = `export AWS_CONFIG_FILE=${credentialsFile}; `;
     syncCommand += `aws s3 sync --profile deep --storage-class REDUCED_REDUNDANCY '${this.path}' 's3://${bucketName}'`;
 
-    console.log(`${new Date().toTimeString()} running tmp hook ${syncCommand}`);
+    console.log(`Running tmp hook ${syncCommand}`);
 
     let syncResult = exec(syncCommand);
 
@@ -230,8 +230,21 @@ export class Frontend {
       }
     }
 
+    if (Frontend._skipInjectDeployNumber) {
+      callback(null);
+      return;
+    }
+
     new DeployIdInjector(this.path, this._deployId)
       .prepare(callback);
+  }
+
+  /**
+   * @returns {Boolean}
+   * @private
+   */
+  static get _skipInjectDeployNumber() {
+    return process.env.hasOwnProperty('DEEP_SKIP_DEPLOY_ID_INJECT');
   }
 
   /**
