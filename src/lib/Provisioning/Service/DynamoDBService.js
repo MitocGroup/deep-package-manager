@@ -144,14 +144,14 @@ export class DynamoDBService extends AbstractService {
    * @private
    */
   _removeMissingTables(missingTablesNames, callback) {
-    console.log(`${new Date().toTimeString()} Removing DynamoDB tables: ${missingTablesNames.join(', ')}`);
+    console.log(`Removing DynamoDB tables: ${missingTablesNames.join(', ')}`);
 
     for (let tableName of missingTablesNames) {
       this.provisioning.dynamoDB.deleteTable({
         TableName: tableName,
       }, (error, data) => {
         if (error) {
-          console.error(`${new Date().toTimeString()} Error while deleting DynamoDB table ${tableName}: ${error}`);
+          console.error(`Error while deleting DynamoDB table ${tableName}: ${error}`);
         }
       });
     }
