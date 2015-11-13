@@ -357,13 +357,8 @@ export class LambdaService extends AbstractService {
     let s3Statement = policy.statement.add();
     let s3ListBucketStatement = policy.statement.add();
 
-    let s3Action = s3Statement.action.add();
-    let s3ListBucketAction = s3ListBucketStatement.action.add();
-
-    s3Action.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
-    s3Action.action = Core.AWS.IAM.Policy.ANY;
-    s3ListBucketAction.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
-    s3ListBucketAction.action = 'ListBucket';
+    s3Statement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, Core.AWS.IAM.Policy.ANY);
+    s3ListBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'ListBucket');
 
     for (let bucketSuffix in buckets) {
       if (!buckets.hasOwnProperty(bucketSuffix)) {
@@ -425,10 +420,7 @@ export class LambdaService extends AbstractService {
     let policy = new Core.AWS.IAM.Policy();
 
     let statement = policy.statement.add();
-    let action = statement.action.add();
-
-    action.service = Core.AWS.Service.LAMBDA;
-    action.action = 'InvokeFunction';
+    statement.action.add(Core.AWS.Service.LAMBDA, 'InvokeFunction');
 
     let resource = statement.resource.add();
 
