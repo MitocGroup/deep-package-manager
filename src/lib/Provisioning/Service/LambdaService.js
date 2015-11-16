@@ -15,6 +15,7 @@ import {Lambda} from '../../Property/Lambda';
 import {IAMService} from './IAMService';
 import objectMerge from 'object-merge';
 import {_extend as extend} from 'util';
+import {CognitoIdentityService} from './CognitoIdentityService';
 
 /**
  * Lambda service
@@ -333,30 +334,21 @@ export class LambdaService extends AbstractService {
    * @returns {Policy}
    */
   _getAccessPolicy(microserviceIdentifier, buckets) {
-    let env = this.env;
     let policy = new Core.AWS.IAM.Policy();
 
     let logsStatement = policy.statement.add();
-    let logsAction = logsStatement.action.add();
-
-    logsAction.service = Core.AWS.Service.CLOUD_WATCH_LOGS;
-    logsAction.action = Core.AWS.IAM.Policy.ANY;
+    logsStatement.action.add(Core.AWS.Service.CLOUD_WATCH_LOGS, Core.AWS.IAM.Policy.ANY);
 
     let logsResource = logsStatement.resource.add();
-
     logsResource.service = Core.AWS.Service.CLOUD_WATCH_LOGS;
     logsResource.region = Core.AWS.IAM.Policy.ANY;
     logsResource.accountId = Core.AWS.IAM.Policy.ANY;
     logsResource.descriptor = Core.AWS.IAM.Policy.ANY;
 
     let dynamoDbStatement = policy.statement.add();
-    let dynamoDbAction = dynamoDbStatement.action.add();
-
-    dynamoDbAction.service = Core.AWS.Service.DYNAMO_DB;
-    dynamoDbAction.action = Core.AWS.IAM.Policy.ANY;
+    dynamoDbStatement.action.add(Core.AWS.Service.DYNAMO_DB, Core.AWS.IAM.Policy.ANY);
 
     let dynamoDbResource = dynamoDbStatement.resource.add();
-
     dynamoDbResource.service = Core.AWS.Service.DYNAMO_DB;
     dynamoDbResource.region = Core.AWS.IAM.Policy.ANY;
     dynamoDbResource.accountId = Core.AWS.IAM.Policy.ANY;
@@ -365,13 +357,8 @@ export class LambdaService extends AbstractService {
     let s3Statement = policy.statement.add();
     let s3ListBucketStatement = policy.statement.add();
 
-    let s3Action = s3Statement.action.add();
-    let s3ListBucketAction = s3ListBucketStatement.action.add();
-
-    s3Action.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
-    s3Action.action = Core.AWS.IAM.Policy.ANY;
-    s3ListBucketAction.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
-    s3ListBucketAction.action = 'ListBucket';
+    s3Statement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, Core.AWS.IAM.Policy.ANY);
+    s3ListBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'ListBucket');
 
     for (let bucketSuffix in buckets) {
       if (!buckets.hasOwnProperty(bucketSuffix)) {
@@ -388,6 +375,12 @@ export class LambdaService extends AbstractService {
       s3ListBucketResource.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
       s3ListBucketResource.descriptor = bucket.name;
     }
+
+    let cognitoService = this.provisioning.services.find(CognitoIdentityService);
+    let cognitoSyncPolicy = cognitoService.generateAllowCognitoSyncPolicy(['ListRecords', 'ListDatasets']);
+    cognitoSyncPolicy.statement.list().forEach((statementInstance) => {
+      policy.statement.add(statementInstance);
+    });
 
     return policy;
   }
@@ -427,10 +420,7 @@ export class LambdaService extends AbstractService {
     let policy = new Core.AWS.IAM.Policy();
 
     let statement = policy.statement.add();
-    let action = statement.action.add();
-
-    action.service = Core.AWS.Service.LAMBDA;
-    action.action = 'InvokeFunction';
+    statement.action.add(Core.AWS.Service.LAMBDA, 'InvokeFunction');
 
     let resource = statement.resource.add();
 
