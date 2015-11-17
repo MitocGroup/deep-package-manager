@@ -4,8 +4,8 @@
 
 'use strict';
 
-import AssetsVersion from 'node-version-assets';
 import {FileWalker} from '../Helpers/FileWalker';
+import {AssetReplacer} from './AssetReplacer';
 
 /**
  * @todo: There is currently some overhead
@@ -21,7 +21,6 @@ export class DeployIdInjector {
     this._deployId = deployId;
 
     this._versionedExtensions = DeployIdInjector.DEFAULT_VERSIONED_EXTENSIONS;
-    this._analysedExtensions = DeployIdInjector.DEFAULT_ANALYSED_EXTENSIONS;
   }
 
   /**
@@ -30,23 +29,20 @@ export class DeployIdInjector {
    */
   prepare(callback = () => {}) {
     let assets = this._findAssets();
-    let greps = this._findGreps();
 
     console.log(
-      `Preparing to inject version #${this._deployId}` +
-        `for ${assets.length} assets into ${greps.length} files`
+      `Preparing to inject version #${this._deployId} into ${assets.length} assets`
     );
 
-    let versionInstance = new AssetsVersion({
-      newVersion: this._deployId,
-      keepOriginalAndOldVersions: false,
-      requireJs: false,
-      keepOriginal: true, // @todo: remove when stable due to double sized frontend
-      assets: assets,
-      grepFiles: greps,
-    });
+    let replacer = AssetReplacer.create(this._deployId, 'url');
 
-    versionInstance.run(callback);
+    try {
+      replacer.replace(...assets);
+
+      callback(null);
+    } catch (error) {
+      callback(error);
+    }
 
     return this;
   }
@@ -56,7 +52,7 @@ export class DeployIdInjector {
    * @private
    */
   _findAssets() {
-    return DeployIdInjector._fileWalker()
+    return DeployIdInjector._fileWalker(true)
       .walk(
       this._path,
       FileWalker.matchExtensionsFilter(null, ...this._versionedExtensions)
@@ -64,36 +60,13 @@ export class DeployIdInjector {
   }
 
   /**
-   * @returns {String[]}
-   * @private
-   */
-  _findGreps() {
-    return DeployIdInjector._fileWalker(true)
-      .walk(
-        this._path,
-        FileWalker.matchExtensionsFilter(null, ...this._analysedExtensions)
-      );
-  }
-
-  /**
    * @private
    */
   static _fileWalker(useIgnore = false) {
-    return new FileWalker(FileWalker.RECURSIVE, useIgnore ? DeployIdInjector.IGNORE_FILE : null);
-  }
-
-  /**
-   * @returns {String[]}
-   */
-  get analysedExtensions() {
-    return this._analysedExtensions;
-  }
-
-  /**
-   * @param {String[]} analysedExtensions
-   */
-  set analysedExtensions(analysedExtensions) {
-    this._analysedExtensions = analysedExtensions;
+    return new FileWalker(
+      FileWalker.RECURSIVE,
+      useIgnore ? DeployIdInjector.IGNORE_FILE : null
+    );
   }
 
   /**
@@ -129,20 +102,7 @@ export class DeployIdInjector {
    * @constructor
    */
   static get DEFAULT_VERSIONED_EXTENSIONS() {
-    return [
-      'css', 'js', 'html', 'json',
-      'png', 'jpeg', 'gif', 'ico', 'jpg', 'svg',
-    ];
-  }
-
-  /**
-   * @returns {String[]}
-   * @constructor
-   */
-  static get DEFAULT_ANALYSED_EXTENSIONS() {
-    return [
-      'css', 'html', 'json',
-    ];
+    return ['css', 'html',];
   }
 
   /**
