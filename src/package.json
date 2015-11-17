@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "1.1.8",
+  "version": "1.1.9",
   "description": "DEEP Package Manager",
   "keywords": [
     "Digital Enterprise End-To-End Platform",
@@ -73,9 +73,11 @@
     "object-merge": "2.5.*",
     "prompt-sync": "3.0.*",
     "aws-api-gw-client": "0.1.*",
-    "node-version-assets": "MitocGroup/node-version-assets",
     "graceful-fs": "4.1.*",
-    "aws-sdk": "2.2.*"
+    "aws-sdk": "2.2.*",
+    "find-assets": "0.3.*",
+    "css-find-assets": "MitocGroup/css-find-assets",
+    "css-parse": "2.0.*"
   },
   "devDependencies": {
     "chai": "3.2.*",
