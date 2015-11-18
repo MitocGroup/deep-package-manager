@@ -8,8 +8,9 @@ import {InvalidValuesException} from './Exception/InvalidValuesException';
 import RamlSanitizer from 'raml-sanitize';
 import RamlValidator from 'raml-validate';
 import {PathTransformer} from './PathTransformer';
-import {prompt} from 'prompt-sync';
+import {Prompt} from '../Helpers/Terminal/Prompt';
 import {_extend as extend} from 'util';
+import OS from 'os';
 
 export class Schema {
   /**
@@ -72,9 +73,13 @@ export class Schema {
 
       let def = this._ramlModel[key];
 
-      Schema._showQuestionInfo(key, def);
+      let prompt = new Prompt(Schema._getQuestionInfo(key, def));
+      prompt.syncMode = true;
 
-      obj[key] = prompt() || def.default;
+      // don't be afraid of cb since it's in sync mode
+      prompt.read((answer) => {
+        obj[key] = answer || def.default;
+      });
     }
 
     return this.extract(obj);
@@ -86,15 +91,19 @@ export class Schema {
    * @returns {String}
    * @private
    */
-  static _showQuestionInfo(key, def) {
+  static _getQuestionInfo(key, def) {
     let name = def.displayName || key;
     let example = (def.example ? `@example '${def.example}'` : null) || '';
     let defaultValue = def.default ? `@default '${def.default}'` : null;
 
-    console.log(new Array(name.length + 1).join('_'));
-    console.log(name);
-    console.log(defaultValue || example);
-    console.log(def.required ? '@required' : '@optional');
+    let text = [];
+
+    text.push(new Array(name.length + 1).join('_'));
+    text.push(name);
+    text.push(defaultValue || example);
+    text.push(def.required ? '@required' : '@optional');
+
+    return text.join(OS.EOL);
   }
 
   /**
