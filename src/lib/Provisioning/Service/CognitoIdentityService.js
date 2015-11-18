@@ -353,7 +353,7 @@ export class CognitoIdentityService extends AbstractService {
     // arn:aws:cognito-sync:us-east-1:389617777922:/identity/us-east-1:cf7b7880-f686-4aa3-9ebc-1a65000bb47c/dataset/deep_session
     statement.resource.add(
       Core.AWS.Service.COGNITO_SYNC,
-      this.provisioning.cognitoIdentity.region,
+      this.provisioning.cognitoIdentity.config.region,
       this.awsAccountId,
       `identitypool/${this._config.identityPool.IdentityPoolId}/*` // @todo - find a way to add user identityId into arn
     );
