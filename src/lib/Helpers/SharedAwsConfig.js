@@ -6,6 +6,9 @@
 
 import AWS from 'aws-sdk';
 import exec from 'sync-exec';
+import path from 'path';
+import {_extend as extend} from 'util';
+import {Prompt} from './Terminal/Prompt';
 
 export class SharedAwsConfig {
   constructor() {
@@ -25,6 +28,70 @@ export class SharedAwsConfig {
    */
   addProvider(provider) {
     this._providers = provider;
+  }
+
+  /**
+   * @returns {Object}
+   */
+  choose() {
+    let chosenCredentials = null;
+    let guessedCredentials = this.guess();
+
+    let credentials = extend({
+      'default': this.guess(),
+    }, this._parseAwsCredentialsFile([guessedCredentials.accessKeyId]));
+
+    let awsProfiles = Object.keys(credentials);
+
+    if (awsProfiles.length === 1) {
+      return guessedCredentials;
+    }
+
+    let prompt = new Prompt('Choose the AWS profile to be used');
+    prompt.syncMode = true;
+
+    // it is sync!
+    prompt.readChoice((awsProfile) => {
+      chosenCredentials = credentials[awsProfile];
+    }, awsProfiles.sort());
+
+    return chosenCredentials;
+  }
+
+  /**
+   * @param {String[]} filterAccessKeys
+   * @returns {Object}
+   * @private
+   */
+  _parseAwsCredentialsFile(filterAccessKeys = []) {
+    let resultCredentials = {};
+
+    let sifCredentials = new AWS.SharedIniFileCredentials();
+    sifCredentials.loadDefaultFilename();
+
+    let guessedIniFile = sifCredentials.filename;
+    let credentials = AWS.util.ini.parse(AWS.util.readFileSync(sifCredentials.filename));
+
+    for (let profile in credentials) {
+      if (!credentials.hasOwnProperty(profile)) {
+        continue;
+      }
+
+      let credentialsObj = credentials[profile];
+
+      // @todo: remove this case?
+      if (filterAccessKeys.indexOf(credentialsObj.aws_access_key_id) !== -1) {
+        continue;
+      }
+
+      resultCredentials[profile] = {
+        accessKeyId: credentialsObj.aws_access_key_id,
+        secretAccessKey: credentialsObj.aws_secret_access_key,
+        region: SharedAwsConfig.DEFAULT_REGION,
+      };
+    }
+
+    return resultCredentials;
   }
 
   /**
@@ -78,7 +145,7 @@ export class SharedAwsConfig {
 
         credentials.accessKeyId = provider.accessKeyId;
         credentials.secretAccessKey = provider.secretAccessKey;
-        credentials.region = provider.region || 'us-west-2';
+        credentials.region = provider.region || SharedAwsConfig.DEFAULT_REGION;
       }
     }
 
@@ -124,8 +191,31 @@ export class SharedAwsConfig {
     return [
       new AWS.EnvironmentCredentials(),
       new AWS.SharedIniFileCredentials(),
-      new AWS.FileSystemCredentials('~/.aws/config'),
+      new AWS.FileSystemCredentials(SharedAwsConfig.AWS_GLOB_CFG_FILE),
       new SharedAwsConfig.AwsCliConfig
     ];
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get DEFAULT_REGION() {
+    return 'us-west-2';
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get AWS_GLOB_CFG_FILE() {
+    let env = process.env;
+    let home = env.HOME ||
+      env.USERPROFILE ||
+      (env.HOMEPATH ? ((env.HOMEDRIVE || 'C:/') + env.HOMEPATH) : null);
+
+    if (!home) {
+      home = '~/';
+    }
+
+    return path.join(home, '.aws', 'credentials');
   }
 }

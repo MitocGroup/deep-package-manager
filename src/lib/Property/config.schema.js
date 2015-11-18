@@ -12,29 +12,56 @@ import Tmp from 'tmp';
 import OS from 'os';
 import FileSystem from 'fs';
 
-let guessedAwsCredentials = guessAwsSdkConfig();
+export default {
+  validation: () => {
+    return Joi.object().keys({
+      dependencies: Joi.object().keys({
+        bucket: JoiHelper.string().required(),
+        prefix: JoiHelper.string().optional().allow(''),
+        aws: Joi.object().keys({
+          accessKeyId: JoiHelper.string().required(),
+          secretAccessKey: JoiHelper.string().required(),
+          region: JoiHelper.string().required(),
+          httpOptions: Joi.object().optional(),
+        }).optional(),
+      }).optional(),
+      appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).required(),
+      env: JoiHelper.stringEnum(['dev', 'stage', 'test', 'prod']).optional().default('dev'),
+      awsAccountId: Joi.number().required(),
+      aws: Joi.object().keys({
+        accessKeyId: JoiHelper.string().required(),
+        secretAccessKey: JoiHelper.string().required(),
+        region: JoiHelper.string().required(),
+        httpOptions: Joi.object().optional(),
+      }).required(),
+    })
+  },
+  generation: () => {
+    let guessedAwsCredentials = guessAwsSdkConfig();
 
-export default Joi.object().keys({
-  dependencies: Joi.object().keys({
-    bucket: JoiHelper.string().required(),
-    prefix: JoiHelper.string().optional().allow(''),
-    aws: Joi.object().keys({
-      accessKeyId: JoiHelper.string().required(),
-      secretAccessKey: JoiHelper.string().required(),
-      region: JoiHelper.string().required(),
-      httpOptions: Joi.object().optional(),
-    }).optional(),
-  }).optional(),
-  appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).optional().default(buildAppId()),
-  env: JoiHelper.stringEnum(['dev', 'stage', 'test', 'prod']).optional().default('dev'),
-  awsAccountId: Joi.number().optional().default(guessAwsAccountId(guessedAwsCredentials)),
-  aws: Joi.object().keys({
-    accessKeyId: JoiHelper.string().required(),
-    secretAccessKey: JoiHelper.string().required(),
-    region: JoiHelper.string().required(),
-    httpOptions: Joi.object().optional(),
-  }).optional().default(guessedAwsCredentials),
-});
+    return Joi.object().keys({
+      dependencies: Joi.object().keys({
+        bucket: JoiHelper.string().required(),
+        prefix: JoiHelper.string().optional().allow(''),
+        aws: Joi.object().keys({
+          accessKeyId: JoiHelper.string().required(),
+          secretAccessKey: JoiHelper.string().required(),
+          region: JoiHelper.string().required(),
+          httpOptions: Joi.object().optional(),
+        }).optional(),
+      }).optional(),
+      appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).optional().default(buildAppId()),
+      env: JoiHelper.stringEnum(['dev', 'stage', 'test', 'prod']).optional().default('dev'),
+      awsAccountId: Joi.number().optional().default(guessAwsAccountId(guessedAwsCredentials)),
+      aws: Joi.object().keys({
+        accessKeyId: JoiHelper.string().required(),
+        secretAccessKey: JoiHelper.string().required(),
+        region: JoiHelper.string().required(),
+        httpOptions: Joi.object().optional(),
+      }).optional().default(guessedAwsCredentials),
+    })
+  }
+};
 
 function buildAppId() {
   let result = exec(
@@ -78,5 +105,5 @@ function guessAwsAccountId(awsCredentials) {
 }
 
 function guessAwsSdkConfig() {
-  return new SharedAwsConfig().guess();
+  return new SharedAwsConfig().choose(); // @todo: replace with guess()?
 }

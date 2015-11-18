@@ -19,7 +19,7 @@ export class Config {
   constructor(rawConfig = {}) {
     this._rawConfig = rawConfig;
 
-    this._parsedObject = Joi.validate(this._rawConfig, appConfigSchema);
+    this._parsedObject = Joi.validate(this._rawConfig, appConfigSchema.validation());
   }
 
   /**
@@ -76,7 +76,7 @@ export class Config {
    * @returns {Object}
    */
   static generate() {
-    return Joi.validate({}, appConfigSchema).value;
+    return Joi.validate({}, appConfigSchema.generation()).value;
   }
 
   /**
