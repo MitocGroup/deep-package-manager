@@ -9,6 +9,7 @@ import exec from 'sync-exec';
 import path from 'path';
 import {_extend as extend} from 'util';
 import {Prompt} from './Terminal/Prompt';
+import FS from 'fs';
 
 export class SharedAwsConfig {
   constructor() {
@@ -70,7 +71,12 @@ export class SharedAwsConfig {
     sifCredentials.loadDefaultFilename();
 
     let guessedIniFile = sifCredentials.filename;
-    let credentials = AWS.util.ini.parse(AWS.util.readFileSync(sifCredentials.filename));
+
+    if (!FS.existsSync(guessedIniFile)) {
+      return {};
+    }
+
+    let credentials = AWS.util.ini.parse(AWS.util.readFileSync(guessedIniFile));
 
     for (let profile in credentials) {
       if (!credentials.hasOwnProperty(profile)) {
