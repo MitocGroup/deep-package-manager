@@ -633,8 +633,9 @@ export class Instance {
     this.microservicesToUpdate = microservicesToUpdate;
     this._config = propertyConfigSnapshot;
 
-    // @todo: does it work?
-    this._provisioning.config = this._config.provisioning;
+    this._provisioning.injectConfig(
+      this._config.provisioning
+    );
 
     return this.install((...args) => {
       this._isUpdate = false;
