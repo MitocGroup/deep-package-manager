@@ -203,12 +203,12 @@ suite('Property/Instance', function() {
     chai.expect(spyCallback).to.not.have.been.calledWith();
   });
 
-  test('Check _postDeploy() method throws InvalidArgumentException for invalid argument', function() {
+  test('Check postDeploy() method throws InvalidArgumentException for invalid argument', function() {
     let e = null;
     let spyCallback = sinon.spy();
 
     try {
-      propertyInstance._postDeploy();
+      propertyInstance.postDeploy();
     } catch (exception) {
       e = exception;
     }
