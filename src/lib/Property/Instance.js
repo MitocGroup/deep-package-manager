@@ -533,7 +533,6 @@ export class Instance {
   /**
    * @param {Function} callback
    * @returns {Instance}
-   * @private
    */
   postDeploy(callback) {
     if (!(callback instanceof Function)) {
