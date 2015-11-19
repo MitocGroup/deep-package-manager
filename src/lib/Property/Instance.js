@@ -533,9 +533,8 @@ export class Instance {
   /**
    * @param {Function} callback
    * @returns {Instance}
-   * @private
    */
-  _postDeploy(callback) {
+  postDeploy(callback) {
     if (!(callback instanceof Function)) {
       throw new InvalidArgumentException(callback, 'Function');
     }
@@ -661,7 +660,7 @@ export class Instance {
       this.deploy(function() {
         console.log(`Deploy is done`);
 
-        this._postDeploy(callback);
+        this.postDeploy(callback);
       }.bind(this));
     }.bind(this), skipProvision);
   }
