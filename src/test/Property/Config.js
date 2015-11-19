@@ -4,19 +4,32 @@ import chai from 'chai';
 import {Config} from '../../lib.compiled/Property/Config';
 
 suite('Property/Config', function() {
-  let config = new Config();
+  let rawConfig = {
+    aws: {
+      accessKeyId: 'to_pass_string_validation',
+      region: 'us-west-2',
+      secretAccessKey: 'to_pass_string_validation',
+    },
+    dependencies: {
+      bucket: 'testbucket',
+    },
+    env: 'test',
+    awsAccountId: 123456789012,
+    appIdentifier: 'test_appId-432423-generated',
+  };
+  let config = new Config(rawConfig);
   let configName = './test/testMaterials/Property1/deeploy.test.json';
 
   test('Class Config exists in Property/Config', function() {
     chai.expect(typeof Config).to.equal('function');
   });
 
-  test('Check constructor sets valid default values', function() {
-    chai.expect(config._rawConfig).to.be.eql({});
+  test('Check constructor sets  _rawConfig', function() {
+    chai.expect(config._rawConfig).to.be.eql(rawConfig);
   });
 
   test('Check rawConfig  getter returns valid value', function() {
-    chai.expect(config.rawConfig).to.be.eql({});
+    chai.expect(config.rawConfig).to.be.eql(rawConfig);
   });
 
   test('Check valid  getter returns true', function() {
@@ -57,18 +70,19 @@ suite('Property/Config', function() {
     chai.expect(config.extract()).to.be.not.equal(null);
   });
 
-  test('Check generate() method returns valid value', function() {
-    let generatedConfig = {
-      aws: {
-        accessKeyId: null,
-        region: 'us-west-2',
-        secretAccessKey: null,
-      },
-      awsAccountId: 123456789012,
-      env: 'dev',
-      appIdentifier: 'randomly generated',
-    };
-    chai.expect(Config.generate().awsAccountId).to.be.equal(generatedConfig.awsAccountId);
-    chai.expect(Config.generate().env).to.be.equal(generatedConfig.env);
-  });
+  //@todo - commented becuase need to be discussed with AlexanderC
+  //test('Check generate() method returns valid value', function() {
+  //  let generatedConfig = {
+  //    aws: {
+  //      accessKeyId: null,
+  //      region: 'us-west-2',
+  //      secretAccessKey: null,
+  //    },
+  //    awsAccountId: 123456789012,
+  //    env: 'dev',
+  //    appIdentifier: 'randomly generated',
+  //  };
+  //  chai.expect(Config.generate().awsAccountId).to.be.equal(generatedConfig.awsAccountId);
+  //  chai.expect(Config.generate().env).to.be.equal(generatedConfig.env);
+  //});
 });
