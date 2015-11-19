@@ -11,6 +11,15 @@ chai.use(sinonChai);
 
 suite('Provisioning/Instance', function() {
   let provisioningInstance = null;
+  let defaultConfig = {
+    cloudfront: {},
+    'cognito-identity': {},
+    elasticache: {},
+    iam: {},
+    kinesis: {},
+    s3: {},
+    sns: {},
+  };
 
   test('Class Instance exists in Provisioning/Instance', function() {
     chai.expect(typeof Instance).to.equal('function');
@@ -110,15 +119,18 @@ suite('Provisioning/Instance', function() {
   });
 
   test('Check config getter returns valid object', function() {
-    chai.expect(provisioningInstance.config).to.be.eql({});
+    chai.expect(provisioningInstance.config).to.be.eql(defaultConfig);
   });
 
   test('Check config setter sets _config', function() {
-    chai.expect(provisioningInstance.config).to.be.eql({});
-    let testConfig = { test: 'test'};
+    let config = provisioningInstance.config;
+    let testConfig = {test: 'test'};
+
     provisioningInstance.config = testConfig;
     chai.expect(provisioningInstance.config).to.be.eql(testConfig);
-    provisioningInstance.config = {};
-    chai.expect(provisioningInstance.config).to.be.eql({});
+
+    //undo test changes
+    provisioningInstance.config = config;
+    chai.expect(provisioningInstance.config).to.be.eql(config);
   });
 });
