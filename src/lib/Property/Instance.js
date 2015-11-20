@@ -264,6 +264,7 @@ export class Instance {
           arn: lambdaInstance.arn,
           name: lambdaInstance.functionName,
           region: lambdaInstance.region,
+          localPath: Path.join(lambdaInstance.path, 'bootstrap.js'),
         };
 
         lambdaInstances.push(lambdaInstance);
@@ -272,7 +273,11 @@ export class Instance {
 
     let lambdas = {};
     for (let lambdaInstance of lambdaInstances) {
-      lambdas[lambdaInstance.arn] = lambdaInstance.createConfig(this._config);
+
+      // assure localRuntime flag set true!
+      let lambdaInstanceConfig = lambdaInstance.createConfig(this._config, true);
+
+      lambdas[lambdaInstance.arn] = lambdaInstanceConfig;
       lambdas[lambdaInstance.arn].name = lambdaInstance.functionName;
       lambdas[lambdaInstance.arn].path = Path.join(lambdaInstance.path, 'bootstrap.js');
     }

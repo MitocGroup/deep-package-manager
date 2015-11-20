@@ -44,9 +44,10 @@ export class Frontend {
 
   /**
    * @param {Object} propertyConfig
+   * @param {Boolean} localRuntime
    * @return {Object}
    */
-  static createConfig(propertyConfig) {
+  static createConfig(propertyConfig, localRuntime = false) {
     let config = {
       env: propertyConfig.env,
       deployId: propertyConfig.deployId,
@@ -111,6 +112,11 @@ export class Frontend {
               original: originalSource,
             },
           };
+
+          if (localRuntime) {
+            microserviceConfig.resources[resourceName][action.name].source._localPath =
+              microservice.lambdas[action.identifier].localPath;
+          }
         }
       }
 

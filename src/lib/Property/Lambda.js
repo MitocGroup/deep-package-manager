@@ -83,10 +83,11 @@ export class Lambda {
 
   /**
    * @param {Object} propertyConfig
+   * @param {Boolean} localRuntime
    * @return {Object}
    */
-  createConfig(propertyConfig) {
-    let config = Frontend.createConfig(propertyConfig);
+  createConfig(propertyConfig, localRuntime = false) {
+    let config = Frontend.createConfig(propertyConfig, localRuntime);
 
     config.forceUserIdentity = this._forceUserIdentity;
     config.microserviceIdentifier = this.microserviceIdentifier;
