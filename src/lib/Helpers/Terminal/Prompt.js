@@ -47,6 +47,21 @@ export class Prompt {
 
   /**
    * @param {Function} callback
+   * @param {*} defaultValue
+   * @returns {Prompt}
+   */
+  readWithDefaults(callback, defaultValue) {
+    this._text += ` [${defaultValue}]`;
+
+    this.read((answer) => {
+      callback(answer || defaultValue);
+    });
+
+    return this;
+  }
+
+  /**
+   * @param {Function} callback
    * @returns {Prompt}
    */
   readHidden(callback) {
@@ -107,7 +122,9 @@ export class Prompt {
     let rl = Prompt._createReadlineInterface(this._syncMode);
 
     if (this._syncMode) {
-      onResultCallback((rl.questionHidden(text) || '').trim());
+      rl.questionHidden(text, (answer) => {
+        onResultCallback((answer || '').trim());
+      });
 
       return this;
     }

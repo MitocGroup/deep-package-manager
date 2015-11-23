@@ -32,9 +32,10 @@ export class SharedAwsConfig {
   }
 
   /**
+   * @param {Boolean} requestOnMissing
    * @returns {Object}
    */
-  choose() {
+  choose(requestOnMissing = true) {
     let chosenCredentials = null;
     let guessedCredentials = this.guess();
 
@@ -45,7 +46,9 @@ export class SharedAwsConfig {
     let awsProfiles = Object.keys(credentials);
 
     if (awsProfiles.length === 1) {
-      return guessedCredentials;
+      return requestOnMissing
+        ? this.askForCredentialsIfMissing(guessedCredentials)
+        : guessedCredentials;
     }
 
     let prompt = new Prompt('Choose the AWS profile to be used');
@@ -56,7 +59,44 @@ export class SharedAwsConfig {
       chosenCredentials = credentials[awsProfile];
     }, awsProfiles.sort());
 
-    return chosenCredentials;
+    return requestOnMissing
+      ? this.askForCredentialsIfMissing(chosenCredentials)
+      : chosenCredentials;
+  }
+
+  /**
+   * @param {Object} credentials
+   * @returns {Object}
+   */
+  askForCredentialsIfMissing(credentials) {
+    if (!credentials.accessKeyId) {
+      let prompt = new Prompt('AWS access key');
+      prompt.syncMode = true;
+
+      prompt.read((answer) => {
+        credentials.accessKeyId = answer;
+      });
+    }
+
+    if (!credentials.secretAccessKey) {
+      let prompt = new Prompt('AWS secret access key');
+      prompt.syncMode = true;
+
+      prompt.readHidden((answer) => {
+        credentials.secretAccessKey = answer;
+      });
+    }
+
+    if (!credentials.region) {
+      let prompt = new Prompt('AWS region');
+      prompt.syncMode = true;
+
+      prompt.readWithDefaults((answer) => {
+        credentials.region = answer;
+      }, SharedAwsConfig.DEFAULT_REGION);
+    }
+
+    return credentials;
   }
 
   /**
