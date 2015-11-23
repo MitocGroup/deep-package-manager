@@ -4,7 +4,6 @@
 
 'use strict';
 
-import {AbstractReplacer} from './Replacer/AbstractReplacer';
 import Core from 'deep-core';
 import fs from 'fs';
 import path from 'path';
@@ -70,10 +69,6 @@ export class AssetReplacer {
       let ReplacerProto = require(`./Replacer/${replacerName}`)[replacerName];
 
       replacer = new ReplacerProto(this._version);
-    }
-
-    if (!(replacer instanceof AbstractReplacer)) {
-      throw new Core.Exception.InvalidArgumentException(replacer, 'AbstractReplacer');
     }
 
     this._replacers.push(replacer);
