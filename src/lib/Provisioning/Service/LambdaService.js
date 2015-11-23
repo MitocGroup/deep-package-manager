@@ -336,23 +336,24 @@ export class LambdaService extends AbstractService {
   _getAccessPolicy(microserviceIdentifier, buckets) {
     let policy = new Core.AWS.IAM.Policy();
 
+    // @todo - limit access to CloudWatch logs from * to certain actions and log groups
     let logsStatement = policy.statement.add();
     logsStatement.action.add(Core.AWS.Service.CLOUD_WATCH_LOGS, Core.AWS.IAM.Policy.ANY);
-
-    let logsResource = logsStatement.resource.add();
-    logsResource.service = Core.AWS.Service.CLOUD_WATCH_LOGS;
-    logsResource.region = Core.AWS.IAM.Policy.ANY;
-    logsResource.accountId = Core.AWS.IAM.Policy.ANY;
-    logsResource.descriptor = Core.AWS.IAM.Policy.ANY;
+    logsStatement.resource.add(
+      Core.AWS.Service.CLOUD_WATCH_LOGS,
+      Core.AWS.IAM.Policy.ANY,
+      this.awsAccountId,
+      Core.AWS.IAM.Policy.ANY
+    );
 
     let dynamoDbStatement = policy.statement.add();
     dynamoDbStatement.action.add(Core.AWS.Service.DYNAMO_DB, Core.AWS.IAM.Policy.ANY);
-
-    let dynamoDbResource = dynamoDbStatement.resource.add();
-    dynamoDbResource.service = Core.AWS.Service.DYNAMO_DB;
-    dynamoDbResource.region = Core.AWS.IAM.Policy.ANY;
-    dynamoDbResource.accountId = Core.AWS.IAM.Policy.ANY;
-    dynamoDbResource.descriptor = `table/${this._getGlobalResourceMask()}`;
+    dynamoDbStatement.resource.add(
+      Core.AWS.Service.DYNAMO_DB,
+      Core.AWS.IAM.Policy.ANY,
+      this.awsAccountId,
+      `table/${this._getGlobalResourceMask()}`
+    );
 
     let s3Statement = policy.statement.add();
     let s3ListBucketStatement = policy.statement.add();
@@ -379,6 +380,11 @@ export class LambdaService extends AbstractService {
     let cognitoService = this.provisioning.services.find(CognitoIdentityService);
     let cognitoSyncPolicy = cognitoService.generateAllowCognitoSyncPolicy(['ListRecords', 'ListDatasets']);
     cognitoSyncPolicy.statement.list().forEach((statementInstance) => {
+      policy.statement.add(statementInstance);
+    });
+
+    let invokeLambdaPolicy = this.generateAllowInvokeFunctionPolicy();
+    invokeLambdaPolicy.statement.list().forEach((statementInstance) => {
       policy.statement.add(statementInstance);
     });
 
