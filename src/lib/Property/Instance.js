@@ -14,6 +14,7 @@ import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
 import {Instance as Microservice} from '../Microservice/Instance';
 import {DuplicateRootException} from './Exception/DuplicateRootException';
 import {MissingRootException} from './Exception/MissingRootException';
+import {MissingMicroserviceException} from './Exception/MissingMicroserviceException';
 import {Lambda} from './Lambda';
 import {WaitFor} from '../Helpers/WaitFor';
 import {Frontend} from './Frontend';
@@ -53,19 +54,29 @@ export class Instance {
   }
 
   /**
-   * @returns {Microservice[]}
+   * @returns {Microservice[]|String[]}
    */
   get microservicesToUpdate() {
     return this._microservicesToUpdate;
   }
 
   /**
-   * @param {Microservice[]} microservices
+   * @param {Microservice[]|String[]} microservices
    */
   set microservicesToUpdate(microservices) {
-    this._microservicesToUpdate = microservices.map(
-      (ms) => typeof ms === 'string' ? this.microservice(ms) : ms
-    );
+    this._microservicesToUpdate = microservices.map((ms) => {
+      if (typeof ms === 'string') {
+        let msObj = this.microservice(ms);
+
+        if (!msObj) {
+          throw new MissingMicroserviceException(ms);
+        }
+
+        return msObj;
+      }
+
+      return ms;
+    });
   }
 
   /**
