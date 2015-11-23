@@ -378,15 +378,9 @@ export class LambdaService extends AbstractService {
     }
 
     let cognitoService = this.provisioning.services.find(CognitoIdentityService);
-    let cognitoSyncPolicy = cognitoService.generateAllowCognitoSyncPolicy(['ListRecords', 'ListDatasets']);
-    cognitoSyncPolicy.statement.list().forEach((statementInstance) => {
-      policy.statement.add(statementInstance);
-    });
+    policy.statement.add(cognitoService.generateAllowCognitoSyncStatement(['ListRecords', 'ListDatasets']));
 
-    let invokeLambdaPolicy = this.generateAllowInvokeFunctionPolicy();
-    invokeLambdaPolicy.statement.list().forEach((statementInstance) => {
-      policy.statement.add(statementInstance);
-    });
+    policy.statement.add(this.generateAllowInvokeFunctionStatement());
 
     return policy;
   }
@@ -420,17 +414,15 @@ export class LambdaService extends AbstractService {
 
   /**
    * Allow Cognito and ApiGateway users to invoke these lambdas
-   * @returns {Core.AWS.IAM.Policy}
+   * @returns {Core.AWS.IAM.Statement}
    */
-  generateAllowInvokeFunctionPolicy() {
+  generateAllowInvokeFunctionStatement() {
     let policy = new Core.AWS.IAM.Policy();
 
     let statement = policy.statement.add();
     statement.action.add(Core.AWS.Service.LAMBDA, 'InvokeFunction');
 
-    let resource = statement.resource.add();
-
-    resource.updateFromArn(
+    statement.resource.add().updateFromArn(
       this._generateLambdaArn(this._getGlobalResourceMask())
     );
 

@@ -295,20 +295,10 @@ export class CognitoIdentityService extends AbstractService {
 
       let lambdaService = this.provisioning.services.find(LambdaService);
 
-      let policy = lambdaService.generateAllowInvokeFunctionPolicy();
-      let apiPolicy = APIGatewayService.generateAllowInvokeMethodPolicy(endpointsARNs);
-      let cognitoSyncPolicy = this.generateAllowCognitoSyncPolicy(
-        ['ListRecords', 'UpdateRecords', 'ListDatasets']
-      );
-
-      // merge policies statements
-      apiPolicy.statement.list().forEach((statementInstance) => {
-        policy.statement.add(statementInstance);
-      });
-
-      cognitoSyncPolicy.statement.list().forEach((statementInstance) => {
-        policy.statement.add(statementInstance);
-      });
+      let policy = new Core.AWS.IAM.Policy();
+      policy.statement.add(lambdaService.generateAllowInvokeFunctionStatement());
+      policy.statement.add(APIGatewayService.generateAllowInvokeMethodStatement(endpointsARNs));
+      policy.statement.add(this.generateAllowCognitoSyncStatement(['ListRecords', 'UpdateRecords', 'ListDatasets']));
 
       let params = {
         PolicyDocument: policy.toString(),
@@ -339,9 +329,9 @@ export class CognitoIdentityService extends AbstractService {
    * Allow Cognito users to list / push data to CognitoSync service
    *
    * @param {Array} allowedActions
-   * @returns {Core.AWS.IAM.Policy}
+   * @returns {Core.AWS.IAM.Statement}
    */
-  generateAllowCognitoSyncPolicy(allowedActions = [Core.AWS.IAM.Policy.ANY]) {
+  generateAllowCognitoSyncStatement(allowedActions = [Core.AWS.IAM.Policy.ANY]) {
     let policy = new Core.AWS.IAM.Policy();
 
     let statement = policy.statement.add();
@@ -358,7 +348,7 @@ export class CognitoIdentityService extends AbstractService {
       `identitypool/${this._config.identityPool.IdentityPoolId}/*` // @todo - find a way to add user identityId into arn
     );
 
-    return policy;
+    return statement;
   }
 
   /**
