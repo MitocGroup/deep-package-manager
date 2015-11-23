@@ -426,6 +426,6 @@ export class LambdaService extends AbstractService {
       this._generateLambdaArn(this._getGlobalResourceMask())
     );
 
-    return policy;
+    return statement;
   }
 }
