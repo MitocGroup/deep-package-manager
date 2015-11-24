@@ -10,13 +10,15 @@ import OS from 'os';
 export class ProvisioningCollisionsDetectedException extends Exception {
   /**
    * @param {Object} resourcesObj
+   * @param {String} collisionHash
    */
-  constructor(resourcesObj) {
+  constructor(resourcesObj, collisionHash) {
     let plainError = ProvisioningCollisionsDetectedException._stringifyResourcesObj(resourcesObj);
 
     super(`The following AWS resources may collision:${OS.EOL}${plainError}`);
 
     this._resourcesObj = resourcesObj;
+    this._collisionHash = collisionHash;
   }
 
   /**
@@ -41,6 +43,13 @@ export class ProvisioningCollisionsDetectedException extends Exception {
     }
 
     return output;
+  }
+
+  /**
+   * @returns {String}
+   */
+  get collisionHash() {
+    return this._collisionHash;
   }
 
   /**

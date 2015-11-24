@@ -30,6 +30,7 @@ import objectMerge from 'object-merge';
 import {Listing} from '../Provisioning/Listing';
 import {ProvisioningCollisionsListingException} from './Exception/ProvisioningCollisionsListingException';
 import {ProvisioningCollisionsDetectedException} from './Exception/ProvisioningCollisionsDetectedException';
+import {AbstractService} from '../Provisioning/Service/AbstractService';
 
 /**
  * Property instance
@@ -65,7 +66,13 @@ export class Instance {
     this.getProvisioningCollisions((error, resources) => {
       error = error ||
         (resources
-          ? new ProvisioningCollisionsDetectedException(resources)
+          ? new ProvisioningCollisionsDetectedException(
+              resources,
+              AbstractService.generateUniqueResourceHash(
+                this.config.awsAccountId,
+                this.identifier
+              )
+            )
           : null);
 
       if (error && throwError) {
