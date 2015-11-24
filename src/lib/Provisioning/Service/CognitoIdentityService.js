@@ -352,6 +352,26 @@ export class CognitoIdentityService extends AbstractService {
   }
 
   /**
+   * Allow to execute DescribeIdentity on Cognito identity pool
+   *
+   * @returns {Core.AWS.IAM.Statement}
+   */
+  generateAllowDescribeIdentityStatement() {
+    let policy = new Core.AWS.IAM.Policy();
+
+    let statement = policy.statement.add();
+    statement.action.add(Core.AWS.Service.COGNITO_IDENTITY, 'DescribeIdentity');
+    statement.resource.add(
+      Core.AWS.Service.COGNITO_IDENTITY,
+      this.provisioning.cognitoIdentity.config.region,
+      this.awsAccountId,
+      'identitypool/' // @todo - find a way to add cognito identity pool id and user identityId into arn
+    );
+
+    return statement;
+  }
+
+  /**
    * @returns {String}
    */
   generateName() {
