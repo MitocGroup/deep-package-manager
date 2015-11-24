@@ -18,6 +18,34 @@ export class CognitoIdentityDriver extends AbstractDriver {
    * @param {Function} cb
    */
   list(cb) {
-    cb(null);
+    this._awsService.listIdentityPools({
+      MaxResults: CognitoIdentityDriver.MAX_RESULTS,
+    }, (error, data) => {
+      if (error) {
+        cb(error);
+        return;
+      }
+
+      for (let i in data.IdentityPools) {
+        if (!data.IdentityPools.hasOwnProperty(i)) {
+          continue;
+        }
+
+        let identityPoolData = data.IdentityPools[i];
+        let identityPoolId = identityPoolData.IdentityPoolId;
+        let identityPoolName = identityPoolData.IdentityPoolName;
+
+        this._checkPushStack(identityPoolName, identityPoolId, identityPoolData);
+      }
+
+      cb(null);
+    });
+  }
+
+  /**
+   * @returns {Number}
+   */
+  static get MAX_RESULTS() {
+    return 60;
   }
 }

@@ -18,6 +18,24 @@ export class APIGatewayDriver extends AbstractDriver {
    * @param {Function} cb
    */
   list(cb) {
-    cb(null);
+    this._awsService.listRestapis()
+      .then((data) => {
+        for (let i in data) {
+          if (!data.hasOwnProperty(i)) {
+            continue;
+          }
+
+          let source = data[i].source;
+          let apiId = source.id;
+          let apiName = source.name;
+
+          this._checkPushStack(apiName, apiId, source);
+        }
+
+        cb(null);
+      })
+      .catch((error) => {
+        cb(error);
+      });
   }
 }

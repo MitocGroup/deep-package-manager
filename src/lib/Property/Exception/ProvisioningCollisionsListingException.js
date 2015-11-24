@@ -34,7 +34,7 @@ export class ProvisioningCollisionsListingException extends Exception {
 
       let error = errorsObj[resourceName];
 
-      output += `- ${resourceName}: ${error}`;
+      output += `- ${resourceName}: ${error}${OS.EOL}`;
     }
 
     return output;

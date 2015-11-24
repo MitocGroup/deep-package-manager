@@ -33,8 +33,11 @@ export class ProvisioningCollisionsDetectedException extends Exception {
       }
 
       let resources = resourcesObj[resourceName];
+      let resourcesKeys = Object.keys(resources);
 
-      output += `- ${resourceName}: ${Object.keys(resources).join(', ')}`;
+      if (resourcesKeys.length > 0) {
+        output += `- ${resourceName}: ${resourcesKeys.join(', ')}${OS.EOL}`;
+      }
     }
 
     return output;

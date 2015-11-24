@@ -18,6 +18,24 @@ export class S3Driver extends AbstractDriver {
    * @param {Function} cb
    */
   list(cb) {
-    cb(null);
+    this._awsService.listBuckets((error, data) => {
+      if (error) {
+        cb(error);
+        return;
+      }
+
+      for (let i in data.Buckets) {
+        if (!data.Buckets.hasOwnProperty(i)) {
+          continue;
+        }
+
+        let bucketData = data.Buckets[i];
+        let bucketName = bucketData.Name;
+
+        this._checkPushStack(bucketName, bucketName, bucketData);
+      }
+
+      cb(null);
+    });
   }
 }
