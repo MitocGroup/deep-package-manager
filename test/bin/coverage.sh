@@ -16,4 +16,4 @@ cat ${COVERAGE_PATH}"/lcov.info" | codacy-coverage
 
 __CMD='rm -rf ./coverage'
 
-#subpath_run_cmd ${__SRC_PATH} "$__CMD"
+subpath_run_cmd ${__SRC_PATH} "$__CMD"
