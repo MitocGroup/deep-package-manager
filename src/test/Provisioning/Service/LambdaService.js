@@ -4,7 +4,6 @@ import chai from 'chai';
 import {LambdaService} from '../../../lib.compiled/Provisioning/Service/LambdaService';
 import Core from 'deep-core';
 import {ObjectStorage} from 'deep-core/lib.compiled/Generic/ObjectStorage';
-import {Policy} from 'deep-core/lib.compiled/AWS/IAM/Policy';
 import {PropertyInstanceMock} from '../../mock/Property/PropertyInstanceMock.js';
 import {ProvisioningInstanceMock} from '../../mock/Provisioning/ProvisioningInstanceMock';
 
@@ -95,9 +94,5 @@ suite('Provisioning/Service/LambdaService', function() {
     // todo - add buckets to testMaterials
     //chai.expect(e).to.be.equal(null);
     //chai.expect(actualResult._readyTeardown).to.be.equal(true);
-  });
-
-  test('Check generateAllowInvokeFunctionPolicy() method returns policy', function() {
-    chai.assert.instanceOf(lambdaServiceInstance.generateAllowInvokeFunctionPolicy(), Policy, 'actualResult is an instance of Policy');
   });
 });
