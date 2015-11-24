@@ -218,7 +218,21 @@ export class AbstractService extends Core.OOP.Interface {
    * @returns {String}
    */
   getUniqueHash(microserviceIdentifier = '') {
-    let globId = Hash.crc32(this.awsAccountId + this.appIdentifier);
+    return AbstractService.generateUniqueResourceHash(
+      this.awsAccountId,
+      this.appIdentifier,
+      microserviceIdentifier
+    );
+  }
+
+  /**
+   * @param {String} awsAccountId
+   * @param {String} appIdentifier
+   * @param {String} microserviceIdentifier
+   * @returns {String}
+   */
+  static generateUniqueResourceHash(awsAccountId, appIdentifier, microserviceIdentifier = '') {
+    let globId = Hash.crc32(`${awsAccountId}${appIdentifier}`);
 
     return microserviceIdentifier ? `${Hash.loseLoseMod(microserviceIdentifier)}${globId}` : globId;
   }
