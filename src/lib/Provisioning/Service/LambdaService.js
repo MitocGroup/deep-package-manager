@@ -15,6 +15,7 @@ import {Lambda} from '../../Property/Lambda';
 import {IAMService} from './IAMService';
 import objectMerge from 'object-merge';
 import {_extend as extend} from 'util';
+import {CognitoIdentityService} from './CognitoIdentityService';
 
 /**
  * Lambda service
@@ -333,41 +334,32 @@ export class LambdaService extends AbstractService {
    * @returns {Policy}
    */
   _getAccessPolicy(microserviceIdentifier, buckets) {
-    let env = this.env;
     let policy = new Core.AWS.IAM.Policy();
 
+    // @todo - limit access to CloudWatch logs from * to certain actions and log groups
     let logsStatement = policy.statement.add();
-    let logsAction = logsStatement.action.add();
-
-    logsAction.service = Core.AWS.Service.CLOUD_WATCH_LOGS;
-    logsAction.action = Core.AWS.IAM.Policy.ANY;
-
-    let logsResource = logsStatement.resource.add();
-
-    logsResource.service = Core.AWS.Service.CLOUD_WATCH_LOGS;
-    logsResource.region = Core.AWS.IAM.Policy.ANY;
-    logsResource.accountId = Core.AWS.IAM.Policy.ANY;
-    logsResource.descriptor = Core.AWS.IAM.Policy.ANY;
+    logsStatement.action.add(Core.AWS.Service.CLOUD_WATCH_LOGS, Core.AWS.IAM.Policy.ANY);
+    logsStatement.resource.add(
+      Core.AWS.Service.CLOUD_WATCH_LOGS,
+      Core.AWS.IAM.Policy.ANY,
+      this.awsAccountId,
+      Core.AWS.IAM.Policy.ANY
+    );
 
     let dynamoDbStatement = policy.statement.add();
-    let dynamoDbAction = dynamoDbStatement.action.add();
-
-    dynamoDbAction.service = Core.AWS.Service.DYNAMO_DB;
-    dynamoDbAction.action = Core.AWS.IAM.Policy.ANY;
-
-    let dynamoDbResource = dynamoDbStatement.resource.add();
-
-    dynamoDbResource.service = Core.AWS.Service.DYNAMO_DB;
-    dynamoDbResource.region = Core.AWS.IAM.Policy.ANY;
-    dynamoDbResource.accountId = Core.AWS.IAM.Policy.ANY;
-    dynamoDbResource.descriptor = `table/${this._getGlobalResourceMask()}`;
+    dynamoDbStatement.action.add(Core.AWS.Service.DYNAMO_DB, Core.AWS.IAM.Policy.ANY);
+    dynamoDbStatement.resource.add(
+      Core.AWS.Service.DYNAMO_DB,
+      Core.AWS.IAM.Policy.ANY,
+      this.awsAccountId,
+      `table/${this._getGlobalResourceMask()}`
+    );
 
     let s3Statement = policy.statement.add();
+    let s3ListBucketStatement = policy.statement.add();
 
-    let s3Action = s3Statement.action.add();
-
-    s3Action.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
-    s3Action.action = Core.AWS.IAM.Policy.ANY;
+    s3Statement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, Core.AWS.IAM.Policy.ANY);
+    s3ListBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'ListBucket');
 
     for (let bucketSuffix in buckets) {
       if (!buckets.hasOwnProperty(bucketSuffix)) {
@@ -375,11 +367,21 @@ export class LambdaService extends AbstractService {
       }
 
       let bucket = buckets[bucketSuffix];
+
       let s3Resource = s3Statement.resource.add();
+      let s3ListBucketResource = s3ListBucketStatement.resource.add();
 
       s3Resource.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
       s3Resource.descriptor = `${bucket.name}/${microserviceIdentifier}/${Core.AWS.IAM.Policy.ANY}`;
+      s3ListBucketResource.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
+      s3ListBucketResource.descriptor = bucket.name;
     }
+
+    let cognitoService = this.provisioning.services.find(CognitoIdentityService);
+    policy.statement.add(cognitoService.generateAllowCognitoSyncStatement(['ListRecords', 'ListDatasets']));
+    policy.statement.add(cognitoService.generateAllowDescribeIdentityStatement());
+
+    policy.statement.add(this.generateAllowInvokeFunctionStatement());
 
     return policy;
   }
@@ -413,23 +415,18 @@ export class LambdaService extends AbstractService {
 
   /**
    * Allow Cognito and ApiGateway users to invoke these lambdas
-   * @returns {Core.AWS.IAM.Policy}
+   * @returns {Core.AWS.IAM.Statement}
    */
-  generateAllowInvokeFunctionPolicy() {
+  generateAllowInvokeFunctionStatement() {
     let policy = new Core.AWS.IAM.Policy();
 
     let statement = policy.statement.add();
-    let action = statement.action.add();
+    statement.action.add(Core.AWS.Service.LAMBDA, 'InvokeFunction');
 
-    action.service = Core.AWS.Service.LAMBDA;
-    action.action = 'InvokeFunction';
-
-    let resource = statement.resource.add();
-
-    resource.updateFromArn(
+    statement.resource.add().updateFromArn(
       this._generateLambdaArn(this._getGlobalResourceMask())
     );
 
-    return policy;
+    return statement;
   }
 }

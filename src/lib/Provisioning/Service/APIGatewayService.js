@@ -393,7 +393,8 @@ export class APIGatewayService extends AbstractService {
     let lambdaService = this.provisioning.services.find(LambdaService);
 
     let iam = this.provisioning.iam;
-    let policy = lambdaService.generateAllowInvokeFunctionPolicy();
+    let policy = new Core.AWS.IAM.Policy();
+    policy.statement.add(lambdaService.generateAllowInvokeFunctionStatement());
 
     let params = {
       PolicyDocument: policy.toString(),
@@ -824,16 +825,13 @@ export class APIGatewayService extends AbstractService {
    * Allow Cognito users to invoke these endpoints
    *
    * @param {Object} endpointsARNs
-   * @returns {Core.AWS.IAM.Policy}
+   * @returns {Core.AWS.IAM.Statement}
    */
-  static generateAllowInvokeMethodPolicy(endpointsARNs) {
+  static generateAllowInvokeMethodStatement(endpointsARNs) {
     let policy = new Core.AWS.IAM.Policy();
 
     let statement = policy.statement.add();
-    let action = statement.action.add();
-
-    action.service = Core.AWS.Service.API_GATEWAY_EXECUTE;
-    action.action = 'Invoke';
+    statement.action.add(Core.AWS.Service.API_GATEWAY_EXECUTE, 'Invoke');
 
     for (let endpointArnKey in endpointsARNs) {
       if (!endpointsARNs.hasOwnProperty(endpointArnKey)) {
@@ -841,11 +839,9 @@ export class APIGatewayService extends AbstractService {
       }
 
       let endpointArn = endpointsARNs[endpointArnKey];
-      let resource = statement.resource.add();
-
-      resource.updateFromArn(endpointArn);
+      statement.resource.add().updateFromArn(endpointArn);
     }
 
-    return policy;
+    return statement;
   }
 }

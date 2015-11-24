@@ -4,8 +4,8 @@ import chai from 'chai';
 import {CognitoIdentityService} from '../../../lib.compiled/Provisioning/Service/CognitoIdentityService';
 import Core from 'deep-core';
 import {ObjectStorage} from 'deep-core/lib.compiled/Generic/ObjectStorage';
-import {PropertyInstanceMock} from '../../../mock/Property/PropertyInstanceMock.js';
-import {ProvisioningInstanceMock} from '../../../mock/Provisioning/ProvisioningInstanceMock';
+import {PropertyInstanceMock} from '../../mock/Property/PropertyInstanceMock';
+import {ProvisioningInstanceMock} from '../../mock/Provisioning/ProvisioningInstanceMock';
 
 
 suite('Provisioning/Service/CognitoIdentityService', function() {
@@ -139,8 +139,14 @@ suite('Provisioning/Service/CognitoIdentityService', function() {
       endpointArnKey1: 'arn:aws:lambda:us-west-2:test_awsAccountId:function:testFunctionName1',
       endpointArnKey2: 'arn:aws:lambda:us-west-2:test_awsAccountId:function:testFunctionName2',
     };
-
     try {
+      // @todo - replace it with a more smarter way (simulate service config generation on provision time)
+      cognitoIdentityServiceInstance._config = {
+        identityPool: {
+          IdentityPoolId: 'test_IdentityPoolId',
+        },
+      };
+
       actualResult =  cognitoIdentityServiceInstance._updateCognitoRolesPolicy(roles, lambdaARNs, endpointsARNs);
     } catch (exception) {
       e = exception;

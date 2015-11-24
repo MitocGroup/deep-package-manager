@@ -3,7 +3,6 @@ deep-package-manager
 
 [![NPM Version](https://img.shields.io/npm/v/deep-package-manager.svg)](https://npmjs.org/package/deep-package-manager)
 [![Build Status](https://magnum.travis-ci.com/MitocGroup/deep-package-manager.svg?token=sAyMHy4Uoefc2JPq5ZLc)](https://magnum.travis-ci.com/MitocGroup/deep-package-manager)
-[![Codacy Badge](https://api.codacy.com/project/badge/grade/f45bf66aad164db0a11523dbfce39bb6)](https://www.codacy.com/app/MitocGroup/deep-package-manager)
 [![Codacy Badge](https://api.codacy.com/project/badge/coverage/f45bf66aad164db0a11523dbfce39bb6)](https://www.codacy.com/app/MitocGroup/deep-package-manager)
 [![API Docs](http://docs.deep.mg/badge.svg)](http://docs.deep.mg)
 

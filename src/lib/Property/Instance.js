@@ -14,6 +14,7 @@ import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
 import {Instance as Microservice} from '../Microservice/Instance';
 import {DuplicateRootException} from './Exception/DuplicateRootException';
 import {MissingRootException} from './Exception/MissingRootException';
+import {MissingMicroserviceException} from './Exception/MissingMicroserviceException';
 import {Lambda} from './Lambda';
 import {WaitFor} from '../Helpers/WaitFor';
 import {Frontend} from './Frontend';
@@ -33,19 +34,12 @@ import objectMerge from 'object-merge';
 export class Instance {
   /**
    * @param {String} path
-   * @param {String} configFileName
+   * @param {String|Object} config
    */
-  constructor(path, configFileName = Config.DEFAULT_FILENAME) {
-    let configFile = Path.join(path, configFileName);
+  constructor(path, config = Config.DEFAULT_FILENAME) {
+    this._config = Instance._createConfigObject(config, path).extract();
 
-    if (!FileSystem.existsSync(configFile)) {
-      throw new Exception(`Missing ${configFileName} configuration file from ${path}.`);
-    }
-
-    this._config = Config.createFromJsonFile(configFile).extract();
-
-    // @todo: improve this!
-    this._config.deployId = Hash.md5(`${this._config.appIdentifier}#${new Date().getTime()}`);
+    this.deployId = Hash.md5(`${this._config.appIdentifier}#${new Date().getTime()}`);
 
     this._aws = AWS;
     AWS.config.update(this._config.aws);
@@ -55,6 +49,68 @@ export class Instance {
     this._localDeploy = false;
     this._provisioning = new Provisioning(this);
     this._isUpdate = false;
+
+    this._microservicesToUpdate = [];
+  }
+
+  /**
+   * @returns {Microservice[]|String[]}
+   */
+  get microservicesToUpdate() {
+    return this._microservicesToUpdate;
+  }
+
+  /**
+   * @param {Microservice[]|String[]} microservices
+   */
+  set microservicesToUpdate(microservices) {
+    this._microservicesToUpdate = microservices.map((ms) => {
+      if (typeof ms === 'string') {
+        let msObj = this.microservice(ms);
+
+        if (!msObj) {
+          throw new MissingMicroserviceException(ms);
+        }
+
+        return msObj;
+      }
+
+      return ms;
+    });
+  }
+
+  /**
+   * @param {String|Object} config
+   * @param {String} path
+   * @returns {Config}
+   * @private
+   */
+  static _createConfigObject(config, path) {
+    if (typeof config === 'string') {
+      let configFile = Path.join(path, config);
+
+      if (!FileSystem.existsSync(configFile)) {
+        throw new Exception(`Missing ${config} configuration file from ${path}.`);
+      }
+
+      return Config.createFromJsonFile(configFile);
+    }
+
+    return new Config(config);
+  }
+
+  /**
+   * @returns {String}
+   */
+  get deployId() {
+    return this._config.deployId;
+  }
+
+  /**
+   * @param {String} id
+   */
+  set deployId(id) {
+    this._config.deployId = id;
   }
 
   /**
@@ -210,12 +266,16 @@ export class Instance {
         lambdaInstance.timeout = lambdaOptions.timeout;
         lambdaInstance.runtime = lambdaOptions.runtime;
 
+        // avoid authentication errors on local machine
+        lambdaInstance.forceUserIdentity = false;
+
         this._config
           .microservices[microserviceIdentifier]
           .lambdas[lambdaIdentifier] = {
           arn: lambdaInstance.arn,
           name: lambdaInstance.functionName,
           region: lambdaInstance.region,
+          localPath: Path.join(lambdaInstance.path, 'bootstrap.js'),
         };
 
         lambdaInstances.push(lambdaInstance);
@@ -224,7 +284,11 @@ export class Instance {
 
     let lambdas = {};
     for (let lambdaInstance of lambdaInstances) {
-      lambdas[lambdaInstance.arn] = lambdaInstance.createConfig(this._config);
+
+      // assure localRuntime flag set true!
+      let lambdaInstanceConfig = lambdaInstance.createConfig(this._config, true);
+
+      lambdas[lambdaInstance.arn] = lambdaInstanceConfig;
       lambdas[lambdaInstance.arn].name = lambdaInstance.functionName;
       lambdas[lambdaInstance.arn].path = Path.join(lambdaInstance.path, 'bootstrap.js');
     }
@@ -244,7 +308,7 @@ export class Instance {
 
     let isUpdate = this._isUpdate;
 
-    console.log(`${new Date().toTimeString()} Start building application`);
+    console.log(`Start building application`);
 
     let microservicesConfig = isUpdate ? this._config.microservices : {};
     let microservices = this.microservices;
@@ -264,7 +328,7 @@ export class Instance {
     }
 
     if (!rootMicroservice) {
-      throw new MissingRootException();
+        throw new MissingRootException();
     }
 
     let modelsDirs = [];
@@ -304,12 +368,12 @@ export class Instance {
     if (skipProvision) {
       callback();
     } else {
-      console.log(`${new Date().toTimeString()} Start ${isUpdate ? 'updating' : 'creating'} provisioning`);
+      console.log(`Start ${isUpdate ? 'updating' : 'creating'} provisioning`);
 
       this.provisioning.create(function(config) {
         this._config.provisioning = config;
 
-        console.log(`${new Date().toTimeString()} Provisioning is done`);
+        console.log(`Provisioning is done`);
 
         callback();
       }.bind(this), isUpdate);
@@ -329,7 +393,7 @@ export class Instance {
       throw new InvalidArgumentException(callback, 'Function');
     }
 
-    console.log(`${new Date().toTimeString()} Start deploying backend`);
+    console.log(`Start deploying backend`);
 
     let lambdas = [];
     let lambdaExecRoles = this._config.provisioning.lambda.executionRoles;
@@ -365,6 +429,7 @@ export class Instance {
         lambdaInstance.memorySize = lambdaOptions.memory;
         lambdaInstance.timeout = lambdaOptions.timeout;
         lambdaInstance.runtime = lambdaOptions.runtime;
+        lambdaInstance.forceUserIdentity = lambdaOptions.forceUserIdentity;
 
         this._config
           .microservices[microserviceIdentifier]
@@ -383,29 +448,34 @@ export class Instance {
     let remaining = 0;
 
     // @todo: setup lambda defaults (memory size, timeout etc.)
-    let asyncLambdaActions = lambdas.map(function(lambda) {
-      return function() {
+    let asyncLambdaActions = lambdas.map((lambda) => {
+      return () => {
         let deployedLambdasConfig = this._config.microservices[lambda.microserviceIdentifier].deployedServices.lambdas;
+
+        if (!this.isWorkingMicroservice(lambda.microserviceIdentifier)) {
+          remaining--;
+          return;
+        }
 
         if (isUpdate) {
           if (this._localDeploy) {
-            lambda.pack().ready(function() {
+            lambda.pack().ready(() => {
               remaining--;
-            }.bind(this));
+            });
           } else {
-            lambda.update(function() {
+            lambda.update(() => {
               deployedLambdasConfig[lambda.identifier] = lambda.uploadedLambda;
               remaining--;
-            }.bind(this));
+            });
           }
         } else {
-          lambda.deploy(function() {
+          lambda.deploy(() => {
             deployedLambdasConfig[lambda.identifier] = lambda.uploadedLambda;
             remaining--;
-          }.bind(this));
+          });
         }
-      }.bind(this);
-    }.bind(this));
+      };
+    });
 
     let hasNextBatch = !!asyncLambdaActions.length;
 
@@ -441,17 +511,23 @@ export class Instance {
     }.bind(this));
 
     wait.ready(function() {
-      let frontend = new Frontend(this._config.microservices, this._path);
-      let publicBucket = this._config.provisioning.s3.buckets[S3Service.PUBLIC_BUCKET].name;
+      this.buildFrontend(this._path, (frontend, error) => {
+        if (error) {
+          console.error(
+            `Error while injecting deploy ID into the assets: ${error}`
+          );
+        }
 
-      frontend.build(Frontend.createConfig(this._config));
+        let publicBucket = this._config.provisioning.s3.buckets[S3Service.PUBLIC_BUCKET].name;
 
-      if (isUpdate && this._localDeploy) {
-        callback();
-      } else {
-        console.log(`${new Date().toTimeString()} Start deploying frontend`);
-        frontend.deploy(this._aws, publicBucket).ready(callback);
-      }
+        if (isUpdate && this._localDeploy) {
+          callback();
+        } else {
+          console.log(`Start deploying frontend`);
+
+          frontend.deploy(this._aws, publicBucket).ready(callback);
+        }
+      });
     }.bind(this));
 
     return this;
@@ -459,22 +535,22 @@ export class Instance {
 
   /**
    * @param {String} dumpPath
-   * @returns {Instance}
+   * @param {Function} callback
+   * @returns {Frontend}
    */
-  buildFrontend(dumpPath = null) {
-    let frontend = new Frontend(this._config.microservices, dumpPath || this._path);
+  buildFrontend(dumpPath = null, callback = () => {}) {
+    let frontend = new Frontend(this._config.microservices, dumpPath || this._path, this.deployId);
 
-    frontend.build(Frontend.createConfig(this._config));
+    frontend.build(Frontend.createConfig(this._config), callback.bind(this, frontend));
 
-    return this;
+    return frontend;
   }
 
   /**
    * @param {Function} callback
    * @returns {Instance}
-   * @private
    */
-  _postDeploy(callback) {
+  postDeploy(callback) {
     if (!(callback instanceof Function)) {
       throw new InvalidArgumentException(callback, 'Function');
     }
@@ -505,12 +581,12 @@ export class Instance {
       let hook = microservice.initHook;
 
       if (!hook) {
-        console.log(`${new Date().toTimeString()} No init hook found for microservice ${microservice.identifier}`);
+        console.log(`No init hook found for microservice ${microservice.identifier}`);
         remaining--;
         continue;
       }
 
-      console.log(`${new Date().toTimeString()} Running init hook for microservice ${microservice.identifier}`);
+      console.log(`Running init hook for microservice ${microservice.identifier}`);
 
       hook(function() {
         remaining--;
@@ -542,12 +618,12 @@ export class Instance {
       let hook = microservice.postDeployHook;
 
       if (!hook) {
-        console.log(`${new Date().toTimeString()} No post deploy hook found for microservice ${microservice.identifier}`);
+        console.log(`No post deploy hook found for microservice ${microservice.identifier}`);
         remaining--;
         continue;
       }
 
-      console.log(`${new Date().toTimeString()} Running post deploy hook for microservice ${microservice.identifier}`);
+      console.log(`Running post deploy hook for microservice ${microservice.identifier}`);
 
       hook(this._provisioning, this._isUpdate, function() {
         remaining--;
@@ -564,13 +640,17 @@ export class Instance {
   /**
    * @param {Object} propertyConfigSnapshot
    * @param {Function} callback
+   * @param {Microservice[]} microservicesToUpdate
    * @returns {Instance}
    */
-  update(propertyConfigSnapshot, callback) {
+  update(propertyConfigSnapshot, callback, microservicesToUpdate = []) {
     this._isUpdate = true;
+    this.microservicesToUpdate = microservicesToUpdate;
     this._config = propertyConfigSnapshot;
-    // @todo: does it work?
-    this._provisioning.config = this._config.provisioning;
+
+    this._provisioning.injectConfig(
+      this._config.provisioning
+    );
 
     return this.install((...args) => {
       this._isUpdate = false;
@@ -589,15 +669,15 @@ export class Instance {
       throw new InvalidArgumentException(callback, 'Function');
     }
 
-    console.log(`${new Date().toTimeString()} Start ${this._isUpdate ? 'updating' : 'installing'} application`);
+    console.log(`Start ${this._isUpdate ? 'updating' : 'installing'} application`);
 
     return this.build(function() {
-      console.log(`${new Date().toTimeString()} Build is done`);
+      console.log(`Build is done`);
 
       this.deploy(function() {
-        console.log(`${new Date().toTimeString()} Deploy is done`);
+        console.log(`Deploy is done`);
 
-        this._postDeploy(callback);
+        this.postDeploy(callback);
       }.bind(this));
     }.bind(this), skipProvision);
   }
@@ -637,7 +717,7 @@ export class Instance {
 
     let engineRepo = FrontendEngine.getEngineRepository(suitableEngine);
 
-    console.log(`${new Date().toTimeString()} Checking out the frontend engine '${suitableEngine}' from '${engineRepo}'`);
+    console.log(`Checking out the frontend engine '${suitableEngine}' from '${engineRepo}'`);
 
     let tmpDir = OS.tmpdir();
     let repoName = engineRepo.replace(/^.+\/([^\/]+)\.git$/i, '$1');
@@ -661,6 +741,76 @@ export class Instance {
   }
 
   /**
+   * @param {String[]|String} identifiers
+   * @returns {Microservice[]|Microservice|null}
+   */
+  microservice(...identifiers) {
+    let matchedMicroservices = [];
+
+    for (let i in this.microservices) {
+      if (!this.microservices.hasOwnProperty(i)) {
+        continue;
+      }
+      
+      let microservice = this.microservices[i];
+      
+      if (identifiers.indexOf(microservice.identifier) !== -1) {
+        if (identifiers.length === 1) {
+          return microservice;
+        }
+
+        matchedMicroservices.push(microservice);
+      }
+    }
+
+    if (identifiers.length === 1 && matchedMicroservices.length <= 0) {
+      return null;
+    }
+
+    return identifiers.length === 1 ? matchedMicroservices[0] : matchedMicroservices;
+  }
+
+  /**
+   * @returns {Microservice[]}
+   */
+  get skippedMicroservices() {
+    if (this._microservicesToUpdate.length <= 0) {
+      return [];
+    }
+
+    return this.microservices
+      .filter(
+        (microserviceInstance) =>  this._microservicesToUpdate.indexOf(microserviceInstance) === -1
+      );
+  }
+
+  /**
+   * @param {String|Microservice} microservice
+   * @returns {Boolean}
+   */
+  isWorkingMicroservice(microservice) {
+    if (typeof microservice === 'string') {
+      microservice = this.microservice(microservice);
+    }
+
+    return this.workingMicroservices.indexOf(microservice) !== -1;
+  }
+
+  /**
+   * @returns {Microservice[]}
+   */
+  get workingMicroservices() {
+    if (this._microservicesToUpdate.length <= 0) {
+      return this.microservices;
+    }
+
+    return this.microservices
+      .filter(
+        (microserviceInstance) => this._microservicesToUpdate.indexOf(microserviceInstance) !== -1
+      );
+  }
+
+  /**
    * @returns {Microservice[]}
    */
   get microservices() {
@@ -672,8 +822,9 @@ export class Instance {
       for (let file of files) {
         let fullPath = Path.join(this._path, file);
 
-        if (FileSystem.statSync(fullPath).isDirectory()
-          && FileSystem.existsSync(Path.join(fullPath, Microservice.CONFIG_FILE))) {
+        if (FileSystem.statSync(fullPath).isDirectory() &&
+          FileSystem.existsSync(Path.join(fullPath, Microservice.CONFIG_FILE))) {
+
           this._microservices.push(Microservice.create(fullPath));
         }
       }

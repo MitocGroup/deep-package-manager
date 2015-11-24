@@ -18,6 +18,7 @@ import Core from 'deep-core';
 import Tmp from 'tmp';
 import OS from 'os';
 import {APIGatewayService} from '../Provisioning/Service/APIGatewayService';
+import {DeployIdInjector} from '../Assets/DeployIdInjector';
 
 /**
  * Frontend
@@ -26,17 +27,27 @@ export class Frontend {
   /**
    * @param {Object} microservicesConfig
    * @param {String} basePath
+   * @param {String} deployId
    */
-  constructor(microservicesConfig, basePath) {
+  constructor(microservicesConfig, basePath, deployId) {
     this._microservicesConfig = microservicesConfig;
     this._basePath = StringUtils.rtrim(basePath, '/');
+    this._deployId = deployId;
+  }
+
+  /**
+   * @returns {String}
+   */
+  get deployId() {
+    return this._deployId;
   }
 
   /**
    * @param {Object} propertyConfig
+   * @param {Boolean} localRuntime
    * @return {Object}
    */
-  static createConfig(propertyConfig) {
+  static createConfig(propertyConfig, localRuntime = false) {
     let config = {
       env: propertyConfig.env,
       deployId: propertyConfig.deployId,
@@ -101,6 +112,11 @@ export class Frontend {
               original: originalSource,
             },
           };
+
+          if (localRuntime) {
+            microserviceConfig.resources[resourceName][action.name].source._localPath =
+              microservice.lambdas[action.identifier].localPath;
+          }
         }
       }
 
@@ -138,14 +154,14 @@ export class Frontend {
     credentials += `aws_secret_access_key=${AWS.config.credentials.secretAccessKey}${OS.EOL}`;
     credentials += `region=${AWS.config.region}${OS.EOL}`;
 
-    console.log(`${new Date().toTimeString()} dump AWS tmp credentials into ${credentialsFile}`);
+    console.log(`dump AWS tmp credentials into ${credentialsFile}`);
 
     FileSystem.writeFileSync(credentialsFile, credentials);
 
     let syncCommand = `export AWS_CONFIG_FILE=${credentialsFile}; `;
     syncCommand += `aws s3 sync --profile deep --storage-class REDUCED_REDUNDANCY '${this.path}' 's3://${bucketName}'`;
 
-    console.log(`${new Date().toTimeString()} running tmp hook ${syncCommand}`);
+    console.log(`Running tmp hook ${syncCommand}`);
 
     let syncResult = exec(syncCommand);
 
@@ -174,8 +190,9 @@ export class Frontend {
 
   /**
    * @param {Object} propertyConfig
+   * @param {Function} callback
    */
-  build(propertyConfig) {
+  build(propertyConfig, callback = () => {}) {
     if (!(propertyConfig instanceof Object)) {
       throw new InvalidArgumentException(propertyConfig, 'Object');
     }
@@ -218,6 +235,22 @@ export class Frontend {
         walker.copy(frontendPath, modulePath);
       }
     }
+
+    if (Frontend._skipInjectDeployNumber) {
+      callback(null);
+      return;
+    }
+
+    new DeployIdInjector(this.path, this._deployId)
+      .prepare(callback);
+  }
+
+  /**
+   * @returns {Boolean}
+   * @private
+   */
+  static get _skipInjectDeployNumber() {
+    return process.env.hasOwnProperty('DEEP_SKIP_DEPLOY_ID_INJECT');
   }
 
   /**

@@ -4,8 +4,8 @@ import chai from 'chai';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 import {APIGatewayService} from '../../../lib.compiled/Provisioning/Service/APIGatewayService';
-import {ProvisioningInstanceMock} from '../../../mock/Provisioning/ProvisioningInstanceMock';
-import {PropertyInstanceMock} from '../../../mock/Property/PropertyInstanceMock';
+import {ProvisioningInstanceMock} from '../../mock/Provisioning/ProvisioningInstanceMock';
+import {PropertyInstanceMock} from '../../mock/Property/PropertyInstanceMock';
 import Core from 'deep-core';
 import {ObjectStorage} from 'deep-core/lib.compiled/Generic/ObjectStorage';
 
@@ -124,22 +124,6 @@ suite('Provisioning/Service/APIGatewayService', function() {
     }
 
     chai.expect(e).to.be.equal(null);
-  });
-
-  test('Check _setup() method returns this._ready="true" for isUpdate', function() {
-    let e = null;
-    apiGatewayService._ready = false;
-    apiGatewayService._isUpdate = true;
-    let actualResult = null;
-
-    try {
-      actualResult = apiGatewayService._setup(objectStorage);
-    } catch (exception) {
-      e = exception;
-    }
-
-    chai.expect(e).to.be.equal(null);
-    chai.expect(actualResult._ready).to.be.equal(true);
   });
 
   test('Check _postProvision() method returns this._readyTeardown="true" for isUpdate', function() {
