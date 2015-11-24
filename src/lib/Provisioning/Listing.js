@@ -109,8 +109,8 @@ export class Listing {
     // @todo: replace with native API when ready
     if (name === 'APIGateway') {
       return new AwsApiGatewayClient({
-        accessKeyId: config.aws.accessKeyId,
-        secretAccessKey: config.aws.secretAccessKey,
+        accessKeyId: this._property.config.aws.accessKeyId,
+        secretAccessKey: this._property.config.aws.secretAccessKey,
         region: appropriateRegion,
       });
     }
