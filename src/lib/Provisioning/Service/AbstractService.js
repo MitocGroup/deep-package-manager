@@ -316,7 +316,7 @@ export class AbstractService extends Core.OOP.Interface {
    * @returns {String}
    */
   static extractBaseHashFromResourceName(resourceName) {
-    let rawRegexp = `^${AbstractService.AWS_RESOURCES_PREFIX}.+([a-z0-9]{${AbstractService.MAIN_HASH_SIZE})$`;
+    let rawRegexp = `^${AbstractService.AWS_RESOURCES_PREFIX}.+([a-z0-9]{${AbstractService.MAIN_HASH_SIZE}})$`;
     let matches = resourceName.match(new RegExp(rawRegexp, 'i'));
 
     if (!matches) {

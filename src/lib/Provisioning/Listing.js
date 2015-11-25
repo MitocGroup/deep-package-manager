@@ -16,9 +16,7 @@ export class Listing {
    */
   constructor(property) {
     this._property = property;
-    this._hash = null;
-
-    this._fillHash();
+    this._hash = this._generateHash();
   }
 
   /**
@@ -77,17 +75,24 @@ export class Listing {
   }
 
   /**
-   * @returns {String}
+   * @returns {String|RegExp}
    */
   get hash() {
     return this._hash;
   }
 
   /**
+   * @param {String|RegExp} hash
+   */
+  set hash(hash) {
+    this._hash = hash;
+  }
+
+  /**
    * @private
    */
-  _fillHash() {
-    this._hash = AbstractService.generateUniqueResourceHash(
+  _generateHash() {
+    return AbstractService.generateUniqueResourceHash(
       this._property.config.awsAccountId,
       this._property.identifier
     );
