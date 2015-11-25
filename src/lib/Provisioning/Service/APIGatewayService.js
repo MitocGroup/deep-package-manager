@@ -310,7 +310,7 @@ export class APIGatewayService extends AbstractService {
 
     let methodsParams = this._methodParamsGenerator(method, apiId, apiResources, integrationParams);
     let stackSize = methodsParams.length;
-    let resources = {};
+    let dataStack = {};
     let delay = 0;
 
     for (let key in methodsParams) {
@@ -321,17 +321,15 @@ export class APIGatewayService extends AbstractService {
       let params = methodsParams[key];
 
       setTimeout(() => {
-        resources[params.resourcePath] = {};
+        dataStack[params.resourcePath] = {};
 
-        this.apiGatewayClient[method](params).then((resource) => {
-          stackSize--;
-          resources[params.resourcePath][params.httpMethod] = resource;
-        }).catch((error) => {
-
-          stackSize--;
+        this.apiGatewayClient[method](params, (error, data) => {
           if (error) {
             throw new FailedToExecuteApiGatewayMethodException(method, params.resourcePath, params.httpMethod, error);
           }
+
+          dataStack[params.resourcePath][params.httpMethod] = data;
+          stackSize--;
         });
       }, delay);
 
@@ -343,7 +341,7 @@ export class APIGatewayService extends AbstractService {
     });
 
     wait.ready(() => {
-      callback(resources);
+      callback(dataStack);
     });
   }
 
@@ -354,19 +352,18 @@ export class APIGatewayService extends AbstractService {
    */
   _deployApi(apiId, callback) {
     let params = {
-      restapiId: apiId,
+      restApiId: apiId,
       stageName: this.stageName,
       stageDescription: `Stage for "${this.env}" environment`,
       description: `Deployed on ${new Date().toTimeString()}`,
     };
 
-    this.apiGatewayClient.createDeployment(params).then((deployment) => {
-      callback(deployment);
-    }).catch((error) => {
-
+    this.apiGatewayClient.createDeployment(params, (error, data) => {
       if (error) {
         throw new FailedToDeployApiGatewayException(apiId, error);
       }
+
+      callback(deployment);
     });
   }
 
@@ -427,7 +424,7 @@ export class APIGatewayService extends AbstractService {
         let commonParams = {
           resourcePath: resourcePath,
           httpMethod: resourceMethod,
-          restapiId: apiId,
+          restApiId: apiId,
           resourceId: apiResource.id,
         };
         let params = {};
@@ -844,11 +841,11 @@ export class APIGatewayService extends AbstractService {
 
   /**
    * @param {Array.<String>} paths
-   * @param {String} restapiId
+   * @param {String} restApiId
    * @param {Resource} rootResource
    * @param {Function} callback
    */
-  _createApiResourcesByPaths(paths, restapiId, rootResource, callback) {
+  _createApiResourcesByPaths(paths, restApiId, rootResource, callback) {
     if (paths.length <= 0) {
       callback(this._apiResources);
       return;
@@ -856,18 +853,18 @@ export class APIGatewayService extends AbstractService {
 
     let pathParts = paths[0].split('/').slice(1);
 
-    this._createApiChildResources(rootResource, pathParts, restapiId, (resources) => {
-      this._createApiResourcesByPaths(paths.slice(1), restapiId, rootResource, callback);
+    this._createApiChildResources(rootResource, pathParts, restApiId, (resources) => {
+      this._createApiResourcesByPaths(paths.slice(1), restApiId, rootResource, callback);
     });
   }
 
   /**
    * @param {Resource} parentResource
    * @param {Array.<String>} pathParts
-   * @param {String} restapiId
+   * @param {String} restApiId
    * @param {Function} callback
    */
-  _createApiChildResources(parentResource, pathParts, restapiId, callback) {
+  _createApiChildResources(parentResource, pathParts, restApiId, callback) {
     if (pathParts.length <= 0) {
       callback(this._apiResources);
       return;
@@ -875,14 +872,14 @@ export class APIGatewayService extends AbstractService {
 
     let path = nodePath.join(parentResource.path, pathParts[0]);
 
-    this._findApiResourceByPath(path, restapiId, (resource) => {
+    this._findApiResourceByPath(path, restApiId, (resource) => {
       if (resource) {
-        this._createApiChildResources(resource, pathParts.slice(1), restapiId, callback);
+        this._createApiChildResources(resource, pathParts.slice(1), restApiId, callback);
       } else {
         let params = {
           parentId: parentResource.id,
           pathPart: pathParts[0],
-          restApiId: restapiId,
+          restApiId: restApiId,
         };
 
         this.apiGatewayClient.createResource(params, (error, resource) => {
@@ -891,7 +888,7 @@ export class APIGatewayService extends AbstractService {
           }
 
           this._apiResources[resource.path] = resource;
-          this._createApiChildResources(resource, pathParts.slice(1), restapiId, callback);
+          this._createApiChildResources(resource, pathParts.slice(1), restApiId, callback);
         });
       }
     });
