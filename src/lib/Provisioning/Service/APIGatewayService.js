@@ -9,16 +9,18 @@ import Core from 'deep-core';
 import {WaitFor} from '../../Helpers/WaitFor';
 import {Exception} from '../../Exception/Exception';
 import {FailedToCreateApiGatewayException} from './Exception/FailedToCreateApiGatewayException';
-import {FailedToCreateApiResourcesException} from './Exception/FailedToCreateApiResourcesException';
+import {FailedToCreateApiResourceException} from './Exception/FailedToCreateApiResourceException';
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
 import {FailedToDeployApiGatewayException} from './Exception/FailedToDeployApiGatewayException';
 import {FailedToExecuteApiGatewayMethodException} from './Exception/FailedToExecuteApiGatewayMethodException';
+import {FailedToListApiResourcesException} from './Exception/FailedToListApiResourcesException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
 import Utils from 'util';
 import objectMerge from 'object-merge';
+import path from 'path';
 
 /**
  * APIGateway service
@@ -30,6 +32,7 @@ export class APIGatewayService extends AbstractService {
   constructor(...args) {
     super(...args);
 
+    this._apiResources = {};
     this._newApiResources = {};
   }
 
@@ -52,6 +55,13 @@ export class APIGatewayService extends AbstractService {
    */
   name() {
     return Core.AWS.Service.API_GATEWAY;
+  }
+
+  /**
+   * @returns {Object}
+   */
+  get apiGatewayClient() {
+    return this.provisioning.apiGateway;
   }
 
   /**
@@ -250,36 +260,15 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _createApi(metadata, callback) {
-    let apiGateway = this.provisioning.apiGateway;
-
-    apiGateway.createRestapi(metadata, (error, api) => {
+    this.apiGatewayClient.createRestapi(metadata, (error, api) => {
       if (error) {
         throw new FailedToCreateApiGatewayException(metadata.name, error);
       }
 
       // generate base url for created API coz it's not returned by createRestapi method
-      api.baseUrl = this._generateApiBaseUrl(api.id, apiGateway.region, this.stageName);
+      api.baseUrl = this._generateApiBaseUrl(api.id, this.apiGatewayClient.region, this.stageName);
 
       callback(api);
-    });
-  }
-
-  /**
-   * @param {Array} resourcePaths
-   * @param {String} restApiId
-   * @param {Function} callback
-   */
-  _createApiResources(resourcePaths, restApiId, callback) {
-    let apiGateway = this.provisioning.apiGateway;
-    let params = {
-      paths: resourcePaths,
-      restapiId: restApiId,
-    };
-
-    apiGateway.createResources(params).then((resources) => {
-      callback(resources);
-    }).catch((error) => {
-      throw new FailedToCreateApiResourcesException(resourcePaths, error);
     });
   }
 
@@ -317,7 +306,6 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _executeProvisionMethod(method, apiId, apiResources, integrationParams, callback) {
-    let apiGateway = this.provisioning.apiGateway;
     let wait = new WaitFor();
 
     let methodsParams = this._methodParamsGenerator(method, apiId, apiResources, integrationParams);
@@ -335,7 +323,7 @@ export class APIGatewayService extends AbstractService {
       setTimeout(() => {
         resources[params.resourcePath] = {};
 
-        apiGateway[method](params).then((resource) => {
+        this.apiGatewayClient[method](params).then((resource) => {
           stackSize--;
           resources[params.resourcePath][params.httpMethod] = resource;
         }).catch((error) => {
@@ -365,8 +353,6 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _deployApi(apiId, callback) {
-    let apiGateway = this.provisioning.apiGateway;
-
     let params = {
       restapiId: apiId,
       stageName: this.stageName,
@@ -374,7 +360,7 @@ export class APIGatewayService extends AbstractService {
       description: `Deployed on ${new Date().toTimeString()}`,
     };
 
-    apiGateway.createDeployment(params).then((deployment) => {
+    this.apiGatewayClient.createDeployment(params).then((deployment) => {
       callback(deployment);
     }).catch((error) => {
 
@@ -567,7 +553,7 @@ export class APIGatewayService extends AbstractService {
         continue;
       }
 
-      let rawResource = rawResources[rawResourceKey].source;
+      let rawResource = rawResources[rawResourceKey];
 
       resourcesMetadata[rawResource.path] = {
         id: rawResource.id,
@@ -804,7 +790,7 @@ export class APIGatewayService extends AbstractService {
    */
   getAllEndpointsArn() {
     let apiId = this._config.api.id;
-    let apiRegion = this.provisioning.apiGateway.region;
+    let apiRegion = this.apiGatewayClient.region;
     let resourcesPaths = this._config.api.hasOwnProperty('resources') ? Object.keys(this._config.api.resources) : [];
     let arns = [];
 
@@ -843,5 +829,107 @@ export class APIGatewayService extends AbstractService {
     }
 
     return statement;
+  }
+
+  /**
+   * @param {Array.<String>} paths
+   * @param {String} restApiId
+   * @param {Function} callback
+   */
+  _createApiResources(paths, restApiId, callback) {
+    this._findApiResourceByPath('/', restApiId, (rootResource) => {
+      this._createApiResourcesByPaths(paths, restApiId, rootResource, callback);
+    });
+  }
+
+  /**
+   * @param {Array.<String>} paths
+   * @param {String} restapiId
+   * @param {Resource} rootResource
+   * @param {Function} callback
+   */
+  _createApiResourcesByPaths(paths, restapiId, rootResource, callback) {
+    if (paths.length <= 0) {
+      callback(this._apiResources);
+      return;
+    }
+
+    let pathParts = paths[0].split('/').slice(1);
+
+    this._createApiChildResources(rootResource, pathParts, restapiId, (resources) => {
+      this._createApiResourcesByPaths(paths.slice(1), restapiId, rootResource, callback);
+    });
+  }
+
+  /**
+   * @param {Resource} parentResource
+   * @param {Array.<String>} pathParts
+   * @param {String} restapiId
+   * @param {Function} callback
+   */
+  _createApiChildResources(parentResource, pathParts, restapiId, callback) {
+    if (pathParts.length <= 0) {
+      callback(this._apiResources);
+      return;
+    }
+
+    let path = path.join(parentResource.path, pathParts[0]);
+
+    this._findApiResourceByPath(path, restapiId, (resource) => {
+      if (resource) {
+        this._createApiChildResources(resource, pathParts.slice(1), restapiId, callback);
+      } else {
+        let params = {
+          parentId: parentResource.id,
+          pathPart: pathParts[0],
+          restApiId: restapiId,
+        };
+
+        this.apiGatewayClient.createResource(params, (error, resource) => {
+          if (error) {
+            throw new FailedToCreateApiResourceException(params.pathPart, error);
+          }
+
+          this._apiResources[resource.path] = resource;
+          this._createApiChildResources(resource, pathParts.slice(1), restapiId, callback);
+        });
+      }
+    });
+  }
+
+  /**
+   * @param {String} path
+   * @param {String} restApiId
+   * @param {Function} callback
+   */
+  _findApiResourceByPath(path, restApiId, callback) {
+    let matchedResource = this._apiResources.hasOwnProperty(path) ? this._apiResources[path] : null;
+
+    if (matchedResource) {
+      callback(matchedResource);
+      return;
+    }
+
+    let params = {
+      restApiId: restApiId,
+      limit: 500,
+    };
+
+    // fetches mainly root resource that is automatically created along with restApi
+    this.apiGatewayClient.getResources(params, (error, data) => {
+      if (error) {
+        throw new FailedToListApiResourcesException(restApiId, error);
+      }
+
+      data.items.forEach((resource) => {
+        this._apiResources[resource.path] = resource;
+      });
+
+      if (this._apiResources.hasOwnProperty(path)) {
+        matchedResource = this._apiResources[path];
+      }
+
+      callback(matchedResource);
+    });
   }
 }
