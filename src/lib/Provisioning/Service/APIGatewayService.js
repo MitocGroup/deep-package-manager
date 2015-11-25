@@ -20,7 +20,7 @@ import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
 import Utils from 'util';
 import objectMerge from 'object-merge';
-import path from 'path';
+import nodePath from 'path';
 
 /**
  * APIGateway service
@@ -260,12 +260,12 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _createApi(metadata, callback) {
-    this.apiGatewayClient.createRestapi(metadata, (error, api) => {
+    this.apiGatewayClient.createRestApi(metadata, (error, api) => {
       if (error) {
         throw new FailedToCreateApiGatewayException(metadata.name, error);
       }
 
-      // generate base url for created API coz it's not returned by createRestapi method
+      // generate base url for created API coz it's not returned by createRestApi method
       api.baseUrl = this._generateApiBaseUrl(api.id, this.apiGatewayClient.region, this.stageName);
 
       callback(api);
@@ -873,7 +873,7 @@ export class APIGatewayService extends AbstractService {
       return;
     }
 
-    let path = path.join(parentResource.path, pathParts[0]);
+    let path = nodePath.join(parentResource.path, pathParts[0]);
 
     this._findApiResourceByPath(path, restapiId, (resource) => {
       if (resource) {
