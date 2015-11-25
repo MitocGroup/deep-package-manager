@@ -64,16 +64,14 @@ export class Instance {
    */
   verifyProvisioningCollisions(callback, throwError = true) {
     this.getProvisioningCollisions((error, resources) => {
-      error = error ||
-        (resources
-          ? new ProvisioningCollisionsDetectedException(
-              resources,
-              AbstractService.generateUniqueResourceHash(
-                this.config.awsAccountId,
-                this.identifier
-              )
-            )
-          : null);
+      if (!error && resources) {
+        let mainHash = AbstractService.generateUniqueResourceHash(
+          this.config.awsAccountId,
+          this.identifier
+        );
+
+        error = new ProvisioningCollisionsDetectedException(resources, mainHash);
+      }
 
       if (error && throwError) {
         throw error;

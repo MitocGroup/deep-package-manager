@@ -2,7 +2,7 @@
  * Created by AlexanderC on 5/25/15.
  */
 
-"use strict";
+'use strict';
 
 import {Exception} from '../../Exception/Exception';
 import OS from 'os';
