@@ -218,7 +218,21 @@ export class AbstractService extends Core.OOP.Interface {
    * @returns {String}
    */
   getUniqueHash(microserviceIdentifier = '') {
-    let globId = Hash.crc32(this.awsAccountId + this.appIdentifier);
+    return AbstractService.generateUniqueResourceHash(
+      this.awsAccountId,
+      this.appIdentifier,
+      microserviceIdentifier
+    );
+  }
+
+  /**
+   * @param {String} awsAccountId
+   * @param {String} appIdentifier
+   * @param {String} microserviceIdentifier
+   * @returns {String}
+   */
+  static generateUniqueResourceHash(awsAccountId, appIdentifier, microserviceIdentifier = '') {
+    let globId = Hash.crc32(`${awsAccountId}${appIdentifier}`);
 
     return microserviceIdentifier ? `${Hash.loseLoseMod(microserviceIdentifier)}${globId}` : globId;
   }
@@ -302,7 +316,7 @@ export class AbstractService extends Core.OOP.Interface {
    * @returns {String}
    */
   static extractBaseHashFromResourceName(resourceName) {
-    let rawRegexp = `^${AbstractService.AWS_RESOURCES_PREFIX}.+([a-z0-9]{8})$`;
+    let rawRegexp = `^${AbstractService.AWS_RESOURCES_PREFIX}.+([a-z0-9]{${AbstractService.MAIN_HASH_SIZE})$`;
     let matches = resourceName.match(new RegExp(rawRegexp, 'i'));
 
     if (!matches) {
@@ -313,9 +327,16 @@ export class AbstractService extends Core.OOP.Interface {
   }
 
   /**
+   * @returns {Number}
+   */
+  static get MAIN_HASH_SIZE() {
+    return 8;
+  }
+
+  /**
    * @param {String} resourceName
    * @param {String} awsService
-   * @param {Integer} nameTplLength
+   * @param {Number} nameTplLength
    */
   static sliceNameToAwsLimits(resourceName, awsService, nameTplLength) {
     let slicedName = resourceName;
