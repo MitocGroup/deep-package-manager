@@ -78,8 +78,7 @@
     "find-assets": "^0.3.x",
     "css-find-assets": "MitocGroup/css-find-assets",
     "css-parse": "^2.0.x",
-    "readline-sync": "^1.2.x",
-    "aws-api-gw-client": "^0.1.x"
+    "readline-sync": "^1.2.x"
   },
   "devDependencies": {
     "aws-sdk": "^2.2.x",
