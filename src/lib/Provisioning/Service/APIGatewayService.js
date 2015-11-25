@@ -733,7 +733,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {string}
    */
   get templateForMockIntegration() {
-    return '{"statusCode": "200"}';
+    return '{"statusCode": 200}';
   }
 
   /**
