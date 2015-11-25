@@ -23,11 +23,9 @@ export class APIGatewayDriver extends AbstractDriver {
 
   /**
    * @param {Function} cb
-   * @param {Object} rawResourcesObj
+   * @param {Object} resources
    */
-  execute(cb, rawResourcesObj) {
-    let resources = this._extractResources(rawResourcesObj);
-
+  _execute(cb, resources) {
     for (let i in resources) {
       if (!resources.hasOwnProperty(i)) {
         continue;
@@ -35,7 +33,7 @@ export class APIGatewayDriver extends AbstractDriver {
 
       let resourceInfo = resources[i];
 
-      console.log(this.service(), i, resourceInfo); //@todo:remove
+      console.log(this.service(), i); //@todo:remove
     }
 
     cb(null);

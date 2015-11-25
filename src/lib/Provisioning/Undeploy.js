@@ -16,11 +16,27 @@ import {OptimisticMatcher} from './UndeployMatcher/OptimisticMatcher';
 export class Undeploy {
   /**
    * @param {Property|Object} property
+   * @param {Boolean} debug
    * @param {AbstractMatcher} matcher
    */
-  constructor(property, matcher = Undeploy.DEFAULT_MATCHER) {
+  constructor(property, debug = false, matcher = Undeploy.DEFAULT_MATCHER) {
     this._property = property;
     this._matcher = matcher;
+    this._debug = debug;
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  get debug() {
+    return this._debug;
+  }
+
+  /**
+   * @param {Boolean} state
+   */
+  set debug(state) {
+    this._debug = state;
   }
 
   /**
@@ -75,7 +91,7 @@ export class Undeploy {
           let service = this._createAwsService(serviceName);
           let ServiceUndeployProto = require(`./UndeployDriver/${serviceName}Driver`)[`${serviceName}Driver`];
 
-          let serviceUndeploy = new ServiceUndeployProto(service, this._hash);
+          let serviceUndeploy = new ServiceUndeployProto(service, this._debug);
 
           serviceUndeploy.execute((error) => {
             servicesRemaining--;

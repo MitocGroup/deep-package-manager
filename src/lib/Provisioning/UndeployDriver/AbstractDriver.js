@@ -21,6 +21,61 @@ export class AbstractDriver extends Core.OOP.Interface {
   }
 
   /**
+   * @param {Function} cb
+   * @param {Object} rawResourcesObj
+   * @returns {AbstractDriver}
+   */
+  execute(cb, rawResourcesObj) {
+    let resources = this._extractResources(rawResourcesObj);
+
+    this._log(`Starting undeploy for ${this.service()}`);
+
+    this._execute((error) => {
+      let removedResources = error ? null : this.extractResetStack;
+
+      if (removedResources && removedResources.length > 0) {
+        this._log(`There are ${removedResources.length} resources removed for ${this.service()}`);
+      } else if(!error) {
+        this._log(`No resources to remove for ${this.service()}`);
+      } else {
+        this._logError(`An error occurred when working with ${this.service()}: ${error}`);
+      }
+
+      cb(error, removedResources);
+    }, resources);
+
+    return this;
+  }
+
+  /**
+   * @param {String} resourceId
+   * @private
+   */
+  _pushStack(resourceId) {
+    this._log(`Removing resource #${resourceId} from ${this.service()}`);
+
+    this._stack.push(resourceId);
+  }
+
+  /**
+   * @returns {Object}
+   */
+  get extractResetStack() {
+    let stack = this._stack;
+
+    this._stack = [];
+
+    return stack;
+  }
+
+  /**
+   * @returns {Object}
+   */
+  get awsService() {
+    return this._awsService;
+  }
+
+  /**
    * @returns {Boolean}
    */
   get debug() {
@@ -61,63 +116,13 @@ export class AbstractDriver extends Core.OOP.Interface {
   }
 
   /**
-   * @param {Function} cb
-   * @param {Object} rawResourcesObj
-   * @returns {AbstractDriver}
-   */
-  execute(cb, rawResourcesObj) {
-    let resources = this._extractResources(rawResourcesObj);
-
-    this._logHeader();
-
-    this._execute((error) => {
-      let removedResources = error ? null : this.extractResetStack;
-
-      if (removedResources) {
-        this._log(`There are ${removedResources.length} resources removed for ${this.service()}`);
-      } else {
-        this._log(`There a no matching resources for ${this.service()}`);
-      }
-
-      cb(error, removedResources);
-    }, resources);
-
-    return this;
-  }
-
-  /**
-   * @param {String} resourceId
+   * @todo: abstract this?
+   *
+   * @param {*} args
    * @private
    */
-  _pushStack(resourceId) {
-    this._log(`Removing resource #${resourceId} from ${this.service()}`);
-
-    this._stack.push(resourceId);
-  }
-
-  /**
-   * @returns {Object}
-   */
-  get extractResetStack() {
-    let stack = this._stack;
-
-    this._stack = [];
-
-    return stack;
-  }
-
-  /**
-   * @returns {Object}
-   */
-  get awsService() {
-    return this._awsService;
-  }
-
-  /**
-   * @private
-   */
-  _logHeader() {
-    this._log(`Starting undeploy for ${this.service()}`);
+  _log(...args) {
+    this._debug && console.log(...args);
   }
 
   /**
@@ -126,7 +131,7 @@ export class AbstractDriver extends Core.OOP.Interface {
    * @param {*} args
    * @private
    */
-  _log(...args) {
-    this._debug && console.log(...args);
+  _logError(...args) {
+    this._debug && console.error(...args);
   }
 }
