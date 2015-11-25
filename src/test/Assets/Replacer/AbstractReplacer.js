@@ -8,19 +8,19 @@ import {AbstractReplacerMock} from '../../mock/Assets/Replacer/AbstractReplacerM
 
 chai.use(sinonChai);
 
-suite('Assets/Replacer/AbstractReplacer', function () {
+suite('Assets/Replacer/AbstractReplacer', function() {
   let version = 'test_version';
   let abstractReplacer = new AbstractReplacerMock(version);
 
-  test('Class AbstractReplacer exists in Assets/Replacer/AbstractReplacer', function () {
+  test('Class AbstractReplacer exists in Assets/Replacer/AbstractReplacer', function() {
     chai.expect(typeof AbstractReplacer).to.equal('function');
   });
 
-  test('Check constructor sets version', function () {
+  test('Check constructor sets version', function() {
     chai.expect(abstractReplacer.version).to.equal(version);
   });
 
-  test('Check replace() method', function () {
+  test('Check replace() method', function() {
     chai.expect(abstractReplacer.replace().isReplaced).to.equal(true);
   });
 });
