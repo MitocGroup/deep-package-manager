@@ -5,7 +5,7 @@ import {AssetReplacer} from '../../lib.compiled/Assets/AssetReplacer';
 import {UrlReplacer} from '../../lib.compiled/Assets/Replacer/UrlReplacer';
 import {AbstractReplacerMock} from '../mock/Assets/Replacer/AbstractReplacerMock'
 import {AbstractReplacer} from '../../lib.compiled/Assets/Replacer/AbstractReplacer';
-import fs from 'fs';
+import fsExtra from 'fs-extra';
 
 suite('Assets/AssetReplacer', function() {
   let version = 'test_version';
@@ -94,38 +94,33 @@ suite('Assets/AssetReplacer', function() {
 
   test('Check replace() returns valid istance AssetReplace', function() {
     //arrange
-    let cssContent = '@font-face { font-family: "Bitstream Vera Serif Bold";' +
-      'src: url("VeraSeBd.ttf");} body { background-image: url(images/foo.png);}';
-    let htmlContent = '<body>' +
-      '<img src="../foo.jpg">' +
-      '<p>hi</p>' +
-      '<script src="scripts/x.js"></script>' +
-      '<script src="scripts/y.js"></script>' +
-      '<link rel=stylesheet href="/styles/thing.css">' +
-      '</body>';
-    let expectedCssResult = '@font-face { font-family: "Bitstream Vera Serif Bold";' +
-      'src: url("VeraSeBd.ttf?replaced_version");} ' +
-      'body { background-image: url(images/foo.png?replaced_version);}';
-    let expectedHtmlResult = '<body><img src="../foo.jpg?replaced_version"><p>hi</p>' +
-      '<script src="scripts/x.js?replaced_version"></script>' +
-      '<script src="scripts/y.js?replaced_version"></script>' +
-      '<link rel=stylesheet href="/styles/thing.css?replaced_version"></body>';
-    let cssFile = './test/testMaterials/assets/test.css';
-    let htmlFile = './test/testMaterials/assets/test.html';
+    let rawCssFilePath = './test/testMaterials/assets/rawFiles/data.css';
+    let rawHtmlFilePath = './test/testMaterials/assets/rawFiles/data.html';
+    let testCssFilePath = './test/testMaterials/assets/testFiles/data.css';
+    let testHtmlFilePath = './test/testMaterials/assets/testFiles/data.html';
+
+    fsExtra.copySync(rawCssFilePath, testCssFilePath);
+    fsExtra.copySync(rawHtmlFilePath, testHtmlFilePath);
+
+    let expectedCssResult = fsExtra.readFileSync('./test/testMaterials/assets/expectedResults/data.css', 'utf8');
+    let expectedHtmlResult = fsExtra.readFileSync('./test/testMaterials/assets/expectedResults/data.html', 'utf8');
+
     let testVersion = 'replaced_version';
     let replacer = new UrlReplacer(testVersion);
-    fs.writeFileSync(cssFile, cssContent);
-    fs.writeFileSync(htmlFile, htmlContent);
+
     assetReplacer.addReplacer(replacer);
 
     //act
-    let actualResult = assetReplacer.replace(cssFile, htmlFile);
+    let actualResult = assetReplacer.replace(testCssFilePath, testHtmlFilePath);
 
     //asserts
-    let actualCssResult = fs.readFileSync(cssFile, 'utf8');
-    let actualHtmlResult = fs.readFileSync(htmlFile, 'utf8');
+    let actualCssResult = fsExtra.readFileSync(testCssFilePath, 'utf8');
+    let actualHtmlResult = fsExtra.readFileSync(testHtmlFilePath, 'utf8');
 
     chai.expect(actualCssResult).to.eql(expectedCssResult);
     chai.expect(actualHtmlResult).to.eql(expectedHtmlResult);
+
+    //remove temp test files
+    fsExtra.removeSync('./test/testMaterials/assets/testFiles');
   });
 });

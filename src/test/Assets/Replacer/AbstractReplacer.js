@@ -1,12 +1,8 @@
 'use strict';
 
 import chai from 'chai';
-import sinon from 'sinon';
-import sinonChai from 'sinon-chai';
 import {AbstractReplacer} from '../../../lib.compiled/Assets/Replacer/AbstractReplacer';
 import {AbstractReplacerMock} from '../../mock/Assets/Replacer/AbstractReplacerMock'
-
-chai.use(sinonChai);
 
 suite('Assets/Replacer/AbstractReplacer', function() {
   let version = 'test_version';

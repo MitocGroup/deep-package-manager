@@ -2,18 +2,24 @@
 
 import chai from 'chai';
 import {UrlReplacer} from '../../../lib.compiled/Assets/Replacer/UrlReplacer';
+import cssExpectedResult from '../../testMaterials/assets/expectedResults/content.css';
+import htmlExpectedResult from '../../testMaterials/assets/expectedResults/content.html';
+import fsExtra from 'fs-extra';
 
 suite('Assets/Replacer/UrlReplacer', function() {
-  let version = 'test_version';
+  let version = 'replaced_version';
   let urlReplacer = new UrlReplacer(version);
-  let cssContent = '.test { background-image: url("test.png"); }';
-  let htmlContent = '<body>' +
-    '<img src="../foo.jpg">' +
-    '<p>hi</p>' +
-    '<script src="scripts/x.js"></script>' +
-    '<script src="scripts/y.js"></script>' +
-    '<link rel=stylesheet href="/styles/thing.css">' +
-    '</body>';
+
+  let rawCssFilePath = './test/testMaterials/assets/rawFiles/data.css';
+  let rawHtmlFilePath = './test/testMaterials/assets/rawFiles/data.html';
+  let testCssFilePath = './test/testMaterials/assets/testFiles/data.css';
+  let testHtmlFilePath = './test/testMaterials/assets/testFiles/data.html';
+
+  fsExtra.copySync(rawCssFilePath, testCssFilePath);
+  fsExtra.copySync(rawHtmlFilePath, testHtmlFilePath);
+
+  let cssContent = fsExtra.readFileSync(testCssFilePath, 'utf8');
+  let htmlContent = fsExtra.readFileSync(testHtmlFilePath, 'utf8');
 
   test('Class UrlReplacer exists in Assets/Replacer/UrlReplacer', function() {
     chai.expect(typeof UrlReplacer).to.equal('function');
@@ -45,45 +51,33 @@ suite('Assets/Replacer/UrlReplacer', function() {
   });
 
   test('Check _parseHtml() returns valid object', function() {
-    let expectedResult = {
-      '<img src="../foo.jpg">': '../foo.jpg',
-      '<link rel=stylesheet href="/styles/thing.css">': '/styles/thing.css',
-      '<script src="scripts/x.js"></script>': 'scripts/x.js',
-      '<script src="scripts/y.js"></script>': 'scripts/y.js',
-    };
-
     let actualResult = UrlReplacer._parseHtml(htmlContent);
 
-    chai.expect(actualResult).to.eql(expectedResult);
+    chai.expect(actualResult).to.eql(htmlExpectedResult);
   });
 
   test('Check _parseCss() and returns valid object', function() {
-    let expectedResult = {'url("test.png")': 'test.png'};
-
     let actualResult = UrlReplacer._parseCss(cssContent);
 
-    chai.expect(actualResult).to.eql(expectedResult);
+    chai.expect(actualResult).to.eql(cssExpectedResult);
   });
 
   test('Check _replace() calls _parseHtml() and returns valid object', function() {
     let extension = 'html';
-    let expectedResult = '<body><img src="../foo.jpg?test_version"><p>hi</p>' +
-      '<script src="scripts/x.js?test_version"></script><script src="scripts/y.js?test_version"></script>' +
-      '<link rel=stylesheet href="/styles/thing.css?test_version"></body>';
+    let expectedHtmlResult = fsExtra.readFileSync('./test/testMaterials/assets/expectedResults/data.html', 'utf8');
 
     let actualResult = urlReplacer._replace(htmlContent, extension);
 
-    chai.expect(actualResult).to.eql(expectedResult);
+    chai.expect(actualResult).to.eql(expectedHtmlResult);
   });
 
   test('Check _replace() calls _parseCss() and returns valid object', function() {
-
     let extension = 'css';
-    let expectedResult = '.test { background-image: url("test.png?test_version"); }';
+    let expectedCssResult = fsExtra.readFileSync('./test/testMaterials/assets/expectedResults/data.css', 'utf8');
 
     let actualResult = urlReplacer._replace(cssContent, extension);
 
-    chai.expect(actualResult).to.eql(expectedResult);
+    chai.expect(actualResult).to.eql(expectedCssResult);
   });
 
   test('Check _replace throws error for invalid extension', function() {
