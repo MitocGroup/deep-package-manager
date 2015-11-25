@@ -266,7 +266,7 @@ export class APIGatewayService extends AbstractService {
       }
 
       // generate base url for created API coz it's not returned by createRestApi method
-      api.baseUrl = this._generateApiBaseUrl(api.id, this.apiGatewayClient.region, this.stageName);
+      api.baseUrl = this._generateApiBaseUrl(api.id, this.apiGatewayClient.config.region, this.stageName);
 
       callback(api);
     });
@@ -787,7 +787,7 @@ export class APIGatewayService extends AbstractService {
    */
   getAllEndpointsArn() {
     let apiId = this._config.api.id;
-    let apiRegion = this.apiGatewayClient.region;
+    let apiRegion = this.apiGatewayClient.config.region;
     let resourcesPaths = this._config.api.hasOwnProperty('resources') ? Object.keys(this._config.api.resources) : [];
     let arns = [];
 
