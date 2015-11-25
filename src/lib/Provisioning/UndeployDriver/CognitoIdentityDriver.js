@@ -28,6 +28,10 @@ export class CognitoIdentityDriver extends AbstractDriver {
    * @private
    */
   _removeResource(resourceId, resourceData, cb) {
-    cb(null);
+    this._awsService.deleteIdentityPool({
+      IdentityPoolId: resourceId,
+    }, (error) => {
+      cb(error);
+    });
   }
 }

@@ -28,6 +28,10 @@ export class DynamoDBDriver extends AbstractDriver {
    * @private
    */
   _removeResource(resourceId, resourceData, cb) {
-    cb(null);
+    this._awsService.deleteTable({
+      TableName: resourceId,
+    }, (error) => {
+      cb(error);
+    });
   }
 }

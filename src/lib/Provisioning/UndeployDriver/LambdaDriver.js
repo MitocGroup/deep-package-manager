@@ -28,6 +28,10 @@ export class LambdaDriver extends AbstractDriver {
    * @private
    */
   _removeResource(resourceId, resourceData, cb) {
-    cb(null);
+    this._awsService.deleteFunction({
+      FunctionName: resourceId,
+    }, (error) => {
+      cb(error);
+    });
   }
 }

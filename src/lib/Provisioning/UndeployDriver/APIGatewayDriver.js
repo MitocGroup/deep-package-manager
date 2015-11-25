@@ -28,6 +28,13 @@ export class APIGatewayDriver extends AbstractDriver {
    * @private
    */
   _removeResource(resourceId, resourceData, cb) {
-    cb(null);
+    this._awsService
+      .deleteRestapi({restapiId: resourceId})
+      .then(() => {
+        cb(null);
+      })
+      .catch((error) => {
+        cb(error);
+      });
   }
 }
