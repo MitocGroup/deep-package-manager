@@ -6,6 +6,7 @@
 
 import Core from 'deep-core';
 import {AbstractService} from '../Service/AbstractService';
+import {WaitFor} from '../../Helpers/WaitFor';
 
 export class AbstractDriver extends Core.OOP.Interface {
   /**
@@ -13,7 +14,7 @@ export class AbstractDriver extends Core.OOP.Interface {
    * @param {Boolean} debug
    */
   constructor(awsService, debug = false) {
-    super(['_execute', 'service']);
+    super(['_removeResource', 'service']);
 
     this._awsService = awsService;
     this._debug = debug;
@@ -34,7 +35,7 @@ export class AbstractDriver extends Core.OOP.Interface {
       let removedResources = error ? null : this.extractResetStack;
 
       if (removedResources && removedResources.length > 0) {
-        this._log(`There are ${removedResources.length} resources removed for ${this.service()}`);
+        this._log(`There are ${removedResources.length} resources removed from ${this.service()}`);
       } else if(!error) {
         this._log(`No resources to remove for ${this.service()}`);
       } else {
@@ -45,6 +46,44 @@ export class AbstractDriver extends Core.OOP.Interface {
     }, resources);
 
     return this;
+  }
+
+  /**
+   * @param {Function} cb
+   * @param {Object} resources
+   */
+  _execute(cb, resources) {
+    let wait = new WaitFor();
+    let resourcesRemaining = resources.length;
+
+    wait.push(() => {
+      return resourcesRemaining <= 0;
+    });
+
+    for (let i in resources) {
+      if (!resources.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let resourceInfo = resources[i];
+      let resourceId = resourceInfo.id;
+      let resourceData = resourceInfo.data;
+
+      this._removeResource(resourceId, resourceData, (error) => {
+        resourcesRemaining--;
+
+        if (!error) {
+          this._pushStack(resourceId);
+          return;
+        }
+
+        this._logError(`Error while removing resource #${resourceId}: ${error}`);
+      });
+    }
+
+    wait.ready(() => {
+      cb(null);
+    });
   }
 
   /**

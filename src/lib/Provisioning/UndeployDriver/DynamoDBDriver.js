@@ -22,20 +22,12 @@ export class DynamoDBDriver extends AbstractDriver {
   }
 
   /**
+   * @param {String} resourceId
+   * @param {Object} resourceData
    * @param {Function} cb
-   * @param {Object} resources
+   * @private
    */
-  _execute(cb, resources) {
-    for (let i in resources) {
-      if (!resources.hasOwnProperty(i)) {
-        continue;
-      }
-
-      let resourceInfo = resources[i];
-
-      console.log(this.service(), i); //@todo:remove
-    }
-
+  _removeResource(resourceId, resourceData, cb) {
     cb(null);
   }
 }
