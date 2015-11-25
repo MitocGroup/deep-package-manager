@@ -336,7 +336,7 @@ export class AbstractService extends Core.OOP.Interface {
   /**
    * @param {String} resourceName
    * @param {String} awsService
-   * @param {Integer} nameTplLength
+   * @param {Number} nameTplLength
    */
   static sliceNameToAwsLimits(resourceName, awsService, nameTplLength) {
     let slicedName = resourceName;
