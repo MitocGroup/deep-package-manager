@@ -20,6 +20,15 @@ export class ProvisioningCollisionsListingException extends Exception {
   }
 
   /**
+   * @returns {String}
+   */
+  get stringifiedErrorsObj() {
+    return ProvisioningCollisionsListingException._stringifyErrorsObj(
+      this._resourcesObj
+    );
+  }
+
+  /**
    * @param {Object} errorsObj
    * @returns {String}
    * @private

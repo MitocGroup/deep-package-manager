@@ -22,6 +22,15 @@ export class ProvisioningCollisionsDetectedException extends Exception {
   }
 
   /**
+   * @returns {String}
+   */
+  get stringifiedResourcesObj() {
+    return ProvisioningCollisionsDetectedException._stringifyResourcesObj(
+      this._resourcesObj
+    );
+  }
+
+  /**
    * @param {Object} resourcesObj
    * @returns {String}
    * @private
