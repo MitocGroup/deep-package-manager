@@ -313,22 +313,22 @@ export class APIGatewayService extends AbstractService {
     let dataStack = {};
     let delay = 0;
 
-    for (let key in methodsParams) {
-      if (!methodsParams.hasOwnProperty(key)) {
+    for (let resourcePath in methodsParams) {
+      if (!methodsParams.hasOwnProperty(resourcePath)) {
         continue;
       }
 
-      let params = methodsParams[key];
+      let params = methodsParams[resourcePath];
 
       setTimeout(() => {
-        dataStack[params.resourcePath] = {};
+        dataStack[resourcePath] = {};
 
         this.apiGatewayClient[method](params, (error, data) => {
           if (error) {
-            throw new FailedToExecuteApiGatewayMethodException(method, params.resourcePath, params.httpMethod, error);
+            throw new FailedToExecuteApiGatewayMethodException(method, resourcePath, params.httpMethod, error);
           }
 
-          dataStack[params.resourcePath][params.httpMethod] = data;
+          dataStack[resourcePath][params.httpMethod] = data;
           stackSize--;
         });
       }, delay);
@@ -402,11 +402,11 @@ export class APIGatewayService extends AbstractService {
    * @param {String} apiId
    * @param {Object} apiResources
    * @param {Object} integrationParams
-   * @returns {Array}
+   * @returns {Object}
    * @private
    */
   _methodParamsGenerator(method, apiId, apiResources, integrationParams) {
-    let paramsArr = [];
+    let paramsArr = {};
 
     for (let resourcePath in integrationParams) {
       if (!integrationParams.hasOwnProperty(resourcePath) || !apiResources.hasOwnProperty(resourcePath)) {
@@ -422,7 +422,6 @@ export class APIGatewayService extends AbstractService {
         }
 
         let commonParams = {
-          resourcePath: resourcePath,
           httpMethod: resourceMethod,
           restApiId: apiId,
           resourceId: apiResource.id,
@@ -462,7 +461,7 @@ export class APIGatewayService extends AbstractService {
             throw new Exception(`Unknown api method ${method}.`);
         }
 
-        paramsArr.push(Utils._extend(commonParams, params));
+        paramsArr[resourcePath] = Utils._extend(commonParams, params);
       }
     }
 
