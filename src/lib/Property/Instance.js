@@ -27,6 +27,10 @@ import {NoMatchingFrontendEngineException} from '../Dependencies/Exception/NoMat
 import {exec} from 'child_process';
 import OS from 'os';
 import objectMerge from 'object-merge';
+import {Listing} from '../Provisioning/Listing';
+import {ProvisioningCollisionsListingException} from './Exception/ProvisioningCollisionsListingException';
+import {ProvisioningCollisionsDetectedException} from './Exception/ProvisioningCollisionsDetectedException';
+import {AbstractService} from '../Provisioning/Service/AbstractService';
 
 /**
  * Property instance
@@ -51,6 +55,52 @@ export class Instance {
     this._isUpdate = false;
 
     this._microservicesToUpdate = [];
+  }
+
+  /**
+   * @param {Function} callback
+   * @param {Boolean} throwError
+   * @returns {Instance}
+   */
+  verifyProvisioningCollisions(callback, throwError = true) {
+    this.getProvisioningCollisions((error, resources) => {
+      if (!error && resources) {
+        let mainHash = AbstractService.generateUniqueResourceHash(
+          this.config.awsAccountId,
+          this.identifier
+        );
+
+        error = new ProvisioningCollisionsDetectedException(resources, mainHash);
+      }
+
+      if (error && throwError) {
+        throw error;
+      }
+
+      callback(error);
+    });
+
+    return this;
+  }
+
+  /**
+   * @param {Function} callback
+   * @returns {Instance}
+   */
+  getProvisioningCollisions(callback) {
+    let resourcesLister = new Listing(this);
+
+    resourcesLister.list((result) => {
+      if (Object.keys(result.errors).length > 0) {
+        callback(new ProvisioningCollisionsListingException(result.errors), null);
+      } else if (result.matchedResources <= 0) {
+        callback(null, null);
+      } else {
+        callback(null, result.resources);
+      }
+    });
+
+    return this;
   }
 
   /**
@@ -669,7 +719,27 @@ export class Instance {
       throw new InvalidArgumentException(callback, 'Function');
     }
 
-    console.log(`Start ${this._isUpdate ? 'updating' : 'installing'} application`);
+    if (!this._isUpdate) {
+      console.log(`Checking possible provisioning collisions for application #${this.identifier}`);
+
+      this.verifyProvisioningCollisions(() => {
+        console.log(`Start installing application #${this.identifier}`);
+
+        this.build(function() {
+          console.log(`Build is done`);
+
+          this.deploy(function() {
+            console.log(`Deploy is done`);
+
+            this.postDeploy(callback);
+          }.bind(this));
+        }.bind(this), skipProvision);
+      });
+
+      return this;
+    }
+
+    console.log(`Start updating application #${this.identifier}`);
 
     return this.build(function() {
       console.log(`Build is done`);
