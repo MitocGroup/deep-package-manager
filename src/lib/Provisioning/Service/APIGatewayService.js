@@ -313,12 +313,14 @@ export class APIGatewayService extends AbstractService {
     let dataStack = {};
     let delay = 0;
 
-    for (let resourcePath in methodsParams) {
-      if (!methodsParams.hasOwnProperty(resourcePath)) {
+    for (let key in methodsParams) {
+      if (!methodsParams.hasOwnProperty(key)) {
         continue;
       }
 
-      let params = methodsParams[resourcePath];
+      let params = methodsParams[key];
+      let resourcePath = params.resourcePath;
+      delete params.resourcePath;
 
       setTimeout(() => {
         dataStack[resourcePath] = {};
@@ -402,11 +404,11 @@ export class APIGatewayService extends AbstractService {
    * @param {String} apiId
    * @param {Object} apiResources
    * @param {Object} integrationParams
-   * @returns {Object}
+   * @returns {Array}
    * @private
    */
   _methodParamsGenerator(method, apiId, apiResources, integrationParams) {
-    let paramsArr = {};
+    let paramsArr = [];
 
     for (let resourcePath in integrationParams) {
       if (!integrationParams.hasOwnProperty(resourcePath) || !apiResources.hasOwnProperty(resourcePath)) {
@@ -422,6 +424,7 @@ export class APIGatewayService extends AbstractService {
         }
 
         let commonParams = {
+          resourcePath: resourcePath,
           httpMethod: resourceMethod,
           restApiId: apiId,
           resourceId: apiResource.id,
@@ -438,7 +441,7 @@ export class APIGatewayService extends AbstractService {
             break;
           case 'putMethodResponse':
             params = {
-              statusCode: 200,
+              statusCode: '200',
               responseModels: this.jsonEmptyModel,
               responseParameters: this._getMethodResponseParameters(resourceMethod),
             };
@@ -452,7 +455,7 @@ export class APIGatewayService extends AbstractService {
             break;
           case 'putIntegrationResponse':
             params = {
-              statusCode: 200,
+              statusCode: '200',
               responseTemplates: this.getJsonResponseTemplate(resourceMethod),
               responseParameters: this._getMethodResponseParameters(resourceMethod, Object.keys(resourceMethods)),
             };
@@ -461,7 +464,7 @@ export class APIGatewayService extends AbstractService {
             throw new Exception(`Unknown api method ${method}.`);
         }
 
-        paramsArr[resourcePath] = Utils._extend(commonParams, params);
+        paramsArr.push(Utils._extend(commonParams, params));
       }
     }
 
@@ -730,7 +733,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {string}
    */
   get templateForMockIntegration() {
-    return '{"statusCode": 200}';
+    return '{"statusCode": "200"}';
   }
 
   /**
