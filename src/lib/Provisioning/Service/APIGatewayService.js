@@ -365,7 +365,7 @@ export class APIGatewayService extends AbstractService {
         throw new FailedToDeployApiGatewayException(apiId, error);
       }
 
-      callback(deployment);
+      callback(data);
     });
   }
 
