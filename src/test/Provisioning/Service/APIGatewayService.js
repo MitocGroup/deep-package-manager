@@ -361,7 +361,7 @@ suite('Provisioning/Service/APIGatewayService', function() {
       },
       resourceId: 'test1Id',
       resourcePath: 'testTesourcePath1',
-      restapiId: 'testApiId',
+      restApiId: 'testApiId',
     };
     let integrationParams = {
       testTesourcePath1: {
@@ -394,7 +394,7 @@ suite('Provisioning/Service/APIGatewayService', function() {
 
     chai.expect(e).to.be.equal(null);
     chai.expect(actualResult.length).to.be.equal(8);
-    chai.expect(actualResult).to.be.contains(expectedResult);
+    chai.expect(actualResult).to.contains(expectedResult);
   });
 
   test('Check _extractApiResourcesMetadata() method returns valid array', function() {
@@ -422,12 +422,10 @@ suite('Provisioning/Service/APIGatewayService', function() {
         methods: [
           'POST',
         ],
-        source: {
-          id: 'createTestId',
-          parentId: 'parentCreateTestId',
-          path: 'src/Test/Create',
-          pathPart: 'createPathPart',
-        },
+        id: 'createTestId',
+        parentId: 'parentCreateTestId',
+        path: 'src/Test/Create',
+        pathPart: 'createPathPart',
       },
       update: {
         description: 'Lambda for updating test',
@@ -435,12 +433,10 @@ suite('Provisioning/Service/APIGatewayService', function() {
         methods: [
           'PUT',
         ],
-        source: {
-          id: 'updateTestId',
-          parentId: 'parentUpdateTestId',
-          path: 'src/Test/Update',
-          pathPart: 'updatePathPart',
-        },
+        id: 'updateTestId',
+        parentId: 'parentUpdateTestId',
+        path: 'src/Test/Update',
+        pathPart: 'updatePathPart',
       },
     };
 

@@ -18,7 +18,6 @@ import {ElasticacheService} from './Service/ElasticacheService';
 import {APIGatewayService} from './Service/APIGatewayService';
 import {Instance as PropertyInstance} from '../Property/Instance';
 import {WaitFor} from '../Helpers/WaitFor';
-import {Client as AwsApiGatewayClient} from 'aws-api-gw-client';
 
 /**
  * Provisioning instance
@@ -55,10 +54,7 @@ export class Instance {
       region: this.getAwsServiceRegion(CognitoIdentityService, property.config.awsRegion),
     });
 
-    // @todo - replace this client with AWS native one than it'll be available
-    this._apiGateway = new AwsApiGatewayClient({
-      accessKeyId: property.AWS.config.credentials.accessKeyId,
-      secretAccessKey: property.AWS.config.credentials.secretAccessKey,
+    this._apiGateway = new property.AWS.APIGateway({
       region: this.getAwsServiceRegion(APIGatewayService, property.config.awsRegion),
     });
 

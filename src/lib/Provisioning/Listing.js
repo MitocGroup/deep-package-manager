@@ -6,7 +6,6 @@
 
 import {AbstractService} from './Service/AbstractService';
 import Core from 'deep-core';
-import {Client as AwsApiGatewayClient} from 'aws-api-gw-client';
 import AWS from 'aws-sdk';
 import {WaitFor} from '../Helpers/WaitFor';
 
@@ -95,7 +94,7 @@ export class Listing {
 
   /**
    * @param {String} name
-   * @returns {AbstractService|AwsApiGatewayClient}
+   * @returns {AbstractService}
    */
   _createAwsService(name) {
     let serviceName = `${name}Service`;
@@ -105,15 +104,6 @@ export class Listing {
       this._property.config.aws.region,
       ServiceProto.AVAILABLE_REGIONS
     );
-
-    // @todo: replace with native API when ready
-    if (name === 'APIGateway') {
-      return new AwsApiGatewayClient({
-        accessKeyId: this._property.config.aws.accessKeyId,
-        secretAccessKey: this._property.config.aws.secretAccessKey,
-        region: appropriateRegion,
-      });
-    }
 
     return new AWS[name]({
       region: appropriateRegion,
