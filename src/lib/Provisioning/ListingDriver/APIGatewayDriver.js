@@ -5,6 +5,7 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
+import {APIGatewayService} from '../Service/APIGatewayService';
 
 export class APIGatewayDriver extends AbstractDriver {
   /**
@@ -18,7 +19,7 @@ export class APIGatewayDriver extends AbstractDriver {
    * @param {Function} cb
    */
   list(cb) {
-    this._awsService.getRestApis({limit: 500}, (error, data) => {
+    this._awsService.getRestApis({limit: APIGatewayService.PAGE_LIMIT}, (error, data) => {
       if (error) {
         cb(error);
         return;

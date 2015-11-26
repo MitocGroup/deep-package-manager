@@ -44,6 +44,13 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
+   * @returns {Number}
+   */
+  static get PAGE_LIMIT() {
+    return 500;
+  }
+
+  /**
    * @returns {String}
    */
   static get ALLOWED_CORS_HEADERS() {
@@ -911,7 +918,7 @@ export class APIGatewayService extends AbstractService {
 
     let params = {
       restApiId: restApiId,
-      limit: 500,
+      limit: APIGatewayService.PAGE_LIMIT,
     };
 
     // fetches mainly root resource that is automatically created along with restApi
