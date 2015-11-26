@@ -7,7 +7,6 @@
 import {AbstractService} from './Service/AbstractService';
 import {AbstractDriver} from './UndeployDriver/AbstractDriver';
 import Core from 'deep-core';
-import {Client as AwsApiGatewayClient} from 'aws-api-gw-client';
 import AWS from 'aws-sdk';
 import {WaitFor} from '../Helpers/WaitFor';
 import {Listing} from './Listing';
@@ -116,7 +115,7 @@ export class Undeploy {
 
   /**
    * @param {String} name
-   * @returns {AbstractService|AwsApiGatewayClient}
+   * @returns {AbstractService}
    */
   _createAwsService(name) {
     let serviceName = `${name}Service`;
@@ -127,20 +126,9 @@ export class Undeploy {
       ServiceProto.AVAILABLE_REGIONS
     );
 
-    let service = null;
-
-    // @todo: replace with native API when ready
-    if (name === 'APIGateway') {
-      service = new AwsApiGatewayClient({
-        accessKeyId: this._property.config.aws.accessKeyId,
-        secretAccessKey: this._property.config.aws.secretAccessKey,
-        region: appropriateRegion,
-      });
-    } else {
-      service = new AWS[name]({
-        region: appropriateRegion,
-      });
-    }
+    let service = new AWS[name]({
+      region: appropriateRegion,
+    });
 
     AbstractDriver.injectServiceCredentials(
       service,
