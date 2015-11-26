@@ -5,12 +5,12 @@
 'use strict';
 
 import chai from 'chai';
-import {FailedToCreateApiResourcesException} from '../../../../lib.compiled/Provisioning/Service/Exception/FailedToCreateApiResourcesException';
+import {FailedToCreateApiResourceException} from '../../../../lib.compiled/Provisioning/Service/Exception/FailedToCreateApiResourceException';
 
-suite('Provisioning/Service/Exception/FailedToCreateApiResourcesException', function() {
+suite('Provisioning/Service/Exception/FailedToCreateApiResourceException', function() {
 
-  test('Class FailedToCreateApiResourcesException', function() {
-    let e = new FailedToCreateApiResourcesException([]);
-    chai.expect(e).to.be.an.instanceof(FailedToCreateApiResourcesException);
+  test('Class FailedToCreateApiResourceException', function() {
+    let e = new FailedToCreateApiResourceException([]);
+    chai.expect(e).to.be.an.instanceof(FailedToCreateApiResourceException);
   });
 });

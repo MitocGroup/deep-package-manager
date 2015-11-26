@@ -422,12 +422,10 @@ suite('Provisioning/Service/APIGatewayService', function() {
         methods: [
           'POST',
         ],
-        source: {
-          id: 'createTestId',
-          parentId: 'parentCreateTestId',
-          path: 'src/Test/Create',
-          pathPart: 'createPathPart',
-        },
+        id: 'createTestId',
+        parentId: 'parentCreateTestId',
+        path: 'src/Test/Create',
+        pathPart: 'createPathPart',
       },
       update: {
         description: 'Lambda for updating test',
@@ -435,12 +433,10 @@ suite('Provisioning/Service/APIGatewayService', function() {
         methods: [
           'PUT',
         ],
-        source: {
-          id: 'updateTestId',
-          parentId: 'parentUpdateTestId',
-          path: 'src/Test/Update',
-          pathPart: 'updatePathPart',
-        },
+        id: 'updateTestId',
+        parentId: 'parentUpdateTestId',
+        path: 'src/Test/Update',
+        pathPart: 'updatePathPart',
       },
     };
 
