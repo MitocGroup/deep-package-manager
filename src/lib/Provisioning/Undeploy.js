@@ -62,7 +62,6 @@ export class Undeploy {
    */
   execute(callback, baseHash = null, services = Undeploy.SERVICES) {
     let lister = this.newLister;
-    let results = Undeploy._createExecResultObj(services);
 
     // @todo: do it smarter?
     if (baseHash) {
@@ -73,10 +72,11 @@ export class Undeploy {
       if (Object.keys(listingResult.errors).length > 0) {
         callback(new ProvisioningCollisionsListingException(listingResult.errors), null);
       } else if (listingResult.matchedResources <= 0) {
-        callback(null, results);
+        callback(null, null);
       } else {
         let wait = new WaitFor();
         let servicesRemaining = services.length;
+        let results = Undeploy._createExecResultObj(services);
         let rawResourcesObj = this._matcher.filter(listingResult.resources);
 
         wait.push(() => {
