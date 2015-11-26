@@ -69,6 +69,21 @@ export class AbstractService extends Core.OOP.Interface {
   }
 
   /**
+   * @returns {RegExp}
+   */
+  static get AWS_RESOURCE_GENERALIZED_REGEXP() {
+    let regexp = '';
+    let capitalizedResourcePrefix = AbstractService.capitalizeFirst(AbstractService.AWS_RESOURCES_PREFIX);
+
+    regexp += `(${AbstractService.AWS_RESOURCES_PREFIX}|${capitalizedResourcePrefix})`;
+    regexp += '(_|\.|[A-Z])';
+    regexp += '.+';
+    regexp += `[a-zA-Z0-9]{${AbstractService.MAIN_HASH_SIZE}}`;
+
+    return new RegExp(`^${regexp}$`);
+  }
+
+  /**
    * @param {Core.Generic.ObjectStorage} services
    */
   setup(services) {
@@ -316,7 +331,7 @@ export class AbstractService extends Core.OOP.Interface {
    * @returns {String}
    */
   static extractBaseHashFromResourceName(resourceName) {
-    let rawRegexp = `^${AbstractService.AWS_RESOURCES_PREFIX}.+([a-z0-9]{${AbstractService.MAIN_HASH_SIZE})$`;
+    let rawRegexp = `^${AbstractService.AWS_RESOURCES_PREFIX}.+([a-z0-9]{${AbstractService.MAIN_HASH_SIZE}})$`;
     let matches = resourceName.match(new RegExp(rawRegexp, 'i'));
 
     if (!matches) {

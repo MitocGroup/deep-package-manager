@@ -43,11 +43,24 @@ export class Hash {
   }
 
   /**
+   * @param {String} str
+   * @param {Number} length
+   * @param {String} char
+   * @returns {String}
+   * @private
+   */
+  static _pad(str, length, char = ' ') {
+    let padding = (new Array( Math.max(length - str.length + 1, 0))).join(char);
+
+    return `${str}${padding}`;
+  }
+
+  /**
    * @param {*} data
    * @returns {String}
    */
   static crc32(data) {
-    return Crc.crc32(data).toString(16);
+    return Hash._pad(Crc.crc32(data).toString(16), 8, '0');
   }
 
   /**

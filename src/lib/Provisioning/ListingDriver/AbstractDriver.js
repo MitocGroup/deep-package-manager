@@ -10,7 +10,7 @@ import {AbstractService} from '../Service/AbstractService';
 export class AbstractDriver extends Core.OOP.Interface {
   /**
    * @param {Object} awsService
-   * @param {String} baseHash
+   * @param {String|RegExp} baseHash
    */
   constructor(awsService, baseHash) {
     super(['list']);
@@ -44,7 +44,7 @@ export class AbstractDriver extends Core.OOP.Interface {
   }
 
   /**
-   * @returns {String}
+   * @returns {String|RegExp}
    */
   get baseHash() {
     return this._baseHash;
@@ -63,6 +63,11 @@ export class AbstractDriver extends Core.OOP.Interface {
    * @private
    */
   _matchResource(resource) {
-    return AbstractService.extractBaseHashFromResourceName(resource) === this._baseHash;
+    let isRegex = this._baseHash instanceof RegExp;
+    let resourceHash = AbstractService.extractBaseHashFromResourceName(resource);
+
+    return isRegex
+      ? this._baseHash.test(resource)
+      : AbstractService.extractBaseHashFromResourceName(resource) === this._baseHash;
   }
 }
