@@ -5,6 +5,7 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
+import {APIGatewayService} from '../Service/APIGatewayService';
 
 export class APIGatewayDriver extends AbstractDriver {
   /**
@@ -18,24 +19,25 @@ export class APIGatewayDriver extends AbstractDriver {
    * @param {Function} cb
    */
   list(cb) {
-    this._awsService.listRestapis()
-      .then((data) => {
-        for (let i in data) {
-          if (!data.hasOwnProperty(i)) {
-            continue;
-          }
+    this._awsService.getRestApis({limit: APIGatewayService.PAGE_LIMIT}, (error, data) => {
+      if (error) {
+        cb(error);
+        return;
+      }
 
-          let source = data[i].source;
-          let apiId = source.id;
-          let apiName = source.name;
+      let items = data.items;
 
-          this._checkPushStack(apiName, apiId, source);
+      for (let i in items) {
+        if (!items.hasOwnProperty(i)) {
+          continue;
         }
 
-        cb(null);
-      })
-      .catch((error) => {
-        cb(error);
-      });
+        let item = items[i];
+
+        this._checkPushStack(item.name, item.id, item);
+      }
+
+      cb(null);
+    });
   }
 }

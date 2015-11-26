@@ -74,7 +74,6 @@
     "raml-validate": "^1.0.x",
     "raml-sanitize": "^1.0.x",
     "object-merge": "^2.5.x",
-    "aws-api-gw-client": "^0.1.x",
     "graceful-fs": "^4.1.x",
     "find-assets": "^0.3.x",
     "css-find-assets": "MitocGroup/css-find-assets",
