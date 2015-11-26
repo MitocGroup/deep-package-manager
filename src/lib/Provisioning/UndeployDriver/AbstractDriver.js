@@ -129,6 +129,38 @@ export class AbstractDriver extends Core.OOP.Interface {
   }
 
   /**
+   * @param {String} service
+   * @param {String} credentials
+   */
+  static injectServiceCredentials(service, credentials) {
+    Object.defineProperty(service, AbstractDriver.CREDENTIALS_KEY, {
+      value: credentials,
+      enumerable: false,
+      configurable: false,
+      writable: false,
+    });
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get CREDENTIALS_KEY() {
+    return '__deep_undeploy_cred__';
+  }
+
+  /**
+   * @returns {Object}
+   * @private
+   */
+  get _credentials() {
+    if (this._awsService.hasOwnProperty(AbstractDriver.CREDENTIALS_KEY)) {
+      return this._awsService[AbstractDriver.CREDENTIALS_KEY];
+    }
+
+    return null;
+  }
+
+  /**
    * @param {Object} rawResourcesObj
    * @returns {Object[]}
    */

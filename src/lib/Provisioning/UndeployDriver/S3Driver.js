@@ -6,9 +6,10 @@
 
 import {AbstractDriver} from './AbstractDriver';
 import tmp from 'tmp';
-import OS from 'OS';
+import OS from 'os';
 import FS from 'fs';
 import {exec} from 'child_process';
+import {MissingCredentialsException} from './Exception/MissingCredentialsException';
 
 export class S3Driver extends AbstractDriver {
   /**
@@ -69,12 +70,18 @@ export class S3Driver extends AbstractDriver {
         return;
       }
 
-      let credentials = `[profile _deep_]${OS.EOL}`;
-      credentials += `aws_access_key_id=${config.aws.accessKeyId}${OS.EOL}`;
-      credentials += `aws_secret_access_key=${config.aws.secretAccessKey}${OS.EOL}`;
-      credentials += `region=${config.aws.region}${OS.EOL}`;
+      let credentials = this._credentials;
 
-      FS.writeFile(credentialsFile, credentials, (error) => {
+      if (!credentials) {
+        throw new MissingCredentialsException(this);
+      }
+
+      let credentialsContent = `[profile _deep_]${OS.EOL}`;
+      credentialsContent += `aws_access_key_id=${credentials.accessKeyId}${OS.EOL}`;
+      credentialsContent += `aws_secret_access_key=${credentials.secretAccessKey}${OS.EOL}`;
+      credentialsContent += `region=${credentials.region}${OS.EOL}`;
+
+      FS.writeFile(credentialsFile, credentialsContent, (error) => {
         if (error) {
           cb(error);
           return;
