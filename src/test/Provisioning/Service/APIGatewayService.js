@@ -361,7 +361,7 @@ suite('Provisioning/Service/APIGatewayService', function() {
       },
       resourceId: 'test1Id',
       resourcePath: 'testTesourcePath1',
-      restapiId: 'testApiId',
+      restApiId: 'testApiId',
     };
     let integrationParams = {
       testTesourcePath1: {
@@ -394,7 +394,7 @@ suite('Provisioning/Service/APIGatewayService', function() {
 
     chai.expect(e).to.be.equal(null);
     chai.expect(actualResult.length).to.be.equal(8);
-    chai.expect(actualResult).to.be.contains(expectedResult);
+    chai.expect(actualResult).to.contains(expectedResult);
   });
 
   test('Check _extractApiResourcesMetadata() method returns valid array', function() {
