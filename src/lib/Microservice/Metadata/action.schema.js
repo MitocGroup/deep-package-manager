@@ -33,7 +33,7 @@ export default Joi.object().keys({
 function assureTypeLambda(joiObject) {
   joiObject.when('type', {
     is: Action.LAMBDA, // @todo - this condition doesn't work, default engine settings are applied for external resources also
-    otherwise: Joi.any().forbidden(),
+    otherwise: Joi.forbidden(),
   });
 
   return joiObject;
