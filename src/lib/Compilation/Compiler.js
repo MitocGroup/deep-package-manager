@@ -4,9 +4,9 @@
 
 'use strict';
 
-//import {NodePackageManagerCompiler} from './Driver/NodePackageManagerCompiler';
 import {Action} from '../Microservice/Metadata/Action';
 import StringUtils from 'underscore.string';
+import {_extend as extend} from 'util';
 
 /**
  * Compiles a microservice
@@ -42,8 +42,8 @@ export class Compiler {
         let source = StringUtils.trim(action.source, '/');
 
         lambdas[action.identifier] = `${backendPath}/${source}`;
-        lambdas._[action.identifier] = action.engine;
-        lambdas._[action.identifier].forceUserIdentity = action.forceUserIdentity; // @todo: =/
+        lambdas._[action.identifier] = extend({}, action.engine);
+        lambdas._[action.identifier].forceUserIdentity = action.forceUserIdentity;
       }
     }
 
@@ -52,11 +52,10 @@ export class Compiler {
 
   /**
    * Retrieve available compilers
-   * @todo: do we need NPM compiler anymore?
    *
-   * @returns {Array}
+   * @returns {Function[]}
    */
   static get compilers() {
-    return [/*NodePackageManagerCompiler*/];
+    return [];
   }
 }
