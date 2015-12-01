@@ -716,7 +716,7 @@ export class APIGatewayService extends AbstractService {
   getJsonRequestTemplate(httpMethod, type = null) {
     let tplVal = ''; // enables Input passthrough
 
-    if (httpMethod === 'GET' && type === 'AWS') {
+    if (type === 'AWS' && ['GET', 'DELETE'].indexOf(httpMethod) !== -1) {
       tplVal = this.qsToMapObjectMappingTpl;
     } else if (httpMethod === 'OPTIONS') {
       tplVal = this.templateForMockIntegration;
