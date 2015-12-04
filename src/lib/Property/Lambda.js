@@ -477,6 +477,8 @@ export class Lambda {
    * @returns {Lambda}
    */
   persistConfig() {
+    FileSystemExtra.ensureDirSync(this.path);
+
     JsonFile.writeFileSync(
       `${this.path}/_config.json`,
       this.createConfig(this._property.config)
