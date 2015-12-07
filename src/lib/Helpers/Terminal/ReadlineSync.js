@@ -52,6 +52,12 @@ export class ReadlineSync {
   /**
    * rlInterface compatibility
    */
+  on() {
+  }
+
+  /**
+   * rlInterface compatibility
+   */
   close() {
   }
 }
