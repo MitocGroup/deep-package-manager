@@ -202,11 +202,17 @@ export class Prompt {
    * @private
    */
   static _createReadlineInterface(sync = false) {
-    return (sync ? ReadlineSync : readline).createInterface({
+    let rl = (sync ? ReadlineSync : readline).createInterface({
       input: process.stdin,
       output: process.stdout,
       historySize: 0,
     });
+
+    // This will override SIGTSTP and prevent the program from going to the background
+
+    rl.on('SIGTSTP', ()  => {});
+
+    return rl;
   }
 
   /**
