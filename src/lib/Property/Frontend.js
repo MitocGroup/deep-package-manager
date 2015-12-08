@@ -17,6 +17,7 @@ import {Action} from '../Microservice/Metadata/Action';
 import Core from 'deep-core';
 import Tmp from 'tmp';
 import OS from 'os';
+import ZLib from 'zlib';
 import {APIGatewayService} from '../Provisioning/Service/APIGatewayService';
 import {DeployIdInjector} from '../Assets/DeployIdInjector';
 
@@ -158,8 +159,15 @@ export class Frontend {
 
     FileSystem.writeFileSync(credentialsFile, credentials);
 
-    let syncCommand = `export AWS_CONFIG_FILE=${credentialsFile}; `;
-    syncCommand += `aws s3 sync --profile deep --storage-class REDUCED_REDUNDANCY '${this.path}' 's3://${bucketName}'`;
+    let syncCommand = `find '${this.path}' -type f ! -name "*.gz" -exec gzip -9 "{}" \\; -exec mv "{}.gz" "{}" \\;; `;
+    syncCommand += `export AWS_CONFIG_FILE=${credentialsFile}; `;
+    syncCommand += 'aws s3 sync ';
+    syncCommand += `--profile=deep `;
+    syncCommand += `--storage-class=REDUCED_REDUNDANCY `;
+    syncCommand += `--content-encoding=gzip `;
+    syncCommand += `--cache-control="max-age=3600" `;
+    syncCommand += `'${this.path}' `;
+    syncCommand += `'s3://${bucketName}'`;
 
     console.log(`Running tmp hook ${syncCommand}`);
 
