@@ -4,7 +4,7 @@
 
 'use strict';
 
-import {AbstractReplacer} from '../../../../lib.compiled/Assets/Replacer/AbstractReplacer';
+import {AbstractReplacer} from '../../../../lib/Assets/Replacer/AbstractReplacer';
 
 export class AbstractReplacerMock extends AbstractReplacer {
   /**
