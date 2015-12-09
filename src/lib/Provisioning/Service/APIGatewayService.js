@@ -9,16 +9,18 @@ import Core from 'deep-core';
 import {WaitFor} from '../../Helpers/WaitFor';
 import {Exception} from '../../Exception/Exception';
 import {FailedToCreateApiGatewayException} from './Exception/FailedToCreateApiGatewayException';
-import {FailedToCreateApiResourcesException} from './Exception/FailedToCreateApiResourcesException';
+import {FailedToCreateApiResourceException} from './Exception/FailedToCreateApiResourceException';
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
 import {FailedToDeployApiGatewayException} from './Exception/FailedToDeployApiGatewayException';
 import {FailedToExecuteApiGatewayMethodException} from './Exception/FailedToExecuteApiGatewayMethodException';
+import {FailedToListApiResourcesException} from './Exception/FailedToListApiResourcesException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
 import Utils from 'util';
 import objectMerge from 'object-merge';
+import nodePath from 'path';
 
 /**
  * APIGateway service
@@ -30,6 +32,7 @@ export class APIGatewayService extends AbstractService {
   constructor(...args) {
     super(...args);
 
+    this._apiResources = {};
     this._newApiResources = {};
   }
 
@@ -38,6 +41,13 @@ export class APIGatewayService extends AbstractService {
    */
   static get API_NAME_PREFIX() {
     return 'Api';
+  }
+
+  /**
+   * @returns {Number}
+   */
+  static get PAGE_LIMIT() {
+    return 500;
   }
 
   /**
@@ -55,6 +65,13 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
+   * @returns {Object}
+   */
+  get apiGatewayClient() {
+    return this.provisioning.apiGateway;
+  }
+
+  /**
    * API default metadata
    *
    * @returns {Object}
@@ -62,6 +79,7 @@ export class APIGatewayService extends AbstractService {
   get apiMetadata() {
     return {
       name: this.generateAwsResourceName(APIGatewayService.API_NAME_PREFIX, Core.AWS.Service.API_GATEWAY),
+      description:`This API is generated automatically by DEEP for #${this.appIdentifier} app.`,
     };
   }
 
@@ -249,39 +267,15 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _createApi(metadata, callback) {
-    let apiGateway = this.provisioning.apiGateway;
-
-    apiGateway.createRestapi(metadata).then((api) => {
-      let apiSource = api.source;
-
-      // generate base url for created API coz it's not returned by createRestapi method
-      apiSource.baseUrl = this._generateApiBaseUrl(apiSource.id, apiGateway.region, this.stageName);
-
-      callback(apiSource);
-    }).catch((error) => {
-
+    this.apiGatewayClient.createRestApi(metadata, (error, api) => {
       if (error) {
         throw new FailedToCreateApiGatewayException(metadata.name, error);
       }
-    });
-  }
 
-  /**
-   * @param {Array} resourcePaths
-   * @param {String} restApiId
-   * @param {Function} callback
-   */
-  _createApiResources(resourcePaths, restApiId, callback) {
-    let apiGateway = this.provisioning.apiGateway;
-    let params = {
-      paths: resourcePaths,
-      restapiId: restApiId,
-    };
+      // generate base url for created API coz it's not returned by createRestApi method
+      api.baseUrl = this._generateApiBaseUrl(api.id, this.apiGatewayClient.config.region, this.stageName);
 
-    apiGateway.createResources(params).then((resources) => {
-      callback(resources);
-    }).catch((error) => {
-      throw new FailedToCreateApiResourcesException(resourcePaths, error);
+      callback(api);
     });
   }
 
@@ -319,12 +313,11 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _executeProvisionMethod(method, apiId, apiResources, integrationParams, callback) {
-    let apiGateway = this.provisioning.apiGateway;
     let wait = new WaitFor();
 
     let methodsParams = this._methodParamsGenerator(method, apiId, apiResources, integrationParams);
     let stackSize = methodsParams.length;
-    let resources = {};
+    let dataStack = {};
     let delay = 0;
 
     for (let key in methodsParams) {
@@ -333,19 +326,19 @@ export class APIGatewayService extends AbstractService {
       }
 
       let params = methodsParams[key];
+      let resourcePath = params.resourcePath;
+      delete params.resourcePath;
 
       setTimeout(() => {
-        resources[params.resourcePath] = {};
+        dataStack[resourcePath] = {};
 
-        apiGateway[method](params).then((resource) => {
-          stackSize--;
-          resources[params.resourcePath][params.httpMethod] = resource;
-        }).catch((error) => {
-
-          stackSize--;
+        this.apiGatewayClient[method](params, (error, data) => {
           if (error) {
-            throw new FailedToExecuteApiGatewayMethodException(method, params.resourcePath, params.httpMethod, error);
+            throw new FailedToExecuteApiGatewayMethodException(method, resourcePath, params.httpMethod, error);
           }
+
+          dataStack[resourcePath][params.httpMethod] = data;
+          stackSize--;
         });
       }, delay);
 
@@ -357,7 +350,7 @@ export class APIGatewayService extends AbstractService {
     });
 
     wait.ready(() => {
-      callback(resources);
+      callback(dataStack);
     });
   }
 
@@ -367,22 +360,19 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _deployApi(apiId, callback) {
-    let apiGateway = this.provisioning.apiGateway;
-
     let params = {
-      restapiId: apiId,
+      restApiId: apiId,
       stageName: this.stageName,
       stageDescription: `Stage for "${this.env}" environment`,
       description: `Deployed on ${new Date().toTimeString()}`,
     };
 
-    apiGateway.createDeployment(params).then((deployment) => {
-      callback(deployment);
-    }).catch((error) => {
-
+    this.apiGatewayClient.createDeployment(params, (error, data) => {
       if (error) {
         throw new FailedToDeployApiGatewayException(apiId, error);
       }
+
+      callback(data);
     });
   }
 
@@ -395,7 +385,8 @@ export class APIGatewayService extends AbstractService {
     let lambdaService = this.provisioning.services.find(LambdaService);
 
     let iam = this.provisioning.iam;
-    let policy = lambdaService.generateAllowInvokeFunctionPolicy();
+    let policy = new Core.AWS.IAM.Policy();
+    policy.statement.add(lambdaService.generateAllowInvokeFunctionStatement());
 
     let params = {
       PolicyDocument: policy.toString(),
@@ -442,7 +433,7 @@ export class APIGatewayService extends AbstractService {
         let commonParams = {
           resourcePath: resourcePath,
           httpMethod: resourceMethod,
-          restapiId: apiId,
+          restApiId: apiId,
           resourceId: apiResource.id,
         };
         let params = {};
@@ -457,7 +448,7 @@ export class APIGatewayService extends AbstractService {
             break;
           case 'putMethodResponse':
             params = {
-              statusCode: 200,
+              statusCode: '200',
               responseModels: this.jsonEmptyModel,
               responseParameters: this._getMethodResponseParameters(resourceMethod),
             };
@@ -471,7 +462,7 @@ export class APIGatewayService extends AbstractService {
             break;
           case 'putIntegrationResponse':
             params = {
-              statusCode: 200,
+              statusCode: '200',
               responseTemplates: this.getJsonResponseTemplate(resourceMethod),
               responseParameters: this._getMethodResponseParameters(resourceMethod, Object.keys(resourceMethods)),
             };
@@ -568,7 +559,7 @@ export class APIGatewayService extends AbstractService {
         continue;
       }
 
-      let rawResource = rawResources[rawResourceKey].source;
+      let rawResource = rawResources[rawResourceKey];
 
       resourcesMetadata[rawResource.path] = {
         id: rawResource.id,
@@ -725,7 +716,7 @@ export class APIGatewayService extends AbstractService {
   getJsonRequestTemplate(httpMethod, type = null) {
     let tplVal = ''; // enables Input passthrough
 
-    if (httpMethod === 'GET' && type === 'AWS') {
+    if (type === 'AWS' && ['GET', 'DELETE'].indexOf(httpMethod) !== -1) {
       tplVal = this.qsToMapObjectMappingTpl;
     } else if (httpMethod === 'OPTIONS') {
       tplVal = this.templateForMockIntegration;
@@ -805,7 +796,7 @@ export class APIGatewayService extends AbstractService {
    */
   getAllEndpointsArn() {
     let apiId = this._config.api.id;
-    let apiRegion = this.provisioning.apiGateway.region;
+    let apiRegion = this.apiGatewayClient.config.region;
     let resourcesPaths = this._config.api.hasOwnProperty('resources') ? Object.keys(this._config.api.resources) : [];
     let arns = [];
 
@@ -826,16 +817,13 @@ export class APIGatewayService extends AbstractService {
    * Allow Cognito users to invoke these endpoints
    *
    * @param {Object} endpointsARNs
-   * @returns {Core.AWS.IAM.Policy}
+   * @returns {Core.AWS.IAM.Statement}
    */
-  static generateAllowInvokeMethodPolicy(endpointsARNs) {
+  static generateAllowInvokeMethodStatement(endpointsARNs) {
     let policy = new Core.AWS.IAM.Policy();
 
     let statement = policy.statement.add();
-    let action = statement.action.add();
-
-    action.service = Core.AWS.Service.API_GATEWAY_EXECUTE;
-    action.action = 'Invoke';
+    statement.action.add(Core.AWS.Service.API_GATEWAY_EXECUTE, 'Invoke');
 
     for (let endpointArnKey in endpointsARNs) {
       if (!endpointsARNs.hasOwnProperty(endpointArnKey)) {
@@ -843,11 +831,111 @@ export class APIGatewayService extends AbstractService {
       }
 
       let endpointArn = endpointsARNs[endpointArnKey];
-      let resource = statement.resource.add();
-
-      resource.updateFromArn(endpointArn);
+      statement.resource.add().updateFromArn(endpointArn);
     }
 
-    return policy;
+    return statement;
+  }
+
+  /**
+   * @param {Array.<String>} paths
+   * @param {String} restApiId
+   * @param {Function} callback
+   */
+  _createApiResources(paths, restApiId, callback) {
+    this._findApiResourceByPath('/', restApiId, (rootResource) => {
+      this._createApiResourcesByPaths(paths, restApiId, rootResource, callback);
+    });
+  }
+
+  /**
+   * @param {Array.<String>} paths
+   * @param {String} restApiId
+   * @param {Resource} rootResource
+   * @param {Function} callback
+   */
+  _createApiResourcesByPaths(paths, restApiId, rootResource, callback) {
+    if (paths.length <= 0) {
+      callback(this._apiResources);
+      return;
+    }
+
+    let pathParts = paths[0].split('/').slice(1);
+
+    this._createApiChildResources(rootResource, pathParts, restApiId, (resources) => {
+      this._createApiResourcesByPaths(paths.slice(1), restApiId, rootResource, callback);
+    });
+  }
+
+  /**
+   * @param {Resource} parentResource
+   * @param {Array.<String>} pathParts
+   * @param {String} restApiId
+   * @param {Function} callback
+   */
+  _createApiChildResources(parentResource, pathParts, restApiId, callback) {
+    if (pathParts.length <= 0) {
+      callback(this._apiResources);
+      return;
+    }
+
+    let path = nodePath.join(parentResource.path, pathParts[0]);
+
+    this._findApiResourceByPath(path, restApiId, (resource) => {
+      if (resource) {
+        this._createApiChildResources(resource, pathParts.slice(1), restApiId, callback);
+      } else {
+        let params = {
+          parentId: parentResource.id,
+          pathPart: pathParts[0],
+          restApiId: restApiId,
+        };
+
+        this.apiGatewayClient.createResource(params, (error, resource) => {
+          if (error) {
+            throw new FailedToCreateApiResourceException(params.pathPart, error);
+          }
+
+          this._apiResources[resource.path] = resource;
+          this._createApiChildResources(resource, pathParts.slice(1), restApiId, callback);
+        });
+      }
+    });
+  }
+
+  /**
+   * @param {String} path
+   * @param {String} restApiId
+   * @param {Function} callback
+   */
+  _findApiResourceByPath(path, restApiId, callback) {
+    let matchedResource = this._apiResources.hasOwnProperty(path) ? this._apiResources[path] : null;
+
+    if (matchedResource) {
+      callback(matchedResource);
+      return;
+    }
+
+    let params = {
+      restApiId: restApiId,
+      limit: APIGatewayService.PAGE_LIMIT,
+    };
+
+    // fetches mainly root resource that is automatically created along with restApi
+    this.apiGatewayClient.getResources(params, (error, data) => {
+      if (error) {
+        throw new FailedToListApiResourcesException(restApiId, error);
+      }
+
+      data.items.forEach((resource) => {
+        this._apiResources[resource.path] = resource;
+      });
+
+      if (this._apiResources.hasOwnProperty(path)) {
+        matchedResource = this._apiResources[path];
+      }
+
+      callback(matchedResource);
+    });
   }
 }

@@ -18,7 +18,6 @@ import {ElasticacheService} from './Service/ElasticacheService';
 import {APIGatewayService} from './Service/APIGatewayService';
 import {Instance as PropertyInstance} from '../Property/Instance';
 import {WaitFor} from '../Helpers/WaitFor';
-import {Client as AwsApiGatewayClient} from 'aws-api-gw-client';
 
 /**
  * Provisioning instance
@@ -55,10 +54,7 @@ export class Instance {
       region: this.getAwsServiceRegion(CognitoIdentityService, property.config.awsRegion),
     });
 
-    // @todo - replace this client with AWS native one than it'll be available
-    this._apiGateway = new AwsApiGatewayClient({
-      accessKeyId: property.AWS.config.credentials.accessKeyId,
-      secretAccessKey: property.AWS.config.credentials.secretAccessKey,
+    this._apiGateway = new property.AWS.APIGateway({
       region: this.getAwsServiceRegion(APIGatewayService, property.config.awsRegion),
     });
 
@@ -210,13 +206,8 @@ export class Instance {
     let remaining = servicesVector.length;
 
     if (isUpdate) {
-      let propertyProvisioning = this.property.config.provisioning;
-
       for (let service of servicesVector) {
         service.isUpdate = true;
-
-        // keep old provisioned config in case of update
-        service.injectConfig(propertyProvisioning[service.name()]);
       }
     }
 
@@ -255,6 +246,27 @@ export class Instance {
   }
 
   /**
+   * @param {Object|null} config
+   * @returns {Instance}
+   */
+  injectConfig(config = null) {
+    if (config) {
+      this._config = config;
+    }
+
+    let services = this.services;
+    let servicesVector = services.iterator;
+
+    let propertyProvisioning = this.property.config.provisioning;
+
+    for (let service of servicesVector) {
+      service.injectConfig(propertyProvisioning[service.name()]);
+    }
+
+    return this;
+  }
+
+  /**
    * @param {Function} callback
    * @param {Boolean} isUpdate
    */
@@ -267,6 +279,12 @@ export class Instance {
     let wait = new WaitFor();
     let servicesVector = services.iterator;
     let remaining = servicesVector.length;
+
+    if (isUpdate) {
+      for (let service of servicesVector) {
+        service.isUpdate = true;
+      }
+    }
 
     for (let service of servicesVector) {
       service.postDeployProvision(services).ready(function() {

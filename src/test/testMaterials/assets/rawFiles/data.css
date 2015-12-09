@@ -1,0 +1,8 @@
+@font-face {
+    font-family: "Bitstream Vera Serif Bold";
+    src: url("VeraSeBd.ttf");
+}
+
+body {
+    background-image: url(images/foo.png);
+}

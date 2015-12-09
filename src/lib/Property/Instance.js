@@ -14,6 +14,7 @@ import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
 import {Instance as Microservice} from '../Microservice/Instance';
 import {DuplicateRootException} from './Exception/DuplicateRootException';
 import {MissingRootException} from './Exception/MissingRootException';
+import {MissingMicroserviceException} from './Exception/MissingMicroserviceException';
 import {Lambda} from './Lambda';
 import {WaitFor} from '../Helpers/WaitFor';
 import {Frontend} from './Frontend';
@@ -26,6 +27,10 @@ import {NoMatchingFrontendEngineException} from '../Dependencies/Exception/NoMat
 import {exec} from 'child_process';
 import OS from 'os';
 import objectMerge from 'object-merge';
+import {Listing} from '../Provisioning/Listing';
+import {ProvisioningCollisionsListingException} from './Exception/ProvisioningCollisionsListingException';
+import {ProvisioningCollisionsDetectedException} from './Exception/ProvisioningCollisionsDetectedException';
+import {AbstractService} from '../Provisioning/Service/AbstractService';
 
 /**
  * Property instance
@@ -53,19 +58,75 @@ export class Instance {
   }
 
   /**
-   * @returns {Microservice[]}
+   * @param {Function} callback
+   * @param {Boolean} throwError
+   * @returns {Instance}
+   */
+  verifyProvisioningCollisions(callback, throwError = true) {
+    this.getProvisioningCollisions((error, resources) => {
+      if (!error && resources) {
+        let mainHash = AbstractService.generateUniqueResourceHash(
+          this.config.awsAccountId,
+          this.identifier
+        );
+
+        error = new ProvisioningCollisionsDetectedException(resources, mainHash);
+      }
+
+      if (error && throwError) {
+        throw error;
+      }
+
+      callback(error);
+    });
+
+    return this;
+  }
+
+  /**
+   * @param {Function} callback
+   * @returns {Instance}
+   */
+  getProvisioningCollisions(callback) {
+    let resourcesLister = new Listing(this);
+
+    resourcesLister.list((result) => {
+      if (Object.keys(result.errors).length > 0) {
+        callback(new ProvisioningCollisionsListingException(result.errors), null);
+      } else if (result.matchedResources <= 0) {
+        callback(null, null);
+      } else {
+        callback(null, result.resources);
+      }
+    });
+
+    return this;
+  }
+
+  /**
+   * @returns {Microservice[]|String[]}
    */
   get microservicesToUpdate() {
     return this._microservicesToUpdate;
   }
 
   /**
-   * @param {Microservice[]} microservices
+   * @param {Microservice[]|String[]} microservices
    */
   set microservicesToUpdate(microservices) {
-    this._microservicesToUpdate = microservices.map(
-      (ms) => typeof ms === 'string' ? this.microservice(ms) : ms
-    );
+    this._microservicesToUpdate = microservices.map((ms) => {
+      if (typeof ms === 'string') {
+        let msObj = this.microservice(ms);
+
+        if (!msObj) {
+          throw new MissingMicroserviceException(ms);
+        }
+
+        return msObj;
+      }
+
+      return ms;
+    });
   }
 
   /**
@@ -264,6 +325,7 @@ export class Instance {
           arn: lambdaInstance.arn,
           name: lambdaInstance.functionName,
           region: lambdaInstance.region,
+          localPath: Path.join(lambdaInstance.path, 'bootstrap.js'),
         };
 
         lambdaInstances.push(lambdaInstance);
@@ -272,7 +334,11 @@ export class Instance {
 
     let lambdas = {};
     for (let lambdaInstance of lambdaInstances) {
-      lambdas[lambdaInstance.arn] = lambdaInstance.createConfig(this._config);
+
+      // assure localRuntime flag set true!
+      let lambdaInstanceConfig = lambdaInstance.createConfig(this._config, true);
+
+      lambdas[lambdaInstance.arn] = lambdaInstanceConfig;
       lambdas[lambdaInstance.arn].name = lambdaInstance.functionName;
       lambdas[lambdaInstance.arn].path = Path.join(lambdaInstance.path, 'bootstrap.js');
     }
@@ -533,9 +599,8 @@ export class Instance {
   /**
    * @param {Function} callback
    * @returns {Instance}
-   * @private
    */
-  _postDeploy(callback) {
+  postDeploy(callback) {
     if (!(callback instanceof Function)) {
       throw new InvalidArgumentException(callback, 'Function');
     }
@@ -633,8 +698,9 @@ export class Instance {
     this.microservicesToUpdate = microservicesToUpdate;
     this._config = propertyConfigSnapshot;
 
-    // @todo: does it work?
-    this._provisioning.config = this._config.provisioning;
+    this._provisioning.injectConfig(
+      this._config.provisioning
+    );
 
     return this.install((...args) => {
       this._isUpdate = false;
@@ -653,7 +719,27 @@ export class Instance {
       throw new InvalidArgumentException(callback, 'Function');
     }
 
-    console.log(`Start ${this._isUpdate ? 'updating' : 'installing'} application`);
+    if (!this._isUpdate) {
+      console.log(`Checking possible provisioning collisions for application #${this.identifier}`);
+
+      this.verifyProvisioningCollisions(() => {
+        console.log(`Start installing application #${this.identifier}`);
+
+        this.build(function() {
+          console.log(`Build is done`);
+
+          this.deploy(function() {
+            console.log(`Deploy is done`);
+
+            this.postDeploy(callback);
+          }.bind(this));
+        }.bind(this), skipProvision);
+      });
+
+      return this;
+    }
+
+    console.log(`Start updating application #${this.identifier}`);
 
     return this.build(function() {
       console.log(`Build is done`);
@@ -661,7 +747,7 @@ export class Instance {
       this.deploy(function() {
         console.log(`Deploy is done`);
 
-        this._postDeploy(callback);
+        this.postDeploy(callback);
       }.bind(this));
     }.bind(this), skipProvision);
   }

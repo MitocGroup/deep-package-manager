@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "DEEP Package Manager",
   "keywords": [
     "Digital Enterprise End-To-End Platform",
@@ -36,6 +36,10 @@
     {
       "name": "Marcel Goria",
       "email": "mgoria@mitocgroup.com"
+    },
+    {
+      "name": "Vitali Cernomschi",
+      "email": "vcernomschi@mitocgroup.com"
     }
   ],
   "main": "lib.compiled/bootstrap.js",
@@ -44,10 +48,9 @@
     "url": "https://github.com/MitocGroup/deep-package-manager.git"
   },
   "scripts": {
-    "coverage": "babel-node `which istanbul` cover --report lcov _mocha -- --ui tdd --recursive --reporter spec",
-    "test": "mocha --ui tdd --compilers js:mocha-babel --recursive --reporter spec",
+    "test": "babel-node `which isparta` cover --include 'lib/**/*.js' _mocha -- 'test/**/*.spec.js' --reporter spec --ui tdd --recursive",
     "compile": "if [ -d 'lib/' ]; then BABEL_ENV=production babel lib/ --out-dir lib.compiled/; fi",
-    "obfuscate-compiled": "if [ -d 'lib/' ]; then npm list -g --depth 1 uglify > /dev/null 2>&1 || npm install uglify -g; for f in $(find lib.compiled -type f -name *.js); do uglify -s ${f} -o ${f}; done; fi",
+    "obfuscate-compiled": "if [ -d 'lib/' ]; then npm list -g --depth 0 uglify > /dev/null 2>&1 || npm install uglify -g; for f in $(find lib.compiled -type f -name *.js); do uglify -s ${f} -o ${f}; done; fi",
     "prepublish": "npm run compile && npm run obfuscate-compiled"
   },
   "dependencies": {
@@ -71,15 +74,14 @@
     "raml-validate": "^1.0.x",
     "raml-sanitize": "^1.0.x",
     "object-merge": "^2.5.x",
-    "prompt-sync": "^3.0.x",
-    "aws-api-gw-client": "^0.1.x",
     "graceful-fs": "^4.1.x",
-    "aws-sdk": "^2.2.x",
     "find-assets": "^0.3.x",
     "css-find-assets": "MitocGroup/css-find-assets",
-    "css-parse": "^2.0.x"
+    "css-parse": "^2.0.x",
+    "readline-sync": "^1.2.x"
   },
   "devDependencies": {
+    "aws-sdk": "^2.2.x",
     "chai": "^3.2.x",
     "sinon": "^1.17.x",
     "sinon-chai": "^2.8.x"
@@ -91,6 +93,6 @@
   "os": [
     "!win32"
   ],
-  "preferGlobal": true,
+  "preferGlobal": false,
   "analyze": true
 }

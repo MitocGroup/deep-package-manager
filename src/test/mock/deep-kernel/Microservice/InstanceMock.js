@@ -1,6 +1,6 @@
 'use strict';
 
-import {Instance} from 'deep-db/node_modules/deep-kernel/lib.compiled/Microservice/Instance';
+import {Instance} from '../../../../node_modules/deep-db/node_modules/deep-kernel/lib.compiled/Microservice/Instance';
 
 /**
  * Microservice mock class

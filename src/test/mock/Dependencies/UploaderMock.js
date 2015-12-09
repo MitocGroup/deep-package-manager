@@ -1,5 +1,5 @@
 'use strict';
-import {Uploader} from '../../../lib.compiled/Dependencies/Uploader';
+import {Uploader} from '../../../lib/Dependencies/Uploader';
 
 /**
  * Dependencies uploader
