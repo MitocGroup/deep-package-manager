@@ -42,11 +42,11 @@ export class DynamoDBService extends AbstractService {
   _setup(services) {
     this._createDbTables(
       this._rawModels
-    )(function(tablesNames) {
+    )((tablesNames) => {
       this._config.tablesNames = tablesNames;
 
       this._ready = true;
-    }.bind(this));
+    });
 
     return this;
   }
@@ -146,7 +146,13 @@ export class DynamoDBService extends AbstractService {
   _removeMissingTables(missingTablesNames, callback) {
     console.log(`Removing DynamoDB tables: ${missingTablesNames.join(', ')}`);
 
-    for (let tableName of missingTablesNames) {
+    for (let i in missingTablesNames) {
+      if (!missingTablesNames.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let tableName = missingTablesNames[i];
+
       this.provisioning.dynamoDB.deleteTable({
         TableName: tableName,
       }, (error, data) => {

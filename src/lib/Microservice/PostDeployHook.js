@@ -39,13 +39,13 @@ export class PostDeployHook {
    * @private
    */
   _wrap(hook) {
-    return function(provisioning, isUpdate, cb) {
+    return (provisioning, isUpdate, cb) => {
       hook.bind({
         microservice: this._microservice,
         provisioning: provisioning,
         isUpdate: isUpdate,
       })(cb);
-    }.bind(this);
+    };
   }
 
   /**

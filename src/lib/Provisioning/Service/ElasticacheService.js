@@ -51,11 +51,11 @@ export class ElasticacheService extends AbstractService {
     //this._createCluster(
     //    this.awsAccountId,
     //    this.appIdentifier
-    //)(function(dsn) {
+    //)((dsn) => {
     //    this._config.dsn = dsn;
     //
     //    this._ready = true;
-    //}.bind(this));
+    //});
 
     this._ready = true;
 
@@ -115,17 +115,17 @@ export class ElasticacheService extends AbstractService {
       NumCacheNodes: 1,
     };
 
-    syncStack.push(ec.createCacheCluster(parameters), function(error, data) {
+    syncStack.push(ec.createCacheCluster(parameters), (error, data) => {
       if (error) {
         throw new FailedToCreateElasticacheClusterException(clusterId, error);
       }
-    }.bind(this));
+    });
 
-    return function(callback) {
-      return syncStack.join().ready(function() {
+    return (callback) => {
+      return syncStack.join().ready(() => {
         this._acquireEndpoint(clusterId, callback);
-      }.bind(this));
-    }.bind(this);
+      });
+    };
   }
 
   /**
@@ -144,7 +144,7 @@ export class ElasticacheService extends AbstractService {
       ShowCacheNodeInfo: true,
     };
 
-    innerSyncStack.push(ec.describeCacheClusters(describeParameters), function(error, data) {
+    innerSyncStack.push(ec.describeCacheClusters(describeParameters), (error, data) => {
       if (error) {
         throw new FailedToCreateElasticacheClusterException(clusterId, error);
       }
@@ -156,17 +156,17 @@ export class ElasticacheService extends AbstractService {
         dsn = `redis://${endpoint.Address}:${endpoint.Port}`;
         succeed = true;
       }
-    }.bind(this));
+    });
 
-    innerSyncStack.join().ready(function() {
+    innerSyncStack.join().ready(() => {
       if (succeed) {
         callback(dsn);
       } else {
-        setTimeout(function() {
+        setTimeout(() => {
           this._acquireEndpoint(clusterId, callback);
-        }.bind(this), ElasticacheService.WAIT_TIME);
+        }, ElasticacheService.WAIT_TIME);
       }
-    }.bind(this));
+    });
   }
 
   /**

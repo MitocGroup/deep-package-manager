@@ -27,26 +27,26 @@ export class Resolver extends Dispatcher {
    * @param {Function} callback
    */
   dispatch(microservice, callback) {
-    this._pull(microservice.config.dependencies, function(pulledDependencies) {
+    this._pull(microservice.config.dependencies, (pulledDependencies) => {
       let wait = new WaitFor();
       let stackSize = 0;
 
-      pulledDependencies.forEach(function(dependencyPath) {
+      pulledDependencies.forEach((dependencyPath) => {
         stackSize++;
 
-        this.dispatch(Microservice.create(dependencyPath), function() {
+        this.dispatch(Microservice.create(dependencyPath), () => {
           stackSize--;
-        }.bind(this));
-      }.bind(this));
+        });
+      });
 
-      wait.push(function() {
+      wait.push(() => {
         return stackSize <= 0;
-      }.bind(this));
+      });
 
-      wait.ready(function() {
+      wait.ready(() => {
         callback();
-      }.bind(this));
-    }.bind(this));
+      });
+    });
   }
 
   /**
@@ -73,19 +73,19 @@ export class Resolver extends Dispatcher {
       stackSize++;
       this._resolveStack.push(dependencyName);
 
-      this._driver.pull(dependencyName, dependencyVersion, function(outputPath) {
+      this._driver.pull(dependencyName, dependencyVersion, (outputPath) => {
         pulledDependencies.push(outputPath);
 
         stackSize--;
-      }.bind(this));
+      });
     }
 
-    wait.push(function() {
+    wait.push(() => {
       return stackSize <= 0;
-    }.bind(this));
+    });
 
-    wait.ready(function() {
+    wait.ready(() => {
       callback(pulledDependencies);
-    }.bind(this));
+    });
   }
 }

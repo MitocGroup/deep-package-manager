@@ -39,7 +39,7 @@ export class S3StdDriver extends AbstractDriver {
   push(mainPath, dependencyName, dependencyVersion, callback) {
     let archivePath = this._getArchivePath(dependencyName, dependencyVersion);
 
-    this._pack(mainPath, archivePath, function(archivePath) {
+    this._pack(mainPath, archivePath, (archivePath) => {
       let parameters = {
         Bucket: this._bucket,
         Key: this._getPrefixedBasename(dependencyName, dependencyVersion),
@@ -53,7 +53,7 @@ export class S3StdDriver extends AbstractDriver {
 
       this._s3
         .putObject(parameters)
-        .on('complete', function(response) {
+        .on('complete', (response) => {
           if (response.error) {
             throw new Exception(
               `Error while persisting s3://${parameters.Bucket}/${parameters.Key}: ${response.error}`
@@ -61,9 +61,9 @@ export class S3StdDriver extends AbstractDriver {
           }
 
           FileSystem.unlink(archivePath, callback);
-        }.bind(this))
+        })
         .send();
-    }.bind(this));
+    });
   }
 
   /**
@@ -88,25 +88,25 @@ export class S3StdDriver extends AbstractDriver {
 
     this._s3
       .getObject(parameters)
-      .on('httpData', function(chunk) {
+      .on('httpData', (chunk) => {
         outputStream.write(chunk);
-      }.bind(this))
-      .on('httpDone', function() {
+      })
+      .on('httpDone', () => {
         outputStream.end();
-      }.bind(this))
-      .on('complete', function(response) {
+      })
+      .on('complete', (response) => {
         if (response.error) {
           throw new Exception(
             `Error while retrieving s3://${parameters.Bucket}/${parameters.Key}: ${response.error}`
           );
         }
 
-        this._unpack(this._getArchivePath(dependencyName, dependencyVersion), function(outputPath) {
-          FileSystem.unlink(archivePath, function() {
+        this._unpack(this._getArchivePath(dependencyName, dependencyVersion), (outputPath) => {
+          FileSystem.unlink(archivePath, () => {
             callback(outputPath);
-          }.bind(this));
-        }.bind(this));
-      }.bind(this))
+          });
+        });
+      })
       .send();
   }
 }

@@ -243,9 +243,9 @@ export class Lambda {
    * @returns {Lambda}
    */
   update(callback) {
-    this.pack().ready(function() {
+    this.pack().ready(() => {
       this.updateCode().ready(callback);
-    }.bind(this));
+    });
 
     return this;
   }
@@ -255,11 +255,11 @@ export class Lambda {
    * @returns {Lambda}
    */
   deploy(callback) {
-    this.pack().ready(function() {
+    this.pack().ready(() => {
       console.log(`Lambda ${this._identifier} packing is ready`);
 
       this.upload().ready(callback);
-    }.bind(this));
+    });
 
     return this;
   }
@@ -277,13 +277,13 @@ export class Lambda {
     let output = FileSystem.createWriteStream(outputFile);
     let archive = Archiver('zip');
 
-    output.on('close', function() {
+    output.on('close', () => {
       ready = true;
-    }.bind(this));
+    });
 
-    wait.push(function() {
+    wait.push(() => {
       return ready;
-    }.bind(this));
+    });
 
     archive.pipe(output);
 
@@ -316,18 +316,18 @@ export class Lambda {
     // @todo: remove this temporary hook by rewriting it in a native way
     require('child_process').exec(
       `cd ${Path.dirname(configFile)} && zip -r ${packageFile} ${Lambda.CONFIG_FILE}`,
-      function(error, stdout, stderr) {
+      (error, stdout, stderr) => {
         if (error !== null) {
           throw new Exception(`Error while adding ${Lambda.CONFIG_FILE} to lambda build: ${error}`);
         }
 
         ready = true;
-      }.bind(this)
+      }
     );
 
-    wait.push(function() {
+    wait.push(() => {
       return ready;
-    }.bind(this));
+    });
 
     return wait;
   }

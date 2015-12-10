@@ -236,9 +236,15 @@ export class Instance {
   fakeBuild() {
     let microservicesConfig = {};
     let microservices = this.microservices;
-    var rootMicroservice;
+    let rootMicroservice = null;
 
-    for (let microservice of microservices) {
+    for (let i in microservices) {
+      if (!microservices.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let microservice = microservices[i];
+
       if (microservice.isRoot) {
         if (rootMicroservice) {
           throw new DuplicateRootException(rootMicroservice, microservice);
@@ -257,7 +263,13 @@ export class Instance {
 
     let modelsDirs = [];
 
-    for (let microservice of microservices) {
+    for (let i in microservices) {
+      if (!microservices.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let microservice = microservices[i];
+
       microservice.compile();
 
       let microserviceConfig = {
@@ -333,12 +345,17 @@ export class Instance {
     }
 
     let lambdas = {};
-    for (let lambdaInstance of lambdaInstances) {
+
+    for (let i in lambdaInstances) {
+      if (!lambdaInstances.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let lambdaInstance = lambdaInstances[i];
 
       // assure localRuntime flag set true!
-      let lambdaInstanceConfig = lambdaInstance.createConfig(this._config, true);
+      lambdas[lambdaInstance.arn] = lambdaInstance.createConfig(this._config, true);
 
-      lambdas[lambdaInstance.arn] = lambdaInstanceConfig;
       lambdas[lambdaInstance.arn].name = lambdaInstance.functionName;
       lambdas[lambdaInstance.arn].path = Path.join(lambdaInstance.path, 'bootstrap.js');
     }
@@ -364,7 +381,13 @@ export class Instance {
     let microservices = this.microservices;
     let rootMicroservice;
 
-    for (let microservice of microservices) {
+    for (let i in microservices) {
+      if (!microservices.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let microservice = microservices[i];
+
       if (microservice.isRoot) {
         if (rootMicroservice) {
           throw new DuplicateRootException(rootMicroservice, microservice);
@@ -383,7 +406,13 @@ export class Instance {
 
     let modelsDirs = [];
 
-    for (let microservice of microservices) {
+    for (let i in microservices) {
+      if (!microservices.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let microservice = microservices[i];
+
       microservice.compile();
 
       let microserviceConfig = {
@@ -420,13 +449,13 @@ export class Instance {
     } else {
       console.log(`Start ${isUpdate ? 'updating' : 'creating'} provisioning`);
 
-      this.provisioning.create(function(config) {
+      this.provisioning.create((config) => {
         this._config.provisioning = config;
 
         console.log(`Provisioning is done`);
 
         callback();
-      }.bind(this), isUpdate);
+      }, isUpdate);
     }
 
     return this;
@@ -547,7 +576,7 @@ export class Instance {
       }
     }
 
-    wait.push(function() {
+    wait.push(() => {
       if (remaining === 0) {
         if (hasNextBatch) {
           processAsyncLambdaBatch();
@@ -558,9 +587,9 @@ export class Instance {
       }
 
       return false;
-    }.bind(this));
+    });
 
-    wait.ready(function() {
+    wait.ready(() => {
       this.buildFrontend(this._path, (frontend, error) => {
         if (error) {
           console.error(
@@ -578,7 +607,7 @@ export class Instance {
           frontend.deploy(this._aws, publicBucket).ready(callback);
         }
       });
-    }.bind(this));
+    });
 
     return this;
   }
@@ -605,10 +634,10 @@ export class Instance {
       throw new InvalidArgumentException(callback, 'Function');
     }
 
-    this.provisioning.postDeployProvision(function(config) {
+    this.provisioning.postDeployProvision((config) => {
       this._config.provisioning = config;
       this._runPostDeployMsHooks(callback);
-    }.bind(this), this._isUpdate);
+    }, this._isUpdate);
 
     return this;
   }
@@ -623,11 +652,17 @@ export class Instance {
     let microservices = this.microservices;
     let remaining = microservices.length;
 
-    wait.push(function() {
+    wait.push(() => {
       return remaining <= 0;
-    }.bind(this));
+    });
 
-    for (let microservice of microservices) {
+    for (let i in microservices) {
+      if (!microservices.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let microservice = microservices[i];
+
       let hook = microservice.initHook;
 
       if (!hook) {
@@ -638,14 +673,14 @@ export class Instance {
 
       console.log(`Running init hook for microservice ${microservice.identifier}`);
 
-      hook(function() {
+      hook(() => {
         remaining--;
-      }.bind(this));
+      });
     }
 
-    wait.ready(function() {
+    wait.ready(() => {
       callback();
-    }.bind(this));
+    });
 
     return this;
   }
@@ -660,11 +695,17 @@ export class Instance {
     let microservices = this.microservices;
     let remaining = microservices.length;
 
-    wait.push(function() {
+    wait.push(() => {
       return remaining <= 0;
-    }.bind(this));
+    });
 
-    for (let microservice of microservices) {
+    for (let i in microservices) {
+      if (!microservices.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let microservice = microservices[i];
+
       let hook = microservice.postDeployHook;
 
       if (!hook) {
@@ -675,14 +716,14 @@ export class Instance {
 
       console.log(`Running post deploy hook for microservice ${microservice.identifier}`);
 
-      hook(this._provisioning, this._isUpdate, function() {
+      hook(this._provisioning, this._isUpdate, () => {
         remaining--;
-      }.bind(this));
+      });
     }
 
-    wait.ready(function() {
+    wait.ready(() => {
       callback();
-    }.bind(this));
+    });
 
     return this;
   }
@@ -725,15 +766,15 @@ export class Instance {
       this.verifyProvisioningCollisions(() => {
         console.log(`Start installing application #${this.identifier}`);
 
-        this.build(function() {
+        this.build(() => {
           console.log(`Build is done`);
 
-          this.deploy(function() {
+          this.deploy(() => {
             console.log(`Deploy is done`);
 
             this.postDeploy(callback);
-          }.bind(this));
-        }.bind(this), skipProvision);
+          });
+        }, skipProvision);
       });
 
       return this;
@@ -741,15 +782,15 @@ export class Instance {
 
     console.log(`Start updating application #${this.identifier}`);
 
-    return this.build(function() {
+    return this.build(() => {
       console.log(`Build is done`);
 
-      this.deploy(function() {
+      this.deploy(() => {
         console.log(`Deploy is done`);
 
         this.postDeploy(callback);
-      }.bind(this));
-    }.bind(this), skipProvision);
+      });
+    }, skipProvision);
   }
 
   /**
@@ -759,7 +800,13 @@ export class Instance {
   assureFrontendEngine(callback) {
     let microservices = this.microservices;
 
-    for (let microservice of microservices) {
+    for (let i in microservices) {
+      if (!microservices.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let microservice = microservices[i];
+
       if (microservice.isRoot) {
         callback(null, null);
         return this;
@@ -889,7 +936,13 @@ export class Instance {
 
       let files = FileSystem.readdirSync(this._path);
 
-      for (let file of files) {
+      for (let i in files) {
+        if (!files.hasOwnProperty(i)) {
+          continue;
+        }
+
+        let file = files[i];
+
         let fullPath = Path.join(this._path, file);
 
         if (FileSystem.statSync(fullPath).isDirectory() &&

@@ -114,7 +114,7 @@ export class S3Driver extends AbstractDriver {
   _remove(bucketName, cb) {
     this._awsService.deleteBucket({
       Bucket: bucketName,
-    }, function(error) {
+    }, (error) => {
       cb(error);
     });
   }

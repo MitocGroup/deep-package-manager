@@ -40,22 +40,22 @@ export class Uploader extends Dispatcher {
 
       remaining++;
 
-      Lambda.createPackage(lambdaPath).ready(function() {
+      Lambda.createPackage(lambdaPath).ready(() => {
         remaining--;
-      }.bind(this));
+      });
     }
 
-    wait.push(function() {
+    wait.push(() => {
       return remaining <= 0;
-    }.bind(this));
+    });
 
-    wait.ready(function() {
+    wait.ready(() => {
       this._driver.push(
         microservice.basePath,
         microservice.identifier,
         microservice.version,
         callback
       );
-    }.bind(this));
+    });
   }
 }
