@@ -108,24 +108,11 @@ export class APIGatewayService extends AbstractService {
    * @todo: remove config.api key and put object to the root
    */
   _setup(services) {
-    let oldResourcePaths = [];
-
-    if (this.isUpdate) {
-      oldResourcePaths = Object.keys(this._config.api.resources);
-    }
-
     let resourcePaths = this._getResourcePaths(this.provisioning.property.microservices);
-    let newResourcePaths = resourcePaths.filter((i) => oldResourcePaths.indexOf(i) < 0);
-
-    if (newResourcePaths.length <= 0) {
-      this._ready = true;
-
-      return this;
-    }
 
     this._provisionApiResources(
       this.apiMetadata,
-      newResourcePaths
+      resourcePaths
     )((api, resources, role) => {
       this._newApiResources = resources;
 
@@ -193,12 +180,14 @@ export class APIGatewayService extends AbstractService {
   _provisionApiResources(metadata, resourcePaths) {
     let restApi = this.isUpdate ? this._config.api : null;
     let restApiIamRole = this.isUpdate ? this._config.api.role : null;
-    let restResources = null;
+    let restResources = this.isUpdate ? this._config.api.resources : null;
 
     return (callback) => {
       if (this.isUpdate) {
-        this._createApiResources(resourcePaths, restApi.id, (resources) => {
-          callback(restApi, this._extractApiResourcesMetadata(resources), restApiIamRole);
+        this._removeOldResources(restApi.id, restResources, () => {
+          this._createApiResources(resourcePaths, restApi.id, (resources) => {
+            callback(restApi, this._extractApiResourcesMetadata(resources), restApiIamRole);
+          });
         });
 
         return;
@@ -846,6 +835,60 @@ export class APIGatewayService extends AbstractService {
     this._findApiResourceByPath('/', restApiId, (rootResource) => {
       this._createApiResourcesByPaths(paths, restApiId, rootResource, callback);
     });
+  }
+
+  /**
+   * @param {String} restApiId
+   * @param {Object} resources
+   * @param {Function} callback
+   * @private
+   */
+  _removeOldResources(restApiId, resources, callback) {
+    let firstLevelResources = this._getFirstLevelResources(resources);
+    let removedResources = 0;
+
+    firstLevelResources.forEach((resourceId) => {
+      let params = {
+        resourceId: resourceId,
+        restApiId: restApiId,
+      };
+
+      this.apiGatewayClient.deleteResource(params, (error, data) => {
+        if (error) {
+          // @todo throw an Exception
+        }
+
+        removedResources++;
+
+        if (removedResources === firstLevelResources.length) {
+          callback();
+        }
+      });
+    });
+  }
+
+  /**
+   * @param {Object} resources
+   * @returns {Array}
+   * @private
+   */
+  _getFirstLevelResources(resources) {
+    let rootResource = resources['/'];
+
+    let firstLevelResources = [];
+    for (let resourcePath in resources) {
+      if (!resources.hasOwnProperty(resourcePath)) {
+        continue;
+      }
+
+      let resource = resources[resourcePath];
+
+      if (resource.parentId === rootResource.id) {
+        firstLevelResources.push(resource.id);
+      }
+    }
+
+    return firstLevelResources;
   }
 
   /**
