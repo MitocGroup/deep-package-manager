@@ -185,6 +185,7 @@ export class APIGatewayService extends AbstractService {
 
     return (callback) => {
       if (this.isUpdate) {
+        // recreate all resources to make sure all changes to resources.json are applied to API Gateway endpoints
         this._removeOldResources(restApi.id, restResources, () => {
           this._createApiResources(resourcePaths, restApi.id, (resources) => {
             callback(restApi, this._extractApiResourcesMetadata(resources), restApiIamRole);
