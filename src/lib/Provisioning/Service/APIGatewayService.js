@@ -15,6 +15,7 @@ import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingP
 import {FailedToDeployApiGatewayException} from './Exception/FailedToDeployApiGatewayException';
 import {FailedToExecuteApiGatewayMethodException} from './Exception/FailedToExecuteApiGatewayMethodException';
 import {FailedToListApiResourcesException} from './Exception/FailedToListApiResourcesException';
+import {FailedToDeleteApiResourceException} from './Exception/FailedToDeleteApiResourceException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
@@ -847,15 +848,15 @@ export class APIGatewayService extends AbstractService {
     let firstLevelResources = this._getFirstLevelResources(resources);
     let removedResources = 0;
 
-    firstLevelResources.forEach((resourceId) => {
+    firstLevelResources.forEach((resource) => {
       let params = {
-        resourceId: resourceId,
+        resourceId: resource.id,
         restApiId: restApiId,
       };
 
       this.apiGatewayClient.deleteResource(params, (error, data) => {
         if (error) {
-          // @todo throw an Exception
+          throw new FailedToDeleteApiResourceException(resource.path, error);
         }
 
         removedResources++;
@@ -884,7 +885,7 @@ export class APIGatewayService extends AbstractService {
       let resource = resources[resourcePath];
 
       if (resource.parentId === rootResource.id) {
-        firstLevelResources.push(resource.id);
+        firstLevelResources.push(resource);
       }
     }
 
