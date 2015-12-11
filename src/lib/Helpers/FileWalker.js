@@ -74,7 +74,13 @@ export class FileWalker {
 
     let files = this.walk(source, skipDotFilter);
 
-    for (let file of files) {
+    for (let i in files) {
+      if (!files.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let file = files[i];
+
       let relativePath = file.substring(sourceOffset);
       let fileCopy = path.join(destination, relativePath);
       let fileDir = path.dirname(fileCopy);
@@ -103,7 +109,13 @@ export class FileWalker {
       .map((file) => path.join(dir, file))
       .filter(ignoreFilter);
 
-    for (let file of list) {
+    for (let i in list) {
+      if (!list.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let file = list[i];
+
       if (this._type === FileWalker.RECURSIVE) {
         let stat = FileSystem.statSync(file);
 

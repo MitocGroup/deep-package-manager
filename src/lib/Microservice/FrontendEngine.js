@@ -56,13 +56,27 @@ export class FrontendEngine {
     let engines = microservices.map((microservice) => microservice.frontendEngine);
     let plainEnginesBatch = [];
 
-    for (let frontendEngine of engines) {
-      plainEnginesBatch.concat(frontendEngine.engines);
+    for (let i in engines) {
+      if (!engines.hasOwnProperty(i)) {
+        continue;
+      }
+
+      plainEnginesBatch.concat(engines[i].engines);
     }
 
-    plainEngineLoop: for (let plainEngine of this._rawEngines) {
-      for (let plainEngines of plainEnginesBatch) {
-        if (plainEngines.indexOf(plainEngine) === -1) {
+    plainEngineLoop: for (let i in this._rawEngines) {
+      if (!this._rawEngines.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let plainEngine = this._rawEngines[i];
+
+      for (let j in plainEnginesBatch) {
+        if (!plainEnginesBatch.hasOwnProperty(j)) {
+          continue;
+        }
+
+        if (plainEnginesBatch[j].indexOf(plainEngine) === -1) {
           continue plainEngineLoop;
         }
       }

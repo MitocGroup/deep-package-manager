@@ -63,12 +63,12 @@ export class CloudFrontService extends AbstractService {
       return this;
     }
 
-    this._createDistribution(services, function(cfData) {
+    this._createDistribution(services, (cfData) => {
       this._config.id = cfData.Distribution.Id;
       this._config.domain = cfData.Distribution.DomainName;
 
       this._readyTeardown = true;
-    }.bind(this));
+    });
 
     return this;
   }
@@ -145,13 +145,13 @@ export class CloudFrontService extends AbstractService {
       },
     };
 
-    cf.createDistribution(payload, function(error, data) {
+    cf.createDistribution(payload, (error, data) => {
       if (error) {
         throw new FailedToCreateCloudFrontDistributionException(error);
       }
 
       cb(data);
-    }.bind(this));
+    });
 
     return this;
   }

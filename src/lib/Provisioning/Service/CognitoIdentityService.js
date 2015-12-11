@@ -91,10 +91,10 @@ export class CognitoIdentityService extends AbstractService {
 
     this._createIdentityPool(
       identityProviders
-    )(function(identityPool) {
+    )((identityPool) => {
       this._config.identityPool = identityPool;
       this._ready = true;
-    }.bind(this));
+    });
 
     return this;
   }
@@ -112,10 +112,10 @@ export class CognitoIdentityService extends AbstractService {
 
     this._setIdentityPoolRoles(
       this._config.identityPool
-    )(function(roles) {
+    )((roles) => {
       this._readyTeardown = true;
       this._config.roles = roles;
-    }.bind(this));
+    });
 
     return this;
   }
@@ -136,12 +136,12 @@ export class CognitoIdentityService extends AbstractService {
     this._updateCognitoRolesPolicy(
       this._config.roles,
       apiGatewayInstance.getAllEndpointsArn()
-    )(function(policies) {
+    )((policies) => {
       this._config.postDeploy = {
         inlinePolicies: policies,
       };
       this._ready = true;
-    }.bind(this));
+    });
 
     return this;
   }
@@ -165,7 +165,7 @@ export class CognitoIdentityService extends AbstractService {
     let cognitoIdentity = this.provisioning.cognitoIdentity;
     let syncStack = new AwsRequestSyncStack();
 
-    syncStack.push(cognitoIdentity.createIdentityPool(params), function(error, data) {
+    syncStack.push(cognitoIdentity.createIdentityPool(params), (error, data) => {
       if (error) {
         throw new FailedToCreateIdentityPoolException(identityPoolName, error);
       }
@@ -173,11 +173,11 @@ export class CognitoIdentityService extends AbstractService {
       identityPool = data;
     });
 
-    return function(callback) {
-      return syncStack.join().ready(function() {
+    return (callback) => {
+      return syncStack.join().ready(() => {
         callback(identityPool);
-      }.bind(this));
-    }.bind(this);
+      });
+    };
   }
 
   /**
@@ -202,17 +202,17 @@ export class CognitoIdentityService extends AbstractService {
         RoleName: this.generateAwsResourceName(roleType, Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT),
       };
 
-      syncStack.push(iam.createRole(roleParams), function(error, data) {
+      syncStack.push(iam.createRole(roleParams), (error, data) => {
         if (error) {
           throw new FailedToCreateIamRoleException(roleParams.RoleName, error);
         }
 
         roles[roleType] = data.Role;
-      }.bind(this));
+      });
     }
 
-    return function(callback) {
-      return syncStack.join().ready(function() {
+    return (callback) => {
+      return syncStack.join().ready(() => {
         let innerSyncStack = new AwsRequestSyncStack();
         let cognitoIdentity = this.provisioning.cognitoIdentity;
 
@@ -224,17 +224,17 @@ export class CognitoIdentityService extends AbstractService {
           },
         };
 
-        innerSyncStack.push(cognitoIdentity.setIdentityPoolRoles(parameters), function(error, data) {
+        innerSyncStack.push(cognitoIdentity.setIdentityPoolRoles(parameters), (error, data) => {
           if (error) {
             throw new FailedSettingIdentityPoolRolesException(identityPool.IdentityPoolName, error);
           }
-        }.bind(this));
+        });
 
-        innerSyncStack.join().ready(function() {
+        innerSyncStack.join().ready(() => {
           callback(roles);
-        }.bind(this));
-      }.bind(this));
-    }.bind(this);
+        });
+      });
+    };
   }
 
   /**
@@ -309,20 +309,20 @@ export class CognitoIdentityService extends AbstractService {
         RoleName: cognitoRole.RoleName,
       };
 
-      syncStack.push(iam.putRolePolicy(params), function(error, data) {
+      syncStack.push(iam.putRolePolicy(params), (error, data) => {
         if (error) {
           throw new FailedAttachingPolicyToRoleException(params.PolicyName, params.RoleName, error);
         }
 
         policies[params.RoleName] = policy;
-      }.bind(this));
+      });
     }
 
-    return function(callback) {
-      return syncStack.join().ready(function() {
+    return (callback) => {
+      return syncStack.join().ready(() => {
         callback(policies);
-      }.bind(this));
-    }.bind(this);
+      });
+    };
   }
 
   /**

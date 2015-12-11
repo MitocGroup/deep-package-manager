@@ -19,8 +19,12 @@ export class Compiler {
    * @returns {Compiler}
    */
   static compile(microservice) {
-    for (let compiler of Compiler.compilers) {
-      compiler.compile(microservice);
+    for (let i in Compiler.compilers) {
+      if (!Compiler.compilers.hasOwnProperty(i)) {
+        continue;
+      }
+
+      Compiler.compilers[i].compile(microservice);
     }
 
     return this;
@@ -33,11 +37,18 @@ export class Compiler {
   static buildLambdas(microservice)
   {
     let backendPath = microservice.autoload.backend;
+    let actionsObj = microservice.resources.actions;
     let lambdas = {
       _: {}, // @todo: move config somewhere...
     };
 
-    for (let action of microservice.resources.actions) {
+    for (let i in actionsObj) {
+      if (!actionsObj.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let action = actionsObj[i];
+
       if (action.type === Action.LAMBDA) {
         let source = StringUtils.trim(action.source, '/');
 

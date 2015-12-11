@@ -79,19 +79,23 @@ export class Manager {
     let wait = new WaitFor();
     let stackSize = subPaths.length;
 
-    for (let subPath of subPaths) {
-      executor.dispatch(this._createMicroservice(subPath), function() {
+    for (let i in subPaths) {
+      if (!subPaths.hasOwnProperty(i)) {
+        continue;
+      }
+
+      executor.dispatch(this._createMicroservice(subPaths[i]), () => {
         stackSize--;
-      }.bind(this));
+      });
     }
 
-    wait.push(function() {
+    wait.push(() => {
       return stackSize <= 0;
-    }.bind(this));
+    });
 
-    wait.ready(function() {
+    wait.ready(() => {
       callback();
-    }.bind(this));
+    });
   }
 
   /**

@@ -108,11 +108,11 @@ export class S3Service extends AbstractService {
 
     this._createFsBuckets(
       S3Service.FS_BUCKETS_SUFFIX
-    )(function(buckets) {
+    )((buckets) => {
       this._config.buckets = buckets;
 
       this._ready = true;
-    }.bind(this));
+    });
 
     return this;
   }
@@ -160,7 +160,13 @@ export class S3Service extends AbstractService {
     let syncStack = new AwsRequestSyncStack();
     let tmpBucket = null;
 
-    for (let bucketSuffix of bucketsSuffix) {
+    for (let i in bucketsSuffix) {
+      if (!bucketsSuffix.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let bucketSuffix = bucketsSuffix[i];
+
       let bucketName = this.generateAwsResourceName(
         bucketSuffix,
         Core.AWS.Service.SIMPLE_STORAGE_SERVICE,
@@ -168,7 +174,7 @@ export class S3Service extends AbstractService {
         AbstractService.DELIMITER_DOT
       );
 
-      syncStack.push(s3.createBucket({Bucket: bucketName}), function(error, data) {
+      syncStack.push(s3.createBucket({Bucket: bucketName}), (error, data) => {
         if (error) {
           throw new FailedToCreateBucketException(bucketName, error);
         }
@@ -181,33 +187,33 @@ export class S3Service extends AbstractService {
 
         buckets[bucketSuffix] = {};
 
-        syncStack.level(1).push(s3.putBucketPolicy(params), function(error, data) {
+        syncStack.level(1).push(s3.putBucketPolicy(params), (error, data) => {
           if (error) {
             throw new FailedAttachingPolicyToBucketException(bucketName, error);
           }
 
           buckets[bucketSuffix].name = bucketName;
-        }.bind(this));
+        });
 
         // setup public bucket as static website hosting
         if (S3Service.isBucketPublic(bucketName)) {
           let websiteConfig = S3Service.getStaticWebsiteConfig(bucketName);
 
-          syncStack.level(1).push(s3.putBucketWebsite(websiteConfig), function(error, data) {
+          syncStack.level(1).push(s3.putBucketWebsite(websiteConfig), (error, data) => {
             if (error) {
               throw new FailedSettingBucketAsWebsiteException(bucketName, error);
             }
 
             buckets[bucketSuffix].website = this.getWebsiteAddress(bucketName);
-          }.bind(this));
+          });
         } else if (S3Service.isBucketTmp(bucketName)) {
           tmpBucket = bucketName;
         }
-      }.bind(this));
+      });
     }
 
-    return function(callback) {
-      return syncStack.join().ready(function() {
+    return (callback) => {
+      return syncStack.join().ready(() => {
         let lifecyclePayload = {
           Bucket: tmpBucket,
           LifecycleConfiguration: {
@@ -223,15 +229,15 @@ export class S3Service extends AbstractService {
           },
         };
 
-        s3.putBucketLifecycle(lifecyclePayload, function(error, data) {
+        s3.putBucketLifecycle(lifecyclePayload, (error, data) => {
           if (error) {
             throw new FailedAddingLifecycleException(tmpBucket, error);
           }
 
           callback(buckets);
-        }.bind(this));
-      }.bind(this));
-    }.bind(this);
+        });
+      });
+    };
   }
 
   /**

@@ -159,14 +159,14 @@ export class APIGatewayService extends AbstractService {
       this._newApiResources,
       this._config.api.role,
       integrationParams
-    )(function(methods, integrations, rolePolicy, deployedApi) {
+    )((methods, integrations, rolePolicy, deployedApi) => {
       this._config.api.methods = methods;
       this._config.api.integrations = integrations;
       this._config.api.rolePolicy = rolePolicy;
       this._config.api.deployedApi = deployedApi;
 
       this._ready = true;
-    }.bind(this));
+    });
 
     return this;
   }

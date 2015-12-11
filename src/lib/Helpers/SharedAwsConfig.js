@@ -216,7 +216,7 @@ export class SharedAwsConfig {
    * @constructor
    */
   static get AwsCliConfig() {
-    return function() {
+    return () => {
       return {
         accessKeyId: null,
         secretAccessKey: null,
@@ -225,7 +225,7 @@ export class SharedAwsConfig {
           this.accessKeyId = exec('aws configure get aws_access_key_id 2>/dev/null').stdout.toString().trim();
           this.secretAccessKey = exec('aws configure get aws_secret_access_key 2>/dev/null').stdout.toString().trim();
           this.region = exec('aws configure get region 2>/dev/null').stdout.toString().trim();
-        }
+        },
       };
     };
   }

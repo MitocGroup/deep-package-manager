@@ -96,7 +96,7 @@ export class LambdaService extends AbstractService {
 
     this._createExecRoles(
       microservices
-    )(function(execRoles) {
+    )((execRoles) => {
       let lambdaNames = this._generateLambdasNames(microservices);
 
       this._config.names = this.isUpdate
@@ -108,7 +108,7 @@ export class LambdaService extends AbstractService {
         : execRoles;
 
       this._ready = true;
-    }.bind(this));
+    });
 
     return this;
   }
@@ -123,13 +123,13 @@ export class LambdaService extends AbstractService {
     this._attachPolicyToExecRoles(
       buckets,
       this._config.executionRoles
-    )(function(policies) {
+    )((policies) => {
       this._config.executionRolesPolicies = this.isUpdate
         ? extend(this._config.executionRolesPolicies, policies)
         : policies;
 
       this._readyTeardown = true;
-    }.bind(this));
+    });
 
     return this;
   }
@@ -204,7 +204,7 @@ export class LambdaService extends AbstractService {
           };
 
           if (this._isIamRoleNew(roleName)) {
-            syncStack.push(iam.createRole(params), function(error, data) {
+            syncStack.push(iam.createRole(params), (error, data) => {
               if (error) {
                 // @todo: remove this hook
                 if (Lambda.isErrorFalsePositive(error)) {
@@ -215,17 +215,17 @@ export class LambdaService extends AbstractService {
               }
 
               execRoles[microservice.identifier][action.identifier] = data.Role;
-            }.bind(this));
+            });
           }
         }
       }
     }
 
-    return function(callback) {
-      return syncStack.join().ready(function() {
+    return (callback) => {
+      return syncStack.join().ready(() => {
         callback(execRoles);
-      }.bind(this));
-    }.bind(this);
+      });
+    };
   }
 
   /**
@@ -307,22 +307,22 @@ export class LambdaService extends AbstractService {
             RoleName: execRole.RoleName,
           };
 
-          syncStack.push(iam.putRolePolicy(params), function(error, data) {
+          syncStack.push(iam.putRolePolicy(params), (error, data) => {
             if (error) {
               throw new FailedAttachingPolicyToRoleException(policyName, execRole.RoleName, error);
             }
 
             policies[execRole.RoleName] = policy;
-          }.bind(this));
+          });
         }
       }
     }
 
-    return function(callback) {
-      return syncStack.join().ready(function() {
+    return (callback) => {
+      return syncStack.join().ready(() => {
         callback(policies);
-      }.bind(this));
-    }.bind(this);
+      });
+    };
   }
 
   /**
