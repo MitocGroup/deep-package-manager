@@ -15,6 +15,7 @@ import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingP
 import {FailedToDeployApiGatewayException} from './Exception/FailedToDeployApiGatewayException';
 import {FailedToExecuteApiGatewayMethodException} from './Exception/FailedToExecuteApiGatewayMethodException';
 import {FailedToListApiResourcesException} from './Exception/FailedToListApiResourcesException';
+import {FailedToDeleteApiResourceException} from './Exception/FailedToDeleteApiResourceException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
@@ -108,24 +109,11 @@ export class APIGatewayService extends AbstractService {
    * @todo: remove config.api key and put object to the root
    */
   _setup(services) {
-    let oldResourcePaths = [];
-
-    if (this.isUpdate) {
-      oldResourcePaths = Object.keys(this._config.api.resources);
-    }
-
     let resourcePaths = this._getResourcePaths(this.provisioning.property.microservices);
-    let newResourcePaths = resourcePaths.filter((i) => oldResourcePaths.indexOf(i) < 0);
-
-    if (newResourcePaths.length <= 0) {
-      this._ready = true;
-
-      return this;
-    }
 
     this._provisionApiResources(
       this.apiMetadata,
-      newResourcePaths
+      resourcePaths
     )((api, resources, role) => {
       this._newApiResources = resources;
 
@@ -193,12 +181,15 @@ export class APIGatewayService extends AbstractService {
   _provisionApiResources(metadata, resourcePaths) {
     let restApi = this.isUpdate ? this._config.api : null;
     let restApiIamRole = this.isUpdate ? this._config.api.role : null;
-    let restResources = null;
+    let restResources = this.isUpdate ? this._config.api.resources : null;
 
     return (callback) => {
       if (this.isUpdate) {
-        this._createApiResources(resourcePaths, restApi.id, (resources) => {
-          callback(restApi, this._extractApiResourcesMetadata(resources), restApiIamRole);
+        // recreate all resources to make sure all changes to resources.json are applied to API Gateway endpoints
+        this._removeOldResources(restApi.id, restResources, () => {
+          this._createApiResources(resourcePaths, restApi.id, (resources) => {
+            callback(restApi, this._extractApiResourcesMetadata(resources), restApiIamRole);
+          });
         });
 
         return;
@@ -846,6 +837,60 @@ export class APIGatewayService extends AbstractService {
     this._findApiResourceByPath('/', restApiId, (rootResource) => {
       this._createApiResourcesByPaths(paths, restApiId, rootResource, callback);
     });
+  }
+
+  /**
+   * @param {String} restApiId
+   * @param {Object} resources
+   * @param {Function} callback
+   * @private
+   */
+  _removeOldResources(restApiId, resources, callback) {
+    let firstLevelResources = this._getFirstLevelResources(resources);
+    let removedResources = 0;
+
+    firstLevelResources.forEach((resource) => {
+      let params = {
+        resourceId: resource.id,
+        restApiId: restApiId,
+      };
+
+      this.apiGatewayClient.deleteResource(params, (error, data) => {
+        if (error) {
+          throw new FailedToDeleteApiResourceException(resource.path, error);
+        }
+
+        removedResources++;
+
+        if (removedResources === firstLevelResources.length) {
+          callback();
+        }
+      });
+    });
+  }
+
+  /**
+   * @param {Object} resources
+   * @returns {Array}
+   * @private
+   */
+  _getFirstLevelResources(resources) {
+    let rootResource = resources['/'];
+
+    let firstLevelResources = [];
+    for (let resourcePath in resources) {
+      if (!resources.hasOwnProperty(resourcePath)) {
+        continue;
+      }
+
+      let resource = resources[resourcePath];
+
+      if (resource.parentId === rootResource.id) {
+        firstLevelResources.push(resource);
+      }
+    }
+
+    return firstLevelResources;
   }
 
   /**
