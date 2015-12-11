@@ -5,6 +5,7 @@
 'use strict';
 
 import FileSystem from 'graceful-fs';
+import FileSystemExtra from 'fs-extra';
 import path from 'path';
 import StringUtils from 'underscore.string';
 import mkdirp from 'mkdirp';
@@ -87,7 +88,7 @@ export class FileWalker {
 
       this.mkdir(fileDir);
 
-      FileSystem.renameSync(file, fileCopy);
+      FileSystemExtra.copySync(file, fileCopy);
     }
 
     return this;
