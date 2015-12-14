@@ -30,7 +30,7 @@ export class ReadlineSyncMock {
         break;
 
       case ReadlineSyncMock.DATA_MODE:
-        callback(ReadlineSyncMock.ERROR);
+        callback(ReadlineSyncMock.DATA);
         break;
     }
   }
@@ -41,7 +41,8 @@ export class ReadlineSyncMock {
    * @returns {ReadlineSyncMock}
    */
   question(text, callback) {
-    this.getResultByMode(this._methodsBehavior.get('question'));
+    console.log('in mock question');
+    this.getResultByMode(this._methodsBehavior.get('question'), callback);
 
     return this;
   }
@@ -52,8 +53,15 @@ export class ReadlineSyncMock {
    * @returns {ReadlineSyncMock}
    */
   questionHidden(text, callback) {
-    this.getResultByMode(this._methodsBehavior.get('questionHidden'));
+    this.getResultByMode(this._methodsBehavior.get('questionHidden'), callback);
 
+    return this;
+  }
+
+  /**
+   * @returns {ReadlineSyncMock}
+   */
+  close() {
     return this;
   }
 
@@ -130,10 +138,7 @@ export class ReadlineSyncMock {
    * @constructor
    */
   static get DATA() {
-    return {
-      status: 200,
-      message: 'Question successfully processed',
-    };
+    return  'Question successfully processed';
   }
 
   /**
