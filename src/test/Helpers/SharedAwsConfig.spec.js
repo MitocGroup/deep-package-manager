@@ -4,6 +4,21 @@ import chai from 'chai';
 import {SharedAwsConfig} from '../../lib/Helpers/SharedAwsConfig';
 
 suite('Helpers/SharedAwsConfig', function() {
+  let provider = {
+    accessKeyId: 'test_accessKeyId123',
+    secretAccessKey: 'test_secretAccessKey123',
+    region: 'us-west-2',
+    refresh: () => {
+      return this;
+    }
+  };
+
+  let credentials = {
+    accessKeyId: 'test_accessKeyId123',
+    secretAccessKey: 'test_secretAccessKey123',
+    region: 'us-west-2',
+  };
+
   let sharedAwsConfig = new SharedAwsConfig();
 
   test('Class SharedAwsConfig exists in Helpers/SharedAwsConfig', function() {
@@ -20,5 +35,49 @@ suite('Helpers/SharedAwsConfig', function() {
 
   test('Check DEFAULT_REGION returns "us-west-2"', function() {
     chai.expect(SharedAwsConfig.DEFAULT_REGION).to.equal('us-west-2');
+  });
+
+  test('Check AWS_GLOB_CFG_FILE returns path to global config', function() {
+    chai.expect(SharedAwsConfig.AWS_GLOB_CFG_FILE).to.include('/credentials');
+  });
+
+  test('Check _getWeight returns valid value', function() {
+    chai.expect(sharedAwsConfig._getWeight(provider)).to.be.equal(5);
+  });
+
+  test('Check _chooseCredentials() returns valid credentials', function() {
+    chai.expect(sharedAwsConfig._chooseCredentials([provider])).to.be.eql(credentials);
+  });
+
+  test('Check _chooseCredentials() without args returns null credentials', function() {
+    let credentials = {
+      accessKeyId: null,
+      secretAccessKey: null,
+      region: null,
+    };
+
+    chai.expect(sharedAwsConfig._chooseCredentials()).to.be.eql(credentials);
+  });
+
+  test('Check addProvider() adds new provider', function() {
+    sharedAwsConfig.addProvider(provider);
+
+    chai.expect(sharedAwsConfig.providers).to.be.eql(provider);
+  });
+
+  test('Check guess() returns valid credentials for _credentials', function() {
+    let credentials = {
+      accessKeyId: null,
+      secretAccessKey: null,
+      region: null,
+    };
+
+    chai.expect(sharedAwsConfig.guess()).to.be.eql(credentials);
+  });
+
+  test('Check guess() returns valid credentials for !_credentials', function() {
+    sharedAwsConfig._credentials = null;
+
+    chai.expect(sharedAwsConfig.guess()).to.be.eql(credentials);
   });
 });
