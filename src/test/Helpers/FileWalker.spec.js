@@ -105,14 +105,14 @@ suite('Helpers/FileWalker', function() {
   test('Check walk() method', function () {
     let dirPath = path.join(__dirname, '../testMaterials/assets');
     let expectedResult = [
-      '/Library/WebServer/Documents/deep-package-manager/src/test/testMaterials/assets/expectedResults/content.css.js',
-      '/Library/WebServer/Documents/deep-package-manager/src/test/testMaterials/assets/expectedResults/content.html.js',
-      '/Library/WebServer/Documents/deep-package-manager/src/test/testMaterials/assets/expectedResults/data.css',
-      '/Library/WebServer/Documents/deep-package-manager/src/test/testMaterials/assets/expectedResults/data.html',
-      '/Library/WebServer/Documents/deep-package-manager/src/test/testMaterials/assets/expectedResults/dataWithDeployId.css',
-      '/Library/WebServer/Documents/deep-package-manager/src/test/testMaterials/assets/expectedResults/dataWithDeployId.html',
-      '/Library/WebServer/Documents/deep-package-manager/src/test/testMaterials/assets/rawFiles/data.css',
-      '/Library/WebServer/Documents/deep-package-manager/src/test/testMaterials/assets/rawFiles/data.html',
+      path.join(__dirname, '../testMaterials/assets/expectedResults/content.css.js'),
+      path.join(__dirname, '../testMaterials/assets/expectedResults/content.html.js'),
+      path.join(__dirname, '../testMaterials/assets/expectedResults/data.css'),
+      path.join(__dirname, '../testMaterials/assets/expectedResults/data.html'),
+      path.join(__dirname, '../testMaterials/assets/expectedResults/dataWithDeployId.css'),
+      path.join(__dirname, '../testMaterials/assets/expectedResults/dataWithDeployId.html'),
+      path.join(__dirname, '../testMaterials/assets/rawFiles/data.css'),
+      path.join(__dirname, '../testMaterials/assets/rawFiles/data.html'),
     ];
 
     let actualResult = fileWalker.walk(dirPath);
