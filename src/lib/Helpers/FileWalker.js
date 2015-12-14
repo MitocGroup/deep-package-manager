@@ -142,7 +142,6 @@ export class FileWalker {
     let ignoreFile = path.join(dir, this._ignoreFile);
 
     if (FileSystem.existsSync(ignoreFile)) {
-      console.log('exists')
       return ignore({})
         .addIgnoreFile(ignoreFile)
         .createFilter();
