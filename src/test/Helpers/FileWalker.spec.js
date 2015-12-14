@@ -3,40 +3,41 @@
 import chai from 'chai';
 import {FileWalker} from '../../lib/Helpers/FileWalker';
 import FileSystem from 'fs';
+import path from 'path';
 
-suite('Helpers/FileWalker', function() {
+suite('Helpers/FileWalker', function () {
   let fileWalker = new FileWalker();
   let ignoreFile = 'ignoreFilePath';
   let directoryPath = 'testDirectory';
   let directoryWithSubPaths = 'testDirectories/subdir/dir';
   let error = null;
 
-  test('Class FileWalker exists in Helpers/FileWalker', function() {
+  test('Class FileWalker exists in Helpers/FileWalker', function () {
     chai.expect(typeof FileWalker).to.equal('function');
   });
 
-  test('Check constructor sets valid default value for _type', function() {
+  test('Check constructor sets valid default value for _type', function () {
     chai.expect(fileWalker.type).to.be.equal(FileWalker.SIMPLE);
   });
 
-  test('Check constructor sets valid default value for _ignoreFile=null', function() {
+  test('Check constructor sets valid default value for _ignoreFile=null', function () {
     chai.expect(fileWalker.ignoreFile).to.be.equal(null);
   });
 
-  test('Check ignoreFile setter sets _ignoreFile = \'ignoreFilePath\'', function() {
+  test('Check ignoreFile setter sets _ignoreFile = "ignoreFilePath"', function () {
     fileWalker.ignoreFile = ignoreFile;
     chai.expect(fileWalker.ignoreFile).to.be.equal(ignoreFile);
   });
 
-  test('Check RECURSIVE static getter returns \'recursive\'', function() {
+  test('Check RECURSIVE static getter returns "recursive"', function () {
     chai.expect(FileWalker.RECURSIVE).to.be.equal('recursive');
   });
 
-  test('Check SIMPLE getter returns \'simple\'', function() {
+  test('Check SIMPLE getter returns "simple"', function () {
     chai.expect(FileWalker.SIMPLE).to.be.equal('simple');
   });
 
-  test('Check mkdir() method creates simple directory and returns undefined', function() {
+  test('Check mkdir() method creates simple directory and returns undefined', function () {
     error = null;
 
     try {
@@ -50,11 +51,10 @@ suite('Helpers/FileWalker', function() {
       }
     }
 
-    chai.expect(error).to.be.equal(null);
     chai.expect(FileSystem.existsSync(directoryPath)).to.be.equal(false);
   });
 
-  test('Check mkdir() method creates directory and any necessary subdirectories', function() {
+  test('Check mkdir() method creates directory and any necessary subdirectories', function () {
     error = null;
     try {
       fileWalker._type = FileWalker.RECURSIVE;
@@ -72,7 +72,7 @@ suite('Helpers/FileWalker', function() {
     chai.expect(FileSystem.existsSync(directoryWithSubPaths)).to.be.equal(false);
   });
 
-  var rmdir = function(dir) {
+  var rmdir = function (dir) {
     var list = FileSystem.readdirSync(dir);
     for (var i = 0; i < list.length; i++) {
       var filename = path.join(dir, list[i]);
@@ -91,4 +91,20 @@ suite('Helpers/FileWalker', function() {
 
     FileSystem.rmdirSync(dir);
   };
+
+  test('Check _buildIgnoreFilter() returns', function() {
+    fileWalker.ignoreFile = '.gitignore';
+    let dirPath = path.join(__dirname, '../testMaterials/Helpers');
+    console.log('dirPath: ', dirPath)
+
+    let actualResult = fileWalker._buildIgnoreFilter(dirPath);
+
+    chai.expect(actualResult()).to.eql({});
+  });
+
+  test('Check _buildIgnoreFilter() returns true', function() {
+    let actualResult = fileWalker._buildIgnoreFilter('testMaterials');
+
+    chai.expect(actualResult()).to.equal(true);
+  });
 });
