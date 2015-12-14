@@ -82,7 +82,7 @@ suite('Helpers/JoiHelper', function () {
 
     chai.expect(actualResult.isJoi).to.equal(true);
     chai.expect(actualResult._type).to.equal('array');
-    chai.expect(actualResult._flags).to.eql({sparse: false, presence: 'required'});
+    chai.expect(actualResult._flags).to.eql({sparse: false});
     chai.expect(actualResult._inner.items[0].isJoi).to.equal(true);
     chai.expect(actualResult._inner.items[0]._type).to.equal('string');
     chai.expect(actualResult._inner.items[0]._flags).to.eql({});

@@ -26,9 +26,12 @@ export class SharedAwsConfig {
 
   /**
    * @param {Object} provider
+   * @returns {SharedAwsConfig}
    */
   addProvider(provider) {
-    this._providers = provider;
+    this._providers.push(provider);
+
+    return this;
   }
 
   /**

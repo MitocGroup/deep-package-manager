@@ -62,7 +62,8 @@ suite('Helpers/SharedAwsConfig', function() {
   test('Check addProvider() adds new provider', function() {
     sharedAwsConfig.addProvider(provider);
 
-    chai.expect(sharedAwsConfig.providers).to.be.eql(provider);
+    chai.expect(sharedAwsConfig.providers.length).to.be.equal(5);
+    chai.expect(sharedAwsConfig.providers).to.contains(provider);
   });
 
   test('Check guess() returns valid credentials for _credentials', function() {
