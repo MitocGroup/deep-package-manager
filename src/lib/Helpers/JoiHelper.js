@@ -2,7 +2,7 @@
  * Created by AlexanderC on 5/25/15.
  */
 
-"use strict";
+'use strict';
 
 import Joi from 'joi';
 
@@ -45,7 +45,7 @@ export class JoiHelper {
      * @returns {*}
      */
     static stringArray() {
-        return JoiHelper.array().items(Joi.string());
+        return JoiHelper.list().items(Joi.string());
     }
 
     /**

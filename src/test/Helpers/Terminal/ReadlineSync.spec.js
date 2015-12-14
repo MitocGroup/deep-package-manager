@@ -12,9 +12,9 @@ suite('Helpers/Terminal/ReadlineSync', function() {
   let options = {
     option: 'Test option',
   };
-  let readlineSyncMock = new ReadlineSyncMock();
 
   //mocking readline-sync
+  let readlineSyncMock = new ReadlineSyncMock();
   let readlineSyncExport = requireProxy('../../../lib/Helpers/Terminal/ReadlineSync', {
     'readline-sync': readlineSyncMock,
   });
@@ -42,7 +42,7 @@ suite('Helpers/Terminal/ReadlineSync', function() {
     chai.expect(actualResult.options).to.eql({});
   });
 
-  test('Check createInterface() return valid instance of ReadlineSync', function() {
+  test('Check createInterface() returns valid instance of ReadlineSync', function() {
     let actualResult = ReadlineSync.createInterface(options);
 
     chai.expect(actualResult).to.be.an.instanceof(ReadlineSync);

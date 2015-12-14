@@ -6,11 +6,22 @@ import sinonChai from 'sinon-chai'
 import {Prompt} from '../../../lib/Helpers/Terminal/Prompt';
 import {ReadlineSync} from '../../../lib/Helpers/Terminal/ReadlineSync';
 import {ReadlineSyncMock} from '../../mock/Helpers/ReadlineSyncMock';
+import {ReadlineMock} from '../../mock/Helpers/ReadlineMock';
+import requireProxy from 'proxyquire';
 
 chai.use(sinonChai);
 
 suite('Helpers/Terminal/Prompt', function() {
   let text = 'test text';
+
+  //mocking readline
+  let readlineMock = new ReadlineMock();
+  let promptExport = requireProxy('../../../lib/Helpers/Terminal/Prompt', {
+    'readline': readlineMock,
+  });
+
+  let Prompt = promptExport.Prompt;
+
   let prompt = new Prompt(text);
 
   test('Class Prompt exists in Helpers/Terminal/Prompt', function() {
@@ -50,20 +61,39 @@ suite('Helpers/Terminal/Prompt', function() {
     chai.expect(Prompt._oct('8')).to.equal(0);
   });
 
-  test('Check _trigger()', function() {
+  test('Check _trigger() calls readlineInterface and returns answer in cb', function() {
     let readlineSyncMock = new ReadlineSyncMock();
     let spyCallback = sinon.spy();
 
     readlineSyncMock.setMode(ReadlineSyncMock.DATA_MODE);
 
     let actualResult = prompt._trigger(readlineSyncMock, text, spyCallback);
-
-    chai.expect(spyCallback).to.have.been.calledWith();
-
     let callbackArgs = spyCallback.args[0];
 
+    chai.expect(spyCallback).to.have.been.calledWith();
     chai.expect(actualResult).to.be.an.instanceof(Prompt);
-
     chai.expect(callbackArgs).to.eql([ReadlineSyncMock.DATA]);
   });
+
+  test('Check syncMode setter', function() {
+    prompt.syncMode = false;
+    chai.expect(prompt.syncMode).to.be.equal(false);
+
+    prompt.syncMode = true;
+    chai.expect(prompt.syncMode).to.be.equal(true);
+  });
+
+  //@todo - uncomment when issue with proxyquire will be solved
+  //test('Check _prompt() calls _trigger->readlineInterface and returns answer in cb', function() {
+  //  let spyCallback = sinon.spy();
+  //
+  //  readlineMock.setMode(ReadlineMock.DATA_MODE);
+  //
+  //  let actualResult = prompt._prompt(spyCallback, text);
+  //  let callbackArgs = spyCallback.args[0];
+  //
+  //  chai.expect(spyCallback).to.have.been.calledWith();
+  //  chai.expect(actualResult).to.be.an.instanceof(Prompt);
+  //  chai.expect(callbackArgs).to.eql([ReadlineMock.DATA]);
+  //});
 });
