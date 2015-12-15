@@ -6,7 +6,7 @@
 
 import StringUtils from 'underscore.string';
 import FileSystem from 'fs';
-import exec from 'sync-exec';
+import {Exec} from '../Helpers/Exec';
 import {FileWalker} from '../Helpers/FileWalker';
 import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
 import JsonFile from 'jsonfile';
@@ -171,10 +171,10 @@ export class Frontend {
 
     console.log(`Running tmp hook ${syncCommand}`);
 
-    let syncResult = exec(syncCommand);
+    let syncResult = new Exec(syncCommand).runSync();
 
-    if (syncResult.status !== 0) {
-      throw new FailedUploadingFileToS3Exception('*', bucketName, syncResult.stderr);
+    if (syncResult.failed) {
+      throw new FailedUploadingFileToS3Exception('*', bucketName, syncResult.error);
     }
 
     // @todo: improve this by using directory upload
