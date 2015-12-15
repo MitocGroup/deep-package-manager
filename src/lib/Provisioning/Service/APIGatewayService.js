@@ -189,7 +189,7 @@ export class APIGatewayService extends AbstractService {
     };
 
     let globalsConfig = this.property.config.globals;
-    if (globalsConfig.hasOwnProperty('api') && globalsConfig.hasOwnProperty('cache')) {
+    if (globalsConfig.hasOwnProperty('api') && globalsConfig.api.hasOwnProperty('cache')) {
       config.enabled = !!globalsConfig.api.cache.enabled;
       if (globalsConfig.api.cache.hasOwnProperty('clusterSize')) {
         config.clusterSize = globalsConfig.api.cache.clusterSize;
@@ -680,6 +680,7 @@ export class APIGatewayService extends AbstractService {
       params.type = type;
       params.integrationHttpMethod = (type === 'AWS') ? 'POST' : httpMethod;
       params.uri = uri;
+      params.cacheKeyParameters = ['caller.aws.principal'];
     }
 
     return params;
