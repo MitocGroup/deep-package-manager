@@ -16,6 +16,7 @@ import {FailedToDeployApiGatewayException} from './Exception/FailedToDeployApiGa
 import {FailedToExecuteApiGatewayMethodException} from './Exception/FailedToExecuteApiGatewayMethodException';
 import {FailedToListApiResourcesException} from './Exception/FailedToListApiResourcesException';
 import {FailedToDeleteApiResourceException} from './Exception/FailedToDeleteApiResourceException';
+import {InvalidCacheClusterSizeException} from './Exception/InvalidCacheClusterSizeException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
@@ -48,6 +49,13 @@ export class APIGatewayService extends AbstractService {
    */
   static get PAGE_LIMIT() {
     return 500;
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get CACHE_CLUSTER_SIZES() {
+    return ['0.5', '1.6', '6.1', '13.5', '28.4', '58.2', '118', '237'];
   }
 
   /**
@@ -167,6 +175,32 @@ export class APIGatewayService extends AbstractService {
     });
 
     return this;
+  }
+
+  /**
+   * Returns cache cluster config
+   *
+   * @returns {{enabled: boolean, clusterSize: string}}
+   */
+  get cacheCluster() {
+    let config = {
+      enabled: false,
+      clusterSize: '0.5',
+    };
+
+    let globalsConfig = this.property.config.globals;
+    if (globalsConfig.hasOwnProperty('api') && globalsConfig.hasOwnProperty('cache')) {
+      config.enabled = !!globalsConfig.api.cache.enabled;
+      if (globalsConfig.api.cache.hasOwnProperty('clusterSize')) {
+        config.clusterSize = globalsConfig.api.cache.clusterSize;
+      }
+    }
+
+    if (APIGatewayService.CACHE_CLUSTER_SIZES.indexOf(config.clusterSize) === -1) {
+      throw new InvalidCacheClusterSizeException(config.clusterSize, APIGatewayService.CACHE_CLUSTER_SIZES);
+    }
+
+    return config;
   }
 
   /**
@@ -351,6 +385,8 @@ export class APIGatewayService extends AbstractService {
     let params = {
       restApiId: apiId,
       stageName: this.stageName,
+      cacheClusterEnabled: this.cacheCluster.enabled,
+      cacheClusterSize: this.cacheCluster.clusterSize,
       stageDescription: `Stage for "${this.env}" environment`,
       description: `Deployed on ${new Date().toTimeString()}`,
     };
