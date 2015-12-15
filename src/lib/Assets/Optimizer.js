@@ -21,6 +21,8 @@ export class Optimizer {
    * @returns {Optimizer}
    */
   optimize(callback = () => {}) {
+    console.log(`Optimize frontend in '${this._path}' by compressing it`);
+
     let cmd = new Exec(
       'find', // find
       '.', // in current directory
@@ -30,6 +32,8 @@ export class Optimizer {
       '-exec mv "{}.gz" "{}" \\;' // restore files original names
     );
     cmd.cwd = this._path;
+
+    console.log('cmd', cmd._fullCmd);//@todo:remove
 
     cmd
       .avoidBufferOverflow()

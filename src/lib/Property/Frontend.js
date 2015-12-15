@@ -168,7 +168,7 @@ export class Frontend {
       'aws s3 sync',
       '--profile=deep',
       '--storage-class=REDUCED_REDUNDANCY',
-      //'--content-encoding=gzip',
+      '--content-encoding=gzip',
       '--cache-control="max-age=3600"',
       `'${this.path}'`,
       `'s3://${bucketName}'`
@@ -255,24 +255,21 @@ export class Frontend {
     }
 
     if (Frontend._skipInjectDeployNumber) {
-      console.log(`Optimize frontend by compressing it`);
-
-      //new Optimizer(this.path)
-      //  .optimize(callback);
-      callback(null);
+      new Optimizer(this.path)
+        .optimize(callback);
 
       return;
     }
 
-    console.log(`Injecting deploy Id #${this._deployId} into the assets`);
-
     new DeployIdInjector(this.path, this._deployId)
-      .prepare((err) => {
-        console.log(`Optimize frontend by compressing it`);
+      .prepare((error) => {
+        if (error) {
+          callback(error);
+          return;
+        }
 
-        //new Optimizer(this.path)
-        //  .optimize(callback);
-        callback(err);
+        new Optimizer(this.path)
+          .optimize(callback);
       });
   }
 

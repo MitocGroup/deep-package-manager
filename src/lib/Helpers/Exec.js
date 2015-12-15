@@ -279,7 +279,9 @@ export class Exec {
    */
   get _fullCmd() {
     let suffix = this._internalCmdSuffix;
-    let cmd = `${this._cmd} ${this._args.join(' ')}`;
+    let cmd = Exec._internalsTokenTransform(
+      `${this._cmd} ${this._args.join(' ')}`
+    );
 
     cmd = cmd.split(';').join(` ${suffix}; `);
     cmd = cmd.split('&&').join(` ${suffix}; `);
@@ -288,7 +290,34 @@ export class Exec {
     cmd += suffix;
     cmd = cmd.replace(new RegExp(`(${Exec.PIPE_VOID})+`), Exec.PIPE_VOID);
 
-    return cmd.trim();
+    return Exec._internalsTokenTransform(cmd, true).trim();
+  }
+
+  /**
+   * @param {String} cmd
+   * @param {Boolean} unescape
+   * @returns {String}
+   * @private
+   */
+  static _internalsTokenTransform(cmd, unescape = false) {
+    let tokens = Exec.INTERNAL_ESCAPE_TOKENS;
+
+    for (let tokenName in tokens) {
+      if (!tokens.hasOwnProperty(tokenName)) {
+        continue;
+      }
+
+      let token = Exec._internalsEscapeToken(tokenName);
+      let tokenSeq = tokens[tokenName];
+
+      if (unescape) {
+        cmd = cmd.replace(new RegExp(token, 'g'), tokenSeq);
+      } else {
+        cmd = cmd.replace(new RegExp(tokenSeq, 'g'), token);
+      }
+    }
+
+    return cmd;
   }
 
   /**
@@ -306,6 +335,28 @@ export class Exec {
     if (!this._isExec) {
       throw new Error(`Command '${this._fullCmd}' is not yet executed (cwd: '${this._cwd}')`);
     }
+  }
+
+  /**
+   * @param {String} name
+   * @returns {String}
+   * @private
+   */
+  static _internalsEscapeToken(name) {
+    return `__deep__exec_intrnls_${name}__`;
+  }
+
+  /**
+   * Tokens used to escape internals
+   * in order to avoid broken commands
+   *
+   * @returns {Object}
+   * @constructor
+   */
+  static get INTERNAL_ESCAPE_TOKENS() {
+    return {
+      semicolon: '\;', // find -exec ... \;
+    };
   }
 
   /**
