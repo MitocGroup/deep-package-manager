@@ -11,6 +11,7 @@ import {FailedLambdaUploadException} from './Exception/FailedLambdaUploadExcepti
 import {FailedUploadingLambdaToS3Exception} from './Exception/FailedUploadingLambdaToS3Exception';
 import {AwsRequestSyncStack} from '../Helpers/AwsRequestSyncStack';
 import {WaitFor} from '../Helpers/WaitFor';
+import {Exec} from '../Helpers/Exec';
 import Path from 'path';
 import {Frontend} from './Frontend';
 import Core from 'deep-core';
@@ -314,16 +315,15 @@ export class Lambda {
     }
 
     // @todo: remove this temporary hook by rewriting it in a native way
-    require('child_process').exec(
-      `cd ${Path.dirname(configFile)} && zip -r ${packageFile} ${Lambda.CONFIG_FILE}`,
-      (error, stdout, stderr) => {
-        if (error !== null) {
-          throw new Exception(`Error while adding ${Lambda.CONFIG_FILE} to lambda build: ${error}`);
+    new Exec(`cd ${Path.dirname(configFile)} && zip -r ${packageFile} ${Lambda.CONFIG_FILE}`)
+      .avoidBufferOverflow()
+      .run((result) => {
+        if (result.failed) {
+          throw new Exception(`Error while adding ${Lambda.CONFIG_FILE} to lambda build: ${result.error}`);
         }
 
         ready = true;
-      }
-    );
+      });
 
     wait.push(() => {
       return ready;
