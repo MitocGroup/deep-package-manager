@@ -91,14 +91,14 @@ export class AbstractService extends Core.OOP.Interface {
 
     this._setup(services);
 
-    wait.push(function() {
+    wait.push(() => {
       if (this._ready) {
         this._ready = false;
         return true;
       }
 
       return false;
-    }.bind(this));
+    });
 
     return wait;
   }
@@ -111,14 +111,14 @@ export class AbstractService extends Core.OOP.Interface {
 
     this._postProvision(services);
 
-    wait.push(function() {
+    wait.push(() => {
       if (this._readyTeardown) {
         this._readyTeardown = false;
         return true;
       }
 
       return false;
-    }.bind(this));
+    });
 
     return wait;
   }
@@ -131,14 +131,14 @@ export class AbstractService extends Core.OOP.Interface {
 
     this._postDeployProvision(services);
 
-    wait.push(function() {
+    wait.push(() => {
       if (this._ready) {
         this._ready = false;
         return true;
       }
 
       return false;
-    }.bind(this));
+    });
 
     return wait;
   }

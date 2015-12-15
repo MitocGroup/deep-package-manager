@@ -39,11 +39,11 @@ export class InitHook {
    * @private
    */
   _wrap(hook) {
-    return function(cb) {
+    return (cb) => {
       hook.bind({
         microservice: this._microservice,
       })(cb);
-    }.bind(this);
+    };
   }
 
   /**

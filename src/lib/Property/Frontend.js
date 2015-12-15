@@ -178,7 +178,14 @@ export class Frontend {
     }
 
     // @todo: improve this by using directory upload
-    //for (let file of walker.walk(this.path, FileWalker.skipDotsFilter())) {
+    //let files = walker.walk(this.path, FileWalker.skipDotsFilter());
+    //for (let i in files) {
+    //    if (!files.hasOwnProperty(i)) {
+    //      continue;
+    //    }
+    //
+    //    let file = files[i];
+    //
     //    let params = {
     //        Bucket: bucketName,
     //        Key: file.slice(sliceOffset),
@@ -186,11 +193,11 @@ export class Frontend {
     //        ContentType: Mime.lookup(file)
     //    };
     //
-    //    syncStack.push(s3.putObject(params), function(error, data) {
+    //    syncStack.push(s3.putObject(params), (error, data) => {
     //        if (error) {
     //            throw new FailedUploadingFileToS3Exception(file, bucketName, error);
     //        }
-    //    }.bind(this));
+    //    });
     //}
 
     return syncStack.join();

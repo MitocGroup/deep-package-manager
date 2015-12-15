@@ -6,7 +6,6 @@
 
 import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
 
-
 /**
  * Wait for something
  */
@@ -104,14 +103,18 @@ export class WaitFor {
       }
     }
 
-    for (let i of skipStack) {
-      delete this._stack[i];
+    for (let i in skipStack) {
+      if (!skipStack.hasOwnProperty(i)) {
+        continue;
+      }
+
+      delete this._stack[skipStack[i]];
     }
 
     if (this.remaining > 0) {
-      setTimeout(function() {
+      setTimeout(() => {
         this.ready(callback);
-      }.bind(this), WaitFor.TICK_TTL);
+      }, WaitFor.TICK_TTL);
     } else {
       this._readyChildren(callback, 0);
     }
@@ -131,21 +134,25 @@ export class WaitFor {
 
     let subWait = new WaitFor();
 
-    for (let child of this._children) {
-      child.ready(function() {
+    for (let i in this._children) {
+      if (!this._children.hasOwnProperty(i)) {
+        continue;
+      }
+
+      this._children[i].ready(() => {
         remaining--;
-      }.bind(this));
+      });
 
       level++;
     }
 
-    subWait.push(function() {
+    subWait.push(() => {
       return remaining <= 0;
-    }.bind(this));
+    });
 
-    subWait.ready(function() {
+    subWait.ready(() => {
       this._readyChildren(callback, level + 1);
-    }.bind(this));
+    });
   }
 
   /**

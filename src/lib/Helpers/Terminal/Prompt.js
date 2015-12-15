@@ -95,7 +95,7 @@ export class Prompt {
 
     choices = choices.map((str) => str.toLowerCase());
 
-    let resultCb = function (cb, result) {
+    let resultCb = (cb, result) => {
       result = castToLower ? result.toLowerCase() : result;
 
       if (choices.indexOf(result) === -1) {
@@ -131,7 +131,7 @@ export class Prompt {
 
     let stdin = process.openStdin();
 
-    process.stdin.on('data', function(char) {
+    process.stdin.on('data', (char) => {
       char = char.toString();
 
       switch (char) {

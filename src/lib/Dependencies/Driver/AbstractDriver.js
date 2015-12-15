@@ -147,9 +147,9 @@ export class AbstractDriver extends Core.OOP.Interface {
       .pipe(zpacker)
       .pipe(dumper);
 
-    dumper.on('end', function() {
+    dumper.on('end', () => {
       callback(archivePath);
-    }.bind(this));
+    });
   }
 
   /**
@@ -180,9 +180,9 @@ export class AbstractDriver extends Core.OOP.Interface {
       .pipe(zunPacker)
       .pipe(unPacker);
 
-    unPacker.on('end', function() {
+    unPacker.on('end', () => {
       callback(outputPath);
-    }.bind(this));
+    });
   }
 
   /**
@@ -190,9 +190,9 @@ export class AbstractDriver extends Core.OOP.Interface {
    * @returns {Function}
    */
   static errorCallback(descriptor) {
-    return function(error) {
+    return (error) => {
       throw new Exception(`Error while ${descriptor}: ${error}`);
-    }.bind(this);
+    };
   }
 
   /**

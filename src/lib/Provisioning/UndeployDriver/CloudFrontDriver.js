@@ -98,7 +98,7 @@ export class CloudFrontDriver extends AbstractDriver {
     this._awsService.deleteDistribution({
       Id: distId,
       IfMatch: eTag,
-    }, function(error) {
+    }, (error) => {
       if (error) {
         cb(error);
         return;

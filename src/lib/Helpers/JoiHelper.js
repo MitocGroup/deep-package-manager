@@ -45,7 +45,7 @@ export class JoiHelper {
      * @returns {*}
      */
     static stringArray() {
-        return JoiHelper.array().items(Joi.string());
+        return Joi.array().items(Joi.string());
     }
 
     /**

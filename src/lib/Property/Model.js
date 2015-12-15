@@ -33,8 +33,21 @@ export class Model {
 
     let models = [];
 
-    for (let dir of directories) {
-      for (let modelFile of walker.walk(dir, filter)) {
+    for (let i in directories) {
+      if (!directories.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let dir = directories[i];
+      let files = walker.walk(dir, filter);
+
+      for (let j in files) {
+        if (!files.hasOwnProperty(j)) {
+          continue;
+        }
+
+        let modelFile = files[j];
+
         let name = Path.basename(modelFile, `.${ext}`);
         let definition = JsonFile.readFileSync(modelFile);
 

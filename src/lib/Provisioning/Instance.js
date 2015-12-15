@@ -206,43 +206,61 @@ export class Instance {
     let remaining = servicesVector.length;
 
     if (isUpdate) {
-      for (let service of servicesVector) {
+      for (let i in servicesVector) {
+        if (!servicesVector.hasOwnProperty(i)) {
+          continue;
+        }
+
+        let service = servicesVector[i];
+
         service.isUpdate = true;
       }
     }
 
-    for (let service of servicesVector) {
-      service.setup(services).ready(function() {
+    for (let i in servicesVector) {
+      if (!servicesVector.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let service = servicesVector[i];
+
+      service.setup(services).ready(() => {
         this._config[service.name()] = service.config();
         remaining--;
-      }.bind(this));
+      });
     }
 
-    wait.push(function() {
+    wait.push(() => {
       return remaining <= 0;
-    }.bind(this));
+    });
 
-    wait.ready(function() {
+    wait.ready(() => {
       let subWait = new WaitFor();
 
       let subRemaining = servicesVector.length;
 
-      for (let service of servicesVector) {
-        service.postProvision(services).ready(function() {
+      for (let i in servicesVector) {
+        if (!servicesVector.hasOwnProperty(i)) {
+          continue;
+        }
+
+        let service = servicesVector[i];
+
+        service.postProvision(services).ready(() => {
           // @todo: why is this resetting the object?
           //this._config[service.name()] = service.config();
           subRemaining--;
-        }.bind(this));
+        });
       }
 
-      subWait.push(function() {
+      subWait.push(() => {
         return subRemaining <= 0;
-      }.bind(this));
+      });
 
-      subWait.ready(function() {
+      subWait.ready(() => {
         callback(this._config);
-      }.bind(this));
-    }.bind(this));
+      });
+    });
   }
 
   /**
@@ -259,7 +277,13 @@ export class Instance {
 
     let propertyProvisioning = this.property.config.provisioning;
 
-    for (let service of servicesVector) {
+    for (let i in servicesVector) {
+      if (!servicesVector.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let service = servicesVector[i];
+
       service.injectConfig(propertyProvisioning[service.name()]);
     }
 
@@ -281,25 +305,37 @@ export class Instance {
     let remaining = servicesVector.length;
 
     if (isUpdate) {
-      for (let service of servicesVector) {
+      for (let i in servicesVector) {
+        if (!servicesVector.hasOwnProperty(i)) {
+          continue;
+        }
+
+        let service = servicesVector[i];
+
         service.isUpdate = true;
       }
     }
 
-    for (let service of servicesVector) {
-      service.postDeployProvision(services).ready(function() {
+    for (let i in servicesVector) {
+      if (!servicesVector.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let service = servicesVector[i];
+
+      service.postDeployProvision(services).ready(() => {
         // @todo: why is this resetting the object?
         //this._config[service.name()] = service.config();
         remaining--;
-      }.bind(this));
+      });
     }
 
-    wait.push(function() {
+    wait.push(() => {
       return remaining <= 0;
-    }.bind(this));
+    });
 
-    wait.ready(function() {
+    wait.ready(() => {
       callback(this._config);
-    }.bind(this));
+    });
   }
 }

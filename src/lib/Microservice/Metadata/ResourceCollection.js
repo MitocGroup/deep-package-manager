@@ -84,7 +84,13 @@ export class ResourceCollection {
   extract() {
     let resources = {};
 
-    for (let resourceAction of this._actions) {
+    for (let i in this._actions) {
+      if (!this._actions.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let resourceAction = this._actions[i];
+
       if (!resources[resourceAction.resourceName]) {
         resources[resourceAction.resourceName] = {};
       }

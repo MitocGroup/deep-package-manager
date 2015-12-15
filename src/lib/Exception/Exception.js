@@ -12,7 +12,7 @@ import Core from 'deep-core';
  */
 export class Exception extends Core.Exception.Exception {
   /**
-   * @param {Array} args
+   * @param {String|*} args
    */
   constructor(...args) {
     super(...args);

@@ -35,21 +35,25 @@ export class Dispatcher extends Core.OOP.Interface {
     let microservices = this.microservices;
     let remaining = microservices.length;
 
-    for (let microservice of microservices) {
-      this.dispatch(microservice, function() {
+    for (let i in microservices) {
+      if (!microservices.hasOwnProperty(i)) {
+        continue;
+      }
+
+      this.dispatch(microservices[i], () => {
         remaining--;
-      }.bind(this));
+      });
     }
 
-    wait.push(function() {
+    wait.push(() => {
       return remaining <= 0;
-    }.bind(this));
+    });
 
-    wait.ready(function() {
+    wait.ready(() => {
       this._resolveStack = [];
 
       callback();
-    }.bind(this));
+    });
 
     return this;
   }
@@ -79,11 +83,18 @@ export class Dispatcher extends Core.OOP.Interface {
 
       let files = FileSystem.readdirSync(this._driver.basePath);
 
-      for (let file of files) {
+      for (let i in files) {
+        if (!files.hasOwnProperty(i)) {
+          continue;
+        }
+
+        let file = files[i];
+
         let fullPath = Path.join(this._driver.basePath, file);
 
-        if (FileSystem.statSync(fullPath).isDirectory()
-          && FileSystem.existsSync(Path.join(fullPath, Microservice.CONFIG_FILE))) {
+        if (FileSystem.statSync(fullPath).isDirectory() &&
+          FileSystem.existsSync(Path.join(fullPath, Microservice.CONFIG_FILE))) {
+
           this._microservices.push(Microservice.create(fullPath));
         }
       }
