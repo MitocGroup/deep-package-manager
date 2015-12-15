@@ -13,6 +13,7 @@ import JsonFile from 'jsonfile';
 import {MissingRootIndexException} from './Exception/MissingRootIndexException';
 import {FailedUploadingFileToS3Exception} from './Exception/FailedUploadingFileToS3Exception';
 import {AwsRequestSyncStack} from '../Helpers/AwsRequestSyncStack';
+import {WaitFor} from '../Helpers/WaitFor';
 import {Action} from '../Microservice/Metadata/Action';
 import Core from 'deep-core';
 import Tmp from 'tmp';
@@ -20,6 +21,7 @@ import OS from 'os';
 import ZLib from 'zlib';
 import {APIGatewayService} from '../Provisioning/Service/APIGatewayService';
 import {DeployIdInjector} from '../Assets/DeployIdInjector';
+import {Optimizer} from '../Assets/Optimizer';
 
 /**
  * Frontend
@@ -159,19 +161,20 @@ export class Frontend {
 
     FileSystem.writeFileSync(credentialsFile, credentials);
 
-    let syncCommand = `find '${this.path}' -type f ! -name "*.gz" -exec gzip -9 "{}" \\; -exec mv "{}.gz" "{}" \\;; `;
-    syncCommand += `export AWS_CONFIG_FILE=${credentialsFile}; `;
-    syncCommand += 'aws s3 sync ';
-    syncCommand += `--profile=deep `;
-    syncCommand += `--storage-class=REDUCED_REDUNDANCY `;
-    syncCommand += `--content-encoding=gzip `;
-    syncCommand += `--cache-control="max-age=3600" `;
-    syncCommand += `'${this.path}' `;
-    syncCommand += `'s3://${bucketName}'`;
+    console.log(`Syncing ${this.path} with ${bucketName}`);
 
-    console.log(`Running tmp hook ${syncCommand}`);
+    let syncCmd = new Exec(
+      `export AWS_CONFIG_FILE=${credentialsFile};`,
+      'aws s3 sync',
+      '--profile=deep',
+      '--storage-class=REDUCED_REDUNDANCY',
+      //'--content-encoding=gzip',
+      '--cache-control="max-age=3600"',
+      `'${this.path}'`,
+      `'s3://${bucketName}'`
+    );
 
-    let syncResult = new Exec(syncCommand).runSync();
+    let syncResult = syncCmd.runSync();
 
     if (syncResult.failed) {
       throw new FailedUploadingFileToS3Exception('*', bucketName, syncResult.error);
@@ -252,15 +255,30 @@ export class Frontend {
     }
 
     if (Frontend._skipInjectDeployNumber) {
+      console.log(`Optimize frontend by compressing it`);
+
+      //new Optimizer(this.path)
+      //  .optimize(callback);
       callback(null);
+
       return;
     }
 
+    console.log(`Injecting deploy Id #${this._deployId} into the assets`);
+
     new DeployIdInjector(this.path, this._deployId)
-      .prepare(callback);
+      .prepare((err) => {
+        console.log(`Optimize frontend by compressing it`);
+
+        //new Optimizer(this.path)
+        //  .optimize(callback);
+        callback(err);
+      });
   }
 
   /**
+   * @todo: get rid of this hook
+   *
    * @returns {Boolean}
    * @private
    */
