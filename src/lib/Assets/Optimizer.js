@@ -33,8 +33,6 @@ export class Optimizer {
     );
     cmd.cwd = this._path;
 
-    console.log('cmd', cmd._fullCmd);//@todo:remove
-
     cmd
       .avoidBufferOverflow()
       .run((result) => {
