@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "1.4.4",
+  "version": "1.4.0",
   "description": "DEEP Package Manager",
   "keywords": [
     "Digital Enterprise End-To-End Platform",
@@ -49,8 +49,8 @@
   },
   "scripts": {
     "test": "babel-node `which isparta` cover --include 'lib/**/*.js' _mocha -- 'test/**/*.spec.js' --reporter spec --ui tdd --recursive",
-    "compile": "if [ -d 'lib/' ]; then BABEL_ENV=production babel lib/ --out-dir lib.compiled/; fi",
-    "obfuscate-compiled": "if [ -d 'lib/' ]; then npm list -g --depth 0 uglify > /dev/null 2>&1 || npm install uglify -g; for f in $(find lib.compiled -type f -name *.js); do uglify -s ${f} -o ${f}; done; fi",
+    "compile": "compile.sh",
+    "obfuscate-compiled": "obfuscate-compiled.sh",
     "prepublish": "npm run compile && npm run obfuscate-compiled"
   },
   "dependencies": {
@@ -90,9 +90,6 @@
     "node": ">=0.12 <5.0.0",
     "npm": ">=2.10"
   },
-  "os": [
-    "!win32"
-  ],
   "preferGlobal": false,
   "analyze": true
 }
