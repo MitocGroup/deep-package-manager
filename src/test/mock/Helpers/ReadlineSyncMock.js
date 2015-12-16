@@ -17,9 +17,34 @@ export class ReadlineSyncMock {
   /**
    * Returns result for method based on behavior from _methodsBehavior map
    * @param {String} mode
+   */
+  getResultByMode(mode) {
+    let result = null;
+
+    switch (mode) {
+      case ReadlineSyncMock.NO_RESULT_MODE:
+        result = null;
+        break;
+
+      case ReadlineSyncMock.FAILURE_MODE:
+        result = ReadlineSyncMock.ERROR;
+        break;
+
+      case ReadlineSyncMock.DATA_MODE:
+        result = ReadlineSyncMock.DATA;
+        break;
+    }
+
+    return result;
+  }
+
+  /**
+   * Returns result for method based on behavior from _methodsBehavior map
+   * @param {String} mode
    * @param {Function} callback
    */
-  getResultByMode(mode, callback) {
+  getCallbackByMode(mode, callback) {
+
     switch (mode) {
       case ReadlineSyncMock.NO_RESULT_MODE:
         callback(null);
@@ -38,24 +63,30 @@ export class ReadlineSyncMock {
   /**
    * @param {String} text
    * @param {Function} callback
-   * @returns {ReadlineSyncMock}
+   * @returns {String}
    */
   question(text, callback) {
-    console.log('in mock question');
-    this.getResultByMode(this._methodsBehavior.get('question'), callback);
 
-    return this;
+    if (callback !== undefined && typeof callback === 'function') {
+      this.getCallbackByMode(this._methodsBehavior.get('question'), callback);
+    }
+
+    return this.getResultByMode(this._methodsBehavior.get('question'));
   }
 
   /**
    * @param {String} text
    * @param {Function} callback
-   * @returns {ReadlineSyncMock}
+   * @returns {String}
    */
-  questionHidden(text, callback) {
-    this.getResultByMode(this._methodsBehavior.get('questionHidden'), callback);
 
-    return this;
+  questionHidden(text, callback) {
+
+    if (callback !== undefined && typeof callback === 'function') {
+      this.getCallbackByMode(this._methodsBehavior.get('questionHidden'), callback);
+    }
+
+    return this.getResultByMode(this._methodsBehavior.get('questionHidden'));
   }
 
   /**
@@ -138,7 +169,7 @@ export class ReadlineSyncMock {
    * @constructor
    */
   static get DATA() {
-    return  'Question successfully processed';
+    return 'Question successfully processed';
   }
 
   /**
@@ -150,5 +181,17 @@ export class ReadlineSyncMock {
       'question',
       'questionHidden',
     ];
+  }
+
+  /**
+   * Fix transpiling for es6
+   */
+  fixBabelTranspile() {
+    for (let method of ReadlineSyncMock.METHODS) {
+      Object.defineProperty(this, method, {
+        value: this[method],
+        writable: false,
+      });
+    }
   }
 }

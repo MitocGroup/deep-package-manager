@@ -15,6 +15,8 @@ suite('Helpers/Terminal/ReadlineSync', function() {
 
   //mocking readline-sync
   let readlineSyncMock = new ReadlineSyncMock();
+  readlineSyncMock.setMode(ReadlineSyncMock.DATA_MODE);
+  readlineSyncMock.fixBabelTranspile();
   let readlineSyncExport = requireProxy('../../../lib/Helpers/Terminal/ReadlineSync', {
     'readline-sync': readlineSyncMock,
   });
@@ -49,11 +51,17 @@ suite('Helpers/Terminal/ReadlineSync', function() {
     chai.expect(actualResult.options).to.eql(options);
   });
 
-  //@todo - uncomment when issue with proxyquire will be solved
-  //test('Check question() return valid instance of ReadlineSync', function() {
-  //  let spyCallback = sinon.spy();
-  //
-  //  readlineSync.question('question test', spyCallback);
-  //  chai.expect(spyCallback).to.have.been.calledWith();
-  //});
+  test('Check question() return valid instance of ReadlineSync', function() {
+    let spyCallback = sinon.spy();
+
+    readlineSync.question('question test', spyCallback);
+    chai.expect(spyCallback).to.have.been.calledWithExactly(ReadlineSyncMock.DATA);
+  });
+
+  test('Check questionHidden() return valid instance of ReadlineSync', function() {
+    let spyCallback = sinon.spy();
+
+    readlineSync.questionHidden('question hidden test', spyCallback);
+    chai.expect(spyCallback).to.have.been.calledWithExactly(ReadlineSyncMock.DATA);
+  });
 });

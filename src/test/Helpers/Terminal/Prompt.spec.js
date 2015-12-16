@@ -16,6 +16,8 @@ suite('Helpers/Terminal/Prompt', function() {
 
   //mocking readline
   let readlineMock = new ReadlineMock();
+  readlineMock.setMode(ReadlineMock.DATA);
+  readlineMock.fixBabelTranspile();
   let promptExport = requireProxy('../../../lib/Helpers/Terminal/Prompt', {
     'readline': readlineMock,
   });
@@ -83,13 +85,94 @@ suite('Helpers/Terminal/Prompt', function() {
     chai.expect(prompt.syncMode).to.be.equal(true);
   });
 
-  //@todo - uncomment when issue with proxyquire will be solved
-  //test('Check _prompt() calls _trigger->readlineInterface and returns answer in cb', function() {
+  test('Check _prompt() calls _trigger->readlineInterface and returns answer in cb', function() {
+    let spyCallback = sinon.spy();
+    let text = 'test _prompt()';
+
+    prompt.syncMode = false;
+    readlineMock.setMode(ReadlineMock.DATA_MODE);
+
+    let actualResult = prompt._prompt(spyCallback, text);
+    let callbackArgs = spyCallback.args[0];
+
+    chai.expect(spyCallback).to.have.been.calledWith();
+    chai.expect(actualResult).to.be.an.instanceof(Prompt);
+    chai.expect(callbackArgs).to.eql([`${text}:`]);
+  });
+
+  test('Check read() calls _prompt() and returns answer in cb', function() {
+    let spyCallback = sinon.spy();
+    let text = 'test read()';
+
+    prompt._text = text;
+    prompt.syncMode = false;
+    readlineMock.setMode(ReadlineMock.DATA_MODE);
+
+    let actualResult = prompt.read(spyCallback);
+    let callbackArgs = spyCallback.args[0];
+
+    chai.expect(spyCallback).to.have.been.calledWith();
+    chai.expect(actualResult).to.be.an.instanceof(Prompt);
+    chai.expect(callbackArgs).to.eql([`${text}:`]);
+  });
+
+  test('Check readWithDefaults() calls _prompt() and returns answer in cb', function() {
+    let spyCallback = sinon.spy();
+    let text = 'test readWithDefaults()';
+    let defaultValue = 'def val test';
+
+    prompt._text = text;
+    prompt.syncMode = false;
+    readlineMock.setMode(ReadlineMock.DATA_MODE);
+
+    let actualResult = prompt.readWithDefaults(spyCallback, defaultValue);
+    let callbackArgs = spyCallback.args[0];
+
+    chai.expect(spyCallback).to.have.been.calledWith();
+    chai.expect(actualResult).to.be.an.instanceof(Prompt);
+    chai.expect(callbackArgs).to.eql([`${text} [${defaultValue}]:`]);
+  });
+
+  test('Check _promptHidden() for !_syncMode', function() {
+    let spyCallback = sinon.spy();
+    let text = 'test _promptHidden()';
+
+    prompt._text = text;
+    prompt.syncMode = false;
+    readlineMock.setMode(ReadlineMock.DATA_MODE);
+
+    let actualResult = prompt._promptHidden(spyCallback, text);
+    let callbackArgs = spyCallback.args[0];
+
+    chai.expect(spyCallback).to.have.been.calledWith();
+    chai.expect(actualResult).to.be.an.instanceof(Prompt);
+    chai.expect(callbackArgs).to.eql([`${text}:`]);
+  });
+
+  test('Check readHidden()', function() {
+    let spyCallback = sinon.spy();
+    let text = 'test _promptHidden()';
+
+    prompt._text = text;
+    prompt.syncMode = false;
+    readlineMock.setMode(ReadlineMock.DATA_MODE);
+
+    let actualResult = prompt.readHidden(spyCallback);
+    let callbackArgs = spyCallback.args[0];
+
+    chai.expect(spyCallback).to.have.been.calledWith();
+    chai.expect(actualResult).to.be.an.instanceof(Prompt);
+    chai.expect(callbackArgs).to.eql([`${text}:`]);
+  });
+
+  //@todo - add smart logic
+  //test('Check readChoice() returns answer in cb', function() {
   //  let spyCallback = sinon.spy();
   //
+  //  prompt.syncMode = false;
   //  readlineMock.setMode(ReadlineMock.DATA_MODE);
   //
-  //  let actualResult = prompt._prompt(spyCallback, text);
+  //  let actualResult = prompt.readChoice(spyCallback, ['Y', 'N']);
   //  let callbackArgs = spyCallback.args[0];
   //
   //  chai.expect(spyCallback).to.have.been.calledWith();

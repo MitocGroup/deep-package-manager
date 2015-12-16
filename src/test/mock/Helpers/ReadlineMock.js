@@ -19,7 +19,7 @@ export class ReadlineMock {
    * @param {String} mode
    * @param {Function} callback
    */
-  getResultByMode(mode, callback) {
+  getResultByMode(mode, callback, text) {
     switch (mode) {
       case ReadlineMock.NO_RESULT_MODE:
         callback(null);
@@ -30,7 +30,12 @@ export class ReadlineMock {
         break;
 
       case ReadlineMock.DATA_MODE:
-        callback(ReadlineMock.DATA);
+        if (text !== undefined) {
+          callback(text);
+        } else {
+          callback(ReadlineMock.DATA);
+        }
+
         break;
     }
   }
@@ -41,8 +46,7 @@ export class ReadlineMock {
    * @returns {ReadlineMock}
    */
   question(text, callback) {
-    console.log('in mock question');
-    this.getResultByMode(this._methodsBehavior.get('question'), callback);
+    this.getResultByMode(this._methodsBehavior.get('question'), callback, text);
 
     return this;
   }
@@ -53,7 +57,7 @@ export class ReadlineMock {
    * @returns {ReadlineMock}
    */
   questionHidden(text, callback) {
-    this.getResultByMode(this._methodsBehavior.get('questionHidden'), callback);
+    this.getResultByMode(this._methodsBehavior.get('questionHidden'), callback, text);
 
     return this;
   }
@@ -65,6 +69,14 @@ export class ReadlineMock {
     return this;
   }
 
+  /**
+   *
+   * @param {*} object
+   * @returns {ReadlineMock}
+   */
+  createInterface(object) {
+    return this;
+  }
 
   /**
    * Set mode for passed methods
@@ -138,7 +150,7 @@ export class ReadlineMock {
    * @constructor
    */
   static get DATA() {
-    return  'Question successfully processed';
+    return 'Question successfully processed';
   }
 
   /**
@@ -149,6 +161,20 @@ export class ReadlineMock {
     return [
       'question',
       'questionHidden',
+      'createInterface',
+      'close'
     ];
+  }
+
+  /**
+   * Fix transpiling for es6
+   */
+  fixBabelTranspile() {
+    for (let method of ReadlineMock.METHODS) {
+      Object.defineProperty(this, method, {
+        value: this[method],
+        writable: false,
+      });
+    }
   }
 }
