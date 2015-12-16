@@ -49,8 +49,8 @@
   },
   "scripts": {
     "test": "babel-node `which isparta` cover --include 'lib/**/*.js' _mocha -- 'test/**/*.spec.js' --reporter spec --ui tdd --recursive",
-    "compile": "compile.sh",
-    "obfuscate-compiled": "obfuscate-compiled.sh",
+    "compile": "bash ./../bin/compile.sh",
+    "obfuscate-compiled": "bash ./../bin/obfuscate-compiled.sh",
     "prepublish": "npm run compile && npm run obfuscate-compiled"
   },
   "dependencies": {
