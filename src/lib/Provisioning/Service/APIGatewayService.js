@@ -424,12 +424,14 @@ export class APIGatewayService extends AbstractService {
     let deployedResources = this._getDeployedResourcePathsByMethod(this._config.api.methods, 'GET');
     let enabledOp = {
       op: 'replace',
+      path: '',
       value: 'true',
     };
 
     let ttlInSecondsOp = {
       op: 'replace',
-      value: 300,
+      path: '',
+      value: '300',
     };
 
     deployedResources.forEach((resourcePath) => {
