@@ -24,7 +24,7 @@ import {Config} from './Config';
 import {Hash} from '../Helpers/Hash';
 import {FrontendEngine} from '../Microservice/FrontendEngine';
 import {NoMatchingFrontendEngineException} from '../Dependencies/Exception/NoMatchingFrontendEngineException';
-import {exec} from 'child_process';
+import {Exec} from '../Helpers/Exec';
 import OS from 'os';
 import objectMerge from 'object-merge';
 import {Listing} from '../Provisioning/Listing';
@@ -841,18 +841,27 @@ export class Instance {
     let repoDir = Path.join(tmpDir, repoName);
 
     // @todo: replace it with https://www.npmjs.com/package/nodegit
-    exec(`rm -rf ${repoDir}; git clone --depth=1 ${engineRepo} ${repoDir}`, (error, stdout, stderr) => {
-      if (error) {
-        callback(error, engineRepo);
-        return;
-      }
+    new Exec(`rm -rf ${repoDir}; git clone --depth=1 ${engineRepo} ${repoDir}`)
+      .avoidBufferOverflow()
+      .run((result) => {
+        if (result.failed) {
+          callback(result.error, engineRepo);
+          return;
+        }
 
-      exec(`cp -R ${repoDir}/src/* ${this._path}/`, (error, stdout, stderr) => {
-        this._microservices = null; // @todo: reset microservices?
+        new Exec(`cp -R ${repoDir}/src/* ${this._path}/`)
+          .avoidBufferOverflow()
+          .run((result) => {
+            this._microservices = null; // @todo: reset microservices?
 
-        callback(error, engineRepo);
+            if (result.failed) {
+              callback(result.error, null);
+              return;
+            }
+
+            callback(null, engineRepo);
+          });
       });
-    });
 
     return this;
   }

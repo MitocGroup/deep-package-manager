@@ -6,13 +6,14 @@
 
 import StringUtils from 'underscore.string';
 import FileSystem from 'fs';
-import exec from 'sync-exec';
+import {Exec} from '../Helpers/Exec';
 import {FileWalker} from '../Helpers/FileWalker';
 import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
 import JsonFile from 'jsonfile';
 import {MissingRootIndexException} from './Exception/MissingRootIndexException';
 import {FailedUploadingFileToS3Exception} from './Exception/FailedUploadingFileToS3Exception';
 import {AwsRequestSyncStack} from '../Helpers/AwsRequestSyncStack';
+import {WaitFor} from '../Helpers/WaitFor';
 import {Action} from '../Microservice/Metadata/Action';
 import Core from 'deep-core';
 import Tmp from 'tmp';
@@ -20,6 +21,7 @@ import OS from 'os';
 import ZLib from 'zlib';
 import {APIGatewayService} from '../Provisioning/Service/APIGatewayService';
 import {DeployIdInjector} from '../Assets/DeployIdInjector';
+import {Optimizer} from '../Assets/Optimizer';
 
 /**
  * Frontend
@@ -159,22 +161,23 @@ export class Frontend {
 
     FileSystem.writeFileSync(credentialsFile, credentials);
 
-    let syncCommand = `find '${this.path}' -type f ! -name "*.gz" -exec gzip -9 "{}" \\; -exec mv "{}.gz" "{}" \\;; `;
-    syncCommand += `export AWS_CONFIG_FILE=${credentialsFile}; `;
-    syncCommand += 'aws s3 sync ';
-    syncCommand += `--profile=deep `;
-    syncCommand += `--storage-class=REDUCED_REDUNDANCY `;
-    syncCommand += `--content-encoding=gzip `;
-    syncCommand += `--cache-control="max-age=3600" `;
-    syncCommand += `'${this.path}' `;
-    syncCommand += `'s3://${bucketName}'`;
+    console.log(`Syncing ${this.path} with ${bucketName}`);
 
-    console.log(`Running tmp hook ${syncCommand}`);
+    let syncCmd = new Exec(
+      `export AWS_CONFIG_FILE=${credentialsFile};`,
+      'aws s3 sync',
+      '--profile=deep',
+      '--storage-class=REDUCED_REDUNDANCY',
+      '--content-encoding=gzip',
+      '--cache-control="max-age=3600"',
+      `'${this.path}'`,
+      `'s3://${bucketName}'`
+    );
 
-    let syncResult = exec(syncCommand);
+    let syncResult = syncCmd.runSync();
 
-    if (syncResult.status !== 0) {
-      throw new FailedUploadingFileToS3Exception('*', bucketName, syncResult.stderr);
+    if (syncResult.failed) {
+      throw new FailedUploadingFileToS3Exception('*', bucketName, syncResult.error);
     }
 
     // @todo: improve this by using directory upload
@@ -252,15 +255,27 @@ export class Frontend {
     }
 
     if (Frontend._skipInjectDeployNumber) {
-      callback(null);
+      new Optimizer(this.path)
+        .optimize(callback);
+
       return;
     }
 
     new DeployIdInjector(this.path, this._deployId)
-      .prepare(callback);
+      .prepare((error) => {
+        if (error) {
+          callback(error);
+          return;
+        }
+
+        new Optimizer(this.path)
+          .optimize(callback);
+      });
   }
 
   /**
+   * @todo: get rid of this hook
+   *
    * @returns {Boolean}
    * @private
    */
