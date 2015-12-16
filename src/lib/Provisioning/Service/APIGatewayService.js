@@ -422,22 +422,20 @@ export class APIGatewayService extends AbstractService {
     };
 
     let deployedResources = this._getDeployedResourcePathsByMethod(this._config.api.methods, 'GET');
-    let enabledOp = {
-      op: 'replace',
-      path: '',
-      value: 'true',
-    };
-
-    let ttlInSecondsOp = {
-      op: 'replace',
-      path: '',
-      value: '300',
-    };
 
     deployedResources.forEach((resourcePath) => {
+      let enabledOp = {
+        op: 'replace',
+        path: `/${jsonPointer.escape(resourcePath)}/GET/caching/enabled`,
+        value: 'true',
+      };
+
       // @todo - set different ttl for different resource path (take this value from resources.json file)
-      enabledOp.path = `/${jsonPointer.escape(resourcePath)}/GET/caching/enabled`;
-      ttlInSecondsOp.path = `/${jsonPointer.escape(resourcePath)}/GET/caching/ttlInSeconds`;
+      let ttlInSecondsOp = {
+        op: 'replace',
+        path: `/${jsonPointer.escape(resourcePath)}/GET/caching/ttlInSeconds`,
+        value: '300',
+      };
 
       params.patchOperations.push(enabledOp, ttlInSecondsOp);
     });
