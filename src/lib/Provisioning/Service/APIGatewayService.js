@@ -17,12 +17,14 @@ import {FailedToExecuteApiGatewayMethodException} from './Exception/FailedToExec
 import {FailedToListApiResourcesException} from './Exception/FailedToListApiResourcesException';
 import {FailedToDeleteApiResourceException} from './Exception/FailedToDeleteApiResourceException';
 import {InvalidCacheClusterSizeException} from './Exception/InvalidCacheClusterSizeException';
+import {FailedToUpdateApiGatewayStageException} from './Exception/FailedToUpdateApiGatewayStageException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
 import Utils from 'util';
 import objectMerge from 'object-merge';
 import nodePath from 'path';
+import jsonPointer from 'json-pointer';
 
 /**
  * APIGateway service
@@ -273,7 +275,13 @@ export class APIGatewayService extends AbstractService {
                 rolePolicy = data;
 
                 this._deployApi(apiId, (deployedApi) => {
-                  callback(methods, integrations, rolePolicy, deployedApi);
+                  if (this.cacheCluster.enabled) {
+                    this._enableStageCaching(apiId, this.stageName, (data) => {
+                      callback(methods, integrations, rolePolicy, deployedApi);
+                    });
+                  } else {
+                    callback(methods, integrations, rolePolicy, deployedApi);
+                  }
                 });
               });
             });
@@ -401,6 +409,47 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
+   * @param {String} apiId
+   * @param {String} stageName
+   * @param {Function} callback
+   * @private
+   */
+  _enableStageCaching(apiId, stageName, callback) {
+    let params = {
+      restApiId: apiId,
+      stageName: stageName,
+      patchOperations: [],
+    };
+
+    let deployedResources = this._getDeployedResourcePathsByMethod(this._config.api.methods, 'GET');
+    let enabledOp = {
+      op: 'replace',
+      value: 'true',
+    };
+
+    let ttlInSecondsOp = {
+      op: 'replace',
+      value: 300,
+    };
+
+    deployedResources.forEach((resourcePath) => {
+      // @todo - set different ttl for different resource path (take this value from resources.json file)
+      enabledOp.path = `/${jsonPointer.escape(resourcePath)}/GET/caching/enabled`;
+      ttlInSecondsOp.path = `/${jsonPointer.escape(resourcePath)}/GET/caching/ttlInSeconds`;
+
+      params.patchOperations.push(enabledOp, ttlInSecondsOp);
+    });
+
+    this.apiGatewayClient.updateStage(params, (error, data) => {
+      if (error) {
+        throw new FailedToUpdateApiGatewayStageException(apiId, stageName, error);
+      }
+
+      callback(data);
+    });
+  }
+
+  /**
    * @param {Object} apiRole
    * @param {Function} callback
    * @private
@@ -500,6 +549,30 @@ export class APIGatewayService extends AbstractService {
     }
 
     return paramsArr;
+  }
+
+  /**
+   * @param {Object} methods
+   * @param {String} method
+   * @returns {Array}
+   * @private
+   */
+  _getDeployedResourcePathsByMethod(methods, method) {
+    let resourcesPaths = [];
+
+    for (let resourcePath in methods) {
+      if (!methods.hasOwnProperty(resourcePath)) {
+        continue;
+      }
+
+      let resourceMethods = methods[resourcePath];
+
+      if (resourceMethods.hasOwnProperty(method.toUpperCase())) {
+        resourcesPaths.push(resourcePath);
+      }
+    }
+
+    return resourcesPaths;
   }
 
   /**
