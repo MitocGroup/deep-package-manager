@@ -33,6 +33,9 @@ export class Instance {
 
     this._property = property;
 
+    // deep-db instance
+    this._db = null;
+
     this._s3 = new property.AWS.S3();
     this._elasticache = new property.AWS.ElastiCache();
     this._sns = new property.AWS.SNS();
@@ -73,6 +76,23 @@ export class Instance {
       defaultRegion,
       awsService.AVAILABLE_REGIONS
     );
+  }
+
+  /**
+   * @returns {DB}
+   */
+  get db() {
+    return this._db;
+  }
+
+  /**
+   * In order to make possible DB manipulations
+   * in post provision hook
+   *
+   * @param {DB} instance
+   */
+  set db(instance) {
+    this._db = instance;
   }
 
   /**
