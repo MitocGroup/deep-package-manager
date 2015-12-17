@@ -1,8 +1,8 @@
 @font-face {
     font-family: "Bitstream Vera Serif Bold";
-    src: url("VeraSeBd.ttf?test_deploy_ID");
+    src: url("VeraSeBd.ttf?_v=test_deploy_ID");
 }
 
 body {
-    background-image: url(images/foo.png?test_deploy_ID);
+    background-image: url(images/foo.png?_v=test_deploy_ID);
 }

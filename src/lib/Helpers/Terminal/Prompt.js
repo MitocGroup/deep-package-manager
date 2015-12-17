@@ -42,6 +42,11 @@ export class Prompt {
    * @returns {Prompt}
    */
   read(callback) {
+    if (Prompt._noInteractionMode) {
+      callback('');
+      return this;
+    }
+
     return this._prompt(callback);
   }
 
@@ -51,6 +56,11 @@ export class Prompt {
    * @returns {Prompt}
    */
   readWithDefaults(callback, defaultValue) {
+    if (Prompt._noInteractionMode) {
+      callback(defaultValue);
+      return this;
+    }
+
     this._text += ` [${defaultValue}]`;
 
     this.read((answer) => {
@@ -65,6 +75,11 @@ export class Prompt {
    * @returns {Prompt}
    */
   readHidden(callback) {
+    if (Prompt._noInteractionMode) {
+      callback('');
+      return this;
+    }
+
     return this._promptHidden(callback);
   }
 
@@ -73,6 +88,11 @@ export class Prompt {
    * @returns {Prompt}
    */
   readConfirm(callback) {
+    if (Prompt._noInteractionMode) {
+      callback(true);
+      return this;
+    }
+
     return this.readChoice((result) => {
       callback(result === 'y');
     }, ['Y', 'N']);
@@ -85,6 +105,11 @@ export class Prompt {
    * @returns {Prompt}
    */
   readChoice(callback, choices, castToLower = true) {
+    if (Prompt._noInteractionMode) {
+      callback(choices.length > 0 ? choices[0] : '');
+      return this;
+    }
+
     let appendText = choices.join(', ');
 
     if (choices.length === 2) {
@@ -216,5 +241,14 @@ export class Prompt {
    */
   static _choicesError(choices) {
     return `You have to choose one of the following values: ${choices.join(', ')}`;
+  }
+
+  /**
+   * @todo: get rid of this hook
+   *
+   * @returns {Boolean}
+   */
+  static get _noInteractionMode() {
+    return process.env.hasOwnProperty('DEEP_NO_INTERACTION');
   }
 }
