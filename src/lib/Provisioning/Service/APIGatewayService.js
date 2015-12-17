@@ -912,7 +912,7 @@ export class APIGatewayService extends AbstractService {
     let params = this._getMethodCorsHeaders('method.request.header', httpMethod);
 
     if (integrationParams.hasOwnProperty('cacheKeyParameters') &&
-      integrationParams.cacheKeyParameters.hasOwnProperty(APIGatewayService.DEEP_CACHE_QS_PARAM)) {
+      integrationParams.cacheKeyParameters.indexOf(APIGatewayService.DEEP_CACHE_QS_PARAM) !== -1) {
       params[APIGatewayService.DEEP_CACHE_QS_PARAM] = true;
     }
 
