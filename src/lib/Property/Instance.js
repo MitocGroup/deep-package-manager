@@ -31,6 +31,7 @@ import {Listing} from '../Provisioning/Listing';
 import {ProvisioningCollisionsListingException} from './Exception/ProvisioningCollisionsListingException';
 import {ProvisioningCollisionsDetectedException} from './Exception/ProvisioningCollisionsDetectedException';
 import {AbstractService} from '../Provisioning/Service/AbstractService';
+import {DeployID} from '../Helpers/DeployID';
 
 /**
  * Property instance
@@ -43,9 +44,9 @@ export class Instance {
   constructor(path, config = Config.DEFAULT_FILENAME) {
     this._config = Instance._createConfigObject(config, path).extract();
 
-    this.deployId = Hash.md5(`${this._config.appIdentifier}#${new Date().getTime()}`);
-
     this._aws = AWS;
+
+    // @todo: move it?
     AWS.config.update(this._config.aws);
 
     this._path = StringUtils.rtrim(path, '/');
@@ -153,6 +154,10 @@ export class Instance {
    * @returns {String}
    */
   get deployId() {
+    if (!this._config.deployId) {
+      this._config.deployId = new DeployID(this).toString();
+    }
+
     return this._config.deployId;
   }
 
@@ -738,6 +743,9 @@ export class Instance {
     this._isUpdate = true;
     this.microservicesToUpdate = microservicesToUpdate;
     this._config = propertyConfigSnapshot;
+
+    // @todo: remove it?
+    this._config.deployId = null;
 
     this._provisioning.injectConfig(
       this._config.provisioning

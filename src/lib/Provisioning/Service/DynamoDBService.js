@@ -104,6 +104,9 @@ export class DynamoDBService extends AbstractService {
     // @todo waiting for https://github.com/aws/aws-sdk-js/issues/710 to be fixed
     deepDb._setVogelsDriver(this.provisioning.dynamoDB);
 
+    // @todo: move this functionality?
+    this._provisioning.db = deepDb;
+
     return (callback) => {
       deepDb.assureTables(() => {
         if (missingTablesNames.length <= 0) {
