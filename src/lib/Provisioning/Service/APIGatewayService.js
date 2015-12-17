@@ -118,7 +118,7 @@ export class APIGatewayService extends AbstractService {
    * @todo: remove config.api key and put object to the root
    */
   _setup(services) {
-    let resourcePaths = this._getResourcePaths(this.provisioning.property.microservices);
+    let resourcePaths = this._getResourcePaths(this.property.microservices);
 
     this._provisionApiResources(
       this.apiMetadata,
@@ -421,24 +421,29 @@ export class APIGatewayService extends AbstractService {
       patchOperations: [],
     };
 
-    let deployedResources = this._getDeployedResourcePathsByMethod(this._config.api.methods, 'GET');
+    let resources = this._getResourcesToBeCached(this.property.microservices);
 
-    deployedResources.forEach((resourcePath) => {
+    for (let resourcePath in resources) {
+      if (!resources.hasOwnProperty(resourcePath)) {
+        continue;
+      }
+
+      let resource = resources[resourcePath];
+
       let enabledOp = {
         op: 'replace',
         path: `/${jsonPointer.escape(resourcePath)}/GET/caching/enabled`,
         value: 'true',
       };
 
-      // @todo - set different ttl for different resource path (take this value from resources.json file)
       let ttlInSecondsOp = {
         op: 'replace',
         path: `/${jsonPointer.escape(resourcePath)}/GET/caching/ttlInSeconds`,
-        value: '300',
+        value: `${resource.cacheTtl}`,
       };
 
       params.patchOperations.push(enabledOp, ttlInSecondsOp);
-    });
+    }
 
     this.apiGatewayClient.updateStage(params, (error, data) => {
       if (error) {
@@ -552,27 +557,41 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
-   * @param {Object} methods
-   * @param {String} method
-   * @returns {Array}
+   * All resources to be cached by API Gateway cache
+   *
+   * microservice_identifier
+   *    resource_name
+   *        action_name
+   *
+   * @param {Object} microservices
+   * @returns {Object}
    * @private
    */
-  _getDeployedResourcePathsByMethod(methods, method) {
-    let resourcesPaths = [];
+  _getResourcesToBeCached(microservices) {
+    let resources = {};
 
-    for (let resourcePath in methods) {
-      if (!methods.hasOwnProperty(resourcePath)) {
+    for (let microserviceKey in microservices) {
+      if (!microservices.hasOwnProperty(microserviceKey)) {
         continue;
       }
 
-      let resourceMethods = methods[resourcePath];
+      let microservice = microservices[microserviceKey];
 
-      if (resourceMethods.hasOwnProperty(method.toUpperCase())) {
-        resourcesPaths.push(resourcePath);
+      for (let actionKey in microservice.resources.actions) {
+        if (!microservice.resources.actions.hasOwnProperty(actionKey)) {
+          continue;
+        }
+
+        let action = microservice.resources.actions[actionKey];
+
+        if (action.cacheEnabled && action.methods.indexOf('GET') !== -1) {
+          let path = APIGatewayService.pathify(microservice.identifier, action.resourceName, action.name);
+          resources[path] = action;
+        }
       }
     }
 
-    return resourcesPaths;
+    return resources;
   }
 
   /**
