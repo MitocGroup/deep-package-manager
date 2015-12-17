@@ -61,6 +61,18 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
+   * A query string parameter added to all GET endpoints with enabled cache
+   * It's used to invalidate cache when query string is changed
+   *
+   * @example _deepQsHash = md5(all_query_string_params)
+   *
+   * @returns {string}
+   */
+  static get DEEP_CACHE_QS_PARAM() {
+    return 'method.request.querystring._deepQsHash';
+  }
+
+  /**
    * @returns {String}
    */
   static get ALLOWED_CORS_HEADERS() {
@@ -521,7 +533,9 @@ export class APIGatewayService extends AbstractService {
             params = {
               authorizationType: resourceMethod === 'OPTIONS' ? 'NONE' : 'AWS_IAM',
               requestModels: this.jsonEmptyModel,
-              requestParameters: this._getMethodRequestParameters(resourceMethod),
+              requestParameters: this._getMethodRequestParameters(
+                resourceMethod, resourceMethods[resourceMethod]
+              ),
             };
             break;
           case 'putMethodResponse':
@@ -729,7 +743,9 @@ export class APIGatewayService extends AbstractService {
               );
 
               action.methods.forEach((httpMethod) => {
-                integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams('AWS', httpMethod, uri);
+                integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams(
+                  'AWS', httpMethod, uri, action.cacheEnabled
+                );
               });
 
               break;
@@ -738,7 +754,8 @@ export class APIGatewayService extends AbstractService {
                 integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams(
                   'HTTP',
                   httpMethod,
-                  action.source
+                  action.source,
+                  action.cacheEnabled
                 );
               });
 
@@ -759,10 +776,11 @@ export class APIGatewayService extends AbstractService {
    * @param {String} type (AWS or HTTP)
    * @param {String} httpMethod
    * @param {String} uri
+   * @param {Boolean} enableCache
    * @returns {Object}
    * @private
    */
-  _getIntegrationTypeParams(type, httpMethod, uri) {
+  _getIntegrationTypeParams(type, httpMethod, uri, enableCache = false) {
     let params = {
       type: 'MOCK',
       requestTemplates: this.getJsonRequestTemplate(httpMethod, type),
@@ -772,7 +790,13 @@ export class APIGatewayService extends AbstractService {
       params.type = type;
       params.integrationHttpMethod = (type === 'AWS') ? 'POST' : httpMethod;
       params.uri = uri;
-      params.cacheKeyParameters = ['caller.aws.principal'];
+    }
+
+    if (enableCache && httpMethod === 'GET') {
+      params.cacheKeyParameters = [
+        'caller.aws.principal',
+        APIGatewayService.DEEP_CACHE_QS_PARAM,
+      ];
     }
 
     return params;
@@ -850,6 +874,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {String}
    */
   get qsToMapObjectMappingTpl() {
+    // @todo - do not pass APIGatewayService.DEEP_CACHE_QS_PARAM to lambda
     return '{ #foreach($key in $input.params().querystring.keySet()) "$key": "$util.escapeJavaScript($input.params($key))"#if($foreach.hasNext),#end #end }';
   }
 
@@ -880,11 +905,18 @@ export class APIGatewayService extends AbstractService {
 
   /**
    * @param {String} httpMethod
-   * @param {Array|null} resourceMethods
+   * @param {Object} integrationParams
    * @returns {Object}
    */
-  _getMethodRequestParameters(httpMethod, resourceMethods = null) {
-    return this._getMethodCorsHeaders('method.request.header', httpMethod, resourceMethods);
+  _getMethodRequestParameters(httpMethod, integrationParams) {
+    let params = this._getMethodCorsHeaders('method.request.header', httpMethod);
+
+    if (integrationParams.hasOwnProperty('cacheKeyParameters') &&
+      integrationParams.cacheKeyParameters.hasOwnProperty(APIGatewayService.DEEP_CACHE_QS_PARAM)) {
+      params[APIGatewayService.DEEP_CACHE_QS_PARAM] = true;
+    }
+
+    return params;
   }
 
   /**
