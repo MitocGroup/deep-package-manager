@@ -8,7 +8,7 @@ import {AbstractDriver} from './AbstractDriver';
 import tmp from 'tmp';
 import OS from 'os';
 import FS from 'fs';
-import {exec} from 'child_process';
+import {Exec} from '../../Helpers/Exec';
 import {MissingCredentialsException} from './Exception/MissingCredentialsException';
 
 export class S3Driver extends AbstractDriver {
@@ -90,16 +90,18 @@ export class S3Driver extends AbstractDriver {
         let removeCommand = `export AWS_CONFIG_FILE=${credentialsFile};`;
         removeCommand += `aws --profile _deep_ s3 rb --force 's3://${bucketName}'`;
 
-        exec(removeCommand, (error) => {
-          FS.unlink(credentialsFile);
+        new Exec(removeCommand)
+          .avoidBufferOverflow()
+          .run((result) => {
+            FS.unlink(credentialsFile);
 
-          if (error) {
-            cb(error);
-            return;
-          }
+            if (result.failed) {
+              cb(result.error);
+              return;
+            }
 
-          cb(null);
-        });
+            cb(null);
+          });
       });
     });
   }

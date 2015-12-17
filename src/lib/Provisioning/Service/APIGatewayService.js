@@ -34,7 +34,6 @@ export class APIGatewayService extends AbstractService {
     super(...args);
 
     this._apiResources = {};
-    this._newApiResources = {};
   }
 
   /**
@@ -115,8 +114,6 @@ export class APIGatewayService extends AbstractService {
       this.apiMetadata,
       resourcePaths
     )((api, resources, role) => {
-      this._newApiResources = resources;
-
       // @todo: remove this hook
       this._config.api = this._config.api || {};
 
@@ -157,7 +154,7 @@ export class APIGatewayService extends AbstractService {
 
     this._putApiIntegrations(
       this._config.api.id,
-      this._newApiResources,
+      this._config.api.resources,
       this._config.api.role,
       integrationParams
     )((methods, integrations, rolePolicy, deployedApi) => {

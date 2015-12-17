@@ -7,7 +7,7 @@
 import Joi from 'joi';
 import {JoiHelper} from '../Helpers/JoiHelper';
 import {SharedAwsConfig} from '../Helpers/SharedAwsConfig';
-import exec from 'sync-exec';
+import {Exec} from '../Helpers/Exec';
 import Tmp from 'tmp';
 import OS from 'os';
 import FileSystem from 'fs';
@@ -64,14 +64,14 @@ export default {
 };
 
 function buildAppId() {
-  let result = exec(
+  let result = new Exec(
     process.platform === 'darwin'
       ? 'echo `uname -a``ifconfig``date` | md5'
       : 'echo `uname -a``ifconfig``date` | md5sum | awk "{print $1}"'
-  );
+  ).runSync();
 
-  return result.status === 0
-    ? result.stdout.toString().replace(/[^a-z0-9_\.-]+/gi, '')
+  return result.succeed
+    ? result.result.replace(/[^a-z0-9_\.-]+/gi, '')
     : `unique-app-id-${new Date().getTime()}`;
 }
 
@@ -90,9 +90,14 @@ function guessAwsAccountId(awsCredentials) {
     let getUserCommand = `export AWS_CONFIG_FILE=${credentialsFile}; `;
     getUserCommand += `aws --profile deep iam get-user 2>/dev/null`;
 
+    let userInfoResult = new Exec(getUserCommand).runSync();
+
+    if (userInfoResult.failed) {
+      return defaultUserId;
+    }
+
     try {
-      let userInfoRaw = exec(getUserCommand).stdout.toString().trim();
-      let userInfo = JSON.parse(userInfoRaw);
+      let userInfo = JSON.parse(userInfoResult.result);
 
       if (userInfo) {
         return userInfo.User.Arn.replace(/^.*:(\d+):(root|(user\/.*))$/i, '$1') || defaultUserId;

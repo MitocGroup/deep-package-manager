@@ -38,11 +38,13 @@ export class DeployIdInjector {
 
     try {
       replacer.replace(...assets);
-
-      callback(null);
     } catch (error) {
       callback(error);
+
+      return this;
     }
+
+    callback(null);
 
     return this;
   }

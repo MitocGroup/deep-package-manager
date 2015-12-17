@@ -187,13 +187,9 @@ export class Prompt {
    * @private
    */
   _trigger(readlineInterface, text, onResultCallback, type = 'question') {
-
-    console.log('in trigger readlineInterface.constructor.name:' , readlineInterface.constructor.name);
-
     readlineInterface[type](text, (answer) => {
-
       readlineInterface.close();
-      console.log ('answer',  answer);
+
       onResultCallback((answer || '').trim());
     });
 
@@ -206,10 +202,6 @@ export class Prompt {
    * @private
    */
   static _createReadlineInterface(sync = false) {
-    console.log('readline.constructor.name: ', readline.constructor.name);
-    console.log('sync: ', sync);
-    console.log('readline close:', readline.close)
-    console.log('readline create:', readline.createInterface)
     return (sync ? ReadlineSync : readline).createInterface({
       input: process.stdin,
       output: process.stdout,

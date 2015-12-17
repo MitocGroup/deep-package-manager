@@ -6,13 +6,14 @@
 
 import StringUtils from 'underscore.string';
 import FileSystem from 'fs';
-import exec from 'sync-exec';
+import {Exec} from '../Helpers/Exec';
 import {FileWalker} from '../Helpers/FileWalker';
 import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
 import JsonFile from 'jsonfile';
 import {MissingRootIndexException} from './Exception/MissingRootIndexException';
 import {FailedUploadingFileToS3Exception} from './Exception/FailedUploadingFileToS3Exception';
 import {AwsRequestSyncStack} from '../Helpers/AwsRequestSyncStack';
+import {WaitFor} from '../Helpers/WaitFor';
 import {Action} from '../Microservice/Metadata/Action';
 import Core from 'deep-core';
 import Tmp from 'tmp';
@@ -20,6 +21,7 @@ import OS from 'os';
 import ZLib from 'zlib';
 import {APIGatewayService} from '../Provisioning/Service/APIGatewayService';
 import {DeployIdInjector} from '../Assets/DeployIdInjector';
+import {Optimizer} from '../Assets/Optimizer';
 
 /**
  * Frontend
@@ -159,23 +161,27 @@ export class Frontend {
 
     FileSystem.writeFileSync(credentialsFile, credentials);
 
-    let syncCommand = `find '${this.path}' -type f ! -name "*.gz" -exec gzip -9 "{}" \\; -exec mv "{}.gz" "{}" \\;; `;
-    syncCommand += `export AWS_CONFIG_FILE=${credentialsFile}; `;
-    syncCommand += 'aws s3 sync ';
-    syncCommand += `--profile=deep `;
-    syncCommand += `--storage-class=REDUCED_REDUNDANCY `;
-    syncCommand += `--content-encoding=gzip `;
-    syncCommand += `--cache-control="max-age=3600" `;
-    syncCommand += `'${this.path}' `;
-    syncCommand += `'s3://${bucketName}'`;
+    console.log(`Syncing ${this.path} with ${bucketName} (non HTML, TTL=86400)`);
 
-    console.log(`Running tmp hook ${syncCommand}`);
+    let syncResultNoHtml = this
+      ._getSyncCommandNoHtml(credentialsFile, bucketName)
+      .runSync();
 
-    let syncResult = exec(syncCommand);
-
-    if (syncResult.status !== 0) {
-      throw new FailedUploadingFileToS3Exception('*', bucketName, syncResult.stderr);
+    if (syncResultNoHtml.failed) {
+      throw new FailedUploadingFileToS3Exception('*', bucketName, syncResultNoHtml.error);
     }
+
+    console.log(`Syncing ${this.path} with ${bucketName} (HTML only, TTL=600)`);
+
+    let syncResultHtml = this
+      ._getSyncCommandHtmlOnly(credentialsFile, bucketName)
+      .runSync();
+
+    if (syncResultHtml.failed) {
+      throw new FailedUploadingFileToS3Exception('*', bucketName, syncResultHtml.error);
+    }
+
+    FileSystem.unlinkSync(credentialsFile);
 
     // @todo: improve this by using directory upload
     //let files = walker.walk(this.path, FileWalker.skipDotsFilter());
@@ -201,6 +207,45 @@ export class Frontend {
     //}
 
     return syncStack.join();
+  }
+
+  /**
+   * @param {String} credentialsFile
+   * @param {String} bucketName
+   * @private
+   */
+  _getSyncCommandNoHtml(credentialsFile, bucketName) {
+    return new Exec(
+      `export AWS_CONFIG_FILE=${credentialsFile};`,
+      'aws s3 sync',
+      '--profile=deep',
+      '--storage-class=REDUCED_REDUNDANCY',
+      '--content-encoding=gzip',
+      '--cache-control="max-age=86400"',
+      '--exclude="*.html"',
+      `'${this.path}'`,
+      `'s3://${bucketName}'`
+    );
+  }
+
+  /**
+   * @param {String} credentialsFile
+   * @param {String} bucketName
+   * @private
+   */
+  _getSyncCommandHtmlOnly(credentialsFile, bucketName) {
+    return new Exec(
+      `export AWS_CONFIG_FILE=${credentialsFile};`,
+      'aws s3 sync',
+      '--profile=deep',
+      '--storage-class=REDUCED_REDUNDANCY',
+      '--content-encoding=gzip',
+      '--cache-control="max-age=600"',
+      '--exclude="*"',
+      '--include="*.html"',
+      `'${this.path}'`,
+      `'s3://${bucketName}'`
+    );
   }
 
   /**
@@ -252,15 +297,27 @@ export class Frontend {
     }
 
     if (Frontend._skipInjectDeployNumber) {
-      callback(null);
+      new Optimizer(this.path)
+        .optimize(callback);
+
       return;
     }
 
     new DeployIdInjector(this.path, this._deployId)
-      .prepare(callback);
+      .prepare((error) => {
+        if (error) {
+          callback(error);
+          return;
+        }
+
+        new Optimizer(this.path)
+          .optimize(callback);
+      });
   }
 
   /**
+   * @todo: get rid of this hook
+   *
    * @returns {Boolean}
    * @private
    */

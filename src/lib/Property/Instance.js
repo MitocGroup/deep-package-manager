@@ -24,13 +24,14 @@ import {Config} from './Config';
 import {Hash} from '../Helpers/Hash';
 import {FrontendEngine} from '../Microservice/FrontendEngine';
 import {NoMatchingFrontendEngineException} from '../Dependencies/Exception/NoMatchingFrontendEngineException';
-import {exec} from 'child_process';
+import {Exec} from '../Helpers/Exec';
 import OS from 'os';
 import objectMerge from 'object-merge';
 import {Listing} from '../Provisioning/Listing';
 import {ProvisioningCollisionsListingException} from './Exception/ProvisioningCollisionsListingException';
 import {ProvisioningCollisionsDetectedException} from './Exception/ProvisioningCollisionsDetectedException';
 import {AbstractService} from '../Provisioning/Service/AbstractService';
+import {DeployID} from '../Helpers/DeployID';
 
 /**
  * Property instance
@@ -43,9 +44,9 @@ export class Instance {
   constructor(path, config = Config.DEFAULT_FILENAME) {
     this._config = Instance._createConfigObject(config, path).extract();
 
-    this.deployId = Hash.md5(`${this._config.appIdentifier}#${new Date().getTime()}`);
-
     this._aws = AWS;
+
+    // @todo: move it?
     AWS.config.update(this._config.aws);
 
     this._path = StringUtils.rtrim(path, '/');
@@ -153,6 +154,10 @@ export class Instance {
    * @returns {String}
    */
   get deployId() {
+    if (!this._config.deployId) {
+      this._config.deployId = new DeployID(this).toString();
+    }
+
     return this._config.deployId;
   }
 
@@ -739,6 +744,9 @@ export class Instance {
     this.microservicesToUpdate = microservicesToUpdate;
     this._config = propertyConfigSnapshot;
 
+    // @todo: remove it?
+    this._config.deployId = null;
+
     this._provisioning.injectConfig(
       this._config.provisioning
     );
@@ -841,18 +849,27 @@ export class Instance {
     let repoDir = Path.join(tmpDir, repoName);
 
     // @todo: replace it with https://www.npmjs.com/package/nodegit
-    exec(`rm -rf ${repoDir}; git clone --depth=1 ${engineRepo} ${repoDir}`, (error, stdout, stderr) => {
-      if (error) {
-        callback(error, engineRepo);
-        return;
-      }
+    new Exec(`rm -rf ${repoDir}; git clone --depth=1 ${engineRepo} ${repoDir}`)
+      .avoidBufferOverflow()
+      .run((result) => {
+        if (result.failed) {
+          callback(result.error, engineRepo);
+          return;
+        }
 
-      exec(`cp -R ${repoDir}/src/* ${this._path}/`, (error, stdout, stderr) => {
-        this._microservices = null; // @todo: reset microservices?
+        new Exec(`cp -R ${repoDir}/src/* ${this._path}/`)
+          .avoidBufferOverflow()
+          .run((result) => {
+            this._microservices = null; // @todo: reset microservices?
 
-        callback(error, engineRepo);
+            if (result.failed) {
+              callback(result.error, null);
+              return;
+            }
+
+            callback(null, engineRepo);
+          });
       });
-    });
 
     return this;
   }
