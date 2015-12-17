@@ -15,7 +15,7 @@ export default Joi.object().keys({
   methods: JoiHelper.listEnum(Action.HTTP_VERBS),
   source: JoiHelper.string(),
   cacheTtl: Joi.number().optional().integer().min(Action.NO_CACHE).default(Action.NO_CACHE),
-  'force-user-identity': assureTypeLambda(Joi.boolean().optional().default(true)),
+  forceUserIdentity: assureTypeLambda(Joi.boolean().optional().default(true)),
 
   // Lambda config
   engine: assureTypeLambda(Joi.object().optional().keys({
