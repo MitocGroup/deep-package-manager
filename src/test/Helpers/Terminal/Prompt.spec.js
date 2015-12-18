@@ -30,6 +30,10 @@ suite('Helpers/Terminal/Prompt', function() {
     chai.expect(typeof Prompt).to.equal('function');
   });
 
+  test('Check _noInteractionMode() returns false', function() {
+    chai.expect(Prompt._noInteractionMode).to.equal(false);
+  });
+
   test('Check constructor sets  value for _text', function() {
     chai.expect(prompt.text).to.be.equal(text);
   });
@@ -179,4 +183,80 @@ suite('Helpers/Terminal/Prompt', function() {
   //  chai.expect(actualResult).to.be.an.instanceof(Prompt);
   //  chai.expect(callbackArgs).to.eql([ReadlineMock.DATA]);
   //});
+
+  test('Check _noInteractionMode() returns true', function() {
+    process.env['DEEP_NO_INTERACTION'] = 1;
+    chai.expect(Prompt._noInteractionMode).to.equal(true);
+
+    //delete property
+    delete process.env['DEEP_NO_INTERACTION'];
+    chai.expect(Prompt._noInteractionMode).to.equal(false);
+  });
+
+  test('Check read() for _noInteractionMode returns "" in cb', function() {
+    let spyCallback = sinon.spy();
+
+    process.env['DEEP_NO_INTERACTION'] = 1;
+
+    let actualResult = prompt.read(spyCallback);
+
+    chai.expect(spyCallback).to.have.been.calledWithExactly('');
+    chai.expect(actualResult).to.be.an.instanceof(Prompt);
+  });
+
+  test('Check readWithDefaults() for _noInteractionMode returns second argument in cb', function() {
+    let spyCallback = sinon.spy();
+    let defaultValue = 'default';
+
+    process.env['DEEP_NO_INTERACTION'] = 1;
+
+    let actualResult = prompt.readWithDefaults(spyCallback, defaultValue);
+
+    chai.expect(spyCallback).to.have.been.calledWithExactly(defaultValue);
+    chai.expect(actualResult).to.be.an.instanceof(Prompt);
+  });
+
+  test('Check readHidden() for _noInteractionMode returns "" in cb', function() {
+    let spyCallback = sinon.spy();
+
+    process.env['DEEP_NO_INTERACTION'] = 1;
+
+    let actualResult = prompt.readHidden(spyCallback);
+
+    chai.expect(spyCallback).to.have.been.calledWithExactly('');
+    chai.expect(actualResult).to.be.an.instanceof(Prompt);
+  });
+
+  test('Check readConfirm() for _noInteractionMode returns true in cb', function() {
+    let spyCallback = sinon.spy();
+
+    process.env['DEEP_NO_INTERACTION'] = 1;
+
+    let actualResult = prompt.readConfirm(spyCallback);
+
+    chai.expect(spyCallback).to.have.been.calledWithExactly(true);
+    chai.expect(actualResult).to.be.an.instanceof(Prompt);
+  });
+
+  test('Check readChoice() for _noInteractionMode returns "" in cb', function() {
+    let spyCallback = sinon.spy();
+
+    process.env['DEEP_NO_INTERACTION'] = 1;
+
+    let actualResult = prompt.readChoice(spyCallback, []);
+
+    chai.expect(spyCallback).to.have.been.calledWithExactly('');
+    chai.expect(actualResult).to.be.an.instanceof(Prompt);
+  });
+
+  test('Check readChoice() for _noInteractionMode returns first choice in cb', function() {
+    let spyCallback = sinon.spy();
+
+    process.env['DEEP_NO_INTERACTION'] = 1;
+
+    let actualResult = prompt.readChoice(spyCallback, ['1', '2', '3']);
+
+    chai.expect(spyCallback).to.have.been.calledWithExactly('1');
+    chai.expect(actualResult).to.be.an.instanceof(Prompt);
+  });
 });
