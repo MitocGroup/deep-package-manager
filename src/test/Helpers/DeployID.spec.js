@@ -32,7 +32,7 @@ suite('Helpers/DeployID', function() {
     let actualResult = deployID.toString();
 
     //compare only length because timestamp can be different
-    chai.expect(actualResult.length).to.be.above(6);
+    chai.expect(actualResult.length).to.be.above(8);
   });
 
   test('Check toString() throws Error for invalid algo', function() {
