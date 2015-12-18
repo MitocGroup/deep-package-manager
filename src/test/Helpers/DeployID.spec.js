@@ -3,8 +3,6 @@
 import chai from 'chai';
 import {DeployID} from '../../lib/Helpers/DeployID';
 import {Instance as PropertyInstance} from '../../lib/Property/Instance';
-import Crc from 'crc';
-import Crypto from 'crypto';
 
 suite('Helpers/DeployID', function() {
   let propertyInstance = new PropertyInstance('./test/testMaterials/Property2', 'deeploy.test.json');
@@ -49,6 +47,4 @@ suite('Helpers/DeployID', function() {
     chai.expect(error).to.be.an.instanceof(Error);
     chai.expect(error.message).to.equal('Unknown deployId generation algorithm');
   });
-
-
 });
