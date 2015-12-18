@@ -109,6 +109,10 @@ export class Frontend {
             type: action.type,
             methods: action.methods,
             forceUserIdentity: action.forceUserIdentity,
+            apiCache: {
+              enabled: action.cacheEnabled,
+              ttl: action.cacheTtl,
+            },
             region: propertyConfig.awsRegion, // @todo: set it from lambda provision
             source: {
               api: apiGatewayBaseUrl + APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName),
