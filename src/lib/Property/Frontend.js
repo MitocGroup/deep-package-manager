@@ -309,13 +309,23 @@ export class Frontend {
 
     new DeployIdInjector(this.path, this._deployId)
       .prepare((error) => {
+        let optCb = callback;
+
         if (error) {
-          callback(error);
-          return;
+          optCb = (optError) => {
+            if (optError) {
+              callback(new Error(
+                `- OptimizerError: ${optError}${OS.EOL}- DeployIdInjectorError: ${error}`
+              ));
+              return;
+            }
+
+            callback(error);
+          };
         }
 
         new Optimizer(this.path)
-          .optimize(callback);
+          .optimize(optCb);
       });
   }
 
