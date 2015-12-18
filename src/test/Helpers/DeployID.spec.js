@@ -33,7 +33,8 @@ suite('Helpers/DeployID', function() {
     let rawId = deployID._rawId;
     let actualResult = deployID.toString();
 
-    chai.expect(actualResult).to.equal(Crc.crc32(rawId).toString(16));
+    //compare only length because timestamp can be different
+    chai.expect(actualResult.length).to.equal(Crc.crc32(rawId).toString(16).length);
   });
 
   test('Check toString() throws Error for invalid algo', function() {
