@@ -64,7 +64,7 @@ export class AssetReplacer {
         fs.writeFileSync(file, content);
       } catch (e) {
         if (this._logFailed) {
-          console.log(`Failed asset replacer ${file}: ${e}`);
+          console.error(`Failed asset replacer ${file}: ${e}`);
         } else {
           throw e;
         }
