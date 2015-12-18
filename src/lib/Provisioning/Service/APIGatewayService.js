@@ -203,7 +203,7 @@ export class APIGatewayService extends AbstractService {
     };
 
     let globalsConfig = this.property.config.globals;
-    if (globalsConfig.hasOwnProperty('api') && globalsConfig.api.hasOwnProperty('cache')) {
+    if (globalsConfig && globalsConfig.hasOwnProperty('api') && globalsConfig.api.hasOwnProperty('cache')) {
       config.enabled = !!globalsConfig.api.cache.enabled;
       if (globalsConfig.api.cache.hasOwnProperty('clusterSize')) {
         config.clusterSize = globalsConfig.api.cache.clusterSize;

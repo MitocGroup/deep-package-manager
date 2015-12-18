@@ -6,7 +6,7 @@ import {Action} from '../../../lib/Microservice/Metadata/Action';
 suite('Microservice/Metadata/Action', function() {
   let configInput = {
     cacheTtl: 60,
-    hasToCache: true,
+    cacheEnabled: true,
     identifier: 'test identifier',
     resourceName: 'testResourceName',
     name: 'testActionName',
@@ -19,7 +19,7 @@ suite('Microservice/Metadata/Action', function() {
       runtime: 'nodejs',
     },
     methods: ['GET', 'POST'],
-    'force-user-identity': 'test-force-user-identity',
+    forceUserIdentity: 'test-force-user-identity',
   };
 
   let action = new Action(configInput.resourceName, configInput.name, configInput);
@@ -79,7 +79,7 @@ suite('Microservice/Metadata/Action', function() {
   test('Check extract() method returns valid action object', function() {
     let expectedResult = {
       cacheTtl: 60,
-      hasToCache: true,
+      cacheEnabled: true,
       identifier: 'testResourceName-testActionName',
       resourceName: 'testResourceName',
       name: 'testActionName',
@@ -94,6 +94,7 @@ suite('Microservice/Metadata/Action', function() {
       methods: ['GET', 'POST'],
       forceUserIdentity: 'test-force-user-identity',
     };
+
     action = new Action(configInput.resourceName, configInput.name, configInput);
     chai.expect(action.extract()).to.eql(expectedResult);
   });
