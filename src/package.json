@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "1.4.14",
+  "version": "1.4.15",
   "description": "DEEP Package Manager",
   "keywords": [
     "Digital Enterprise End-To-End Platform",
@@ -89,8 +89,8 @@
     "proxyquire": "^1.7.x"
   },
   "engines": {
-    "node": ">=0.12 <5.0.0",
-    "npm": ">=2.10"
+    "node": ">=0.12 <5.0",
+    "npm": ">=2.10 <3.0"
   },
   "os": [
     "!win32"
