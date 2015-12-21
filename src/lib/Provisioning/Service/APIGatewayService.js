@@ -874,8 +874,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {String}
    */
   get qsToMapObjectMappingTpl() {
-    // @todo - do not pass APIGatewayService.DEEP_CACHE_QS_PARAM to lambda
-    return '{ #foreach($key in $input.params().querystring.keySet()) "$key": "$util.escapeJavaScript($input.params($key))"#if($foreach.hasNext),#end #end }';
+    return '#set($keys = []) #foreach($key in $input.params().querystring.keySet()) #if ($key != "_deepQsHash") #set($result = $keys.add($key)) #end #end { #foreach($key in $keys "$key": "$util.escapeJavaScript($input.params($key))" #if($foreach.hasNext),#end #end }';
   }
 
   /**
