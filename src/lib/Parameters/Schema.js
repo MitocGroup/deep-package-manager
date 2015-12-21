@@ -93,8 +93,8 @@ export class Schema {
    */
   static _getQuestionInfo(key, def) {
     let name = def.displayName || key;
-    let example = (def.example ? `@example '${def.example}'` : null) || '';
-    let defaultValue = def.default ? `@default '${def.default}'` : null;
+    let example = (def.hasOwnProperty('example') ? `@example '${def.example}'` : null) || '';
+    let defaultValue = def.hasOwnProperty('default') ? `@default '${def.default}'` : null;
 
     let text = [];
 
