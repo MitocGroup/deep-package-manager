@@ -19,21 +19,6 @@ suite('Provisioning/Service/SNSService', function() {
     chai.expect(snsService._ready).to.be.equal(false);
   });
 
-  //todo - TBD
-  test('Check AVAILABLE_REGIONS() static method returns array of available regions', function() {
-    chai.expect(SNSService.AVAILABLE_REGIONS[0].length).to.be.equal(10);
-    chai.expect(SNSService.AVAILABLE_REGIONS[0]).to.be.include('*');
-    chai.expect(SNSService.AVAILABLE_REGIONS[0]).to.be.include('ap-northeast-1');
-    chai.expect(SNSService.AVAILABLE_REGIONS[0]).to.be.include('ap-southeast-1');
-    chai.expect(SNSService.AVAILABLE_REGIONS[0]).to.be.include('ap-southeast-2');
-    chai.expect(SNSService.AVAILABLE_REGIONS[0]).to.be.include('eu-central-1');
-    chai.expect(SNSService.AVAILABLE_REGIONS[0]).to.be.include('eu-west-1');
-    chai.expect(SNSService.AVAILABLE_REGIONS[0]).to.be.include('sa-east-1');
-    chai.expect(SNSService.AVAILABLE_REGIONS[0]).to.be.include('us-east-1');
-    chai.expect(SNSService.AVAILABLE_REGIONS[0]).to.be.include('us-west-1');
-    chai.expect(SNSService.AVAILABLE_REGIONS[0]).to.be.include('us-west-2');
-  });
-
   test('Check _setup() method returns this._ready=\'true\'', function() {
     chai.expect(snsService._ready).to.be.equal(false);
     let actualResult = snsService._setup('service');
