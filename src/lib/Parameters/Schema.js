@@ -93,8 +93,8 @@ export class Schema {
    */
   static _getQuestionInfo(key, def) {
     let name = def.displayName || key;
-    let example = (def.hasOwnProperty('example') ? `@example '${def.example}'` : null) || '';
-    let defaultValue = def.hasOwnProperty('default') ? `@default '${def.default}'` : null;
+    let example = (def.hasOwnProperty('example') ? `@example: '${def.example}'` : null) || '';
+    let defaultValue = def.hasOwnProperty('default') ? `@default: '${def.default}'` : null;
 
     let text = [];
 
@@ -102,6 +102,7 @@ export class Schema {
     text.push(name);
     text.push(defaultValue || example);
     text.push(def.required ? '@required' : '@optional');
+    text.push('');
 
     return text.join(OS.EOL);
   }
