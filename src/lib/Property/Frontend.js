@@ -224,7 +224,7 @@ export class Frontend {
       'aws s3 sync',
       '--profile=deep',
       '--storage-class=REDUCED_REDUNDANCY',
-      '--content-encoding=gzip',
+      Frontend._contentEncodingExecOption,
       '--cache-control="max-age=86400"',
       '--exclude="*.html"',
       `'${this.path}'`,
@@ -243,13 +243,21 @@ export class Frontend {
       'aws s3 sync',
       '--profile=deep',
       '--storage-class=REDUCED_REDUNDANCY',
-      '--content-encoding=gzip',
+      Frontend._contentEncodingExecOption,
       '--cache-control="max-age=600"',
       '--exclude="*"',
       '--include="*.html"',
       `'${this.path}'`,
       `'s3://${bucketName}'`
     );
+  }
+
+  /**
+   * @returns {String}
+   * @private
+   */
+  static get _contentEncodingExecOption() {
+    return Frontend._skipAssetsOptimizations ? null : '--content-encoding=gzip';
   }
 
   /**
@@ -301,10 +309,7 @@ export class Frontend {
     }
 
     if (Frontend._skipInjectDeployNumber) {
-      new Optimizer(this.path)
-        .optimize(callback);
-
-      return;
+      return this._optimizeAssets(callback);
     }
 
     new DeployIdInjector(this.path, this._deployId)
@@ -324,9 +329,32 @@ export class Frontend {
           };
         }
 
-        new Optimizer(this.path)
-          .optimize(optCb);
+        this._optimizeAssets(optCb);
       });
+  }
+
+  /**
+   * @param {Function} callback
+   * @private
+   */
+  _optimizeAssets(callback) {
+    if (Frontend._skipAssetsOptimizations) {
+      callback(null);
+      return;
+    }
+
+    new Optimizer(this.path)
+      .optimize(callback);
+  }
+
+  /**
+   * @todo: get rid of this hook
+   *
+   * @returns {Boolean}
+   * @private
+   */
+  static get _skipAssetsOptimizations() {
+    return process.env.hasOwnProperty('DEEP_SKIP_ASSETS_OPTIMIZATION');
   }
 
   /**
