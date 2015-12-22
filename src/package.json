@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "1.4.19",
+  "version": "1.4.20",
   "description": "DEEP Package Manager",
   "keywords": [
     "Digital Enterprise End-To-End Platform",
@@ -79,7 +79,9 @@
     "css-find-assets": "MitocGroup/css-find-assets",
     "css-parse": "^2.0.x",
     "readline-sync": "^1.2.x",
-    "json-pointer": "^0.3.x",
+    "json-pointer": "^0.3.x"
+  },
+  "optionalDependencies": {
     "aws-sdk": "^2.2.x"
   },
   "devDependencies": {
