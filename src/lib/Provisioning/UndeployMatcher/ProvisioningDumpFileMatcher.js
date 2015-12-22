@@ -12,6 +12,7 @@ import Core from 'deep-core';
 import {S3Service} from '../Service/S3Service';
 import {MissingProvisioningConfig} from './Exception/MissingProvisioningConfig';
 import {Undeploy} from '../Undeploy';
+import {CloudWatchLogsDriver} from '../ListingDriver/CloudWatchLogsDriver';
 
 export class ProvisioningDumpFileMatcher extends AbstractMatcher {
   /**
@@ -170,6 +171,10 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
               this._deployConfig.Lambda = this._deployConfig.Lambda.concat(lambdaNamesChunk);
             }
           }
+
+          this._deployConfig.CloudWatchLogs = this._deployConfig.Lambda.map((lambdaName) => {
+            return `${CloudWatchLogsDriver.LAMBDA_LOG_GROUP_PREFIX}${lambdaName}`;
+          });
 
           cb(null);
           return;
