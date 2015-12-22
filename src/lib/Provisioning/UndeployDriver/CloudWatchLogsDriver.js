@@ -50,7 +50,7 @@ export class CloudWatchLogsDriver extends AbstractDriver {
           //      OperationAbortedException: A conflicting operation is currently
           //      in progress against this resource. Please try again.
           setTimeout(() => {
-            this._removeLogGroup(logGroupName, cb, retries++)
+            this._removeLogGroup(logGroupName, cb, retries++);
           }, 300);
         }
 
