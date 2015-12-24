@@ -90,6 +90,12 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
 
           if (deployProvisioning.apigateway && deployProvisioning.apigateway.api) {
             this._deployConfig.APIGateway.push(deployProvisioning.apigateway.api.id);
+
+            if (deployProvisioning.apigateway.api.role) {
+              this._deployConfig.IAM.push(
+                deployProvisioning.apigateway.api.role.RoleName
+              );
+            }
           }
 
           if (deployProvisioning.dynamodb && deployProvisioning.dynamodb.tablesNames) {
