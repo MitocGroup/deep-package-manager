@@ -9,9 +9,8 @@ node_js:
   - '5.3'
 cache:
   directories:
-#  - "$(npm root -g)"
+  - "$(npm root -g)"
   - node_modules
-
 #notifications:
 #  email:
 #  - devs-deep@mitocgroup.com
