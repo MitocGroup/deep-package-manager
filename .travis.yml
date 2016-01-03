@@ -3,17 +3,14 @@ sudo: false
 node_js:
   - '0.12'
   - '4.2'
-  - '5.0'
-  - '5.1'
-  - '5.2'
   - '5.3'
 cache:
   directories:
   - "$(npm root -g)"
   - node_modules
-#notifications:
-#  email:
-#  - devs-deep@mitocgroup.com
+notifications:
+  email:
+  - devs-deep@mitocgroup.com
 branches:
   only:
   - master
