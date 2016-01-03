@@ -4,12 +4,16 @@ node_js:
   - '0.12'
   - '4.2'
   - '5.0'
+  - '5.1'
+  - '5.2'
+  - '5.3'
 cache:
   directories:
   - "$(npm root -g)"
-notifications:
-  email:
-  - devs-deep@mitocgroup.com
+  - node_modules
+#notifications:
+#  email:
+#  - devs-deep@mitocgroup.com
 branches:
   only:
   - master
