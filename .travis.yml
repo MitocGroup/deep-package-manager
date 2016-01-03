@@ -6,7 +6,6 @@ node_js:
   - '5.3'
 cache:
   directories:
-  - "$(npm root -g)"
   - node_modules
 notifications:
   email:
