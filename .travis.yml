@@ -7,10 +7,10 @@ node_js:
   - '5.1'
   - '5.2'
   - '5.3'
-#cache:
-#  directories:
+cache:
+  directories:
 #  - "$(npm root -g)"
-#  - node_modules
+  - node_modules
 #notifications:
 #  email:
 #  - devs-deep@mitocgroup.com
