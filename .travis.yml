@@ -8,15 +8,16 @@ cache:
   directories:
   - "$(npm root -g)"
   - node_modules
-notifications:
-  email:
-  - devs-deep@mitocgroup.com
+#notifications:
+#  email:
+#  - devs-deep@mitocgroup.com
 branches:
   only:
   - master
   - stage
   - test
   - dev
+  - codacy_update
 env:
   global:
   #CODACY_PROJECT_TOKEN=[secured]
