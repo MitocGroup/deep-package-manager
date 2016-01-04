@@ -17,7 +17,7 @@ branches:
   - stage
   - test
   - dev
-  - codacy_update
+  - coverage_update
 env:
   global:
   #CODACY_PROJECT_TOKEN=[secured]
