@@ -17,7 +17,6 @@ branches:
   - stage
   - test
   - dev
-  - node_cache
 env:
   global:
   #CODACY_PROJECT_TOKEN=[secured]
