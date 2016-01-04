@@ -361,13 +361,22 @@ export class CognitoIdentityService extends AbstractService {
     let policy = new Core.AWS.IAM.Policy();
 
     let statement = policy.statement.add();
+
     statement.action.add(Core.AWS.Service.COGNITO_IDENTITY, 'DescribeIdentity');
+
     statement.resource.add(
       Core.AWS.Service.COGNITO_IDENTITY,
       this.provisioning.cognitoIdentity.config.region,
       this.awsAccountId,
-      'identitypool/' // @todo - find a way to add cognito identity pool id and user identityId into arn
+      'identitypool/'
     );
+
+    statement.condition = {
+      "StringEquals": {
+        "cognito-identity.amazonaws.com:aud": this._config.identityPool.IdentityPoolId,
+        "cognito-identity.amazonaws.com:sub": ["${cognito-identity.amazonaws.com:sub}"],
+      }
+    };
 
     return statement;
   }
