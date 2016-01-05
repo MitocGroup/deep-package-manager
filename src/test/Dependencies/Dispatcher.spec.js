@@ -4,25 +4,13 @@ import chai from 'chai';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 import {Dispatcher} from '../../lib/Dependencies/Dispatcher';
+import {DispatcherMock} from '../mock/Dependencies/DispatcherMock';
 
 chai.use(sinonChai);
 
-/**
- * Dependency dispatcher implements abstract method from Dispatcher
- */
-class DependencyDispatcher extends Dispatcher {
-  constructor(driver) {
-    super(driver);
-  }
-
-  dispatch() {
-    return this;
-  }
-}
-
 suite('Dependencies/Dispatcher', function() {
   let driver = 'driverTest';
-  let dispatcher = new DependencyDispatcher(driver);
+  let dispatcher = new DispatcherMock(driver);
 
   test('Class Dispatcher exists in Dependencies/Dispatcher', function() {
     chai.expect(typeof Dispatcher).to.equal('function');
