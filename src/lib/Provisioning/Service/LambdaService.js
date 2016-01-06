@@ -378,8 +378,11 @@ export class LambdaService extends AbstractService {
     }
 
     let cognitoService = this.provisioning.services.find(CognitoIdentityService);
-    policy.statement.add(cognitoService.generateAllowCognitoSyncStatement(['ListRecords', 'ListDatasets']));
-    policy.statement.add(cognitoService.generateAllowDescribeIdentityStatement());
+    policy.statement.add(cognitoService.generateAllowCognitoSyncStatement(
+      ['ListRecords', 'ListDatasets']),
+      LambdaService
+    );
+    policy.statement.add(cognitoService.generateAllowDescribeIdentityStatement(LambdaService));
 
     policy.statement.add(this.generateAllowInvokeFunctionStatement());
 

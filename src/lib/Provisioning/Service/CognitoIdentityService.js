@@ -329,9 +329,11 @@ export class CognitoIdentityService extends AbstractService {
    * Allow Cognito users to list / push data to CognitoSync service
    *
    * @param {Array} allowedActions
+   * @param {Function} targetService
+   *
    * @returns {Core.AWS.IAM.Statement}
    */
-  generateAllowCognitoSyncStatement(allowedActions = [Core.AWS.IAM.Policy.ANY]) {
+  generateAllowCognitoSyncStatement(allowedActions = [Core.AWS.IAM.Policy.ANY], targetService = CognitoIdentityService) {
     let policy = new Core.AWS.IAM.Policy();
 
     let statement = policy.statement.add();
@@ -340,7 +342,12 @@ export class CognitoIdentityService extends AbstractService {
       statement.action.add(Core.AWS.Service.COGNITO_SYNC, actionName);
     });
 
-    let resourceIdentifier = 'identitypool/' + this._config.identityPool.IdentityPoolId + '/identity/${cognito-identity.amazonaws.com:sub}/*';
+    let identityPoolId = this._config.identityPool.IdentityPoolId;
+    let resourceIdentifier = 'identitypool/' + identityPoolId + '/identity/${cognito-identity.amazonaws.com:sub}/*';
+
+    if (targetService == LambdaService) {
+      resourceIdentifier = 'identitypool/' + identityPoolId + '/identity/*';
+    }
 
     statement.resource.add(
       Core.AWS.Service.COGNITO_SYNC,
@@ -355,9 +362,11 @@ export class CognitoIdentityService extends AbstractService {
   /**
    * Allow to execute DescribeIdentity on Cognito identity pool
    *
+   * @param {Function} targetService
+   *
    * @returns {Core.AWS.IAM.Statement}
    */
-  generateAllowDescribeIdentityStatement() {
+  generateAllowDescribeIdentityStatement(targetService = CognitoIdentityService) {
     let policy = new Core.AWS.IAM.Policy();
 
     let statement = policy.statement.add();
@@ -371,12 +380,17 @@ export class CognitoIdentityService extends AbstractService {
       'identitypool/'
     );
 
-    statement.condition = {
+    let condition = {
       "StringEquals": {
         "cognito-identity.amazonaws.com:aud": this._config.identityPool.IdentityPoolId,
-        "cognito-identity.amazonaws.com:sub": ["${cognito-identity.amazonaws.com:sub}"],
-      }
+      },
     };
+
+    if (targetService == CognitoIdentityService) {
+      condition.StringEquals["cognito-identity.amazonaws.com:sub"] = ["${cognito-identity.amazonaws.com:sub}"];
+    }
+
+    statement.condition = condition;
 
     return statement;
   }
