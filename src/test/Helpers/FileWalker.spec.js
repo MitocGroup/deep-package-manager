@@ -2,6 +2,7 @@
 
 import chai from 'chai';
 import {FileWalker} from '../../lib/Helpers/FileWalker';
+import {Remover} from './Remover';
 import FileSystem from 'fs';
 import path from 'path';
 
@@ -43,11 +44,11 @@ suite('Helpers/FileWalker', function() {
     try {
       fileWalker.mkdir(directoryPath);
       chai.expect(FileSystem.existsSync(directoryPath)).to.be.equal(true);
-      rmdir(directoryPath);
+      Remover.rmdir(directoryPath);
     } catch (e) {
       error = e;
       if (error.message === `EEXIST, file already exists \'${directoryPath}\'`) {
-        rmdir(directoryPath);
+        Remover.rmdir(directoryPath);
       }
     }
 
@@ -60,11 +61,11 @@ suite('Helpers/FileWalker', function() {
       fileWalker._type = FileWalker.RECURSIVE;
       fileWalker.mkdir(directoryWithSubPaths);
       chai.expect(FileSystem.existsSync(directoryWithSubPaths)).to.be.equal(true);
-      rmdir(directoryWithSubPaths);
+      Remover.rmdir(directoryWithSubPaths);
     } catch (e) {
       error = e;
       if (error.message === `EEXIST, file already exists \'${directoryWithSubPaths}\'`) {
-        rmdir(directoryWithSubPaths);
+        Remover.rmdir(directoryWithSubPaths);
       }
     }
 
@@ -99,7 +100,7 @@ suite('Helpers/FileWalker', function() {
     chai.expect(stats.isFile()).to.be.equal(true);
 
     //remove destination directory with the copied content
-    rmdir(destinationPath);
+    Remover.rmdir(destinationPath);
   });
 
   test('Check walk() method', function () {
@@ -119,24 +120,4 @@ suite('Helpers/FileWalker', function() {
 
     chai.expect(actualResult).to.be.eql(expectedResult);
   });
-
-  var rmdir = function(dir) {
-    var list = FileSystem.readdirSync(dir);
-    for (var i = 0; i < list.length; i++) {
-      var filename = path.join(dir, list[i]);
-      var stat = FileSystem.statSync(filename);
-
-      if (filename === '.' || filename === '..') {
-        // pass these files
-      } else if (stat.isDirectory()) {
-        // rmdir recursively
-        rmdir(filename);
-      } else {
-        // rm fiilename
-        FileSystem.unlinkSync(filename);
-      }
-    }
-
-    FileSystem.rmdirSync(dir);
-  };
 });
