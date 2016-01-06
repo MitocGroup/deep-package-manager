@@ -126,43 +126,6 @@ suite('Dependencies/Driver/AbstractDriver', function () {
     chai.expect(error.message).to.be.an.equal(`Error while ${errorDescriptor}: undefined`);
   });
 
-  test('Check _pack() method throws exception for invalid input path', function() {
-    let error = null;
-    let errorDescriptor = 'reading sources';
-
-    let execDomain = domain.create();
-
-    execDomain.on('error', (error) => {
-      console.log('details here'); // !!!!!!
-      console.log(error); // !!!!!!
-    });
-
-    execDomain.run(() => {
-      // negative test case
-      console.log('negative test case'); // !!!!!!
-      try {
-        abstractDriver._pack(inputPath, archivePath, callback);
-      } catch (e) {
-        error = e;
-        console.log('error: ', error);
-      }
-    });
-
-    //let callback = () => {
-    //  // complete the async
-    //  done();
-    //
-    //  //chai.expect(error).to.be.an.instanceOf(Exception);
-    //  //chai.expect(error.message).to.be.an.equal(`Error while ${errorDescriptor}: undefined`);
-    //};
-    //
-    //try {
-    //  abstractDriver._pack('fdsfdsfds', archivePath, callback);
-    //} catch (e) {
-    //  error = e;
-    //}
-  });
-
   test('Check _pack() method packs folder/file successfully', function (done) {
     let callback = () => {
       let stats = FileSystem.statSync(archivePath);
@@ -178,7 +141,7 @@ suite('Dependencies/Driver/AbstractDriver', function () {
   test('Check _unpack() method', function (done) {
     let actualResult = null;
     let fileWalker = new FileWalker();
-    let expectedResult =  [
+    let expectedResult = [
       'test/testMaterials/testPack/archiveFileName/Microservice',
       'test/testMaterials/testPack/archiveFileName/deeploy.test.json',
     ];
@@ -202,8 +165,40 @@ suite('Dependencies/Driver/AbstractDriver', function () {
     abstractDriver._unpack(archivePath, callback);
   });
 
-  //remove folder with unpacked archive
-  after(function(){
-    Remover.rmdir('test/testMaterials/testPack');
-  })
+  //@todo - need to deeply investigate
+  //test('Check _pack() method throws exception for invalid input path', function () {
+  //  let error = null;
+  //  let errorDescriptor = 'reading sources';
+  //
+  //  let execDomain = domain.create();
+  //
+  //  execDomain.on('error', (error) => {
+  //    throw new Exception(`Error while ${errorDescriptor}: ${error}`);
+  //  });
+  //
+  //  execDomain.run(() => {
+  //    // negative test case
+  //    console.log('in negative test case'); // !!!!!!
+  //
+  //    try {
+  //      abstractDriver._pack(inputPath, archivePath, () => {
+  //        console.log('in cb')
+  //      });
+  //
+  //    } catch (e) {
+  //      error = e;
+  //    }
+  //
+  //    chai.expect(error).to.be.an.instanceOf(Exception);
+  //    chai.expect(error.message).to.contains(`Error while ${errorDescriptor}:`);
+  //  });
+  //});
 });
+
+//remove folder with unpacked archive
+after(function () {
+  Remover.rmdir('test/testMaterials/testPack');
+
+  //@todo - need to move in other test which generate this folder
+  Remover.rmdir('test/testMaterials/Property2/_public');
+})
