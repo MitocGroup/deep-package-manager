@@ -7,6 +7,7 @@ import {Exception} from '../../../lib/Dependencies/Exception/Exception';
 import OS from 'os';
 import Path from 'path';
 import {Hash} from '../../../lib/Helpers/Hash';
+import domain from 'domain';
 
 suite('Dependencies/Driver/AbstractDriver', function() {
   let abstractDriver = new AbstractDriverMock();
@@ -16,6 +17,8 @@ suite('Dependencies/Driver/AbstractDriver', function() {
   let identifierInput = 'identifierTest';
   let dependencyName = 'dependencyName';
   let dependencyVersion = 'v0.0.1';
+  let inputPath = 'test/testMaterials/Property4';
+  let archivePath = 'test/testMaterials/testPack/archiveFileName.tar.gz';
   let expectedResult = null;
 
   test('Class AbstractDriver exists in Dependencies/Driver/AbstractDriver', function() {
@@ -104,59 +107,75 @@ suite('Dependencies/Driver/AbstractDriver', function() {
     chai.expect(actualResult).to.contains(`${prefixInput}/${dependencyName}-${dependencyVersion}`);
   });
 
-  //todo
   test('Check errorCallback(descriptor) throws Exception', function() {
     let error = null;
+    let actualResult = null;
+    let errorDescriptor = null;
 
     try {
-      AbstractDriver.errorCallback('descriptor');
+      actualResult = AbstractDriverMock.errorCallback(errorDescriptor);
+      actualResult();
     } catch (e) {
       error = e;
     }
 
-    //chai.expect(error).to.be.an.instanceOf(Exception);
-    //chai.expect(error.message).to.be.an.equal(`Error while ${descriptor}: ${error}`);
+    chai.expect(error).to.be.an.instanceOf(Exception);
+    chai.expect(error.message).to.be.an.equal(`Error while ${errorDescriptor}: undefined`);
   });
 
-  //test('Check _pack() method', function(done) {
+  //test('Check _pack() method throws exception for invalid input path', function(done) {
   //  let error = null;
-  //  let actualResult = null;
+  //  let errorDescriptor = 'reading sources';
   //
   //  let callback = () => {
   //    // complete the async
   //    done();
-  //    chai.expect(error).to.be.equal(null);
-  //    chai.expect(actualResult).to.be.equal(undefined);
-  //    let stats = FileSystem.statSync(archivePath);
-  //    chai.expect(stats.isFile()).to.be.equal(true);
-  //  };
-  //  try {
-  //    actualResult = abstractDriver._pack(inputPath, archivePath, callback);
-  //  } catch (e) {
-  //    error = e;
-  //  }
-  //});
   //
-  //test('Check _unpack() method', function(done) {
-  //  let error = null;
-  //  let actualResult = null;
-  //  let outputPath = null;
-  //  let callback = () => {
-  //    // complete the async
-  //    done();
-  //    chai.expect(error).to.be.equal(null);
-  //    chai.expect(actualResult).to.be.equal(undefined);
-  //    let stats = FileSystem.statSync(archivePath);
-  //    chai.expect(stats.isDirectory()).to.be.equal(true);
+  //    //chai.expect(error).to.be.an.instanceOf(Exception);
+  //    //chai.expect(error.message).to.be.an.equal(`Error while ${errorDescriptor}: undefined`);
   //  };
+  //
   //  try {
-  //    outputPath = Path.join(
-  //      Path.dirname(archivePath),
-  //      Path.basename(archivePath, AbstractDriver.ARCHIVE_EXTENSION)
-  //    );
-  //    actualResult = abstractDriver._unpack(archivePath, callback);
+  //    abstractDriver._pack('fdsfdsfds', archivePath, callback);
   //  } catch (e) {
   //    error = e;
   //  }
   //});
+
+  test('Check _pack() method packs folder/file successfully', function(done) {
+    let callback = () => {
+      // complete the async
+      done();
+      let stats = FileSystem.statSync(archivePath);
+      chai.expect(stats.isFile()).to.be.equal(true);
+    };
+
+    abstractDriver._pack(inputPath, archivePath, callback);
+  });
+
+  //@todo - need to add check here and remove
+  test('Check _unpack() method', function(done) {
+    let error = null;
+    let actualResult = null;
+    let outputPath = null;
+
+    let callback = () => {
+      // complete the async
+      done();
+      chai.expect(error).to.be.equal(null);
+      chai.expect(actualResult).to.be.equal(undefined);
+      let stats = FileSystem.statSync(archivePath);
+      chai.expect(stats.isDirectory()).to.be.equal(true);
+    };
+
+    try {
+      outputPath = Path.join(
+        Path.dirname(archivePath),
+        Path.basename(archivePath, AbstractDriver.ARCHIVE_EXTENSION)
+      );
+      actualResult = abstractDriver._unpack(archivePath, callback);
+    } catch (e) {
+      error = e;
+    }
+  });
 });
