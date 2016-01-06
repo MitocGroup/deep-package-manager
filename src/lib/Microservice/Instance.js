@@ -14,6 +14,7 @@ import StringUtils from 'underscore.string';
 import {PostDeployHook} from './PostDeployHook';
 import {InitHook} from './InitHook';
 import {FrontendEngine} from './FrontendEngine';
+import {Search} from './Search';
 
 /**
  * Microservice instance
@@ -22,9 +23,10 @@ export class Instance {
   /**
    * @param {Config} config
    * @param {Parameters} parameters
+   * @param {Search|null} searchSchema
    * @param {String} basePath
    */
-  constructor(config, parameters, basePath) {
+  constructor(config, parameters, searchSchema, basePath) {
     if (!(config instanceof Config)) {
       throw new InvalidArgumentException(config, Config);
     }
@@ -36,11 +38,19 @@ export class Instance {
     this._basePath = StringUtils.rtrim(basePath, '/');
     this._config = config.extract();
     this._parameters = parameters.extract();
+    this._searchSchema = searchSchema ? searchSchema.extract() : null;
     this._autoload = new Autoload(this._config.autoload, this._basePath);
     this._resources = null;
 
     this._postDeployHook = new PostDeployHook(this);
     this._initHook = new InitHook(this);
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get SEARCH_SCHEMA_FILE() {
+    return 'search.json';
   }
 
   /**
@@ -72,10 +82,18 @@ export class Instance {
 
     let configFile = `${basePath}/${Instance.CONFIG_FILE}`;
     let parametersFile = `${basePath}/${Instance.PARAMS_FILE}`;
+    let searchSchemaFile = `${basePath}/${Instance.SEARCH_SCHEMA_FILE}`;
+    let searchSchema = null;
+
+    try {
+      searchSchema = Search.createFromJsonFile(searchSchemaFile)
+    } catch (e) {
+    }
 
     return new Instance(
       Config.createFromJsonFile(configFile),
       Parameters.createFromJsonFile(parametersFile),
+      searchSchema,
       basePath
     );
   }
@@ -132,14 +150,21 @@ export class Instance {
   /**
    * Retrieve microservice configuration
    *
-   * @returns {Config}
+   * @returns {Object}
    */
   get config() {
     return this._config;
   }
 
   /**
-   * @returns {Parameters}
+   * @returns {Object}
+   */
+  get searchSchema() {
+    return this._searchSchema;
+  }
+
+  /**
+   * @returns {Object}
    */
   get parameters() {
     return this._parameters;
