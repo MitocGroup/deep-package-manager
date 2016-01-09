@@ -18,7 +18,6 @@ suite('Dependencies/Driver/S3StdDriver', function() {
   let dependencyVersion = 'v0.0.1';
   let inputPath = 'test/testMaterials/Property4';
   let s3StdDriver = new S3StdDriver(awsS3Mock, bucketName);
-  let fileWalker = new FileWalker();
   let archivePath = 'test/testMaterials/testPack/dependencyName-v0.0.1.tar.gz';
 
   test('Class S3StdDriver exists in Dependencies/Driver/S3StdDriver', function() {
@@ -44,6 +43,21 @@ suite('Dependencies/Driver/S3StdDriver', function() {
     chai.expect(spyCallback).to.have.been.calledWithExactly();
   });
 
+
+  test('Check push() method _dryRun', function() {
+    s3StdDriver.dryRun = true;
+    let callback = (path) => {
+      let stats = FileSystem.statSync(s3StdDriver._getArchivePath(dependencyName, dependencyVersion));
+      chai.expect(stats.isFile()).to.equal(true);
+      chai.expect(actualResult).to.equal(undefined);
+
+      // complete the async
+      done();
+    };
+
+    let actualResult = s3StdDriver.push(inputPath, dependencyName, dependencyVersion, callback);
+  });
+
   //@todo - unable to write to outputstream -> TypeError: Invalid non-string/buffer chunk
   //test('Check pull() method for !_dryRun throw exception', function() {
   //  let spyCallback = sinon.spy();
@@ -62,19 +76,19 @@ suite('Dependencies/Driver/S3StdDriver', function() {
   //  chai.expect(spyCallback).to.not.have.been.calledWith();
   //});
 
-  //check pack
-  test('Check pack() method', function(done) {
-    let callback = (path) => {
-      console.log('done paccking in: ', path);
-      let stats = FileSystem.statSync(path);
-      chai.expect(stats.isFile()).to.equal(true);
-
-      // complete the async
-      done();
-    };
-
-    s3StdDriver._pack(inputPath, archivePath, callback);
-  });
+  ////create archive
+  //test('Check pack() method', function(done) {
+  //  let callback = (path) => {
+  //    console.log('done paccking in: ', path);
+  //    let stats = FileSystem.statSync(path);
+  //    chai.expect(stats.isFile()).to.equal(true);
+  //
+  //    // complete the async
+  //    done();
+  //  };
+  //
+  //  s3StdDriver._pack(inputPath, archivePath, callback);
+  //});
 
   //test('Check pull() method for !_dryRun', function(done) {
   //

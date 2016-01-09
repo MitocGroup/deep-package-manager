@@ -48,10 +48,19 @@ export class S3Mock {
 
   /**
    * @param {String} parameters
-   * @param {Function} callback
    * @returns {S3Mock}
    */
-  getObject(parameters, callback) {
+  getObject(parameters) {
+    this.parameters = parameters;
+
+    return this;
+  }
+
+  /**
+   * @param {String} parameters
+   * @returns {S3Mock}
+   */
+  putObject(parameters) {
     this.parameters = parameters;
 
     return this;
