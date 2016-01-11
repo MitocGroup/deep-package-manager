@@ -25,7 +25,6 @@ suite('Assets/Optimizer', function() {
     chai.expect(Optimizer.COMPRESSION_LEVEL).to.equal(9);
   });
 
-  //todo - is it fine to have negative compressionLevel?
   test('Check compressionLevel setter', function() {
     optimizer.compressionLevel = -2.1;
     chai.expect(optimizer.compressionLevel).to.equal(-2);
