@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "DEEP Package Manager",
   "keywords": [
     "Digital Enterprise End-To-End Platform",
@@ -49,6 +49,7 @@
   },
   "scripts": {
     "test": "babel-node `which isparta` cover --include 'lib/**/*.js' _mocha -- 'test/**/*.spec.js' --reporter spec --ui tdd --recursive",
+    "debug-test": "`which istanbul` cover _mocha -- --compilers js:babel/register --reporter spec --ui tdd --recursive ",
     "compile": "if [ -d 'lib/' ]; then BABEL_ENV=production babel lib/ --out-dir lib.compiled/; fi",
     "obfuscate-compiled": "if [ -d 'lib/' ]; then npm list -g --depth 0 uglify > /dev/null 2>&1 || npm install uglify -g; for f in $(find lib.compiled -type f -name *.js); do uglify -s ${f} -o ${f}; done; fi",
     "prepublish": "npm run compile && npm run obfuscate-compiled"
@@ -78,17 +79,21 @@
     "find-assets": "^0.3.x",
     "css-find-assets": "MitocGroup/css-find-assets",
     "css-parse": "^2.0.x",
-    "readline-sync": "^1.2.x"
+    "readline-sync": "^1.2.x",
+    "json-pointer": "^0.3.x"
+  },
+  "optionalDependencies": {
+    "aws-sdk": "^2.2.x"
   },
   "devDependencies": {
-    "aws-sdk": "^2.2.x",
     "chai": "^3.2.x",
     "sinon": "^1.17.x",
-    "sinon-chai": "^2.8.x"
+    "sinon-chai": "^2.8.x",
+    "proxyquire": "^1.7.x"
   },
   "engines": {
-    "node": ">=0.12 <5.0.0",
-    "npm": ">=2.10"
+    "node": ">=0.12 <5.0",
+    "npm": ">=2.10 <3.0"
   },
   "os": [
     "!win32"

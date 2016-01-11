@@ -185,12 +185,20 @@ suite('Provisioning/Service/APIGatewayService', function() {
     let e = null;
     let actualResult = null;
     let httpMethod = 'GET';
+    let integrationParams = {
+      cacheKeyParameters: [
+        'caller.aws.principal',
+        'method.request.querystring._deepQsHash',
+      ],
+    };
+
     let expectedResult = {
       'method.request.header.Access-Control-Allow-Origin': true,
+      'method.request.querystring._deepQsHash': true,
     };
 
     try {
-      actualResult = apiGatewayService._getMethodRequestParameters(httpMethod);
+      actualResult = apiGatewayService._getMethodRequestParameters(httpMethod, integrationParams);
     } catch (exception) {
       e = exception;
     }

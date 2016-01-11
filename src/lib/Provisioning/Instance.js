@@ -33,17 +33,20 @@ export class Instance {
 
     this._property = property;
 
+    // deep-db instance
+    this._db = null;
+
     this._s3 = new property.AWS.S3();
     this._elasticache = new property.AWS.ElastiCache();
     this._sns = new property.AWS.SNS();
     this._cloudFront = new property.AWS.CloudFront();
     this._iam = new property.AWS.IAM();
+    this._cloudWatchLogs = new property.AWS.CloudWatchLogs();
 
     // set appropriate region for services that are not available on all regions
     this._dynamoDb = new property.AWS.DynamoDB({
       region: this.getAwsServiceRegion(DynamoDBService, property.config.awsRegion),
     });
-
     this._kinesis = new property.AWS.Kinesis({
       region: this.getAwsServiceRegion(KinesisService, property.config.awsRegion),
     });
@@ -53,7 +56,6 @@ export class Instance {
     this._cognitoIdentity = new property.AWS.CognitoIdentity({
       region: this.getAwsServiceRegion(CognitoIdentityService, property.config.awsRegion),
     });
-
     this._apiGateway = new property.AWS.APIGateway({
       region: this.getAwsServiceRegion(APIGatewayService, property.config.awsRegion),
     });
@@ -76,6 +78,23 @@ export class Instance {
   }
 
   /**
+   * @returns {DB}
+   */
+  get db() {
+    return this._db;
+  }
+
+  /**
+   * In order to make possible DB manipulations
+   * in post provision hook
+   *
+   * @param {DB} instance
+   */
+  set db(instance) {
+    this._db = instance;
+  }
+
+  /**
    * @returns {Object}
    */
   get config() {
@@ -94,6 +113,13 @@ export class Instance {
    */
   get property() {
     return this._property;
+  }
+
+  /**
+   * @returns {Object}
+   */
+  get cloudWatchLogs() {
+    return this._cloudWatchLogs;
   }
 
   /**

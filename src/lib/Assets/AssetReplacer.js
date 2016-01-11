@@ -15,6 +15,22 @@ export class AssetReplacer {
   constructor(version) {
     this._version = version;
     this._replacers = [];
+
+    this._logFailed = AssetReplacer.LOG_FAILED_STATE;
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  get logFailed() {
+    return this._logFailed;
+  }
+
+  /**
+   * @param {Boolean} state
+   */
+  set logFailed(state) {
+    this._logFailed = state;
   }
 
   /**
@@ -40,11 +56,19 @@ export class AssetReplacer {
       let extension = AssetReplacer._getExtension(file);
       let content = fs.readFileSync(file).toString();
 
-      this._replacers.forEach((replacer) => {
-        content = replacer.replace(content, extension);
-      });
+      try {
+        this._replacers.forEach((replacer) => {
+          content = replacer.replace(content, extension);
+        });
 
-      fs.writeFileSync(file, content);
+        fs.writeFileSync(file, content);
+      } catch (e) {
+        if (this._logFailed) {
+          console.error(`Failed asset replacer ${file}: ${e}`);
+        } else {
+          throw e;
+        }
+      }
     });
 
     return this;
@@ -97,5 +121,12 @@ export class AssetReplacer {
    */
   static _ucFirst(str) {
     return str[0].toUpperCase() + str.slice(1);
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  static get LOG_FAILED_STATE() {
+    return true;
   }
 }

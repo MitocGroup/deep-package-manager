@@ -36,4 +36,8 @@ suite('Helpers/Hash', function() {
   test('Check pseudoRandomId() static method returns md5 random value', function() {
     chai.expect(Hash.pseudoRandomId(inputDataString)).to.be.not.equal(null);
   });
+
+  test('Check loseLoseMod() returns "0"', function() {
+    chai.expect(Hash.loseLoseMod('')).to.equal('0');
+  });
 });

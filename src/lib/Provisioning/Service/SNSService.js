@@ -30,7 +30,7 @@ export class SNSService extends AbstractService {
    */
   static get AVAILABLE_REGIONS() {
     return [
-      Core.AWS.Region.all()
+      Core.AWS.Region.ANY
     ];
   }
 

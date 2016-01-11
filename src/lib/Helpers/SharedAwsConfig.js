@@ -5,7 +5,7 @@
 'use strict';
 
 import AWS from 'aws-sdk';
-import exec from 'sync-exec';
+import {Exec} from './Exec';
 import path from 'path';
 import {_extend as extend} from 'util';
 import {Prompt} from './Terminal/Prompt';
@@ -225,9 +225,13 @@ export class SharedAwsConfig {
         secretAccessKey: null,
         region: null,
         refresh: function() {
-          this.accessKeyId = exec('aws configure get aws_access_key_id 2>/dev/null').stdout.toString().trim();
-          this.secretAccessKey = exec('aws configure get aws_secret_access_key 2>/dev/null').stdout.toString().trim();
-          this.region = exec('aws configure get region 2>/dev/null').stdout.toString().trim();
+          let accessKeyIdResult = new Exec('aws configure get aws_access_key_id 2>/dev/null').runSync();
+          let secretAccessKeyResult = new Exec('aws configure get aws_secret_access_key 2>/dev/null').runSync();
+          let regionResult = new Exec('aws configure get region 2>/dev/null').runSync();
+
+          this.accessKeyId = accessKeyIdResult.succeed ? accessKeyIdResult.result : null;
+          this.secretAccessKey = secretAccessKeyResult.succeed ? secretAccessKeyResult.result : null;
+          this.region = regionResult.succeed ? regionResult.result : null;
         },
       };
     };

@@ -28,10 +28,43 @@ export class DynamoDBDriver extends AbstractDriver {
    * @private
    */
   _removeResource(resourceId, resourceData, cb) {
+    this._removeTable(resourceId, cb);
+  }
+
+  /**
+   * @param {String} tableName
+   * @param {Function} cb
+   * @param {Number} retries
+   * @private
+   */
+  _removeTable(tableName, cb, retries = 0) {
     this._awsService.deleteTable({
-      TableName: resourceId,
+      TableName: tableName,
     }, (error) => {
-      cb(error);
+      if (error) {
+        if (retries >= DynamoDBDriver.MAX_ON_LIMIT_RETRIES) {
+          cb(error);
+        } else { // @todo: remove hook when fixed
+
+          // Fix:
+          //      LimitExceededException: Subscriber limit exceeded:
+          //      Only 10 tables can be created, updated, or deleted simultaneously
+          setTimeout(() => {
+            this._removeTable(tableName, cb, retries++);
+          }, 300);
+        }
+
+        return;
+      }
+
+      cb(null);
     });
+  }
+
+  /**
+   * @returns {Number}
+   */
+  static get MAX_ON_LIMIT_RETRIES() {
+    return 10;
   }
 }

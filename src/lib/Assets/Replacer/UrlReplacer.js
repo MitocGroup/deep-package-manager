@@ -73,7 +73,7 @@ export class UrlReplacer extends AbstractReplacer {
       replacements[node] = UrlReplacer._replaceAll(
         node,
         uri,
-        `$1${delimiter}${this._version}`
+        `$1${delimiter}_v=${this._version}`
       );
     }
 

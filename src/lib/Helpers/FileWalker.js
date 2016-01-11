@@ -157,7 +157,7 @@ export class FileWalker {
    */
   static matchExtensionsFilter(originalFilter, ...extensions) {
     let extensionsPlain = extensions.join('|');
-    let regex = new RegExp(`\.(${extensionsPlain})$`, 'i');
+    let regex = new RegExp(`\\.(${extensionsPlain})$`, 'i');
 
     return (file) => {
       return regex.test(file) && (!originalFilter || originalFilter(file));
