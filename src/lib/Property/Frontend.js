@@ -60,6 +60,7 @@ export class Frontend {
       identityProviders: '',
       microservices: {},
       globals: propertyConfig.globals,
+      search: {},
     };
 
     let apiGatewayBaseUrl = '';
@@ -71,6 +72,23 @@ export class Frontend {
       config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders;
 
       apiGatewayBaseUrl = propertyConfig.provisioning[Core.AWS.Service.API_GATEWAY].api.baseUrl;
+
+      if (propertyConfig.provisioning.hasOwnProperty(Core.AWS.Service.CLOUD_SEARCH)) {
+        let cloudSearchConfig = propertyConfig.provisioning[Core.AWS.Service.CLOUD_SEARCH];
+
+        for (let modelName in cloudSearchConfig) {
+          if (!cloudSearchConfig.hasOwnProperty(modelName)) {
+            continue;
+          }
+
+          let domainConfig = cloudSearchConfig[modelName];
+
+          config.search[modelName] = {
+            endpoint: domainConfig.endpoints.search,
+            indexes: domainConfig.indexes,
+          };
+        }
+      }
     }
 
     for (let microserviceIdentifier in propertyConfig.microservices) {

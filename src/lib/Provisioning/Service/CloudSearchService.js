@@ -184,6 +184,8 @@ export class CloudSearchService extends AbstractService {
       return this;
     }
 
+    this._ready = true;
+
     return this;
   }
 
@@ -193,7 +195,7 @@ export class CloudSearchService extends AbstractService {
    * @private
    */
   _waitForDomainsReady(cb, estTime = null) {
-    estTime = null === estTime ? 10 * 60 : estTime;
+    estTime = null === estTime ? 11 * 60 : estTime;
 
     let domainsStack = new AwsRequestSyncStack();
     let cloudsearch = this.provisioning.cloudSearch;

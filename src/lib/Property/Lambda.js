@@ -105,6 +105,10 @@ export class Lambda {
       config.tablesNames = propertyConfig.provisioning[Core.AWS.Service.DYNAMO_DB].tablesNames;
 
       //config.cacheDsn = propertyConfig.provisioning[Core.AWS.Service.ELASTIC_CACHE].dsn;
+
+      if (propertyConfig.provisioning.hasOwnProperty(Core.AWS.Service.CLOUD_SEARCH)) {
+        config.search = propertyConfig.provisioning[Core.AWS.Service.CLOUD_SEARCH];
+      }
     }
 
     for (let microserviceIdentifier in propertyConfig.microservices) {
