@@ -13,7 +13,7 @@ import {FailedToCreateCloudSearchDomainIndexesException} from './Exception/Faile
 import {DynamoDBService} from './DynamoDBService';
 import {MissingDynamoDBTableUsedInCloudSearchException} from './Exception/MissingDynamoDBTableUsedInCloudSearchException';
 import {AmbiguousCloudSearchDomainException} from './Exception/AmbiguousCloudSearchDomainException';
-import {FailedToRetrieveCloudFrontDistributionException} from './Exception/FailedToRetrieveCloudFrontDistributionException';
+import {FailedToRetrieveCloudSearchDistributionException} from './Exception/FailedToRetrieveCloudSearchDistributionException';
 
 export class CloudSearchService extends AbstractService {
   /**
@@ -208,7 +208,7 @@ export class CloudSearchService extends AbstractService {
 
     cloudsearch.describeDomains({DomainNames: domains,}, (error, data) => {
       if (error) {
-        throw new FailedToRetrieveCloudFrontDistributionException(error);
+        throw new FailedToRetrieveCloudSearchDistributionException(error);
       }
 
       for (let i in data.DomainStatusList) {
@@ -219,7 +219,10 @@ export class CloudSearchService extends AbstractService {
         let domainInfo = data.DomainStatusList[i];
         let domainName = domainInfo.DomainName;
 
-        if (false === domainInfo.Processing) {
+        if (false === domainInfo.Processing
+          && domainInfo.DocService.Endpoint
+          && domainInfo.SearchService.Endpoint) {
+
           this._config[this._domainsToWaitFor[domainName]].endpoints = {
             push: domainInfo.DocService.Endpoint,
             search: domainInfo.SearchService.Endpoint,
