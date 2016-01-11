@@ -178,6 +178,18 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
             }
           }
 
+          if (deployProvisioning.cloudsearch) {
+            for (let tableName in deployProvisioning.cloudsearch) {
+              if (!deployProvisioning.cloudsearch.hasOwnProperty(tableName)) {
+                continue;
+              }
+
+              this._deployConfig.CloudSearch.push(
+                deployProvisioning.cloudsearch[tableName].name
+              );
+            }
+          }
+
           this._deployConfig.CloudWatchLogs = this._deployConfig.Lambda.map((lambdaName) => {
             return `${CloudWatchLogsDriver.LAMBDA_LOG_GROUP_PREFIX}${lambdaName}`;
           });

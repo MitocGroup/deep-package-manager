@@ -10,6 +10,10 @@ import Core from 'deep-core';
 import {Inflector} from './Helpers/Inflector';
 import {FailedToCreateCloudSearchDomainException} from './Exception/FailedToCreateCloudSearchDomainException';
 import {FailedToCreateCloudSearchDomainIndexesException} from './Exception/FailedToCreateCloudSearchDomainIndexesException';
+import {DynamoDBService} from './DynamoDBService';
+import {MissingDynamoDBTableUsedInCloudSearchException} from './Exception/MissingDynamoDBTableUsedInCloudSearchException';
+import {AmbiguousCloudSearchDomainException} from './Exception/AmbiguousCloudSearchDomainException';
+import {FailedToRetrieveCloudFrontDistributionException} from './Exception/FailedToRetrieveCloudFrontDistributionException';
 
 export class CloudSearchService extends AbstractService {
   /**
@@ -19,6 +23,7 @@ export class CloudSearchService extends AbstractService {
     super(...args);
 
     this._searchConfig = this._generateSearchConfig();
+    this._domainsToWaitFor = {};
   }
 
   /**
@@ -155,13 +160,15 @@ export class CloudSearchService extends AbstractService {
    * @returns {CloudSearchService}
    */
   _postProvision(services) {
-    // @todo: implement!
-    if (this._isUpdate) {
-      this._readyTeardown = true;
-      return this;
-    }
+    this._fillConfigTables();
 
-    this._readyTeardown = true;
+    console.log(
+      `Waiting for the following CloudSearch domains to be ready: ${Object.keys(this._domainsToWaitFor).join(', ')}`
+    );
+
+    this._waitForDomainsReady(() => {
+      this._readyTeardown = true;
+    });
 
     return this;
   }
@@ -177,7 +184,82 @@ export class CloudSearchService extends AbstractService {
       return this;
     }
 
-    this._ready = true;
+    return this;
+  }
+
+  /**
+   * @param {Function} cb
+   * @param {Number} estTime
+   * @private
+   */
+  _waitForDomainsReady(cb, estTime = null) {
+    estTime = null === estTime ? 10 * 60 : estTime;
+
+    let domainsStack = new AwsRequestSyncStack();
+    let cloudsearch = this.provisioning.cloudSearch;
+    let domains = Object.keys(this._domainsToWaitFor);
+
+    if (domains.length <= 0) {
+      cb();
+      return;
+    }
+
+    cloudsearch.describeDomains({DomainNames: domains,}, (error, data) => {
+      if (error) {
+        throw new FailedToRetrieveCloudFrontDistributionException(error);
+      }
+
+      for (let i in data.DomainStatusList) {
+        if (!data.DomainStatusList.hasOwnProperty(i)) {
+          continue;
+        }
+
+        let domainInfo = data.DomainStatusList[i];
+        let domainName = domainInfo.DomainName;
+
+        if (false === domainInfo.Processing) {
+          this._config[this._domainsToWaitFor[domainName]].endpoints = {
+            push: domainInfo.DocService.Endpoint,
+            search: domainInfo.SearchService.Endpoint,
+          };
+
+          delete this._domainsToWaitFor[domainName];
+        }
+      }
+
+      let estTimeMinutes = (estTime / 60);
+
+      if (estTimeMinutes <= 0) {
+        console.log('almost done...');
+      } else {
+        console.log(`${estTimeMinutes} minutes remaining...`);
+      }
+
+      setTimeout(() => {
+        this._waitForDomainsReady(cb, estTime - 30);
+      }, 1000 * 30);
+    });
+  }
+
+  /**
+   * @returns {CloudSearchService}
+   * @private
+   */
+  _fillConfigTables() {
+    let dynamoDbService = this.provisioning.services.find(DynamoDBService);
+    let dynamoDbTables = this.provisioning.config[dynamoDbService.name()].tablesNames;
+
+    for (let domainName in this._config) {
+      if (!this._config.hasOwnProperty(domainName)) {
+        continue;
+      }
+
+      if (!dynamoDbTables.hasOwnProperty(domainName)) {
+        throw new MissingDynamoDBTableUsedInCloudSearchException(domainName);
+      }
+
+      this._config[domainName].table = dynamoDbTables[domainName];
+    }
 
     return this;
   }
@@ -199,8 +281,6 @@ export class CloudSearchService extends AbstractService {
 
       let domains = this._searchConfig.domains[microserviceIdentifier];
 
-      config[microserviceIdentifier] = {};
-
       domains.forEach((domain) => {
         let domainName = this.generateAwsResourceName(
           domain,
@@ -216,11 +296,21 @@ export class CloudSearchService extends AbstractService {
 
           let domainInfo = data.DomainStatus;
 
-          config[microserviceIdentifier][domainName] = {
-            id: domainInfo.DomainId,
+          if (config.hasOwnProperty(domain)) {
+            throw new AmbiguousCloudSearchDomainException(
+              microserviceIdentifier,
+              domain
+            );
+          }
+
+          config[domain] = {
+            name: domainName,
+            table: null,
             endpoints: {
-              push: domainInfo.DocService.Endpoint,
-              search: domainInfo.SearchService.Endpoint,
+
+              // these properties are empty at this step...
+              //push: domainInfo.DocService.Endpoint,
+              //search: domainInfo.SearchService.Endpoint,
             },
             indexes: {},
           };
@@ -244,7 +334,9 @@ export class CloudSearchService extends AbstractService {
                 throw new FailedToCreateCloudSearchDomainIndexesException(error);
               }
 
-              config[microserviceIdentifier][domainName].indexes[indexName] = indexOptions.IndexFieldName;
+              config[domain].indexes[indexName] = indexOptions.IndexFieldName;
+
+              this._domainsToWaitFor[domainName] = domain;
             });
           }
         });
