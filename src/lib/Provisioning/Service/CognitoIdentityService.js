@@ -345,7 +345,7 @@ export class CognitoIdentityService extends AbstractService {
     let identityPoolId = this._config.identityPool.IdentityPoolId;
     let resourceIdentifier = 'identitypool/' + identityPoolId + '/identity/${cognito-identity.amazonaws.com:sub}/*';
 
-    if (targetService == LambdaService) {
+    if (targetService === LambdaService) {
       resourceIdentifier = 'identitypool/' + identityPoolId + '/identity/*';
     }
 
@@ -386,7 +386,7 @@ export class CognitoIdentityService extends AbstractService {
       },
     };
 
-    if (targetService == CognitoIdentityService) {
+    if (targetService === CognitoIdentityService) {
       condition.StringEquals["cognito-identity.amazonaws.com:sub"] = ["${cognito-identity.amazonaws.com:sub}"];
     }
 
