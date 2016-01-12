@@ -86,6 +86,7 @@ export class Frontend {
           config.search[modelName] = {
             endpoint: domainConfig.endpoints.search,
             indexes: domainConfig.indexes,
+            suggesters: domainConfig.suggesters,
           };
         }
       }

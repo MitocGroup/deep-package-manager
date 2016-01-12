@@ -21,5 +21,11 @@ export default Joi.object()
           .default(CloudSearchService.DEFAULT_IDX_TYPE)
           .allow(CloudSearchService.ALLOWED_IDX_TYPES),
         options: Joi.object().optional().unknown(true),
+        autocomplete: Joi.object().optional().keys({
+          fuzziness: Joi.string()
+            .optional()
+            .default(CloudSearchService.ALLOWED_FUZZINESS[0])
+            .allow(CloudSearchService.ALLOWED_FUZZINESS),
+        }),
       })),
   }));

@@ -10,6 +10,7 @@ import Core from 'deep-core';
 import {Inflector} from './Helpers/Inflector';
 import {FailedToCreateCloudSearchDomainException} from './Exception/FailedToCreateCloudSearchDomainException';
 import {FailedToCreateCloudSearchDomainIndexesException} from './Exception/FailedToCreateCloudSearchDomainIndexesException';
+import {FailedToCreateCloudSearchDomainSuggestersException} from './Exception/FailedToCreateCloudSearchDomainSuggestersException';
 import {DynamoDBService} from './DynamoDBService';
 import {MissingDynamoDBTableUsedInCloudSearchException} from './Exception/MissingDynamoDBTableUsedInCloudSearchException';
 import {AmbiguousCloudSearchDomainException} from './Exception/AmbiguousCloudSearchDomainException';
@@ -82,6 +83,7 @@ export class CloudSearchService extends AbstractService {
 
           let searchInfo = searchSchema[domainName];
           let searchConfig = {};
+          let suggestConfig = {};
 
           if (searchInfo.timestamp) {
             let fields = CloudSearchService.TIMESTAMP_FIELDS;
@@ -123,9 +125,22 @@ export class CloudSearchService extends AbstractService {
 
               searchConfig[field][optionsKey] = fieldOptions.options;
             }
+
+            if (fieldOptions.autocomplete) {
+              suggestConfig[field] = {
+                DocumentSuggesterOptions: {
+                  SourceField: searchConfig[field].IndexFieldName,
+                  FuzzyMatching: fieldOptions.autocomplete.fuzziness || CloudSearchService.ALLOWED_FUZZINESS[0],
+                },
+                SuggesterName: searchConfig[field].IndexFieldName,
+              };
+            }
           }
 
-          domainConfig[domainName] = searchConfig;
+          domainConfig[domainName] = {
+            search: searchConfig,
+            suggest: suggestConfig,
+          };
         }
 
         config.config[microservice.identifier] = domainConfig;
@@ -277,6 +292,7 @@ export class CloudSearchService extends AbstractService {
     let config = {};
     let domainsStack = new AwsRequestSyncStack();
     let indexesStack = domainsStack.addLevel();
+    let suggestionsStack = indexesStack.addLevel();
     let cloudsearch = this.provisioning.cloudSearch;
 
     for (let microserviceIdentifier in this._searchConfig.domains) {
@@ -318,9 +334,12 @@ export class CloudSearchService extends AbstractService {
               //search: domainInfo.SearchService.Endpoint,
             },
             indexes: {},
+            suggesters: {},
           };
 
-          let indexes = this._searchConfig.config[microserviceIdentifier][domain];
+          this._domainsToWaitFor[domainName] = domain;
+
+          let indexes = this._searchConfig.config[microserviceIdentifier][domain].search;
 
           for (let indexName in indexes) {
             if (!indexes.hasOwnProperty(indexName)) {
@@ -340,8 +359,29 @@ export class CloudSearchService extends AbstractService {
               }
 
               config[domain].indexes[indexName] = indexOptions.IndexFieldName;
+            });
+          }
 
-              this._domainsToWaitFor[domainName] = domain;
+          let suggestions = this._searchConfig.config[microserviceIdentifier][domain].suggest;
+
+          for (let suggestionName in suggestions) {
+            if (!suggestions.hasOwnProperty(suggestionName)) {
+              continue;
+            }
+
+            let suggestionsOptions = suggestions[suggestionName];
+
+            let payload = {
+              DomainName: domainName,
+              Suggester: suggestionsOptions,
+            };
+
+            suggestionsStack.push(cloudsearch.defineSuggester(payload), (error) => {
+              if (error) {
+                throw new FailedToCreateCloudSearchDomainSuggestersException(error);
+              }
+
+              config[domain].suggesters[suggestionName] = suggestionsOptions.SuggesterName;
             });
           }
         });
@@ -381,5 +421,12 @@ export class CloudSearchService extends AbstractService {
       'literal-array', 'text-array',
       'date-array',
     ];
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get ALLOWED_FUZZINESS() {
+    return ['none', 'low', 'high'];
   }
 }
