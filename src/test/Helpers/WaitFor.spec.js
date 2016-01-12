@@ -30,7 +30,8 @@ suite('Helpers/WaitFor', function() {
     chai.expect(waitFor.childrenCount).to.be.equal(0);
   });
 
-  test('Check addChild() method throws MethodsNotImplementedException exception', function() {
+  test('Check addChild() method throws MethodsNotImplementedException exception', function () {
+
     try {
       waitFor.addChild({});
     } catch (e) {
@@ -42,6 +43,7 @@ suite('Helpers/WaitFor', function() {
 
   test('Check addChild() method adds child', function() {
     actualResult = waitFor.addChild(waitForChild);
+
     chai.expect(waitFor.childrenCount).to.be.equal(1);
     chai.expect(actualResult.children[0]).to.be.eql(waitForChild);
   });
@@ -50,9 +52,10 @@ suite('Helpers/WaitFor', function() {
     chai.expect(WaitFor.TICK_TTL).to.be.above(0);
   });
 
-  test('Check child() method throws InvalidArgumentException exception when required index doesn\'t exist', function() {
+  test('Check child() method throws InvalidArgumentException exception when required index doesn\'t exist', function () {
     index = 2;
     error = null;
+
     try {
       actualResult = waitFor.child(index);
     } catch (e) {
@@ -60,13 +63,12 @@ suite('Helpers/WaitFor', function() {
     }
 
     chai.expect(error).to.be.an.instanceOf(InvalidArgumentException);
-
-    //chai.expect(error.message).to.be.equal(`Invalid argument ${index} of type number provided (meant existing index).`);
   });
 
   test('Check child() method returns child object by index', function() {
     index = 0;
     error = null;
+
     try {
       actualResult = waitFor.child(index);
     } catch (e) {
@@ -74,32 +76,25 @@ suite('Helpers/WaitFor', function() {
     }
 
     chai.expect(error).to.be.equal(null);
-    chai.expect(actualResult).to.be.eql(waitForChild);
+    chai.expect(actualResult).to.eql(waitForChild);
   });
 
   test('Check push() method adds object _stack array', function() {
-    error = null;
-    try {
-      actualResult = waitFor.push(stackItem);
-    } catch (e) {
-      error = e;
-    }
+    actualResult = waitFor.push(stackItem);
 
-    chai.expect(error).to.be.equal(null);
     chai.expect(actualResult._stack[0]).to.be.eql(stackItem);
   });
 
-  test('Check push() method throws InvalidArgumentException exception when the added item is not Function', function() {
+  test('Check push() method throws InvalidArgumentException exception when the added item is not Function', function () {
     error = null;
+
     try {
-      actualResult = waitFor.push(index);
+      waitFor.push(index);
     } catch (e) {
       error = e;
     }
 
     chai.expect(error).to.be.an.instanceOf(InvalidArgumentException);
-
-    //chai.expect(error.message).to.be.an.equal(`Invalid argument ${index} of type number provided (meant Function).`);
   });
 
   test('Check count getter returns valid value', function() {
@@ -110,8 +105,9 @@ suite('Helpers/WaitFor', function() {
     chai.expect(waitFor.remaining).to.be.above(0);
   });
 
-  test('Check ready() method throws InvalidArgumentException exception when the callback is not Function', function() {
+  test('Check ready() method throws InvalidArgumentException exception when the callback is not Function', function () {
     error = null;
+
     try {
       actualResult = waitFor.ready(index);
     } catch (e) {
@@ -119,19 +115,11 @@ suite('Helpers/WaitFor', function() {
     }
 
     chai.expect(error).to.be.an.instanceOf(InvalidArgumentException);
-
-    //chai.expect(error.message).to.be.an.equal(`Invalid argument ${index} of type number provided (meant Function).`);
   });
 
   test('Check push() method adds object _stack array', function() {
-    error = null;
-    try {
-      waitFor.ready(callbackFunction);
-    } catch (e) {
-      error = e;
-    }
+    waitFor.ready(callbackFunction);
 
-    chai.expect(error).to.be.equal(null);
     chai.expect(waitFor.remaining).to.be.eql(0);
   });
 });

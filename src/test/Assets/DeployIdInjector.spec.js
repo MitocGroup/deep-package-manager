@@ -88,8 +88,10 @@ suite('Assets/DeployIdInjector', function() {
     let actualResult = deployIdInjector.prepare(spyCallback);
 
     chai.expect(spyCallback).to.have.been.calledWith();
+
     let error = spyCallback.args[0][0];
-    chai.expect(error).to.be.an.instanceof(Error, 'error is instance of Error');
+
+    chai.expect(error).to.equal(null);
 
     //remove temp test files
     fsExtra.removeSync('./test/testMaterials/assets/testFiles');

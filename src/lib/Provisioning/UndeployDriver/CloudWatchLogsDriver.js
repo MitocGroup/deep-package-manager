@@ -6,7 +6,7 @@
 
 import {AbstractDriver} from './AbstractDriver';
 
-export class DynamoDBDriver extends AbstractDriver {
+export class CloudWatchLogsDriver extends AbstractDriver {
   /**
    * @param {*} args
    */
@@ -18,7 +18,7 @@ export class DynamoDBDriver extends AbstractDriver {
    * @returns {String}
    */
   service() {
-    return 'DynamoDB';
+    return 'CloudWatchLogs';
   }
 
   /**
@@ -28,29 +28,29 @@ export class DynamoDBDriver extends AbstractDriver {
    * @private
    */
   _removeResource(resourceId, resourceData, cb) {
-    this._removeTable(resourceId, cb);
+    this._removeLogGroup(resourceId, cb);
   }
 
   /**
-   * @param {String} tableName
+   * @param {String} logGroupName
    * @param {Function} cb
    * @param {Number} retries
    * @private
    */
-  _removeTable(tableName, cb, retries = 0) {
-    this._awsService.deleteTable({
-      TableName: tableName,
+  _removeLogGroup(logGroupName, cb, retries = 0) {
+    this._awsService.deleteLogGroup({
+      logGroupName: logGroupName,
     }, (error) => {
       if (error) {
-        if (retries >= DynamoDBDriver.MAX_ON_LIMIT_RETRIES) {
+        if (retries >= CloudWatchLogsDriver.MAX_ON_CONFLICT_RETRIES) {
           cb(error);
         } else { // @todo: remove hook when fixed
 
           // Fix:
-          //      LimitExceededException: Subscriber limit exceeded:
-          //      Only 10 tables can be created, updated, or deleted simultaneously
+          //      OperationAbortedException: A conflicting operation is currently
+          //      in progress against this resource. Please try again.
           setTimeout(() => {
-            this._removeTable(tableName, cb, retries++);
+            this._removeLogGroup(logGroupName, cb, retries++);
           }, 300);
         }
 
@@ -64,7 +64,7 @@ export class DynamoDBDriver extends AbstractDriver {
   /**
    * @returns {Number}
    */
-  static get MAX_ON_LIMIT_RETRIES() {
+  static get MAX_ON_CONFLICT_RETRIES() {
     return 10;
   }
 }

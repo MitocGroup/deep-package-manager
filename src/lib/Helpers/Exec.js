@@ -283,9 +283,9 @@ export class Exec {
       `${this._cmd} ${this._args.join(' ')}`
     );
 
-    cmd = cmd.split(';').join(` ${suffix}; `);
-    cmd = cmd.split('&&').join(` ${suffix}; `);
-    cmd = cmd.split('||').join(` ${suffix}; `);
+    cmd = cmd.split(';').join(` ${suffix} ; `);
+    cmd = cmd.split('&&').join(` ${suffix} && `);
+    cmd = cmd.split('||').join(` ${suffix} || `);
 
     cmd += suffix;
     cmd = cmd.replace(new RegExp(`(${Exec.PIPE_VOID})+`), Exec.PIPE_VOID);

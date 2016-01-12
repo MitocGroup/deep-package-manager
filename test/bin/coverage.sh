@@ -2,16 +2,12 @@
 
 source $(dirname $0)/_head.sh
 
-### Merge Coverage results ###
-
-COVERAGE_PATH=${__SCRIPT_PATH}"/../coverage"
-
-istanbul-combine -d ${COVERAGE_PATH} -r lcov -p both \
-  ${__SRC_PATH}/coverage/*.json
-
 ### Upload Coverage info to Codacy ###
 
-cat ${COVERAGE_PATH}"/lcov.info" | codacy-coverage
+cat ${__SRC_PATH}"/coverage/lcov.info" | codacy-coverage --debug
+
+### Log top 20 file paths to be able see paths format from travis###
+head -n 20 ${__SRC_PATH}"/coverage/lcov.info"
 
 ### Cleanup! ###
 

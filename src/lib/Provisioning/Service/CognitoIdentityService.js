@@ -329,9 +329,11 @@ export class CognitoIdentityService extends AbstractService {
    * Allow Cognito users to list / push data to CognitoSync service
    *
    * @param {Array} allowedActions
+   * @param {Function} targetService
+   *
    * @returns {Core.AWS.IAM.Statement}
    */
-  generateAllowCognitoSyncStatement(allowedActions = [Core.AWS.IAM.Policy.ANY]) {
+  generateAllowCognitoSyncStatement(allowedActions = [Core.AWS.IAM.Policy.ANY], targetService = CognitoIdentityService) {
     let policy = new Core.AWS.IAM.Policy();
 
     let statement = policy.statement.add();
@@ -340,12 +342,18 @@ export class CognitoIdentityService extends AbstractService {
       statement.action.add(Core.AWS.Service.COGNITO_SYNC, actionName);
     });
 
-    // arn:aws:cognito-sync:us-east-1:389617777922:/identity/us-east-1:cf7b7880-f686-4aa3-9ebc-1a65000bb47c/dataset/deep_session
+    let identityPoolId = this._config.identityPool.IdentityPoolId;
+    let resourceIdentifier = 'identitypool/' + identityPoolId + '/identity/${cognito-identity.amazonaws.com:sub}/*';
+
+    if (targetService === LambdaService) {
+      resourceIdentifier = 'identitypool/' + identityPoolId + '/identity/*';
+    }
+
     statement.resource.add(
       Core.AWS.Service.COGNITO_SYNC,
       this.provisioning.cognitoIdentity.config.region,
       this.awsAccountId,
-      `identitypool/${this._config.identityPool.IdentityPoolId}/*` // @todo - find a way to add user identityId into arn
+      resourceIdentifier
     );
 
     return statement;
@@ -354,19 +362,35 @@ export class CognitoIdentityService extends AbstractService {
   /**
    * Allow to execute DescribeIdentity on Cognito identity pool
    *
+   * @param {Function} targetService
+   *
    * @returns {Core.AWS.IAM.Statement}
    */
-  generateAllowDescribeIdentityStatement() {
+  generateAllowDescribeIdentityStatement(targetService = CognitoIdentityService) {
     let policy = new Core.AWS.IAM.Policy();
 
     let statement = policy.statement.add();
+
     statement.action.add(Core.AWS.Service.COGNITO_IDENTITY, 'DescribeIdentity');
+
     statement.resource.add(
       Core.AWS.Service.COGNITO_IDENTITY,
       this.provisioning.cognitoIdentity.config.region,
       this.awsAccountId,
-      'identitypool/' // @todo - find a way to add cognito identity pool id and user identityId into arn
+      'identitypool/'
     );
+
+    let condition = {
+      "StringEquals": {
+        "cognito-identity.amazonaws.com:aud": this._config.identityPool.IdentityPoolId,
+      },
+    };
+
+    if (targetService === CognitoIdentityService) {
+      condition.StringEquals["cognito-identity.amazonaws.com:sub"] = ["${cognito-identity.amazonaws.com:sub}"];
+    }
+
+    statement.condition = condition;
 
     return statement;
   }

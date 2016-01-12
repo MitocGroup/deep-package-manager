@@ -63,10 +63,7 @@ export class AbstractDriver extends Core.OOP.Interface {
    * @private
    */
   _matchResource(resource) {
-    let isRegex = this._baseHash instanceof RegExp;
-    let resourceHash = AbstractService.extractBaseHashFromResourceName(resource);
-
-    return isRegex
+    return this._baseHash instanceof RegExp
       ? this._baseHash.test(resource)
       : AbstractService.extractBaseHashFromResourceName(resource) === this._baseHash;
   }

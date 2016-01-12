@@ -109,6 +109,10 @@ export class Frontend {
             type: action.type,
             methods: action.methods,
             forceUserIdentity: action.forceUserIdentity,
+            apiCache: {
+              enabled: action.cacheEnabled,
+              ttl: action.cacheTtl,
+            },
             region: propertyConfig.awsRegion, // @todo: set it from lambda provision
             source: {
               api: apiGatewayBaseUrl + APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName),
@@ -161,24 +165,27 @@ export class Frontend {
 
     FileSystem.writeFileSync(credentialsFile, credentials);
 
-    console.log(`Syncing ${this.path} with ${bucketName}`);
+    console.log(`Syncing ${this.path} with ${bucketName} (non HTML, TTL=86400)`);
 
-    let syncCmd = new Exec(
-      `export AWS_CONFIG_FILE=${credentialsFile};`,
-      'aws s3 sync',
-      '--profile=deep',
-      '--storage-class=REDUCED_REDUNDANCY',
-      '--content-encoding=gzip',
-      '--cache-control="max-age=3600"',
-      `'${this.path}'`,
-      `'s3://${bucketName}'`
-    );
+    let syncResultNoHtml = this
+      ._getSyncCommandNoHtml(credentialsFile, bucketName)
+      .runSync();
 
-    let syncResult = syncCmd.runSync();
-
-    if (syncResult.failed) {
-      throw new FailedUploadingFileToS3Exception('*', bucketName, syncResult.error);
+    if (syncResultNoHtml.failed) {
+      throw new FailedUploadingFileToS3Exception('*', bucketName, syncResultNoHtml.error);
     }
+
+    console.log(`Syncing ${this.path} with ${bucketName} (HTML only, TTL=600)`);
+
+    let syncResultHtml = this
+      ._getSyncCommandHtmlOnly(credentialsFile, bucketName)
+      .runSync();
+
+    if (syncResultHtml.failed) {
+      throw new FailedUploadingFileToS3Exception('*', bucketName, syncResultHtml.error);
+    }
+
+    FileSystem.unlinkSync(credentialsFile);
 
     // @todo: improve this by using directory upload
     //let files = walker.walk(this.path, FileWalker.skipDotsFilter());
@@ -204,6 +211,53 @@ export class Frontend {
     //}
 
     return syncStack.join();
+  }
+
+  /**
+   * @param {String} credentialsFile
+   * @param {String} bucketName
+   * @private
+   */
+  _getSyncCommandNoHtml(credentialsFile, bucketName) {
+    return new Exec(
+      `export AWS_CONFIG_FILE=${credentialsFile};`,
+      'aws s3 sync',
+      '--profile=deep',
+      '--storage-class=REDUCED_REDUNDANCY',
+      Frontend._contentEncodingExecOption,
+      '--cache-control="max-age=86400"',
+      '--exclude="*.html"',
+      `'${this.path}'`,
+      `'s3://${bucketName}'`
+    );
+  }
+
+  /**
+   * @param {String} credentialsFile
+   * @param {String} bucketName
+   * @private
+   */
+  _getSyncCommandHtmlOnly(credentialsFile, bucketName) {
+    return new Exec(
+      `export AWS_CONFIG_FILE=${credentialsFile};`,
+      'aws s3 sync',
+      '--profile=deep',
+      '--storage-class=REDUCED_REDUNDANCY',
+      Frontend._contentEncodingExecOption,
+      '--cache-control="max-age=600"',
+      '--exclude="*"',
+      '--include="*.html"',
+      `'${this.path}'`,
+      `'s3://${bucketName}'`
+    );
+  }
+
+  /**
+   * @returns {String}
+   * @private
+   */
+  static get _contentEncodingExecOption() {
+    return Frontend._skipAssetsOptimizations ? null : '--content-encoding=gzip';
   }
 
   /**
@@ -255,22 +309,52 @@ export class Frontend {
     }
 
     if (Frontend._skipInjectDeployNumber) {
-      new Optimizer(this.path)
-        .optimize(callback);
-
-      return;
+      return this._optimizeAssets(callback);
     }
 
     new DeployIdInjector(this.path, this._deployId)
       .prepare((error) => {
+        let optCb = callback;
+
         if (error) {
-          callback(error);
-          return;
+          optCb = (optError) => {
+            if (optError) {
+              callback(new Error(
+                `- OptimizerError: ${optError}${OS.EOL}- DeployIdInjectorError: ${error}`
+              ));
+              return;
+            }
+
+            callback(error);
+          };
         }
 
-        new Optimizer(this.path)
-          .optimize(callback);
+        this._optimizeAssets(optCb);
       });
+  }
+
+  /**
+   * @param {Function} callback
+   * @private
+   */
+  _optimizeAssets(callback) {
+    if (Frontend._skipAssetsOptimizations) {
+      callback(null);
+      return;
+    }
+
+    new Optimizer(this.path)
+      .optimize(callback);
+  }
+
+  /**
+   * @todo: get rid of this hook
+   *
+   * @returns {Boolean}
+   * @private
+   */
+  static get _skipAssetsOptimizations() {
+    return process.env.hasOwnProperty('DEEP_SKIP_ASSETS_OPTIMIZATION');
   }
 
   /**

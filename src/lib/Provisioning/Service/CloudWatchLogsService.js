@@ -7,10 +7,7 @@
 import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
 
-/**
- * SNS service
- */
-export class SNSService extends AbstractService {
+export class CloudWatchLogsService extends AbstractService {
   /**
    * @param {Array} args
    */
@@ -22,7 +19,7 @@ export class SNSService extends AbstractService {
    * @returns {String}
    */
   name() {
-    return Core.AWS.Service.SIMPLE_NOTIFICATION_SERVICE;
+    return Core.AWS.Service.CLOUD_WATCH_LOGS;
   }
 
   /**
@@ -36,7 +33,7 @@ export class SNSService extends AbstractService {
 
   /**
    * @parameter {Core.Generic.ObjectStorage} services
-   * @returns {SNSService}
+   * @returns {CloudWatchLogsService}
    */
   _setup(services) {
     // @todo: implement!
@@ -52,7 +49,7 @@ export class SNSService extends AbstractService {
 
   /**
    * @parameter {Core.Generic.ObjectStorage} services
-   * @returns {SNSService}
+   * @returns {CloudWatchLogsService}
    */
   _postProvision(services) {
     // @todo: implement!
@@ -68,7 +65,7 @@ export class SNSService extends AbstractService {
 
   /**
    * @parameter {Core.Generic.ObjectStorage} services
-   * @returns {SNSService}
+   * @returns {CloudWatchLogsService}
    */
   _postDeployProvision(services) {
     // @todo: implement!

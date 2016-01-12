@@ -16,12 +16,15 @@ import {FailedToDeployApiGatewayException} from './Exception/FailedToDeployApiGa
 import {FailedToExecuteApiGatewayMethodException} from './Exception/FailedToExecuteApiGatewayMethodException';
 import {FailedToListApiResourcesException} from './Exception/FailedToListApiResourcesException';
 import {FailedToDeleteApiResourceException} from './Exception/FailedToDeleteApiResourceException';
+import {InvalidCacheClusterSizeException} from './Exception/InvalidCacheClusterSizeException';
+import {FailedToUpdateApiGatewayStageException} from './Exception/FailedToUpdateApiGatewayStageException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
 import Utils from 'util';
 import objectMerge from 'object-merge';
 import nodePath from 'path';
+import jsonPointer from 'json-pointer';
 
 /**
  * APIGateway service
@@ -48,6 +51,25 @@ export class APIGatewayService extends AbstractService {
    */
   static get PAGE_LIMIT() {
     return 500;
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get CACHE_CLUSTER_SIZES() {
+    return ['0.5', '1.6', '6.1', '13.5', '28.4', '58.2', '118', '237'];
+  }
+
+  /**
+   * A query string parameter added to all GET endpoints with enabled cache
+   * It's used to invalidate cache when query string is changed
+   *
+   * @example _deepQsHash = md5(all_query_string_params)
+   *
+   * @returns {string}
+   */
+  static get DEEP_CACHE_QS_PARAM() {
+    return 'method.request.querystring._deepQsHash';
   }
 
   /**
@@ -108,7 +130,7 @@ export class APIGatewayService extends AbstractService {
    * @todo: remove config.api key and put object to the root
    */
   _setup(services) {
-    let resourcePaths = this._getResourcePaths(this.provisioning.property.microservices);
+    let resourcePaths = this._getResourcePaths(this.property.microservices);
 
     this._provisionApiResources(
       this.apiMetadata,
@@ -167,6 +189,32 @@ export class APIGatewayService extends AbstractService {
     });
 
     return this;
+  }
+
+  /**
+   * Returns cache cluster config
+   *
+   * @returns {{enabled: boolean, clusterSize: string}}
+   */
+  get cacheCluster() {
+    let config = {
+      enabled: false,
+      clusterSize: '0.5',
+    };
+
+    let globalsConfig = this.property.config.globals;
+    if (globalsConfig && globalsConfig.hasOwnProperty('api') && globalsConfig.api.hasOwnProperty('cache')) {
+      config.enabled = !!globalsConfig.api.cache.enabled;
+      if (globalsConfig.api.cache.hasOwnProperty('clusterSize')) {
+        config.clusterSize = globalsConfig.api.cache.clusterSize;
+      }
+    }
+
+    if (APIGatewayService.CACHE_CLUSTER_SIZES.indexOf(config.clusterSize) === -1) {
+      throw new InvalidCacheClusterSizeException(config.clusterSize, APIGatewayService.CACHE_CLUSTER_SIZES);
+    }
+
+    return config;
   }
 
   /**
@@ -239,7 +287,13 @@ export class APIGatewayService extends AbstractService {
                 rolePolicy = data;
 
                 this._deployApi(apiId, (deployedApi) => {
-                  callback(methods, integrations, rolePolicy, deployedApi);
+                  if (this.cacheCluster.enabled) {
+                    this._enableStageCaching(apiId, this.stageName, (data) => {
+                      callback(methods, integrations, rolePolicy, deployedApi);
+                    });
+                  } else {
+                    callback(methods, integrations, rolePolicy, deployedApi);
+                  }
                 });
               });
             });
@@ -351,6 +405,8 @@ export class APIGatewayService extends AbstractService {
     let params = {
       restApiId: apiId,
       stageName: this.stageName,
+      cacheClusterEnabled: this.cacheCluster.enabled,
+      cacheClusterSize: this.cacheCluster.clusterSize,
       stageDescription: `Stage for "${this.env}" environment`,
       description: `Deployed on ${new Date().toTimeString()}`,
     };
@@ -358,6 +414,52 @@ export class APIGatewayService extends AbstractService {
     this.apiGatewayClient.createDeployment(params, (error, data) => {
       if (error) {
         throw new FailedToDeployApiGatewayException(apiId, error);
+      }
+
+      callback(data);
+    });
+  }
+
+  /**
+   * @param {String} apiId
+   * @param {String} stageName
+   * @param {Function} callback
+   * @private
+   */
+  _enableStageCaching(apiId, stageName, callback) {
+    let params = {
+      restApiId: apiId,
+      stageName: stageName,
+      patchOperations: [],
+    };
+
+    let resources = this._getResourcesToBeCached(this.property.microservices);
+
+    for (let resourcePath in resources) {
+      if (!resources.hasOwnProperty(resourcePath)) {
+        continue;
+      }
+
+      let resource = resources[resourcePath];
+
+      let enabledOp = {
+        op: 'replace',
+        path: `/${jsonPointer.escape(resourcePath)}/GET/caching/enabled`,
+        value: 'true',
+      };
+
+      let ttlInSecondsOp = {
+        op: 'replace',
+        path: `/${jsonPointer.escape(resourcePath)}/GET/caching/ttlInSeconds`,
+        value: `${resource.cacheTtl}`,
+      };
+
+      params.patchOperations.push(enabledOp, ttlInSecondsOp);
+    }
+
+    this.apiGatewayClient.updateStage(params, (error, data) => {
+      if (error) {
+        throw new FailedToUpdateApiGatewayStageException(apiId, stageName, error);
       }
 
       callback(data);
@@ -431,7 +533,9 @@ export class APIGatewayService extends AbstractService {
             params = {
               authorizationType: resourceMethod === 'OPTIONS' ? 'NONE' : 'AWS_IAM',
               requestModels: this.jsonEmptyModel,
-              requestParameters: this._getMethodRequestParameters(resourceMethod),
+              requestParameters: this._getMethodRequestParameters(
+                resourceMethod, resourceMethods[resourceMethod]
+              ),
             };
             break;
           case 'putMethodResponse':
@@ -464,6 +568,44 @@ export class APIGatewayService extends AbstractService {
     }
 
     return paramsArr;
+  }
+
+  /**
+   * All resources to be cached by API Gateway cache
+   *
+   * microservice_identifier
+   *    resource_name
+   *        action_name
+   *
+   * @param {Object} microservices
+   * @returns {Object}
+   * @private
+   */
+  _getResourcesToBeCached(microservices) {
+    let resources = {};
+
+    for (let microserviceKey in microservices) {
+      if (!microservices.hasOwnProperty(microserviceKey)) {
+        continue;
+      }
+
+      let microservice = microservices[microserviceKey];
+
+      for (let actionKey in microservice.resources.actions) {
+        if (!microservice.resources.actions.hasOwnProperty(actionKey)) {
+          continue;
+        }
+
+        let action = microservice.resources.actions[actionKey];
+
+        if (action.cacheEnabled && action.methods.indexOf('GET') !== -1) {
+          let path = APIGatewayService.pathify(microservice.identifier, action.resourceName, action.name);
+          resources[path] = action;
+        }
+      }
+    }
+
+    return resources;
   }
 
   /**
@@ -601,7 +743,9 @@ export class APIGatewayService extends AbstractService {
               );
 
               action.methods.forEach((httpMethod) => {
-                integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams('AWS', httpMethod, uri);
+                integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams(
+                  'AWS', httpMethod, uri, action.cacheEnabled
+                );
               });
 
               break;
@@ -610,7 +754,8 @@ export class APIGatewayService extends AbstractService {
                 integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams(
                   'HTTP',
                   httpMethod,
-                  action.source
+                  action.source,
+                  action.cacheEnabled
                 );
               });
 
@@ -631,10 +776,11 @@ export class APIGatewayService extends AbstractService {
    * @param {String} type (AWS or HTTP)
    * @param {String} httpMethod
    * @param {String} uri
+   * @param {Boolean} enableCache
    * @returns {Object}
    * @private
    */
-  _getIntegrationTypeParams(type, httpMethod, uri) {
+  _getIntegrationTypeParams(type, httpMethod, uri, enableCache = false) {
     let params = {
       type: 'MOCK',
       requestTemplates: this.getJsonRequestTemplate(httpMethod, type),
@@ -644,6 +790,13 @@ export class APIGatewayService extends AbstractService {
       params.type = type;
       params.integrationHttpMethod = (type === 'AWS') ? 'POST' : httpMethod;
       params.uri = uri;
+    }
+
+    if (enableCache && httpMethod === 'GET') {
+      params.cacheKeyParameters = [
+        'caller.aws.principal',
+        APIGatewayService.DEEP_CACHE_QS_PARAM,
+      ];
     }
 
     return params;
@@ -721,7 +874,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {String}
    */
   get qsToMapObjectMappingTpl() {
-    return '{ #foreach($key in $input.params().querystring.keySet()) "$key": "$util.escapeJavaScript($input.params($key))"#if($foreach.hasNext),#end #end }';
+    return '#set($keys = []) #foreach($key in $input.params().querystring.keySet()) #if ($key != "_deepQsHash") #set($result = $keys.add($key)) #end #end { #foreach($key in $keys) "$key": "$util.escapeJavaScript($input.params($key))" #if($foreach.hasNext),#end #end }';
   }
 
   /**
@@ -751,11 +904,18 @@ export class APIGatewayService extends AbstractService {
 
   /**
    * @param {String} httpMethod
-   * @param {Array|null} resourceMethods
+   * @param {Object} integrationParams
    * @returns {Object}
    */
-  _getMethodRequestParameters(httpMethod, resourceMethods = null) {
-    return this._getMethodCorsHeaders('method.request.header', httpMethod, resourceMethods);
+  _getMethodRequestParameters(httpMethod, integrationParams) {
+    let params = this._getMethodCorsHeaders('method.request.header', httpMethod);
+
+    if (integrationParams.hasOwnProperty('cacheKeyParameters') &&
+      integrationParams.cacheKeyParameters.indexOf(APIGatewayService.DEEP_CACHE_QS_PARAM) !== -1) {
+      params[APIGatewayService.DEEP_CACHE_QS_PARAM] = true;
+    }
+
+    return params;
   }
 
   /**
