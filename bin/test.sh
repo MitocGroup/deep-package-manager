@@ -1,0 +1,8 @@
+if [ "$OSTYPE" != "msys" ] && [ "$OSTYPE" != "win32" ]; then
+    babel-node `which isparta` cover --include 'lib/**/*.js' _mocha -- 'test/**/*.spec.js' --reporter spec --ui tdd --recursive
+elif [ "$OSTYPE" == "win32" ]; then
+    echo "You should have installed and configured http://git-scm.com/ and run all bash command by using git-bash.exe"
+else
+    echo "Running from git-bash without gathering coverage"
+    mocha --ui tdd --compilers js:mocha-babel --recursive --reporter spec
+fi
