@@ -12,14 +12,17 @@ import path from 'path';
 let walker = new FileWalker(FileWalker.RECURSIVE);
 
 let classFiles = walker.walk(__dirname, FileWalker.skipDotsFilter((file) => {
-  return /^(.*\/)?[A-Z][^\/]+\.js$/.test(file);
+  console.log('file:', file);
+  return /^(.*[\/|\\])?[A-Z][^\/\\]+\.js$/.test(file);
 })).map((file) => file.substr(__dirname.length));
 
 let exp = {};
 
 classFiles.forEach((classFile) => {
-  let matches = classFile.match(/^(?:.*\/)?([A-Z][^\/]+)\.js$/);
+  console.log('classFile:', classFile);
+  let matches = classFile.match(/^(?:.*[\/|\\])?([A-Z][^\/\\]+)\.js$/);
   let className = matches[1];
+  console.log('className:', className);
 
   let nsParts = classFile.split('/').filter((part) => !!part);
   nsParts.pop();
