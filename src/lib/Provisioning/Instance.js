@@ -49,6 +49,9 @@ export class Instance {
     this._dynamoDb = new property.AWS.DynamoDB({
       region: this.getAwsServiceRegion(DynamoDBService, property.config.awsRegion),
     });
+    this._dynamoDbStreams = new property.AWS.DynamoDBStreams({
+      region: this.getAwsServiceRegion(DynamoDBService, property.config.awsRegion),
+    });
     this._kinesis = new property.AWS.Kinesis({
       region: this.getAwsServiceRegion(KinesisService, property.config.awsRegion),
     });
@@ -129,6 +132,13 @@ export class Instance {
    */
   get cloudWatchLogs() {
     return this._cloudWatchLogs;
+  }
+
+  /**
+   * @returns {Object}
+   */
+  get dynamoDbStreams() {
+    return this._dynamoDbStreams;
   }
 
   /**
