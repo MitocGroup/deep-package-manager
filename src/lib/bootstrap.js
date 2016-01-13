@@ -21,9 +21,8 @@ let exp = {};
 classFiles.forEach((classFile) => {
   let matches = classFile.match(/^(?:.*[\/|\\])?([A-Z][^\/\\]+)\.js$/);
   let className = matches[1];
-  let nsDelimeter = (os.platform().indexOf('win') > -1) ? '\\': '/';
 
-  let nsParts = classFile.split(nsDelimeter).filter((part) => !!part);
+  let nsParts = classFile.split(path.sep).filter((part) => !!part);
   nsParts.pop();
 
   let jsObj = require(path.join(__dirname, classFile));
@@ -35,5 +34,7 @@ classFiles.forEach((classFile) => {
     exp[nsParts.join('_')] = classObj;
   }
 });
+
+console.log('exp', exp);
 
 export default exp;
