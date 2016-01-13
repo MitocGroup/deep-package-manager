@@ -354,6 +354,12 @@ export class LambdaService extends AbstractService {
       this.awsAccountId,
       `table/${this._getGlobalResourceMask()}`
     );
+    dynamoDbStatement.resource.add(
+      Core.AWS.Service.DYNAMO_DB,
+      Core.AWS.IAM.Policy.ANY,
+      this.awsAccountId,
+      `table/${this._getGlobalResourceMask()}/stream/*`
+    );
 
     let cloudSearchStatement = policy.statement.add();
     cloudSearchStatement.action.add(Core.AWS.Service.CLOUD_SEARCH, Core.AWS.IAM.Policy.ANY);
