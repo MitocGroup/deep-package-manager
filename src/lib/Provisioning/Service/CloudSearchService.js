@@ -15,6 +15,7 @@ import {DynamoDBService} from './DynamoDBService';
 import {MissingDynamoDBTableUsedInCloudSearchException} from './Exception/MissingDynamoDBTableUsedInCloudSearchException';
 import {AmbiguousCloudSearchDomainException} from './Exception/AmbiguousCloudSearchDomainException';
 import {FailedToRetrieveCloudSearchDistributionException} from './Exception/FailedToRetrieveCloudSearchDistributionException';
+import {FailedToRunCloudSearchDocumentsIndexingException} from './Exception/FailedToRunCloudSearchDocumentsIndexingException';
 
 export class CloudSearchService extends AbstractService {
   /**
@@ -293,6 +294,7 @@ export class CloudSearchService extends AbstractService {
     let domainsStack = new AwsRequestSyncStack();
     let indexesStack = domainsStack.addLevel();
     let suggestionsStack = indexesStack.addLevel();
+    let activationStack = suggestionsStack.addLevel();
     let cloudsearch = this.provisioning.cloudSearch;
 
     for (let microserviceIdentifier in this._searchConfig.domains) {
@@ -384,6 +386,12 @@ export class CloudSearchService extends AbstractService {
               config[domain].suggesters[suggestionName] = suggestionsOptions.SuggesterName;
             });
           }
+
+          activationStack.push(cloudsearch.indexDocuments({DomainName: domainName,}), (error) => {
+            if (error) {
+              throw new FailedToRunCloudSearchDocumentsIndexingException(domainName, error);
+            }
+          });
         });
       });
     }

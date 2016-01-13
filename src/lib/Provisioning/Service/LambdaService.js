@@ -355,6 +355,15 @@ export class LambdaService extends AbstractService {
       `table/${this._getGlobalResourceMask()}`
     );
 
+    let cloudSearchStatement = policy.statement.add();
+    cloudSearchStatement.action.add(Core.AWS.Service.CLOUD_SEARCH, Core.AWS.IAM.Policy.ANY);
+    cloudSearchStatement.resource.add(
+      Core.AWS.Service.CLOUD_SEARCH,
+      Core.AWS.IAM.Policy.ANY,
+      this.awsAccountId,
+      `domain/${this._getGlobalResourceMask('', AbstractService.DELIMITER_HYPHEN_LOWER_CASE)}`
+    );
+
     let s3Statement = policy.statement.add();
     let s3ListBucketStatement = policy.statement.add();
 
