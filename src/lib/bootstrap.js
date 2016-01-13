@@ -13,7 +13,6 @@ import os from 'os';
 let walker = new FileWalker(FileWalker.RECURSIVE);
 
 let classFiles = walker.walk(__dirname, FileWalker.skipDotsFilter((file) => {
-  console.log('file:', file);
   return /^(.*[\/|\\])?[A-Z][^\/\\]+\.js$/.test(file);
 })).map((file) => file.substr(__dirname.length));
 
@@ -36,7 +35,5 @@ classFiles.forEach((classFile) => {
     exp[nsParts.join('_')] = classObj;
   }
 });
-
-console.log('EXP',exp);
 
 export default exp;
