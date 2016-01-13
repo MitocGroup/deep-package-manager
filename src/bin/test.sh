@@ -4,5 +4,5 @@ elif [ "$OSTYPE" == "win32" ] || [ "$OSTYPE" == "win64" ]; then
     echo "You should have installed and configured http://git-scm.com/ and run all bash command by using git-bash.exe"
 else
     echo "Running from git-bash without gathering coverage"
-    mocha --ui tdd --compilers js:mocha-babel --recursive --reporter spec
+    babel-node _mocha --ui tdd --recursive --reporter spec
 fi
