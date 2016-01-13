@@ -66,12 +66,16 @@ export class Frontend {
     let apiGatewayBaseUrl = '';
 
     if (propertyConfig.provisioning) {
-      let cognitoConfig = propertyConfig.provisioning[Core.AWS.Service.COGNITO_IDENTITY];
+      if (propertyConfig.provisioning.hasOwnProperty(Core.AWS.Service.COGNITO_IDENTITY)) {
+        let cognitoConfig = propertyConfig.provisioning[Core.AWS.Service.COGNITO_IDENTITY];
 
-      config.identityPoolId = cognitoConfig.identityPool.IdentityPoolId;
-      config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders;
+        config.identityPoolId = cognitoConfig.identityPool.IdentityPoolId;
+        config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders;
+      }
 
-      apiGatewayBaseUrl = propertyConfig.provisioning[Core.AWS.Service.API_GATEWAY].api.baseUrl;
+      if (propertyConfig.provisioning.hasOwnProperty(Core.AWS.Service.API_GATEWAY)) {
+        apiGatewayBaseUrl = propertyConfig.provisioning[Core.AWS.Service.API_GATEWAY].api.baseUrl;
+      }
 
       if (propertyConfig.provisioning.hasOwnProperty(Core.AWS.Service.CLOUD_SEARCH)) {
         let cloudSearchConfig = propertyConfig.provisioning[Core.AWS.Service.CLOUD_SEARCH];
