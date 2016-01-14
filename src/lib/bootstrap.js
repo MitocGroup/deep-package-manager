@@ -35,6 +35,6 @@ classFiles.forEach((classFile) => {
   }
 });
 
-console.log('exp', exp);
+console.log('exp: ', exp);
 
 export default exp;
