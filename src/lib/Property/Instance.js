@@ -845,11 +845,11 @@ export class Instance {
     console.log(`Checking out the frontend engine '${suitableEngine}' from '${engineRepo}'`);
 
     let tmpDir = OS.tmpdir();
-    let repoName = engineRepo.replace(/^.+\/([^\/]+)\.git$/i, '$1');
+    let repoName = engineRepo.replace(/^.+[\/|\\]([^\/\\]+)\.git$/i, '$1');
     let repoDir = Path.join(tmpDir, repoName);
 
     // @todo: replace it with https://www.npmjs.com/package/nodegit
-    new Exec(`rm -rf ${repoDir}; git clone --depth=1 ${engineRepo} ${repoDir}`)
+    new Exec(`rm -rf ${repoDir} && git clone --depth=1 ${engineRepo} ${repoDir}`)
       .avoidBufferOverflow()
       .run((result) => {
         if (result.failed) {
@@ -857,7 +857,11 @@ export class Instance {
           return;
         }
 
-        new Exec(`cp -R ${repoDir}/src/* ${this._path}/`)
+
+        let destinationPath = this._path.replace('\\src', '')
+          console.log('copy repos from temp to: ', destinationPath);
+
+        new Exec(`cp -R ${repoDir}${Path.sep}src${Path.sep} ${destinationPath}`)
           .avoidBufferOverflow()
           .run((result) => {
             this._microservices = null; // @todo: reset microservices?

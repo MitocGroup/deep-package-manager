@@ -246,7 +246,8 @@ export class Exec {
    * @private
    */
   _exec(cb) {
-    ChildProcess.exec(this._fullCmd, {
+    console.log('CMD after changing: ', this._fullCmd.split('> /dev/null 2>&1').join(''));
+    ChildProcess.exec(this._fullCmd.split('> /dev/null 2>&1').join(''), {
       cwd: this._cwd,
     }, (error, stdout) => {
       if (error) {
