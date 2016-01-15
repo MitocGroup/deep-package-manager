@@ -24,7 +24,7 @@ suite('Compilation/Compiler', function() {
   let config = new Config(configInput);
   let parameters = new Parameters();
   let basePath = 'basePath';
-  let microservice = new Instance(config, parameters, basePath);
+  let microservice = new Instance(config, parameters, null, basePath);
 
   let compiler = new Compiler();
 
