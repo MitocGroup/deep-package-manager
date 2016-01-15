@@ -780,10 +780,10 @@ export class Instance {
     this.microservicesToUpdate = microservicesToUpdate;
 
     // keep initial deployId
-    let newDeployId = this.deployId;
+    let deployId = this.deployId;
 
     this._config = propertyConfigSnapshot;
-    this._config.deployId = newDeployId;
+    this._config.deployId = deployId;
 
     this._provisioning.injectConfig(
       this._config.provisioning

@@ -293,7 +293,6 @@ export class Frontend {
     }
 
     FileSystem.mkdirSync(this.path);
-    JsonFile.writeFileSync(this.configPath, propertyConfig);
 
     for (let identifier in this._microservicesConfig) {
       if (!this._microservicesConfig.hasOwnProperty(identifier)) {
@@ -330,6 +329,8 @@ export class Frontend {
         walker.copy(frontendPath, modulePath);
       }
     }
+
+    JsonFile.writeFileSync(this.configPath, propertyConfig);
 
     if (Frontend._skipInjectDeployNumber) {
       return this._optimizeAssets(callback);
