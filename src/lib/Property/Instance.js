@@ -679,6 +679,7 @@ export class Instance {
       console.log(`Running init hook for microservice ${microservice.identifier}`);
 
       hook(() => {
+        console.log(`Done init hook for microservice ${microservice.identifier}`);
         remaining--;
       });
     }
