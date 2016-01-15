@@ -137,7 +137,7 @@ export class Instance {
   /**
    * @returns {Object}
    */
-  get dynamoDbStreams() {
+  get dynamoDBStreams() {
     return this._dynamoDbStreams;
   }
 
