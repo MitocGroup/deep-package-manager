@@ -204,7 +204,14 @@ export class Exec {
     console.log('before win parse realCmd: ', typeof realCmd);
     console.log('before win parse realArgs: ', typeof realArgs);
 
-    if(os.platform().indexOf('win') > -1) {
+    console.log('cmdParts: ', cmdParts);
+    console.log('realCmd: ', realCmd);
+    console.log('realArgs: ', realArgs);
+    console.log('os.platform: ', os.platform());
+
+
+    if(os.platform().indexOf('win32') > -1 || os.platform().indexOf('win64') > -1) {
+      console.log("ON WIN");
       realCmd = this.winCMD;
       realArgs = this.winRealArgs;
     }
