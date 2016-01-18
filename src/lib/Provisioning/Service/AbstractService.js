@@ -396,4 +396,12 @@ export class AbstractService extends Core.OOP.Interface {
   static capitalizeFirst(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
+
+  /**
+   * @param {String} str
+   * @returns {String}
+   */
+  static lowerCaseFirst(str) {
+    return str.charAt(0).toLowerCase() + str.slice(1);
+  }
 }
