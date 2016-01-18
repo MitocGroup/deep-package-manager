@@ -55,6 +55,7 @@ export class AbstractDriver extends Core.OOP.Interface {
   _execute(cb, resources) {
     let wait = new WaitFor();
     let resourcesRemaining = resources.length;
+    let resourceIds = [];
 
     wait.push(() => {
       return resourcesRemaining <= 0;
@@ -68,6 +69,14 @@ export class AbstractDriver extends Core.OOP.Interface {
       let resourceInfo = resources[i];
       let resourceId = resourceInfo.id;
       let resourceData = resourceInfo.data;
+
+      // manage duplicate resources
+      if (resourceIds.indexOf(resourceId) !== -1) {
+        resourcesRemaining--;
+        continue;
+      }
+
+      resourceIds.push(resourceId);
 
       this._removeResource(resourceId, resourceData, (error) => {
         resourcesRemaining--;
