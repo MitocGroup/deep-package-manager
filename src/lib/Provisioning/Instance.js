@@ -6,6 +6,7 @@
 
 import Core from 'deep-core';
 import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
+import {AbstractService} from './Service/AbstractService';
 import {S3Service} from './Service/S3Service';
 import {CognitoIdentityService} from './Service/CognitoIdentityService';
 import {IAMService} from './Service/IAMService';
@@ -190,6 +191,25 @@ export class Instance {
    */
   get apiGateway() {
     return this._apiGateway;
+  }
+
+  /**
+   * @param {String} name
+   * @returns {Object}
+   */
+  getAwsServiceByName(name) {
+    switch (name) {
+      case 'IAM':
+        name = name.toLowerCase();
+        break;
+      case 'APIGateway':
+        name = 'apiGateway';
+        break;
+      default:
+        name = AbstractService.lowerCaseFirst(name);
+    }
+
+    return this[name];
   }
 
   /**

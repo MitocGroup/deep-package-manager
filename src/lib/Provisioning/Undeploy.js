@@ -6,8 +6,6 @@
 
 import {AbstractService} from './Service/AbstractService';
 import {AbstractDriver} from './UndeployDriver/AbstractDriver';
-import Core from 'deep-core';
-import AWS from 'aws-sdk';
 import {WaitFor} from '../Helpers/WaitFor';
 import {Listing} from './Listing';
 import {ProvisioningCollisionsListingException} from '../Property/Exception/ProvisioningCollisionsListingException';
@@ -118,24 +116,14 @@ export class Undeploy {
    * @returns {AbstractService}
    */
   _createAwsService(name) {
-    let serviceName = `${name}Service`;
-    let ServiceProto = require(`./Service/${serviceName}`)[serviceName];
-
-    let appropriateRegion = Core.AWS.Region.getAppropriateAwsRegion(
-      this._property.config.aws.region,
-      ServiceProto.AVAILABLE_REGIONS
-    );
-
-    let service = new AWS[name]({
-      region: appropriateRegion,
-    });
+    let service = this._property.provisioning.getAwsServiceByName(name);
 
     AbstractDriver.injectServiceCredentials(
       service,
       {
         accessKeyId: this._property.config.aws.accessKeyId,
         secretAccessKey: this._property.config.aws.secretAccessKey,
-        region: appropriateRegion,
+        region: service.config.region,
       }
     );
 
