@@ -7,6 +7,7 @@
 import ChildProcess from 'child_process';
 import syncExec from 'sync-exec';
 import {EventEmitter} from 'events';
+import os from 'os';
 
 export class Exec {
   /**
@@ -110,9 +111,14 @@ export class Exec {
   runSync() {
     this._isExec = true;
 
+    console.log(' runSync,  _fullCmd: ', this._fullCmd);
+    console.log(' runSync,  _cwd: ', this._cwd);
+
     let result = syncExec(this._fullCmd, {
       cwd: this._cwd,
     });
+
+    console.log(' result: ', result);
 
     this._checkError(result.status);
     this._result = result.stdout ? result.stdout.toString().trim() : null;
@@ -126,6 +132,7 @@ export class Exec {
    * @returns {Exec}
    */
   run(cb, pipeOutput = false) {
+    console.log('Exec run pipeOutput: ', pipeOutput);
     this._isExec = true;
 
     if (pipeOutput) {
@@ -192,6 +199,23 @@ export class Exec {
     let realCmd = cmdParts.shift();
     let realArgs = cmdParts.concat(this._args);
     let uncaughtError = false;
+
+    console.log('before win parse cmdParts: ', typeof cmdParts);
+    console.log('before win parse realCmd: ', typeof realCmd);
+    console.log('before win parse realArgs: ', typeof realArgs);
+
+    if(os.platform().indexOf('win') > -1) {
+      realCmd = this.winCMD;
+      realArgs = this.winRealArgs;
+    }
+
+    console.log('after win parse cmdParts: ', typeof cmdParts);
+    console.log('after win parse realCmd: ', typeof realCmd);
+    console.log('after win parse realArgs: ', typeof realArgs);
+    console.log('cmdParts: ', cmdParts);
+    console.log('realCmd: ', realCmd);
+    console.log('realArgs: ', realArgs);
+    console.log('this._cwd: ', this._cwd);
 
     let proc = ChildProcess.spawn(realCmd, realArgs, {
       cwd: this._cwd,
@@ -366,4 +390,50 @@ export class Exec {
   static get PIPE_VOID() {
     return ' > /dev/null 2>&1';
   }
+
+/**
+ * Returns command for Windows
+ * @returns {String}
+ */
+  get winCMD() {
+    if (this._cmd.indexOf('Program Files (x86)') > -1) {
+
+      //command contains 2 space
+      return this._cmd.trim().split(' ').slice(0, 4).join(' ');
+    } else if (this._cmd.indexOf('Program Files') > -1) {
+
+      //command contains 1 space
+      return this._cmd.trim().split(' ').slice(0, 3).join(' ');
+    } else {
+
+      // doesn't contains spaces
+      return this._cmd.trim().split(' ').slice(0, 2);
+    }
+  }
+
+/**
+ * Returns arguments for Windows
+ * @returns {String}
+ */
+  get winRealArgs() {
+    let result = null;
+
+    if (this._cmd.indexOf('Program Files (x86)') > -1) {
+
+      //command contains 2 space
+      result = this._cmd.trim().split(' ').slice(4);
+    } else if (this._cmd.indexOf('Program Files') > -1) {
+
+      //command contains 1 space
+      result = this._cmd.trim().split(' ').slice(3);
+    } else {
+
+      // doesn't contains spaces
+      result = this._cmd.trim().split(' ').splice(2);
+      //result = (result === '')? null: result;
+    }
+
+    return result;
+}
+
 }
