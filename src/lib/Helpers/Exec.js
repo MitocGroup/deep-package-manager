@@ -406,15 +406,15 @@ export class Exec {
     if (this._cmd.indexOf('Program Files (x86)') > -1) {
 
       //command contains 2 space
-      return this._cmd.trim().split(' ').slice(0, 4).join(' ');
+      return this._cmd.trim().split(' ').slice(0, 3).join(' ');
     } else if (this._cmd.indexOf('Program Files') > -1) {
 
       //command contains 1 space
-      return this._cmd.trim().split(' ').slice(0, 3).join(' ');
+      return this._cmd.trim().split(' ').slice(0, 2).join(' ');
     } else {
 
       // doesn't contains spaces
-      return this._cmd.trim().split(' ').slice(0, 2);
+      return this._cmd.trim().split(' ').slice(0, 1);
     }
   }
 
@@ -423,24 +423,20 @@ export class Exec {
  * @returns {String}
  */
   get winRealArgs() {
-    let result = null;
-
     if (this._cmd.indexOf('Program Files (x86)') > -1) {
 
       //command contains 2 space
-      result = this._cmd.trim().split(' ').slice(4);
+      return this._cmd.trim().split(' ').slice(3);
     } else if (this._cmd.indexOf('Program Files') > -1) {
 
       //command contains 1 space
-      result = this._cmd.trim().split(' ').slice(3);
+      return this._cmd.trim().split(' ').slice(2);
     } else {
 
       // doesn't contains spaces
-      result = this._cmd.trim().split(' ').splice(2);
+      return this._cmd.trim().split(' ').splice(1);
       //result = (result === '')? null: result;
     }
-
-    return result;
 }
 
 }
