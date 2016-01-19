@@ -131,7 +131,11 @@ export class IAMDriver extends AbstractDriver {
               this._deleteIAMRole(roleName, cb);
             });
           });
+
+          return;
         }
+
+        cb(error);
 
         return;
       }
