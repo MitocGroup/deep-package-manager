@@ -25,7 +25,7 @@ suite('Microservice/Instance', function() {
   let config = new Config(configInput);
   let parameters = new Parameters();
   let basePath = 'basePath';
-  let instance = new Instance(config, parameters, basePath);
+  let instance = new Instance(config, parameters, null, basePath);
 
   test('Class Instance exists in Microservice/Instance', function() {
     chai.expect(typeof Instance).to.equal('function');
@@ -34,7 +34,7 @@ suite('Microservice/Instance', function() {
   test('Contructor throws TypeError when called as a function', function() {
     let e = null;
     try {
-      Instance(config, parameters, basePath);
+      Instance(config, parameters, null, basePath);
     } catch (exception) {
       e = exception;
     }
@@ -45,7 +45,7 @@ suite('Microservice/Instance', function() {
   test('Constructor throws InvalidArgumentException when config is not instance of config', function() {
     let e = null;
     try {
-      new Instance({}, parameters, basePath);
+      new Instance({}, parameters, null, basePath);
     } catch (exception) {
       e = exception;
     }
@@ -60,7 +60,7 @@ suite('Microservice/Instance', function() {
   test('Constructor throws InvalidArgumentException when parameters is not instance of parameters', function() {
     let e = null;
     try {
-      new Instance(config, {}, basePath);
+      new Instance(config, {}, null, basePath);
     } catch (exception) {
       e = exception;
     }

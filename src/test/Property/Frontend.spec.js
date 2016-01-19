@@ -28,6 +28,7 @@ suite('Property/Frontend', function() {
     deployId: defaultConfig.deployId,
     awsRegion: defaultConfig.awsRegion,
     models: defaultConfig.models,
+    search: {},
     identityPoolId: '',
     identityProviders: '',
     microservices: {},
