@@ -95,9 +95,6 @@
     "node": ">=0.12 <5.0",
     "npm": ">=2.10 <3.0"
   },
-  "os": [
-    "!win32"
-  ],
   "preferGlobal": false,
   "analyze": true
 }
