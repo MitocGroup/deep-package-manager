@@ -16,6 +16,7 @@ import {MissingDynamoDBTableUsedInCloudSearchException} from './Exception/Missin
 import {AmbiguousCloudSearchDomainException} from './Exception/AmbiguousCloudSearchDomainException';
 import {FailedToRetrieveCloudSearchDistributionException} from './Exception/FailedToRetrieveCloudSearchDistributionException';
 import {FailedToRunCloudSearchDocumentsIndexingException} from './Exception/FailedToRunCloudSearchDocumentsIndexingException';
+import {FailedToUpdateCloudSearchDomainAccessPoliciesException} from './Exception/FailedToUpdateCloudSearchDomainAccessPoliciesException';
 
 export class CloudSearchService extends AbstractService {
   /**
@@ -213,7 +214,6 @@ export class CloudSearchService extends AbstractService {
   _waitForDomainsReady(cb, estTime = null) {
     estTime = null === estTime ? 15 * 60 : estTime;
 
-    let domainsStack = new AwsRequestSyncStack();
     let cloudsearch = this.provisioning.cloudSearch;
     let domains = Object.keys(this._domainsToWaitFor);
 
@@ -293,6 +293,7 @@ export class CloudSearchService extends AbstractService {
     let config = {};
     let domainsStack = new AwsRequestSyncStack();
     let indexesStack = domainsStack.addLevel();
+    let policiesStack = domainsStack.addLevel();
     let suggestionsStack = indexesStack.addLevel();
     let activationStack = suggestionsStack.addLevel();
     let cloudsearch = this.provisioning.cloudSearch;
@@ -340,6 +341,17 @@ export class CloudSearchService extends AbstractService {
           };
 
           this._domainsToWaitFor[domainName] = domain;
+
+          let policyPayload = {
+            DomainName: domainName,
+            AccessPolicies: JSON.stringify(CloudSearchService.DOMAIN_ACCESS_POLICY),
+          };
+
+          policiesStack.push(cloudsearch.updateServiceAccessPolicies(policyPayload), (error) => {
+            if (error) {
+              throw new FailedToUpdateCloudSearchDomainAccessPoliciesException(error);
+            }
+          });
 
           let indexes = this._searchConfig.config[microserviceIdentifier][domain].search;
 
@@ -399,6 +411,27 @@ export class CloudSearchService extends AbstractService {
     domainsStack.join().ready(() => {
       cb(config);
     });
+  }
+
+  /**
+   * @returns {Object}
+   */
+  static get DOMAIN_ACCESS_POLICY() {
+    return {
+      Version: "2012-10-17",
+      Statement: [
+        {
+          Effect: 'Allow',
+          Principal: {
+            AWS: '*',
+          },
+          Action: [
+            'cloudsearch:search',
+            'cloudsearch:suggest'
+          ],
+        },
+      ],
+    };
   }
 
   /**
