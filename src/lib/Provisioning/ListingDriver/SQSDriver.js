@@ -32,7 +32,7 @@ export class SQSDriver extends AbstractDriver {
         }
 
         let queueUrl = data.QueueUrls[i];
-        let queueName = queueUrl.split('/').pop();
+        let queueName = queueUrl.replace(/\/+$/g, '').split('/').pop();
 
         this._checkPushStack(queueName, queueUrl, queueUrl);
       }
