@@ -5,6 +5,7 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
+import {AbstractService} from '../Service/AbstractService';
 
 export class SQSDriver extends AbstractDriver {
   /**
@@ -19,7 +20,7 @@ export class SQSDriver extends AbstractDriver {
    */
   list(cb) {
     this.awsService.listQueues({
-      QueueNamePrefix: SQSDriver.QUEUE_NAME_PREFIX,
+      QueueNamePrefix: AbstractService.AWS_RESOURCES_PREFIX,
     }, (error, data) => {
       if (error) {
         cb(error);
@@ -32,19 +33,11 @@ export class SQSDriver extends AbstractDriver {
         }
 
         let queueUrl = data.QueueUrls[i];
-        let queueName = queueUrl.replace(/\/+$/g, '').split('/').pop();
 
-        this._checkPushStack(queueName, queueUrl, queueUrl);
+        this._checkPushStack(queueUrl, queueUrl);
       }
 
       cb(null);
     });
-  }
-
-  /**
-   * @returns {Number}
-   */
-  static get QUEUE_NAME_PREFIX() {
-    return 'Deep';
   }
 }
