@@ -56,6 +56,8 @@ export class Instance {
     this._isUpdate = false;
 
     this._microservicesToUpdate = [];
+
+    this._config.deployId = new DeployID(this).toString();
   }
 
   /**
@@ -154,10 +156,6 @@ export class Instance {
    * @returns {String}
    */
   get deployId() {
-    if (!this._config.deployId) {
-      this._config.deployId = new DeployID(this).toString();
-    }
-
     return this._config.deployId;
   }
 
@@ -623,7 +621,7 @@ export class Instance {
    * @returns {Frontend}
    */
   buildFrontend(dumpPath = null, callback = () => {}) {
-    let frontend = new Frontend(this._config.microservices, dumpPath || this._path, this.deployId);
+    let frontend = new Frontend(this, this._config.microservices, dumpPath || this._path, this.deployId);
 
     frontend.build(Frontend.createConfig(this._config), callback.bind(this, frontend));
 
@@ -743,10 +741,12 @@ export class Instance {
   update(propertyConfigSnapshot, callback, microservicesToUpdate = []) {
     this._isUpdate = true;
     this.microservicesToUpdate = microservicesToUpdate;
-    this._config = propertyConfigSnapshot;
 
-    // @todo: remove it?
-    this._config.deployId = null;
+    // keep initial deployId
+    let deployId = this.deployId;
+
+    this._config = propertyConfigSnapshot;
+    this._config.deployId = deployId;
 
     this._provisioning.injectConfig(
       this._config.provisioning

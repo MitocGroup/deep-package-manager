@@ -51,7 +51,7 @@ export class DynamoDBDriver extends AbstractDriver {
           //      Only 10 tables can be created, updated, or deleted simultaneously
           setTimeout(() => {
             this._removeTable(tableName, cb, retries++);
-          }, 300);
+          }, 1000); // 1 second delay!
         }
 
         return;
