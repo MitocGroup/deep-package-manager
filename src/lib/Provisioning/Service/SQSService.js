@@ -173,4 +173,29 @@ export class SQSService extends AbstractService {
       });
     };
   }
+
+  /**
+   * Allow Cognito Identities and Lambda functions to send messages to SQS queue
+   *
+   * @param {Array} actions
+   * @returns {Core.AWS.IAM.Statement}
+   */
+  generateAllowActionsStatement(actions = ['SendMessage', 'SendMessageBatch']) {
+    let policy = new Core.AWS.IAM.Policy();
+
+    let statement = policy.statement.add();
+
+    actions.forEach((action) => {
+      statement.action.add(Core.AWS.Service.SIMPLE_QUEUE_SERVICE, action);
+    });
+
+    statement.resource.add(
+      Core.AWS.Service.SIMPLE_QUEUE_SERVICE,
+      this.provisioning.sqs.config.region,
+      this.awsAccountId,
+      this._getGlobalResourceMask()
+    );
+
+    return statement;
+  }
 }
