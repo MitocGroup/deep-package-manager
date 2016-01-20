@@ -5,6 +5,7 @@
 'use strict';
 
 import ChildProcess from 'child_process';
+import {spawn} from 'spawn-cmd';
 import syncExec from 'sync-exec';
 import {EventEmitter} from 'events';
 import os from 'os';
@@ -204,27 +205,28 @@ export class Exec {
     console.log('before win parse realCmd: ', typeof realCmd);
     console.log('before win parse realArgs: ', typeof realArgs);
 
+    console.log('this._cwd: ', this._cwd);
     console.log('cmdParts: ', cmdParts);
     console.log('realCmd: ', realCmd);
     console.log('realArgs: ', realArgs);
     console.log('os.platform: ', os.platform());
 
-
     if(os.platform().indexOf('win32') > -1 || os.platform().indexOf('win64') > -1) {
       console.log("ON WIN");
-      realCmd = this.winCMD;
+      realCmd = this.winCmd;
       realArgs = this.winRealArgs;
+      //this.cwd = this.winCwd;
     }
 
     console.log('after win parse cmdParts: ', typeof cmdParts);
     console.log('after win parse realCmd: ', typeof realCmd);
     console.log('after win parse realArgs: ', typeof realArgs);
+    console.log('this._cwd: ', this.cwd);
     console.log('cmdParts: ', cmdParts);
     console.log('realCmd: ', realCmd);
     console.log('realArgs: ', realArgs);
-    console.log('this._cwd: ', this._cwd);
 
-    let proc = ChildProcess.spawn(realCmd, realArgs, {
+    let proc = spawn(realCmd, realArgs, {
       cwd: this._cwd,
       stdio: [process.stdin, 'pipe', 'pipe'],
     });
@@ -327,6 +329,7 @@ export class Exec {
 
   /**
    * @param {String} cmd
+   * @param {String} cmd
    * @param {Boolean} unescape
    * @returns {String}
    * @private
@@ -402,20 +405,26 @@ export class Exec {
  * Returns command for Windows
  * @returns {String}
  */
-  get winCMD() {
+  get winCmd() {
+    let unixPath = null;
+
     if (this._cmd.indexOf('Program Files (x86)') > -1) {
 
       //command contains 2 space
-      return this._cmd.trim().split(' ').slice(0, 3).join(' ');
+      unixPath = this._cmd.trim().split(' ').slice(0, 3).join(' ');
     } else if (this._cmd.indexOf('Program Files') > -1) {
 
       //command contains 1 space
-      return this._cmd.trim().split(' ').slice(0, 2).join(' ');
+      unixPath = this._cmd.trim().split(' ').slice(0, 2).join(' ');
     } else {
 
       // doesn't contains spaces
-      return this._cmd.trim().split(' ').slice(0, 1);
+      unixPath = this._cmd.trim().split(' ').slice(0, 1).join(' ');
     }
+
+    let windowsPath = unixPath.replace(/^\/[a-z]+/, (diskName) => { return diskName.toUpperCase()+':';});
+
+    return windowsPath.replace('\/', '').split('\/').join('\\');
   }
 
 /**
@@ -439,4 +448,12 @@ export class Exec {
     }
 }
 
+///**
+// * Returns cwd compatible for Windows
+// * @returns {String}
+// */
+//  get winCwd() {
+//    let result = this._cwd.trim().split('\\').join('/')
+//    return result.replace('C:', 'c');
+//  }
 }
