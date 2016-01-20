@@ -59,8 +59,13 @@ export class CloudFrontDriver extends AbstractDriver {
           + distId + ' is already disabled' + addMsg);
 
         if (!isDeployed) {
-          this._waitForDistDisabled(distId, data.ETag, (distId, eTag) => {
-            this._nativeDeleteDistribution(distId, eTag, cb);
+          this._waitForDistDisabled(distId, data.ETag, (error) => {
+            if (error) {
+              cb(error);
+              return;
+            }
+
+            this._nativeDeleteDistribution(distId, data.ETag, cb);
           });
         } else {
           this._nativeDeleteDistribution(distId, data.ETag, cb);
@@ -81,8 +86,13 @@ export class CloudFrontDriver extends AbstractDriver {
           return;
         }
 
-        this._waitForDistDisabled(distId, data.ETag, (distId, eTag) => {
-          this._nativeDeleteDistribution(distId, eTag, cb);
+        this._waitForDistDisabled(distId, data.ETag, (error) => {
+          if (error) {
+            cb(error);
+            return;
+          }
+
+          this._nativeDeleteDistribution(distId, data.ETag, cb);
         });
       });
     });
@@ -99,12 +109,7 @@ export class CloudFrontDriver extends AbstractDriver {
       Id: distId,
       IfMatch: eTag,
     }, (error) => {
-      if (error) {
-        cb(error);
-        return;
-      }
-
-      cb(null);
+      cb(error);
     });
   }
 
@@ -147,7 +152,7 @@ export class CloudFrontDriver extends AbstractDriver {
         return;
       }
 
-      cb(distId, eTag);
+      cb(null);
     });
   }
 }
