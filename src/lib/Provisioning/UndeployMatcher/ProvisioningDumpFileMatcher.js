@@ -134,14 +134,14 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
           if (deployProvisioning.sqs && deployProvisioning.sqs.queues) {
             let queues = deployProvisioning.sqs.queues;
 
-            for (let queueName in queues) {
-              if (!queues.hasOwnProperty(queueName)) {
+            for (let key in queues) {
+              if (!queues.hasOwnProperty(key)) {
                 continue;
               }
 
-              let queueUrl = queues[queueName];
+              let queue = queues[key];
 
-              this._deployConfig.SQS.push(queueUrl);
+              this._deployConfig.SQS.push(queue.url);
             }
           }
 
