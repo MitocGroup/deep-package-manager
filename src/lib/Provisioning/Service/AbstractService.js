@@ -425,6 +425,10 @@ export class AbstractService extends Core.OOP.Interface {
         awsServiceLimit = 255;
         break;
 
+      case Core.AWS.Service.SIMPLE_QUEUE_SERVICE:
+        awsServiceLimit = 80;
+        break;
+
       default:
         throw new Exception(`Naming limits for aws service ${awsService} are not defined.`);
     }

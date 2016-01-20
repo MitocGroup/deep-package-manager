@@ -16,6 +16,7 @@ import {IAMService} from './IAMService';
 import objectMerge from 'object-merge';
 import {_extend as extend} from 'util';
 import {CognitoIdentityService} from './CognitoIdentityService';
+import {SQSService} from './SQSService';
 
 /**
  * Lambda service
@@ -399,6 +400,9 @@ export class LambdaService extends AbstractService {
     policy.statement.add(cognitoService.generateAllowDescribeIdentityStatement(LambdaService));
 
     policy.statement.add(this.generateAllowInvokeFunctionStatement());
+
+    let sqsService = this.provisioning.services.find(SQSService);
+    policy.statement.add(sqsService.generateAllowActionsStatement());
 
     return policy;
   }

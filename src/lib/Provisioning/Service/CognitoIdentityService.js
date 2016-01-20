@@ -14,6 +14,7 @@ import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingP
 import {Exception} from '../../Exception/Exception';
 import {LambdaService} from './LambdaService';
 import {APIGatewayService} from './APIGatewayService';
+import {SQSService} from './SQSService';
 
 /**
  * Cognito service
@@ -294,11 +295,13 @@ export class CognitoIdentityService extends AbstractService {
       let cognitoRole = cognitoRoles[cognitoRoleType];
 
       let lambdaService = this.provisioning.services.find(LambdaService);
+      let sqsService = this.provisioning.services.find(SQSService);
 
       let policy = new Core.AWS.IAM.Policy();
       policy.statement.add(lambdaService.generateAllowInvokeFunctionStatement());
       policy.statement.add(APIGatewayService.generateAllowInvokeMethodStatement(endpointsARNs));
       policy.statement.add(this.generateAllowCognitoSyncStatement(['ListRecords', 'UpdateRecords', 'ListDatasets']));
+      policy.statement.add(sqsService.generateAllowActionsStatement());
 
       let params = {
         PolicyDocument: policy.toString(),

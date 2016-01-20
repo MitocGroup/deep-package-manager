@@ -18,6 +18,7 @@ import {DynamoDBService} from './Service/DynamoDBService';
 import {ElasticacheService} from './Service/ElasticacheService';
 import {APIGatewayService} from './Service/APIGatewayService';
 import {CloudSearchService} from './Service/CloudSearchService';
+import {SQSService} from './Service/SQSService';
 import {Instance as PropertyInstance} from '../Property/Instance';
 import {WaitFor} from '../Helpers/WaitFor';
 
@@ -63,6 +64,9 @@ export class Instance {
     });
     this._apiGateway = new property.AWS.APIGateway({
       region: this.getAwsServiceRegion(APIGatewayService, property.config.awsRegion),
+    });
+    this._sqs = new property.AWS.SQS({
+      region: this.getAwsServiceRegion(SQSService, property.config.awsRegion),
     });
 
     // set region for services that depend on other services region
@@ -218,12 +222,21 @@ export class Instance {
   }
 
   /**
+   * @returns {Object}
+   */
+  get sqs() {
+    return this._sqs;
+  }
+
+  /**
    * @param {String} name
    * @returns {Object}
    */
   getAwsServiceByName(name) {
     switch (name) {
       case 'IAM':
+      case 'SNS':
+      case 'SQS':
         name = name.toLowerCase();
         break;
       case 'APIGateway':
@@ -254,6 +267,7 @@ export class Instance {
         new LambdaService(this),
         new APIGatewayService(this),
         new CloudSearchService(this),
+        new SQSService(this),
       ]);
     }
 

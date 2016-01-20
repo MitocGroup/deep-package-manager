@@ -131,6 +131,20 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
             }
           }
 
+          if (deployProvisioning.sqs && deployProvisioning.sqs.queues) {
+            let queues = deployProvisioning.sqs.queues;
+
+            for (let key in queues) {
+              if (!queues.hasOwnProperty(key)) {
+                continue;
+              }
+
+              let queue = queues[key];
+
+              this._deployConfig.SQS.push(queue.url);
+            }
+          }
+
           if (deployProvisioning['cognito-identity'] && deployProvisioning['cognito-identity'].roles) {
             let identityPoolRoles = deployProvisioning['cognito-identity'].roles;
 

@@ -20,6 +20,7 @@ import Tmp from 'tmp';
 import OS from 'os';
 import ZLib from 'zlib';
 import {APIGatewayService} from '../Provisioning/Service/APIGatewayService';
+import {SQSService} from '../Provisioning/Service/SQSService';
 import {DeployIdInjector} from '../Assets/DeployIdInjector';
 import {Optimizer} from '../Assets/Optimizer';
 
@@ -95,6 +96,12 @@ export class Frontend {
             suggesters: domainConfig.suggesters,
           };
         }
+      }
+
+      if (propertyConfig.provisioning.hasOwnProperty(Core.AWS.Service.SIMPLE_QUEUE_SERVICE)) {
+        let sqsQueues = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_QUEUE_SERVICE].queues;
+
+        config.rumQueue = sqsQueues.hasOwnProperty(SQSService.RUM_QUEUE) ? sqsQueues[sqsQueues] : '';
       }
     }
 
