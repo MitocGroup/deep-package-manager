@@ -101,10 +101,21 @@ export class Lambda {
     //config.cacheDsn = '';
 
     if (propertyConfig.provisioning) {
-      config.buckets = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_STORAGE_SERVICE].buckets;
-      config.tablesNames = propertyConfig.provisioning[Core.AWS.Service.DYNAMO_DB].tablesNames;
+      if (propertyConfig.provisioning.hasOwnProperty(Core.AWS.Service.SIMPLE_STORAGE_SERVICE)) {
+        config.buckets = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_STORAGE_SERVICE].buckets;
+      }
 
-      //config.cacheDsn = propertyConfig.provisioning[Core.AWS.Service.ELASTIC_CACHE].dsn;
+      if (propertyConfig.provisioning.hasOwnProperty(Core.AWS.Service.DYNAMO_DB)) {
+        config.tablesNames = propertyConfig.provisioning[Core.AWS.Service.DYNAMO_DB].tablesNames;
+      }
+
+      if (propertyConfig.provisioning.hasOwnProperty(Core.AWS.Service.ELASTIC_CACHE)) {
+        //config.cacheDsn = propertyConfig.provisioning[Core.AWS.Service.ELASTIC_CACHE].dsn;
+      }
+
+      if (propertyConfig.provisioning.hasOwnProperty(Core.AWS.Service.CLOUD_SEARCH)) {
+        config.search = propertyConfig.provisioning[Core.AWS.Service.CLOUD_SEARCH];
+      }
     }
 
     for (let microserviceIdentifier in propertyConfig.microservices) {

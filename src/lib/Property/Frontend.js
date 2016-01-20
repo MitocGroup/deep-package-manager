@@ -63,20 +63,46 @@ export class Frontend {
       identityProviders: '',
       microservices: {},
       globals: propertyConfig.globals,
+      search: {},
     };
 
     let apiGatewayBaseUrl = '';
 
     if (propertyConfig.provisioning) {
-      let cognitoConfig = propertyConfig.provisioning[Core.AWS.Service.COGNITO_IDENTITY];
+      if (propertyConfig.provisioning.hasOwnProperty(Core.AWS.Service.COGNITO_IDENTITY)) {
+        let cognitoConfig = propertyConfig.provisioning[Core.AWS.Service.COGNITO_IDENTITY];
 
-      config.identityPoolId = cognitoConfig.identityPool.IdentityPoolId;
-      config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders;
+        config.identityPoolId = cognitoConfig.identityPool.IdentityPoolId;
+        config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders;
+      }
 
-      apiGatewayBaseUrl = propertyConfig.provisioning[Core.AWS.Service.API_GATEWAY].api.baseUrl;
+      if (propertyConfig.provisioning.hasOwnProperty(Core.AWS.Service.API_GATEWAY)) {
+        apiGatewayBaseUrl = propertyConfig.provisioning[Core.AWS.Service.API_GATEWAY].api.baseUrl;
+      }
 
-      let sqsQueues = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_QUEUE_SERVICE].queues;
-      config.rumQueue = sqsQueues[SQSService.RUM_QUEUE] || '';
+      if (propertyConfig.provisioning.hasOwnProperty(Core.AWS.Service.CLOUD_SEARCH)) {
+        let cloudSearchConfig = propertyConfig.provisioning[Core.AWS.Service.CLOUD_SEARCH];
+
+        for (let modelName in cloudSearchConfig) {
+          if (!cloudSearchConfig.hasOwnProperty(modelName)) {
+            continue;
+          }
+
+          let domainConfig = cloudSearchConfig[modelName];
+
+          config.search[modelName] = {
+            endpoint: domainConfig.endpoints.search,
+            indexes: domainConfig.indexes,
+            suggesters: domainConfig.suggesters,
+          };
+        }
+      }
+
+      if (propertyConfig.provisioning.hasOwnProperty(Core.AWS.Service.SIMPLE_QUEUE_SERVICE)) {
+        let sqsQueues = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_QUEUE_SERVICE].queues;
+
+        config.rumQueue = sqsQueues.hasOwnProperty(SQSService.RUM_QUEUE) ? sqsQueues[sqsQueues] : '';
+      }
     }
 
     for (let microserviceIdentifier in propertyConfig.microservices) {

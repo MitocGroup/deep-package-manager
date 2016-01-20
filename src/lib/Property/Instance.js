@@ -264,6 +264,9 @@ export class Instance {
       throw new MissingRootException();
     }
 
+    this._config.provisioning = this._config.provisioning || {};
+    this._config.provisioning.cloudsearch = this._config.provisioning.cloudsearch || {};
+
     let modelsDirs = [];
 
     for (let i in microservices) {
@@ -292,6 +295,41 @@ export class Instance {
       microservicesConfig[microserviceConfig.identifier] = microserviceConfig;
 
       modelsDirs.push(microservice.autoload.models);
+
+      if (microservice.searchSchema) {
+        let searchSchema = microservice.searchSchema;
+
+        for (let domainName in searchSchema) {
+          if (!searchSchema.hasOwnProperty(domainName)) {
+            continue;
+          }
+
+          let searchInfo = searchSchema[domainName];
+
+          this._config.provisioning.cloudsearch[domainName] = {
+            name: domainName,
+            table: domainName,
+            endpoints: {
+              push: '',
+              search: '',
+            },
+            indexes: {},
+            suggesters: {},
+          };
+
+          for (let field in searchInfo.indexes) {
+            if (!searchInfo.indexes.hasOwnProperty(field)) {
+              continue;
+            }
+
+            let fieldOptions = searchInfo.indexes[field];
+
+            if (fieldOptions.autocomplete) {
+              this._config.provisioning.cloudsearch[domainName].suggesters[field] = field;
+            }
+          }
+        }
+      }
     }
 
     this._config.microservices = microservicesConfig;

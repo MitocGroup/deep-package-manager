@@ -57,6 +57,20 @@ export class AbstractService extends Core.OOP.Interface {
   /**
    * @returns {string}
    */
+  static get DELIMITER_HYPHEN_LOWER_CASE() {
+    return 'hyphenLowerCase';
+  }
+
+  /**
+   * @returns {string}
+   */
+  static get DELIMITER_HYPHEN() {
+    return '-';
+  }
+
+  /**
+   * @returns {string}
+   */
   static get DELIMITER_UNDERSCORE() {
     return '_';
   }
@@ -268,14 +282,24 @@ export class AbstractService extends Core.OOP.Interface {
         mask = AbstractService.capitalizeFirst(AbstractService.AWS_RESOURCES_PREFIX) +
           AbstractService.capitalizeFirst(this.env) +
           '*' +
-          uniqueHash +
-          appendMatcher;
+          appendMatcher +
+          uniqueHash;
         break;
       case AbstractService.DELIMITER_DOT:
-        mask = `${AbstractService.AWS_RESOURCES_PREFIX}.${this.env}.*.${uniqueHash}${appendMatcher}`;
+        mask = `${AbstractService.AWS_RESOURCES_PREFIX}.${this.env}.*.${appendMatcher}${uniqueHash}`;
         break;
       case AbstractService.DELIMITER_UNDERSCORE:
-        mask = `${AbstractService.AWS_RESOURCES_PREFIX}_${this.env}_*_${uniqueHash}${appendMatcher}`;
+        mask = `${AbstractService.AWS_RESOURCES_PREFIX}_${this.env}_*_${appendMatcher}${uniqueHash}`;
+        break;
+      case AbstractService.DELIMITER_HYPHEN_LOWER_CASE:
+        let lowerAwsResourcesPrefix = AbstractService.AWS_RESOURCES_PREFIX.toLowerCase();
+        let lowerEnv = this.env.toLowerCase();
+        let lowerUniqueHash = uniqueHash.toLowerCase();
+
+        mask = `${lowerAwsResourcesPrefix}-${lowerEnv}-*-${appendMatcher}${lowerUniqueHash}`;
+        break;
+      case AbstractService.DELIMITER_HYPHEN:
+        mask = `${AbstractService.AWS_RESOURCES_PREFIX}-${this.env}-*-${appendMatcher}${uniqueHash}`;
         break;
       default:
         throw new Exception(`Undefined aws resource name delimiter ${delimiter}.`);
@@ -320,6 +344,25 @@ export class AbstractService extends Core.OOP.Interface {
         name = `${AbstractService.AWS_RESOURCES_PREFIX}_${this.env}_${resourceName}_${uniqueHash}`;
 
         break;
+      case AbstractService.DELIMITER_HYPHEN_LOWER_CASE:
+        nameTplLength += 3; // adding 3 hyphen delimiters
+        resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
+
+        let lowerAwsResourcesPrefix = AbstractService.AWS_RESOURCES_PREFIX.toLowerCase();
+        let lowerEnv = this.env.toLowerCase();
+        let lowerResourceName = resourceName.toLowerCase();
+        let lowerUniqueHash = uniqueHash.toLowerCase();
+
+        name = `${lowerAwsResourcesPrefix}-${lowerEnv}-${lowerResourceName}-${lowerUniqueHash}`;
+
+        break;
+      case AbstractService.DELIMITER_HYPHEN:
+        nameTplLength += 3; // adding 3 hyphen delimiters
+        resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
+
+        name = `${AbstractService.AWS_RESOURCES_PREFIX}-${this.env}-${resourceName}-${uniqueHash}`;
+
+        break;
       default:
         throw new Exception(`Undefined aws resource name delimiter ${delimiter}.`);
     }
@@ -360,6 +403,10 @@ export class AbstractService extends Core.OOP.Interface {
     let awsServiceLimit = null;
 
     switch (awsService) {
+      case Core.AWS.Service.CLOUD_SEARCH:
+        awsServiceLimit = 28;
+        break;
+
       case Core.AWS.Service.SIMPLE_STORAGE_SERVICE:
         awsServiceLimit = 63;
         break;

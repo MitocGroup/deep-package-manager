@@ -121,7 +121,7 @@ export class CloudFrontDriver extends AbstractDriver {
    * @private
    */
   _waitForDistDisabled(distId, eTag, cb, estTime = null) {
-    estTime = estTime || 15 * 60;
+    estTime = null === estTime ? 15 * 60 : estTime;
 
     this._awsService.getDistribution({
       Id: distId,
@@ -136,14 +136,17 @@ export class CloudFrontDriver extends AbstractDriver {
       if (status !== 'Deployed') {
         let estTimeMinutes = (estTime / 60);
 
-        if (estTimeMinutes < 0) {
-          estTimeMinutes = '...';
+        if (estTimeMinutes <= 0) {
+          this._log(
+            `Waiting for CloudFront distribution ${distId} to be disabled`,
+            `(currently ${status}, ETC ...)`
+          );
+        } else {
+          this._log(
+            `Waiting for CloudFront distribution ${distId} to be disabled`,
+            `(currently ${status}, ETC ${estTimeMinutes} min.)`
+          );
         }
-
-        this._log(
-          `Waiting for CloudFront distribution ${distId} to be disabled`,
-          `(currently ${status}, ETC ${estTimeMinutes} min.)`
-        );
 
         setTimeout(() => {
           this._waitForDistDisabled(distId, eTag, cb, estTime - 30);

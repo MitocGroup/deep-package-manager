@@ -17,6 +17,7 @@ import {KinesisService} from './Service/KinesisService';
 import {DynamoDBService} from './Service/DynamoDBService';
 import {ElasticacheService} from './Service/ElasticacheService';
 import {APIGatewayService} from './Service/APIGatewayService';
+import {CloudSearchService} from './Service/CloudSearchService';
 import {SQSService} from './Service/SQSService';
 import {Instance as PropertyInstance} from '../Property/Instance';
 import {WaitFor} from '../Helpers/WaitFor';
@@ -43,9 +44,13 @@ export class Instance {
     this._cloudFront = new property.AWS.CloudFront();
     this._iam = new property.AWS.IAM();
     this._cloudWatchLogs = new property.AWS.CloudWatchLogs();
+    this._cloudSearch = new property.AWS.CloudSearch();
 
     // set appropriate region for services that are not available on all regions
     this._dynamoDb = new property.AWS.DynamoDB({
+      region: this.getAwsServiceRegion(DynamoDBService, property.config.awsRegion),
+    });
+    this._dynamoDbStreams = new property.AWS.DynamoDBStreams({
       region: this.getAwsServiceRegion(DynamoDBService, property.config.awsRegion),
     });
     this._kinesis = new property.AWS.Kinesis({
@@ -128,8 +133,22 @@ export class Instance {
   /**
    * @returns {Object}
    */
+  get cloudSearch() {
+    return this._cloudSearch;
+  }
+
+  /**
+   * @returns {Object}
+   */
   get cloudWatchLogs() {
     return this._cloudWatchLogs;
+  }
+
+  /**
+   * @returns {Object}
+   */
+  get dynamoDBStreams() {
+    return this._dynamoDbStreams;
   }
 
   /**
@@ -247,6 +266,7 @@ export class Instance {
         new CloudFrontService(this),
         new LambdaService(this),
         new APIGatewayService(this),
+        new CloudSearchService(this),
         new SQSService(this),
       ]);
     }
