@@ -6,6 +6,7 @@
 
 import Core from 'deep-core';
 import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
+import {AbstractService} from './Service/AbstractService';
 import {S3Service} from './Service/S3Service';
 import {CognitoIdentityService} from './Service/CognitoIdentityService';
 import {IAMService} from './Service/IAMService';
@@ -37,7 +38,6 @@ export class Instance {
     // deep-db instance
     this._db = null;
 
-    this._s3 = new property.AWS.S3();
     this._elasticache = new property.AWS.ElastiCache();
     this._sns = new property.AWS.SNS();
     this._cloudFront = new property.AWS.CloudFront();
@@ -63,6 +63,12 @@ export class Instance {
     });
     this._apiGateway = new property.AWS.APIGateway({
       region: this.getAwsServiceRegion(APIGatewayService, property.config.awsRegion),
+    });
+
+    // set region for services that depend on other services region
+    this._s3 = new property.AWS.S3({
+      // This bucket must reside in the same AWS region where you are creating the Lambda function
+      region: this._lambda.config.region,
     });
 
     this._config = {};
@@ -209,6 +215,25 @@ export class Instance {
    */
   get apiGateway() {
     return this._apiGateway;
+  }
+
+  /**
+   * @param {String} name
+   * @returns {Object}
+   */
+  getAwsServiceByName(name) {
+    switch (name) {
+      case 'IAM':
+        name = name.toLowerCase();
+        break;
+      case 'APIGateway':
+        name = 'apiGateway';
+        break;
+      default:
+        name = AbstractService.lowerCaseFirst(name);
+    }
+
+    return this[name];
   }
 
   /**

@@ -28,11 +28,13 @@ import {Optimizer} from '../Assets/Optimizer';
  */
 export class Frontend {
   /**
+   * @param {Property} property
    * @param {Object} microservicesConfig
    * @param {String} basePath
    * @param {String} deployId
    */
-  constructor(microservicesConfig, basePath, deployId) {
+  constructor(property, microservicesConfig, basePath, deployId) {
+    this._property = property;
     this._microservicesConfig = microservicesConfig;
     this._basePath = StringUtils.rtrim(basePath, '/');
     this._deployId = deployId;
@@ -169,7 +171,8 @@ export class Frontend {
    * @returns {WaitFor}
    */
   deploy(AWS, bucketName) {
-    //let s3 = new AWS.S3();
+    let s3 = this._property.provisioning.s3;
+    let bucketRegion = s3.config.region;
 
     let syncStack = new AwsRequestSyncStack();
 
@@ -191,7 +194,7 @@ export class Frontend {
     console.log(`Syncing ${this.path} with ${bucketName} (non HTML, TTL=86400)`);
 
     let syncResultNoHtml = this
-      ._getSyncCommandNoHtml(credentialsFile, bucketName)
+      ._getSyncCommandNoHtml(credentialsFile, bucketName, bucketRegion)
       .runSync();
 
     if (syncResultNoHtml.failed) {
@@ -201,7 +204,7 @@ export class Frontend {
     console.log(`Syncing ${this.path} with ${bucketName} (HTML only, TTL=600)`);
 
     let syncResultHtml = this
-      ._getSyncCommandHtmlOnly(credentialsFile, bucketName)
+      ._getSyncCommandHtmlOnly(credentialsFile, bucketName, bucketRegion)
       .runSync();
 
     if (syncResultHtml.failed) {
@@ -239,13 +242,15 @@ export class Frontend {
   /**
    * @param {String} credentialsFile
    * @param {String} bucketName
+   * @param {String} bucketRegion
    * @private
    */
-  _getSyncCommandNoHtml(credentialsFile, bucketName) {
+  _getSyncCommandNoHtml(credentialsFile, bucketName, bucketRegion) {
     return new Exec(
       `export AWS_CONFIG_FILE=${credentialsFile};`,
       'aws s3 sync',
       '--profile=deep',
+      `--region=${bucketRegion}`,
       '--storage-class=REDUCED_REDUNDANCY',
       Frontend._contentEncodingExecOption,
       '--cache-control="max-age=86400"',
@@ -258,13 +263,15 @@ export class Frontend {
   /**
    * @param {String} credentialsFile
    * @param {String} bucketName
+   * @param {String} bucketRegion
    * @private
    */
-  _getSyncCommandHtmlOnly(credentialsFile, bucketName) {
+  _getSyncCommandHtmlOnly(credentialsFile, bucketName, bucketRegion) {
     return new Exec(
       `export AWS_CONFIG_FILE=${credentialsFile};`,
       'aws s3 sync',
       '--profile=deep',
+      `--region=${bucketRegion}`,
       '--storage-class=REDUCED_REDUNDANCY',
       Frontend._contentEncodingExecOption,
       '--cache-control="max-age=600"',

@@ -659,7 +659,7 @@ export class Instance {
    * @returns {Frontend}
    */
   buildFrontend(dumpPath = null, callback = () => {}) {
-    let frontend = new Frontend(this._config.microservices, dumpPath || this._path, this.deployId);
+    let frontend = new Frontend(this, this._config.microservices, dumpPath || this._path, this.deployId);
 
     frontend.build(Frontend.createConfig(this._config), callback.bind(this, frontend));
 

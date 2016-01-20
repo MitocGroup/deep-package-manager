@@ -5,8 +5,6 @@
 'use strict';
 
 import {AbstractService} from './Service/AbstractService';
-import Core from 'deep-core';
-import AWS from 'aws-sdk';
 import {WaitFor} from '../Helpers/WaitFor';
 
 export class Listing {
@@ -102,17 +100,7 @@ export class Listing {
    * @returns {AbstractService}
    */
   _createAwsService(name) {
-    let serviceName = `${name}Service`;
-    let ServiceProto = require(`./Service/${serviceName}`)[serviceName];
-
-    let appropriateRegion = Core.AWS.Region.getAppropriateAwsRegion(
-      this._property.config.aws.region,
-      ServiceProto.AVAILABLE_REGIONS
-    );
-
-    return new AWS[name]({
-      region: appropriateRegion,
-    });
+    return this._property.provisioning.getAwsServiceByName(name);
   }
 
   /**

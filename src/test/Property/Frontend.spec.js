@@ -8,7 +8,22 @@ suite('Property/Frontend', function() {
   let basePathTrimmed = './Property';
   let microservicesConfig = {};
   let moduleIdentifier = 'identifierTest';
-  let frontend = new Frontend(microservicesConfig, basePath);
+  let propertyInstance = {
+    path: 'propertyPath',
+    identifier: 'appIdentifier',
+    config: {
+      awsAccountId: 123456789012,
+    },
+    provisioning: {
+      s3: {
+        config: {
+          region: 'us-west-2',
+        },
+      },
+    },
+  };
+
+  let frontend = new Frontend(propertyInstance, microservicesConfig, basePath);
 
   let defaultConfig = {
     error: [null],

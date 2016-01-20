@@ -7,7 +7,7 @@
 import {AbstractDriver} from './AbstractDriver';
 import tmp from 'tmp';
 import OS from 'os';
-import FS from 'fs';
+import fse from 'fs-extra';
 import {Exec} from '../../Helpers/Exec';
 import {MissingCredentialsException} from './Exception/MissingCredentialsException';
 
@@ -64,45 +64,72 @@ export class S3Driver extends AbstractDriver {
    * @private
    */
   _removeUsingAwsCli(bucketName, cb) {
-    tmp.tmpName((error, credentialsFile) => {
+    this._getBucketRegion(bucketName, (error, region) => {
       if (error) {
         cb(error);
         return;
       }
 
-      let credentials = this._credentials;
-
-      if (!credentials) {
-        throw new MissingCredentialsException(this);
-      }
-
-      let credentialsContent = `[profile _deep_]${OS.EOL}`;
-      credentialsContent += `aws_access_key_id=${credentials.accessKeyId}${OS.EOL}`;
-      credentialsContent += `aws_secret_access_key=${credentials.secretAccessKey}${OS.EOL}`;
-      credentialsContent += `region=${credentials.region}${OS.EOL}`;
-
-      FS.writeFile(credentialsFile, credentialsContent, (error) => {
+      tmp.tmpName((error, credentialsFile) => {
         if (error) {
           cb(error);
           return;
         }
 
-        let removeCommand = `export AWS_CONFIG_FILE=${credentialsFile};`;
-        removeCommand += `aws --profile _deep_ s3 rb --force 's3://${bucketName}'`;
+        let credentials = this._credentials;
 
-        new Exec(removeCommand)
-          .avoidBufferOverflow()
-          .run((result) => {
-            FS.unlink(credentialsFile);
+        if (!credentials) {
+          cb(new MissingCredentialsException(this));
+          return;
+        }
 
-            if (result.failed) {
-              cb(result.error);
-              return;
-            }
+        let credentialsContent = `[profile _deep_]${OS.EOL}`;
+        credentialsContent += `aws_access_key_id=${credentials.accessKeyId}${OS.EOL}`;
+        credentialsContent += `aws_secret_access_key=${credentials.secretAccessKey}${OS.EOL}`;
 
-            cb(null);
-          });
+        fse.outputFile(credentialsFile, credentialsContent, (error) => {
+          if (error) {
+            cb(error);
+            return;
+          }
+
+          let regionPart = region ? `--region '${region}'` : '';
+
+          let removeCommand = `export AWS_CONFIG_FILE=${credentialsFile};`;
+          removeCommand += `aws --profile _deep_ ${regionPart} s3 rb --force 's3://${bucketName}'`;
+
+          new Exec(removeCommand)
+            .avoidBufferOverflow()
+            .run((result) => {
+              fse.removeSync(credentialsFile);
+
+              if (result.failed) {
+                cb(result.error);
+                return;
+              }
+
+              cb(null);
+            });
+        });
       });
+    });
+  }
+
+  /**
+   * @param {String} bucketName
+   * @param {Function} cb
+   * @private
+   */
+  _getBucketRegion(bucketName, cb) {
+    this._awsService.getBucketLocation({
+      Bucket: bucketName,
+    }, (error, data) => {
+      if (error) {
+        cb(error, null);
+        return;
+      }
+
+      cb(null, data.LocationConstraint);
     });
   }
 
