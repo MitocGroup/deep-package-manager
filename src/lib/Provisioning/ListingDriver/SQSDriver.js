@@ -20,7 +20,7 @@ export class SQSDriver extends AbstractDriver {
    */
   list(cb) {
     this.awsService.listQueues({
-      QueueNamePrefix: AbstractService.AWS_RESOURCES_PREFIX,
+      QueueNamePrefix: AbstractService.capitalizeFirst(AbstractService.AWS_RESOURCES_PREFIX),
     }, (error, data) => {
       if (error) {
         cb(error);
