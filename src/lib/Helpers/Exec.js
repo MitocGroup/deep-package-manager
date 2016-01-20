@@ -112,14 +112,9 @@ export class Exec {
   runSync() {
     this._isExec = true;
 
-    console.log(' runSync,  _fullCmd: ', this._fullCmd);
-    console.log(' runSync,  _cwd: ', this._cwd);
-
     let result = syncExec(this._fullCmd, {
       cwd: this._cwd,
     });
-
-    console.log(' result: ', result);
 
     this._checkError(result.status);
     this._result = result.stdout ? result.stdout.toString().trim() : null;
@@ -133,7 +128,6 @@ export class Exec {
    * @returns {Exec}
    */
   run(cb, pipeOutput = false) {
-    console.log('Exec run pipeOutput: ', pipeOutput);
     this._isExec = true;
 
     if (pipeOutput) {
@@ -201,30 +195,10 @@ export class Exec {
     let realArgs = cmdParts.concat(this._args);
     let uncaughtError = false;
 
-    console.log('before win parse cmdParts: ', typeof cmdParts);
-    console.log('before win parse realCmd: ', typeof realCmd);
-    console.log('before win parse realArgs: ', typeof realArgs);
-
-    console.log('this._cwd: ', this._cwd);
-    console.log('cmdParts: ', cmdParts);
-    console.log('realCmd: ', realCmd);
-    console.log('realArgs: ', realArgs);
-    console.log('os.platform: ', os.platform());
-
-    if(os.platform().indexOf('win32') > -1 || os.platform().indexOf('win64') > -1) {
-      console.log("ON WIN");
+    if (os.platform().indexOf('win32') > -1 || os.platform().indexOf('win64') > -1) {
       realCmd = this.winCmd;
       realArgs = this.winRealArgs;
-      //this.cwd = this.winCwd;
     }
-
-    console.log('after win parse cmdParts: ', typeof cmdParts);
-    console.log('after win parse realCmd: ', typeof realCmd);
-    console.log('after win parse realArgs: ', typeof realArgs);
-    console.log('this._cwd: ', this.cwd);
-    console.log('cmdParts: ', cmdParts);
-    console.log('realCmd: ', realCmd);
-    console.log('realArgs: ', realArgs);
 
     let proc = spawn(realCmd, realArgs, {
       cwd: this._cwd,
@@ -279,8 +253,7 @@ export class Exec {
    * @private
    */
   _exec(cb) {
-    console.log('CMD after changing: ', this._fullCmd.split('> /dev/null 2>&1').join(''));
-    ChildProcess.exec(this._fullCmd.split('> /dev/null 2>&1').join(''), {
+    ChildProcess.exec(this._fullCmd, {
       cwd: this._cwd,
     }, (error, stdout) => {
       if (error) {
@@ -324,7 +297,16 @@ export class Exec {
     cmd += suffix;
     cmd = cmd.replace(new RegExp(`(${Exec.PIPE_VOID})+`), Exec.PIPE_VOID);
 
-    return Exec._internalsTokenTransform(cmd, true).trim();
+    let fullCmd = Exec._internalsTokenTransform(cmd, true).trim();
+
+    //remove redirection stdout and stderr for Windows
+    if (os.platform().indexOf('win32') > -1 ||
+      os.platform().indexOf('win64') > -1) {
+
+      fullCmd = fullCmd.replace(/\s*>\s*\/dev\/null\s*2>\&1/gi, ' ');
+    }
+
+    return fullCmd;
   }
 
   /**
@@ -401,10 +383,10 @@ export class Exec {
     return ' > /dev/null 2>&1';
   }
 
-/**
- * Returns command for Windows
- * @returns {String}
- */
+  /**
+   * Returns command for Windows
+   * @returns {String}
+   */
   get winCmd() {
     let unixPath = null;
 
@@ -422,15 +404,17 @@ export class Exec {
       unixPath = this._cmd.trim().split(' ').slice(0, 1).join(' ');
     }
 
-    let windowsPath = unixPath.replace(/^\/[a-z]+/, (diskName) => { return diskName.toUpperCase()+':';});
+    let windowsPath = unixPath.replace(/^\/[a-z]+/, (diskName) => {
+      return diskName.toUpperCase() + ':';
+    });
 
     return windowsPath.replace('\/', '').split('\/').join('\\');
   }
 
-/**
- * Returns arguments for Windows
- * @returns {String}
- */
+  /**
+   * Returns arguments for Windows
+   * @returns {String}
+   */
   get winRealArgs() {
     if (this._cmd.indexOf('Program Files (x86)') > -1) {
 
@@ -446,14 +430,5 @@ export class Exec {
       return this._cmd.trim().split(' ').splice(1);
       //result = (result === '')? null: result;
     }
-}
-
-///**
-// * Returns cwd compatible for Windows
-// * @returns {String}
-// */
-//  get winCwd() {
-//    let result = this._cwd.trim().split('\\').join('/')
-//    return result.replace('C:', 'c');
-//  }
+  }
 }

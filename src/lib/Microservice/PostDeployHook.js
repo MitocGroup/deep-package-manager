@@ -18,7 +18,6 @@ export class PostDeployHook {
    * @returns {Function}
    */
   getHook() {
-    console.log('getHook')
     let hookFile = this._getHookFile();
 
     if (!FileSystem.existsSync(hookFile)) {

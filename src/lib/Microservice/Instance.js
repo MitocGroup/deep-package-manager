@@ -163,7 +163,6 @@ export class Instance {
    * @returns {Function}
    */
   get postDeployHook() {
-    console.log('postDeployHook');
     return this._postDeployHook.getHook();
   }
 
