@@ -28,6 +28,13 @@ export class SQSService extends AbstractService {
   }
 
   /**
+   * @returns {String}
+   */
+  static get RUM_QUEUE() {
+    return 'rum';
+  }
+
+  /**
    * @returns {String[]}
    */
   static get AVAILABLE_REGIONS() {
@@ -64,8 +71,7 @@ export class SQSService extends AbstractService {
     rum.enabled = true;
 
     if (rum.enabled) {
-      let rumQueueName = this.generateAwsResourceName('RumQueue', this.name());
-      queuesConfig[rumQueueName] = {};
+      queuesConfig[SQSService.RUM_QUEUE] = {}; // @note - here you can add some sqs queue config options
     }
 
     this._createQueues(
@@ -142,16 +148,22 @@ export class SQSService extends AbstractService {
       }
 
       let params = {
-        QueueName: queueName,
+        QueueName: this.generateAwsResourceName(
+          `${AbstractService.capitalizeFirst(queueName)}Queue`,
+          this.name()
+        ),
         Attributes: queuesConfig[queueName],
       };
 
       syncStack.push(sqs.createQueue(params), (error, data) => {
         if (error) {
-          throw new FailedToCreateSqsQueueException(queueName, error);
+          throw new FailedToCreateSqsQueueException(params.QueueName, error);
         }
 
-        queues[queueName] = data.QueueUrl;
+        queues[queueName] = {
+          name: params.QueueName,
+          url: data.QueueUrl,
+        };
       });
     }
 
