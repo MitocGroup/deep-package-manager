@@ -311,7 +311,6 @@ export class Exec {
 
   /**
    * @param {String} cmd
-   * @param {String} cmd
    * @param {Boolean} unescape
    * @returns {String}
    * @private
