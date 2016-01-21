@@ -412,7 +412,7 @@ export class Exec {
 
   /**
    * Returns arguments for Windows
-   * @returns {String}
+   * @returns {String[]}
    */
   get winRealArgs() {
     if (this._cmd.indexOf('Program Files (x86)') > -1) {

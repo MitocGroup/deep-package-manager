@@ -48,9 +48,9 @@
     "url": "https://github.com/MitocGroup/deep-package-manager.git"
   },
   "scripts": {
-    "test": "bash bin/test.sh",
-    "compile": "bash bin/compile.sh",
-    "obfuscate-compiled": "bash bin/obfuscate-compiled.sh",
+    "test": "bash node-bin/test.sh",
+    "compile": "bash node-bin/compile.sh",
+    "obfuscate-compiled": "bash node-bin/obfuscate-compiled.sh",
     "prepublish": "npm run compile && npm run obfuscate-compiled"
   },
   "dependencies": {
