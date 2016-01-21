@@ -386,7 +386,7 @@ export class Exec {
   get winCmd() {
     let unixPath = null;
 
-    if (this._cmd.indexOf('Program Files (x86)') > -1) {
+    if (this._cmd.indexOf('Program Files ') > -1) {
 
       //command contains 2 space
       unixPath = this._cmd.trim().split(' ').slice(0, 3).join(' ');
@@ -412,7 +412,7 @@ export class Exec {
    * @returns {String[]}
    */
   get winRealArgs() {
-    if (this._cmd.indexOf('Program Files (x86)') > -1) {
+    if (this._cmd.indexOf('Program Files ') > -1) {
 
       //command contains 2 space
       return this._cmd.trim().split(' ').slice(3);
