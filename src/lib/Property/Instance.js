@@ -861,8 +861,7 @@ export class Instance {
         }
 
 
-        let destinationPath = this._path.replace('\\src', '')
-          console.log('copy repos from temp to: ', destinationPath);
+        let destinationPath = this._path.replace('\\src', '');
 
         new Exec(`cp -R ${repoDir}${Path.sep}src${Path.sep} ${destinationPath}`)
           .avoidBufferOverflow()
