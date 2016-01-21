@@ -420,11 +420,8 @@ export class Exec {
 
       //command contains 1 space
       return this._cmd.trim().split(' ').slice(2);
-    } else {
-
-      // doesn't contains spaces
-      return this._cmd.trim().split(' ').splice(1);
-      //result = (result === '')? null: result;
     }
+    // doesn't contains spaces
+    return this._cmd.trim().split(' ').splice(1);
   }
 }
