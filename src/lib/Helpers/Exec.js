@@ -8,6 +8,7 @@ import ChildProcess from 'child_process';
 import {spawn} from 'spawn-cmd';
 import syncExec from 'sync-exec';
 import {EventEmitter} from 'events';
+import {Env} from './Env';
 import os from 'os';
 
 export class Exec {
@@ -195,7 +196,7 @@ export class Exec {
     let realArgs = cmdParts.concat(this._args);
     let uncaughtError = false;
 
-    if (os.platform().indexOf('win32') > -1 || os.platform().indexOf('win64') > -1) {
+    if (Env.is) {
       realCmd = this.winCmd;
       realArgs = this.winRealArgs;
     }
@@ -297,16 +298,7 @@ export class Exec {
     cmd += suffix;
     cmd = cmd.replace(new RegExp(`(${Exec.PIPE_VOID})+`), Exec.PIPE_VOID);
 
-    let fullCmd = Exec._internalsTokenTransform(cmd, true).trim();
-
-    //remove redirection stdout and stderr for Windows
-    if (os.platform().indexOf('win32') > -1 ||
-      os.platform().indexOf('win64') > -1) {
-
-      fullCmd = fullCmd.replace(/\s*>\s*\/dev\/null\s*2>\&1/gi, ' ');
-    }
-
-    return fullCmd;
+    return Exec._internalsTokenTransform(cmd, true).trim();
   }
 
   /**
@@ -379,6 +371,11 @@ export class Exec {
    * @returns {String}
    */
   static get PIPE_VOID() {
+
+    if (Env.isWin) {
+      return ' > NUL 2>&1 ';
+    }
+
     return ' > /dev/null 2>&1';
   }
 
