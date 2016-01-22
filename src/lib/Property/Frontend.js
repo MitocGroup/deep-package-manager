@@ -384,15 +384,13 @@ export class Frontend {
    * @returns {String}
    */
   modulePath(moduleIdentifier) {
-    return Path.join(this._basePath, moduleIdentifier);
+    return Path.join(this.path, moduleIdentifier);
   }
 
   /**
    * @returns {String}
    */
   get configPath() {
-    let base = this.path;
-
     return Path.join(this.path, Frontend.CONFIG_FILE);
   }
 
