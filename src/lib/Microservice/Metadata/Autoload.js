@@ -37,17 +37,17 @@ export class Autoload {
   }
 
   /**
-   * @param {String} path
+   * @param {String} frontendPath
    * @returns {String}
    * @private
    */
-  _getBuildAwareFrontendPath(path) {
+  _getBuildAwareFrontendPath(frontendPath) {
     // @todo: remove this hook
     if (Autoload.__skipBuild) {
-      return path;
+      return frontendPath;
     }
 
-    let buildPath = path.join(path, Autoload.BUILD_FOLDER);
+    let buildPath = path.join(frontendPath, Autoload.BUILD_FOLDER);
 
     try {
       let buildStats = FileSystem.lstatSync(buildPath);
@@ -59,7 +59,7 @@ export class Autoload {
       // do nothing...
     }
 
-    return path;
+    return frontendPath;
   }
 
   /**
