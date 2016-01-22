@@ -70,7 +70,7 @@ export class FileWalker {
     destination = path.normalize(destination);
 
     let skipDotFilter = FileWalker.skipDotsFilter(filter);
-    let sourceOffset = source.length + 1;
+    let sourceOffset = source.length;
 
     let files = this.walk(source, skipDotFilter);
 
