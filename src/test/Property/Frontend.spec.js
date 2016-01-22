@@ -68,7 +68,7 @@ suite('Property/Frontend', function() {
   });
 
   test('Check configPath getter returns valid path', function() {
-    chai.expect(frontend.configPath).to.be.equal(path.join(frontend.basePath, Frontend.CONFIG_FILE));
+    chai.expect(frontend.configPath).to.be.equal(path.join(frontend.path, Frontend.CONFIG_FILE));
   });
 
   test('Check createConfig() method returns valid path', function() {
