@@ -2,10 +2,11 @@
 
 import chai from 'chai';
 import {Frontend} from '../../lib/Property/Frontend';
+import path from 'path';
 
 suite('Property/Frontend', function() {
   let basePath = './Property/';
-  let basePathTrimmed = './Property';
+  let basePathTrimmed = 'Property/';
   let microservicesConfig = {};
   let moduleIdentifier = 'identifierTest';
   let propertyInstance = {
@@ -59,15 +60,15 @@ suite('Property/Frontend', function() {
   });
 
   test('Check path getter returns valid path', function() {
-    chai.expect(frontend.path).to.be.equal(`${frontend.basePath}/_public`);
+    chai.expect(frontend.path).to.be.equal(path.join(frontend.basePath, Frontend.PUBLIC_FOLDER));
   });
 
   test('Check modulePath() method returns valid path', function() {
-    chai.expect(frontend.modulePath(moduleIdentifier)).to.be.equal(`${frontend.path}/${moduleIdentifier}`);
+    chai.expect(frontend.modulePath(moduleIdentifier)).to.be.equal(path.join(frontend.path, moduleIdentifier));
   });
 
   test('Check configPath getter returns valid path', function() {
-    chai.expect(frontend.configPath).to.be.equal(`${frontend.path}/_config.json`);
+    chai.expect(frontend.configPath).to.be.equal(path.join(frontend.path, Frontend.CONFIG_FILE));
   });
 
   test('Check createConfig() method returns valid path', function() {

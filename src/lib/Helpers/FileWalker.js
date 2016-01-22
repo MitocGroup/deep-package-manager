@@ -7,7 +7,6 @@
 import FileSystem from 'graceful-fs';
 import FileSystemExtra from 'fs-extra';
 import path from 'path';
-import StringUtils from 'underscore.string';
 import mkdirp from 'mkdirp';
 import ignore from 'ignore';
 
@@ -67,11 +66,11 @@ export class FileWalker {
    * @returns {FileWalker}
    */
   copy(source, destination, filter = () => true) {
-    source = StringUtils.rtrim(source, '/');
-    destination = StringUtils.rtrim(destination, '/');
+    source = path.normalize(source);
+    destination = path.normalize(destination);
 
     let skipDotFilter = FileWalker.skipDotsFilter(filter);
-    let sourceOffset = source.length + 1;
+    let sourceOffset = source.length;
 
     let files = this.walk(source, skipDotFilter);
 

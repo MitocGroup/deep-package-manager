@@ -4,7 +4,6 @@
 
 'use strict';
 
-import StringUtils from 'underscore.string';
 import Archiver from 'archiver';
 import FileSystem from 'fs';
 import {FailedLambdaUploadException} from './Exception/FailedLambdaUploadException';
@@ -40,9 +39,9 @@ export class Lambda {
     this._identifier = identifier;
     this._name = name;
     this._execRole = execRole;
-    this._path = StringUtils.rtrim(path, '/');
-    this._outputPath = StringUtils.rtrim(property.path, '/');
-    this._zipPath = `${this._outputPath}/${microserviceIdentifier}_lambda_${identifier}.zip`;
+    this._path = Path.normalize(path);
+    this._outputPath = Path.normalize(property.path);
+    this._zipPath = Path.join(this._outputPath, `${microserviceIdentifier}_lambda_${identifier}.zip`);
 
     this._memorySize = Lambda.DEFAULT_MEMORY_LIMIT;
     this._timeout = Lambda.DEFAULT_TIMEOUT;
@@ -371,7 +370,7 @@ export class Lambda {
     let s3 = this._property.provisioning.s3;
     let tmpBucket = this._property.config.provisioning.s3.buckets[S3Service.TMP_BUCKET].name;
 
-    let objectKey = this._zipPath.split('/').pop();
+    let objectKey = this._zipPath.split(Path.sep).pop();
 
     let s3Params = {
       Bucket: tmpBucket,
@@ -480,7 +479,7 @@ export class Lambda {
     FileSystemExtra.ensureDirSync(this.path);
 
     JsonFile.writeFileSync(
-      `${this.path}/_config.json`,
+      Path.join(this.path, Lambda.CONFIG_FILE),
       this.createConfig(this._property.config)
     );
 
@@ -514,7 +513,7 @@ export class Lambda {
    * @returns {String}
    */
   static get CONFIG_FILE() {
-    return '_config.json';
+    return Frontend.CONFIG_FILE;
   }
 
   /**

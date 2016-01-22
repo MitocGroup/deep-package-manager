@@ -26,7 +26,7 @@ import {WaitFor} from '../Helpers/WaitFor';
  */
 export class Instance {
   /**
-   * @param {PropertyInstance} property
+   * @param {PropertyInstance|*} property
    */
   constructor(property) {
     if (!(property instanceof PropertyInstance)) {
