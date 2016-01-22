@@ -41,10 +41,9 @@ suite('Property/Instance', function() {
     }
 
     chai.expect(e).to.be.equal(null);
-    chai.expect(propertyInstance.path).to.be.equal('./test/testMaterials/Property2');
+    chai.expect(propertyInstance.path).to.be.equal('test/testMaterials/Property2');
     chai.expect(propertyInstance._microservices).to.be.equal(null);
     chai.expect(propertyInstance.localDeploy).to.be.equal(false);
-    chai.expect(propertyInstance.path).to.be.an.equal('./test/testMaterials/Property2');
     chai.expect(propertyInstance.isUpdate).to.be.an.equal(false);
   });
 
