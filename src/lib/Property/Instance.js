@@ -5,7 +5,6 @@
 'use strict';
 
 import AWS from 'aws-sdk';
-import StringUtils from 'underscore.string';
 import FileSystem from 'fs';
 import Path from 'path';
 import {Instance as Provisioning} from '../Provisioning/Instance';
@@ -49,7 +48,7 @@ export class Instance {
     // @todo: move it?
     AWS.config.update(this._config.aws);
 
-    this._path = StringUtils.rtrim(path, '/');
+    this._path = Path.normalize(path);
     this._microservices = null;
     this._localDeploy = false;
     this._provisioning = new Provisioning(this);

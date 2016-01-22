@@ -10,10 +10,10 @@ import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
 import {Autoload} from './Metadata/Autoload';
 import {ResourceCollection} from './Metadata/ResourceCollection';
 import {Compiler} from '../Compilation/Compiler';
-import StringUtils from 'underscore.string';
 import {PostDeployHook} from './PostDeployHook';
 import {InitHook} from './InitHook';
 import {FrontendEngine} from './FrontendEngine';
+import path from 'path';
 
 /**
  * Microservice instance
@@ -33,7 +33,7 @@ export class Instance {
       throw new InvalidArgumentException(parameters, Parameters);
     }
 
-    this._basePath = StringUtils.rtrim(basePath, '/');
+    this._basePath = path.normalize(basePath);
     this._config = config.extract();
     this._parameters = parameters.extract();
     this._autoload = new Autoload(this._config.autoload, this._basePath);
@@ -68,10 +68,10 @@ export class Instance {
    * @param {String} basePath
    */
   static create(basePath) {
-    basePath = StringUtils.rtrim(basePath, '/');
+    basePath = path.normalize(basePath);
 
-    let configFile = `${basePath}/${Instance.CONFIG_FILE}`;
-    let parametersFile = `${basePath}/${Instance.PARAMS_FILE}`;
+    let configFile = path.join(basePath, Instance.CONFIG_FILE);
+    let parametersFile = path.join(basePath, Instance.PARAMS_FILE);
 
     return new Instance(
       Config.createFromJsonFile(configFile),
