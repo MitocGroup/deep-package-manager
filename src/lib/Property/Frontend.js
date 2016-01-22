@@ -20,6 +20,7 @@ import Tmp from 'tmp';
 import OS from 'os';
 import ZLib from 'zlib';
 import {APIGatewayService} from '../Provisioning/Service/APIGatewayService';
+import {SQSService} from '../Provisioning/Service/SQSService';
 import {DeployIdInjector} from '../Assets/DeployIdInjector';
 import {Optimizer} from '../Assets/Optimizer';
 
@@ -73,6 +74,9 @@ export class Frontend {
       config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders;
 
       apiGatewayBaseUrl = propertyConfig.provisioning[Core.AWS.Service.API_GATEWAY].api.baseUrl;
+
+      let sqsQueues = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_QUEUE_SERVICE].queues;
+      config.rumQueue = sqsQueues[SQSService.RUM_QUEUE] || '';
     }
 
     for (let microserviceIdentifier in propertyConfig.microservices) {

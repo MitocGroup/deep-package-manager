@@ -10,6 +10,7 @@ import syncExec from 'sync-exec';
 import {EventEmitter} from 'events';
 import {Env} from './Env';
 import os from 'os';
+import fs from 'fs';
 
 export class Exec {
   /**
@@ -196,6 +197,7 @@ export class Exec {
     let realArgs = cmdParts.concat(this._args);
     let uncaughtError = false;
 
+    //TODO - before cmd = Exec.winCmd(cmd);
     if (Env.is) {
       realCmd = this.winCmd;
       realArgs = this.winRealArgs;
@@ -380,48 +382,71 @@ export class Exec {
   }
 
   /**
-   * Returns command for Windows
+   * Returns command in Windows format
    * @returns {String}
    */
-  get winCmd() {
-    let unixPath = null;
+  static winCmd(cmd) {
 
-    if (this._cmd.indexOf('Program Files ') > -1) {
-
-      //command contains 2 space
-      unixPath = this._cmd.trim().split(' ').slice(0, 3).join(' ');
-    } else if (this._cmd.indexOf('Program Files') > -1) {
-
-      //command contains 1 space
-      unixPath = this._cmd.trim().split(' ').slice(0, 2).join(' ');
-    } else {
-
-      // doesn't contains spaces
-      unixPath = this._cmd.trim().split(' ').slice(0, 1).join(' ');
-    }
-
-    let windowsPath = unixPath.replace(/^\/[a-z]+/, (diskName) => {
-      return diskName.toUpperCase() + ':';
+    let windowsFormat = cmd.replace(/(^|\s)\/[a-z]+/gi, (diskName) => {
+      return ' ' + diskName.toUpperCase() + ':';
     });
 
-    return windowsPath.replace('\/', '').split('\/').join('\\');
+    return windowsFormat.replace(/($|\s)\//gi, '').split('\/').join('\\');
   }
 
   /**
-   * Returns arguments for Windows
-   * @returns {String[]}
+   * Returns path to command by checking if folder/file exists
+   * @param cmd
+   * @returns {Object}
    */
-  get winRealArgs() {
-    if (this._cmd.indexOf('Program Files ') > -1) {
+  static resolveIfPathExists(cmd) {
+    let cmdParts = cmd.trim().split(' ');
+    let toResolve = cmdParts[0];
+    let isResolved = false;
 
-      //command contains 2 space
-      return this._cmd.trim().split(' ').slice(3);
-    } else if (this._cmd.indexOf('Program Files') > -1) {
-
-      //command contains 1 space
-      return this._cmd.trim().split(' ').slice(2);
+    for (let i = 0; i < cmdParts.length - 1; i++) {
+      if (fs.existsSync(toResolve)) {
+        isResolved = true;
+        break;
+      } else {
+        toResolve = cmd.substring(0, cmd.indexOf(cmdParts[i + 1])) + cmdParts[i + 1];
+      }
     }
-    // doesn't contains spaces
-    return this._cmd.trim().split(' ').splice(1);
+
+    let realCmd = (isResolved) ? toResolve : cmdParts[0];
+    let realArgs = cmd.replace(realCmd, '').split(' ');
+
+    return {
+      realCmd: realCmd,
+      realArgs: realArgs,
+    }
+  }
+
+  /**
+   * Returns path to command by checking if exists in bin
+   * @param cmd
+   * @returns {Object}
+   */
+  static resolvePathInBin(cmd) {
+    let binSeparator = (Env.isWin) ? ';' : ':';
+    let binItems = process.env.PATH.trim().split(binSeparator);
+    let realCmd = null;
+
+    for (let binItem of binItems) {
+      let index = cmd.indexOf(binItem);
+      if (index !== -1) {
+        realCmd = binItem + cmd.replace(binItem, '').split(' ')[0];
+        break;
+      }
+    }
+
+    if (!realCmd) {
+      return {};
+    }
+
+    return {
+      realCmd: realCmd,
+      realArgs: cmd.replace(realCmd, '').split(' '),
+    };
   }
 }

@@ -93,8 +93,10 @@ export class S3Driver extends AbstractDriver {
             return;
           }
 
+          let regionPart = region ? `--region '${region}'` : '';
+
           let removeCommand = `export AWS_CONFIG_FILE=${credentialsFile};`;
-          removeCommand += `aws --profile _deep_ --region '${region}' s3 rb --force 's3://${bucketName}'`;
+          removeCommand += `aws --profile _deep_ ${regionPart} s3 rb --force 's3://${bucketName}'`;
 
           new Exec(removeCommand)
             .avoidBufferOverflow()
