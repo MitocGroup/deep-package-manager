@@ -4,8 +4,8 @@
 
 'use strict';
 
-import StringUtils from 'underscore.string';
 import FileSystem from 'fs';
+import path from 'path';
 import {Exec} from '../Helpers/Exec';
 import {FileWalker} from '../Helpers/FileWalker';
 import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
@@ -37,7 +37,7 @@ export class Frontend {
   constructor(property, microservicesConfig, basePath, deployId) {
     this._property = property;
     this._microservicesConfig = microservicesConfig;
-    this._basePath = StringUtils.rtrim(basePath, '/');
+    this._basePath = path.normalize(basePath);
     this._deployId = deployId;
   }
 
@@ -298,7 +298,7 @@ export class Frontend {
       // @todo: implement this in a smarter way
       if (config.isRoot) {
         try {
-          let indexFile = `${frontendPath}/index.html`;
+          let indexFile = path.join(frontendPath, 'index.html');
           let indexStats = FileSystem.lstatSync(indexFile);
 
           if (!indexStats.isFile()) {
@@ -384,9 +384,7 @@ export class Frontend {
    * @returns {String}
    */
   modulePath(moduleIdentifier) {
-    let base = this.path;
-
-    return `${base}/${moduleIdentifier}`;
+    return path.join(this._basePath, moduleIdentifier);
   }
 
   /**
@@ -395,15 +393,20 @@ export class Frontend {
   get configPath() {
     let base = this.path;
 
-    return `${base}/_config.json`;
+    return path.join(this.path, Frontend.CONFIG_FILE);
   }
 
   /**
    * @returns {String}
    */
   get path() {
-    let base = this._basePath;
+    return path.join(this._basePath, '_public');
+  }
 
-    return `${base}/_public`;
+  /**
+   * @returns {String}
+   */
+  static get CONFIG_FILE() {
+    return '_config.json';
   }
 }

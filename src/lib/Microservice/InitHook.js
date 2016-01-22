@@ -5,6 +5,7 @@
 'use strict';
 
 import FileSystem from 'fs';
+import path from 'path';
 
 export class InitHook {
   /**
@@ -51,7 +52,7 @@ export class InitHook {
    * @private
    */
   _getHookFile() {
-    return `${this._microservice.basePath}/${InitHook.HOOK_BASENAME}`;
+    return path.join(this._microservice.basePath, InitHook.HOOK_BASENAME);
   }
 
   /**

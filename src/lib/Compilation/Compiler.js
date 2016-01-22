@@ -5,8 +5,8 @@
 'use strict';
 
 import {Action} from '../Microservice/Metadata/Action';
-import StringUtils from 'underscore.string';
 import {_extend as extend} from 'util';
+import path from 'path';
 
 /**
  * Compiles a microservice
@@ -50,9 +50,9 @@ export class Compiler {
       let action = actionsObj[i];
 
       if (action.type === Action.LAMBDA) {
-        let source = StringUtils.trim(action.source, '/');
+        let source = path.normalize(action.source);
 
-        lambdas[action.identifier] = `${backendPath}/${source}`;
+        lambdas[action.identifier] = path.join(backendPath, source);
         lambdas._[action.identifier] = extend({}, action.engine);
         lambdas._[action.identifier].forceUserIdentity = action.forceUserIdentity;
       }
