@@ -88,6 +88,10 @@ export class Exec {
    * @returns {String}
    */
   get cmd() {
+    if (Env.isWin) {
+      return Exec.winCmd(this._cmd);
+    }
+
     return this._cmd;
   }
 
@@ -192,18 +196,11 @@ export class Exec {
    * @private
    */
   _spawn(cb) {
-    let cmdParts = this._cmd.trim().split(' ');
-    let realCmd = cmdParts.shift();
-    let realArgs = cmdParts.concat(this._args);
+    let cmd = this.cmd;
+    let resolvedCmd = Exec.resolveCmd(cmd);
     let uncaughtError = false;
 
-    //TODO - before cmd = Exec.winCmd(cmd);
-    if (Env.is) {
-      realCmd = this.winCmd;
-      realArgs = this.winRealArgs;
-    }
-
-    let proc = spawn(realCmd, realArgs, {
+    let proc = spawn(resolvedCmd.realCmd, resolvedCmd.realArgs, {
       cwd: this._cwd,
       stdio: [process.stdin, 'pipe', 'pipe'],
     });
@@ -395,8 +392,8 @@ export class Exec {
   }
 
   /**
-   * Returns path to command by checking if folder/file exists
-   * @param cmd
+   * Returns path and args for command by checking if folder/file exists
+   * @param {String} cmd
    * @returns {Object}
    */
   static resolveIfPathExists(cmd) {
@@ -414,7 +411,7 @@ export class Exec {
     }
 
     let realCmd = (isResolved) ? toResolve : cmdParts[0];
-    let realArgs = cmd.replace(realCmd, '').split(' ');
+    let realArgs = cmd.replace(realCmd, '').trim().split(' ');
 
     return {
       realCmd: realCmd,
@@ -423,18 +420,18 @@ export class Exec {
   }
 
   /**
-   * Returns path to command by checking if exists in bin
-   * @param cmd
+   * Returns path and args for command by checking if exists in bin
+   * @param {String} cmd
    * @returns {Object}
    */
-  static resolvePathInBin(cmd) {
+  static resolvePathInBinPath(cmd) {
     let binSeparator = (Env.isWin) ? ';' : ':';
     let binItems = process.env.PATH.trim().split(binSeparator);
     let realCmd = null;
 
     for (let binItem of binItems) {
       let index = cmd.indexOf(binItem);
-      if (index !== -1) {
+      if (index === 0) {
         realCmd = binItem + cmd.replace(binItem, '').split(' ')[0];
         break;
       }
@@ -446,7 +443,43 @@ export class Exec {
 
     return {
       realCmd: realCmd,
-      realArgs: cmd.replace(realCmd, '').split(' '),
+      realArgs: cmd.replace(realCmd, '').trim().split(' '),
     };
+  }
+
+  /**
+   * Returns path and args for command by checking with which
+   * @param {String} cmd
+   * @returns {Object}
+   */
+  static resolvePathByWhich(cmd) {
+    let toCheck = cmd.split(' ')[0];
+    let status = syncExec('which ' + toCheck).status;
+
+    if (status !== 0) {
+      return {};
+    }
+
+    return {
+      realCmd: toCheck,
+      realArgs: cmd.replace(toCheck, '').trim().split(' '),
+    };
+  }
+
+  static resolveCmd(cmd) {
+    let result = Exec.resolvePathInBinPath(cmd);
+    if (result.hasOwnProperty('realCmd') && result.realCmd) {
+      return result;
+    }
+
+    result = Exec.resolvePathByWhich(cmd);
+    if (result.hasOwnProperty('realCmd') && result.realCmd) {
+      return result;
+    }
+
+    result = Exec.resolveIfPathExists(cmd);
+    if (result.hasOwnProperty('realCmd') && result.realCmd) {
+      return result;
+    }
   }
 }
