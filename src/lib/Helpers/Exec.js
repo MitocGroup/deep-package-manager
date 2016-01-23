@@ -200,7 +200,7 @@ export class Exec {
     let resolvedCmd = Exec.resolveCmd(cmd);
     let uncaughtError = false;
 
-    let proc = spawn(resolvedCmd.realCmd, resolvedCmd.realArgs, {
+    let proc = spawn(resolvedCmd.realCmd, resolvedCmd.realArgs.concat(this._args), {
       cwd: this._cwd,
       stdio: [process.stdin, 'pipe', 'pipe'],
     });
