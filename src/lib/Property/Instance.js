@@ -859,12 +859,7 @@ export class Instance {
           return;
         }
 
-        console.log('destination path before: ', this._path);
-
-        let destinationPath = this._path.replace('\\src', '');
-        console.log('destination path after: ', destinationPath);
-
-        new Exec(`cp -R ${repoDir}${Path.sep}src${Path.sep} ${destinationPath}`)
+        new Exec(`cp -R ${repoDir}${Path.sep}src${Path.sep}. ${this._path}`)
           .avoidBufferOverflow()
           .run((result) => {
             this._microservices = null; // @todo: reset microservices?
