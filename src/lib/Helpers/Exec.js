@@ -197,10 +197,14 @@ export class Exec {
    */
   _spawn(cb) {
     let cmd = this.cmd;
-    let resolvedCmd = Exec.resolveCmd(cmd);
+    let realCmd = Exec.resolveCmd(cmd);
+    let realArgs = (cmd === realCmd ) ? this._args: cmd.replace(realCmd, '').trim().split(' ').concat(this._args);
     let uncaughtError = false;
 
-    let proc = spawn(resolvedCmd.realCmd, resolvedCmd.realArgs.concat(this._args), {
+    // update path with spaces
+    //realCmd = `"${realCmd}"`;
+
+    let proc = spawn(realCmd, realArgs, {
       cwd: this._cwd,
       stdio: [process.stdin, 'pipe', 'pipe'],
     });
@@ -392,9 +396,9 @@ export class Exec {
   }
 
   /**
-   * Returns path and args for command by checking if folder/file exists
+   * Returns path for command by checking if folder/file exists
    * @param {String} cmd
-   * @returns {Object}
+   * @returns {null|String}
    */
   static resolveIfPathExists(cmd) {
     let cmdParts = cmd.trim().split(' ');
@@ -410,19 +414,13 @@ export class Exec {
       }
     }
 
-    let realCmd = (isResolved) ? toResolve : cmdParts[0];
-    let realArgs = cmd.replace(realCmd, '').trim().split(' ');
-
-    return {
-      realCmd: realCmd,
-      realArgs: realArgs,
-    }
+    return (isResolved) ? toResolve : cmdParts[0];
   }
 
   /**
-   * Returns path and args for command by checking if exists in bin
+   * Returns path for command by checking if exists in bin
    * @param {String} cmd
-   * @returns {Object}
+   * @returns {null|String}
    */
   static resolvePathInBinPath(cmd) {
     let binSeparator = (Env.isWin) ? ';' : ':';
@@ -437,48 +435,38 @@ export class Exec {
       }
     }
 
-    if (!realCmd) {
-      return {};
-    }
-
-    return {
-      realCmd: realCmd,
-      realArgs: cmd.replace(realCmd, '').trim().split(' '),
-    };
+    return realCmd;
   }
 
   /**
-   * Returns path and args for command by checking with which
+   * Returns path for command by checking with which
    * @param {String} cmd
-   * @returns {Object}
+   * @returns {null|String}
    */
   static resolvePathByWhich(cmd) {
     let toCheck = cmd.split(' ')[0];
     let status = syncExec('which ' + toCheck).status;
 
     if (status !== 0) {
-      return {};
+      return null;
     }
 
-    return {
-      realCmd: toCheck,
-      realArgs: cmd.replace(toCheck, '').trim().split(' '),
-    };
+    return toCheck;
   }
 
   static resolveCmd(cmd) {
     let result = Exec.resolvePathInBinPath(cmd);
-    if (result.hasOwnProperty('realCmd') && result.realCmd) {
+    if (result) {
       return result;
     }
 
     result = Exec.resolvePathByWhich(cmd);
-    if (result.hasOwnProperty('realCmd') && result.realCmd) {
+    if (result) {
       return result;
     }
 
     result = Exec.resolveIfPathExists(cmd);
-    if (result.hasOwnProperty('realCmd') && result.realCmd) {
+    if (result) {
       return result;
     }
   }
