@@ -17,6 +17,7 @@ export default Joi.object().keys({
   source: JoiHelper.string().replace(/\//gi, path.sep),
   cacheTtl: Joi.number().optional().integer().min(Action.NO_CACHE).default(Action.NO_CACHE),
   forceUserIdentity: assureTypeLambda(Joi.boolean().optional().default(true)),
+  validationSchema: JoiHelper.maybeString(),
 
   // Lambda config
   engine: assureTypeLambda(Joi.object().optional().keys({

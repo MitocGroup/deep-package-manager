@@ -13,13 +13,14 @@ suite('Microservice/Metadata/Action', function() {
     description: 'Lambda for retrieve counts',
     type: 'lambda',
     source: 'src/Property/RetrieveCounts',
+    validationSchema: 'Sample',
     engine: {
       memory: 120,
       timeout: 60,
       runtime: 'nodejs',
     },
     methods: ['GET', 'POST'],
-    forceUserIdentity: 'test-force-user-identity',
+    forceUserIdentity: true,
   };
 
   let action = new Action(configInput.resourceName, configInput.name, configInput);
@@ -51,29 +52,33 @@ suite('Microservice/Metadata/Action', function() {
     chai.expect(action.resourceName).to.equal(configInput.resourceName);
   });
 
-  test('Check name getter returns valid  action name', function() {
+  test('Check name getter returns valid action name', function() {
     chai.expect(action.name).to.equal(configInput.name);
   });
 
-  test('Check identifier getter returns valid  identifier', function() {
+  test('Check identifier getter returns valid identifier', function() {
     configInput.identifier = action.identifier;
     chai.expect(action.identifier).to.equal(`${configInput.resourceName}-${configInput.name}`);
   });
 
-  test('Check description getter returns valid  action description', function() {
+  test('Check description getter returns valid action description', function() {
     chai.expect(action.description).to.equal(configInput.description);
   });
 
-  test('Check type getter returns valid  action type', function() {
+  test('Check type getter returns valid action type', function() {
     chai.expect(action.type).to.equal(configInput.type);
   });
 
-  test('Check methods getter returns valid  action methods', function() {
+  test('Check methods getter returns valid action methods', function() {
     chai.expect(action.methods).to.eql(configInput.methods);
   });
 
-  test('Check source getter returns valid  action source', function() {
+  test('Check source getter returns valid action source', function() {
     chai.expect(action.source).to.equal(configInput.source);
+  });
+
+  test('Check validationSchema getter returns valid action validationSchema', function() {
+    chai.expect(action.validationSchema).to.equal(configInput.validationSchema);
   });
 
   test('Check extract() method returns valid action object', function() {
@@ -86,13 +91,14 @@ suite('Microservice/Metadata/Action', function() {
       description: 'Lambda for retrieve counts',
       type: 'lambda',
       source: 'src/Property/RetrieveCounts',
+      validationSchema: 'Sample',
       engine: {
         memory: 120,
         timeout: 60,
         runtime: 'nodejs',
       },
       methods: ['GET', 'POST'],
-      forceUserIdentity: 'test-force-user-identity',
+      forceUserIdentity: true,
     };
 
     action = new Action(configInput.resourceName, configInput.name, configInput);
