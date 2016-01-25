@@ -3,5 +3,5 @@ if [ -d 'lib/' ] && [ "$OSTYPE" != "msys" ] && [ "$OSTYPE" != "win32" ] && [ "$O
 elif [ -d 'lib/' ] && ([ "$OSTYPE" == "win32" ] || [ "$OSTYPE" == "win64" ]); then
     echo "You should have installed and configured http://git-scm.com/ and run all bash command by using git-bash.exe"
 elif [ -d 'lib/' ] && [ "$OSTYPE" == "msys" ]; then
-    echo "Running obfuscate-compiled from git-bash without results"
+    echo "Skipping running obfuscate-compiled from git-bash"
 fi
