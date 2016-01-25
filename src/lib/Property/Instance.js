@@ -6,6 +6,7 @@
 
 import AWS from 'aws-sdk';
 import FileSystem from 'fs';
+import FileSystemExtra from 'fs-extra';
 import Path from 'path';
 import {Instance as Provisioning} from '../Provisioning/Instance';
 import {Exception} from '../Exception/Exception';
@@ -847,8 +848,10 @@ export class Instance {
     let repoName = engineRepo.replace(/^.+\/([^\/]+)\.git$/i, '$1');
     let repoDir = Path.join(tmpDir, repoName);
 
+    FileSystemExtra.removeSync(repoDir);
+
     // @todo: replace it with https://www.npmjs.com/package/nodegit
-    new Exec(`rm -rf ${repoDir}; git clone --depth=1 ${engineRepo} ${repoDir}`)
+    new Exec(`git clone --depth=1 ${engineRepo} ${repoDir}`)
       .avoidBufferOverflow()
       .run((result) => {
         if (result.failed) {
@@ -856,7 +859,7 @@ export class Instance {
           return;
         }
 
-        new Exec(`cp -R ${repoDir}/src/* ${this._path}/`)
+        new Exec(`cp -R ${repoDir}${Path.sep}src${Path.sep}. ${this._path}`)
           .avoidBufferOverflow()
           .run((result) => {
             this._microservices = null; // @todo: reset microservices?

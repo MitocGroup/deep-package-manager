@@ -5,8 +5,12 @@
 'use strict';
 
 import ChildProcess from 'child_process';
+import {spawn} from 'spawn-cmd';
 import syncExec from 'sync-exec';
 import {EventEmitter} from 'events';
+import {Env} from './Env';
+import os from 'os';
+import fs from 'fs';
 
 export class Exec {
   /**
@@ -84,6 +88,10 @@ export class Exec {
    * @returns {String}
    */
   get cmd() {
+    if (Env.isWin) {
+      return Exec.winCmd(this._cmd);
+    }
+
     return this._cmd;
   }
 
@@ -188,12 +196,12 @@ export class Exec {
    * @private
    */
   _spawn(cb) {
-    let cmdParts = this._cmd.trim().split(' ');
-    let realCmd = cmdParts.shift();
-    let realArgs = cmdParts.concat(this._args);
+    let cmd = this.cmd;
+    let realCmd = Exec.resolveCmd(cmd);
+    let realArgs = (cmd === realCmd ) ? this._args: cmd.replace(realCmd, '').trim().split(' ').concat(this._args);
     let uncaughtError = false;
 
-    let proc = ChildProcess.spawn(realCmd, realArgs, {
+    let proc = spawn(realCmd, realArgs, {
       cwd: this._cwd,
       stdio: [process.stdin, 'pipe', 'pipe'],
     });
@@ -363,6 +371,98 @@ export class Exec {
    * @returns {String}
    */
   static get PIPE_VOID() {
+
+    if (Env.isWin) {
+      return ' > NUL 2>&1 ';
+    }
+
     return ' > /dev/null 2>&1';
+  }
+
+  /**
+   * Returns command in Windows format
+   * @returns {String}
+   */
+  static winCmd(cmd) {
+
+    let windowsFormat = cmd.replace(/(^|\s)(?:\/([a-z]{1}))(\/|\s*$)/gi, '$1 $2:$3');
+
+    return windowsFormat.split('\/').join('\\');
+  }
+
+  /**
+   * Returns path for command by checking if folder/file exists
+   * @param {String} cmd
+   * @returns {null|String}
+   */
+  static resolveIfPathExists(cmd) {
+    let cmdParts = cmd.trim().split(' ');
+    let toResolve = cmdParts[0];
+    let isResolved = false;
+
+    for (let i = 0; i < cmdParts.length - 1; i++) {
+      if (fs.existsSync(toResolve)) {
+        isResolved = true;
+        break;
+      } else {
+        toResolve = cmd.substring(0, cmd.indexOf(cmdParts[i + 1])) + cmdParts[i + 1];
+      }
+    }
+
+    return (isResolved) ? toResolve : cmdParts[0];
+  }
+
+  /**
+   * Returns path for command by checking if exists in bin
+   * @param {String} cmd
+   * @returns {null|String}
+   */
+  static resolvePathInBinPath(cmd) {
+    let binSeparator = (Env.isWin) ? ';' : ':';
+    let binItems = process.env.PATH.trim().split(binSeparator);
+    let realCmd = null;
+
+    for (let binItem of binItems) {
+      let index = cmd.indexOf(binItem);
+      if (index === 0) {
+        realCmd = binItem + cmd.replace(binItem, '').split(' ')[0];
+        break;
+      }
+    }
+
+    return realCmd;
+  }
+
+  /**
+   * Returns path for command by checking with which
+   * @param {String} cmd
+   * @returns {null|String}
+   */
+  static resolvePathByWhich(cmd) {
+    let toCheck = cmd.split(' ')[0];
+    let status = syncExec('which ' + toCheck).status;
+
+    if (status !== 0) {
+      return null;
+    }
+
+    return toCheck;
+  }
+
+  static resolveCmd(cmd) {
+    let result = Exec.resolvePathInBinPath(cmd);
+    if (result) {
+      return result;
+    }
+
+    result = Exec.resolvePathByWhich(cmd);
+    if (result) {
+      return result;
+    }
+
+    result = Exec.resolveIfPathExists(cmd);
+    if (result) {
+      return result;
+    }
   }
 }

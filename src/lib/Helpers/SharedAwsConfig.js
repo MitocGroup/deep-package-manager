@@ -6,6 +6,7 @@
 
 import AWS from 'aws-sdk';
 import {Exec} from './Exec';
+import {Env} from './Env';
 import path from 'path';
 import {_extend as extend} from 'util';
 import {Prompt} from './Terminal/Prompt';
@@ -225,9 +226,16 @@ export class SharedAwsConfig {
         secretAccessKey: null,
         region: null,
         refresh: function() {
-          let accessKeyIdResult = new Exec('aws configure get aws_access_key_id 2>/dev/null').runSync();
-          let secretAccessKeyResult = new Exec('aws configure get aws_secret_access_key 2>/dev/null').runSync();
-          let regionResult = new Exec('aws configure get region 2>/dev/null').runSync();
+          let cmdPipe = Env.isWin ? '2 > NUL' : '2>/dev/null';
+
+          let accessKeyIdConfigureCmd =`aws configure get aws_access_key_id ${cmdPipe}`;
+          let secretAccessKeyConfigureCmd = `aws configure get aws_secret_access_key ${cmdPipe}`;
+          let regionConfigureCmd = `aws configure get region ${cmdPipe}`;
+
+
+          let accessKeyIdResult = new Exec(accessKeyIdConfigureCmd).runSync();
+          let secretAccessKeyResult = new Exec(secretAccessKeyConfigureCmd).runSync();
+          let regionResult = new Exec(regionConfigureCmd).runSync();
 
           this.accessKeyId = accessKeyIdResult.succeed ? accessKeyIdResult.result : null;
           this.secretAccessKey = secretAccessKeyResult.succeed ? secretAccessKeyResult.result : null;
