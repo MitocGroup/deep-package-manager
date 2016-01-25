@@ -5,6 +5,7 @@
 'use strict';
 
 import ChildProcess from 'child_process';
+import {spawn} from 'spawn-cmd';
 import syncExec from 'sync-exec';
 import {EventEmitter} from 'events';
 import {Env} from './Env';
@@ -200,7 +201,9 @@ export class Exec {
     let realArgs = (cmd === realCmd ) ? this._args: cmd.replace(realCmd, '').trim().split(' ').concat(this._args);
     let uncaughtError = false;
 
-    let proc = ChildProcess.spawn(realCmd, realArgs, {
+    let spawnCmd = Env.isWin ? spawn: ChildProcess.spawn;
+
+    let proc = spawnCmd(realCmd, realArgs, {
       cwd: this._cwd,
       stdio: [process.stdin, 'pipe', 'pipe'],
     });

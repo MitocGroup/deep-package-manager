@@ -78,7 +78,8 @@
     "css-find-assets": "MitocGroup/css-find-assets",
     "css-parse": "^2.0.x",
     "readline-sync": "^1.2.x",
-    "json-pointer": "^0.3.x"
+    "json-pointer": "^0.3.x",
+    "spawn-cmd": "^0.0.x"
   },
   "optionalDependencies": {
     "aws-sdk": "^2.2.x"
