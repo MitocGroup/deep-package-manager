@@ -201,9 +201,6 @@ export class Exec {
     let realArgs = (cmd === realCmd ) ? this._args: cmd.replace(realCmd, '').trim().split(' ').concat(this._args);
     let uncaughtError = false;
 
-    // update path with spaces
-    //realCmd = `"${realCmd}"`;
-
     let proc = spawn(realCmd, realArgs, {
       cwd: this._cwd,
       stdio: [process.stdin, 'pipe', 'pipe'],
@@ -388,11 +385,9 @@ export class Exec {
    */
   static winCmd(cmd) {
 
-    let windowsFormat = cmd.replace(/(^|\s)\/[a-z]+/gi, (diskName) => {
-      return ' ' + diskName.toUpperCase() + ':';
-    });
+    let windowsFormat = cmd.replace(/(^|\s)(?:\/([a-z]{1}))(\/|\s*$)/gi, '$1 $2:$3');
 
-    return windowsFormat.replace(/($|\s)\//gi, '').split('\/').join('\\');
+    return windowsFormat.split('\/').join('\\');
   }
 
   /**

@@ -845,7 +845,7 @@ export class Instance {
     console.log(`Checking out the frontend engine '${suitableEngine}' from '${engineRepo}'`);
 
     let tmpDir = OS.tmpdir();
-    let repoName = engineRepo.replace(/^.+[\/|\\]([^\/\\]+)\.git$/i, '$1');
+    let repoName = engineRepo.replace(/^.+\/([^\/]+)\.git$/i, '$1');
     let repoDir = Path.join(tmpDir, repoName);
 
     FileSystemExtra.removeSync(repoDir);

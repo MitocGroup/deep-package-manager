@@ -226,16 +226,12 @@ export class SharedAwsConfig {
         secretAccessKey: null,
         region: null,
         refresh: function() {
+          let cmdPipe = Env.isWin ? '2 > NUL' : '2>/dev/null';
 
-          let accessKeyIdConfigureCmd = 'aws configure get aws_access_key_id 2>/dev/null';
-          let secretAccessKeyConfigureCmd = 'aws configure get aws_secret_access_key 2>/dev/null';
-          let regionConfigureCmd = 'aws configure get region 2>/dev/null';
+          let accessKeyIdConfigureCmd =`aws configure get aws_access_key_id ${cmdPipe}`;
+          let secretAccessKeyConfigureCmd = `aws configure get aws_secret_access_key ${cmdPipe}`;
+          let regionConfigureCmd = `aws configure get region ${cmdPipe}`;
 
-          if(Env.isWin) {
-            accessKeyIdConfigureCmd = 'aws configure get aws_access_key_id 2 > NUL';
-            secretAccessKeyConfigureCmd = 'aws configure get aws_secret_access_key 2 > NUL';
-            regionConfigureCmd = 'aws configure get region 2 > NUL';
-          }
 
           let accessKeyIdResult = new Exec(accessKeyIdConfigureCmd).runSync();
           let secretAccessKeyResult = new Exec(secretAccessKeyConfigureCmd).runSync();

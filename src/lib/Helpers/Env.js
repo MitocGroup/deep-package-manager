@@ -6,7 +6,6 @@ export class Env {
 
   /**
    * @returns {Boolean}
-   * @private
    */
   static get isWin() {
     return /^win/.test(process.platform);
