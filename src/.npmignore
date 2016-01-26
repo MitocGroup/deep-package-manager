@@ -3,4 +3,5 @@ tests
 /lib
 .gitignore
 coverage
+.parameters.json
 testDirectories

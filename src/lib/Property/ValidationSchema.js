@@ -6,20 +6,16 @@
 
 import {FileWalker} from '../Helpers/FileWalker';
 import Path from 'path';
-import JsonFile from 'jsonfile';
 import FileSystem from 'fs';
 
-/**
- * DB model class
- */
-export class Model {
+export class ValidationSchema {
   /**
    * @param {String} name
-   * @param {Object} definition
+   * @param {String} schemaPath
    */
-  constructor(name, definition) {
+  constructor(name, schemaPath) {
     this._name = name;
-    this._definition = definition;
+    this._schemaPath = schemaPath;
   }
 
   /**
@@ -27,11 +23,13 @@ export class Model {
    * @returns {Model[]}
    */
   static create(...directories) {
-    let ext = Model.EXTENSION;
     let walker = new FileWalker(FileWalker.RECURSIVE);
-    let filter = FileWalker.matchExtensionsFilter(FileWalker.skipDotsFilter(), ext);
+    let filter = FileWalker.matchExtensionsFilter(
+      FileWalker.skipDotsFilter(),
+      ValidationSchema.EXTENSION
+    );
 
-    let models = [];
+    let validationSchemas = [];
 
     for (let i in directories) {
       if (!directories.hasOwnProperty(i)) {
@@ -48,17 +46,15 @@ export class Model {
             continue;
           }
 
-          let modelFile = files[j];
+          let schemaFile = files[j];
+          let name = Path.basename(schemaFile, `.${ValidationSchema.EXTENSION}`);
 
-          let name = Path.basename(modelFile, `.${ext}`);
-          let definition = JsonFile.readFileSync(modelFile);
-
-          models.push(new Model(name, definition));
+          validationSchemas.push(new ValidationSchema(name, schemaFile));
         }
       }
     }
 
-    return models;
+    return validationSchemas;
   }
 
   /**
@@ -69,27 +65,16 @@ export class Model {
   }
 
   /**
-   * @returns {Object}
+   * @returns {String}
    */
-  get definition() {
-    return this._definition;
+  get schemaPath() {
+    return this._schemaPath;
   }
 
   /**
    * @returns {String}
    */
   static get EXTENSION() {
-    return 'json';
-  }
-
-  /**
-   * @returns {Object}
-   */
-  extract() {
-    let obj = {};
-
-    obj[this._name] = this._definition;
-
-    return obj;
+    return 'js';
   }
 }

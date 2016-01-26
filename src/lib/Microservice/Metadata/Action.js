@@ -23,6 +23,7 @@ export class Action {
     this._engine = config.engine;
     this._cacheTtl = config.cacheTtl;
     this._forceUserIdentity = config.forceUserIdentity;
+    this._validationSchema = config.validationSchema;
   }
 
   /**
@@ -54,6 +55,13 @@ export class Action {
       Action.LAMBDA,
       Action.EXTERNAL,
     ];
+  }
+
+  /**
+   * @returns {String|null}
+   */
+  get validationSchema() {
+    return this._validationSchema;
   }
 
   /**
@@ -165,6 +173,7 @@ export class Action {
       cacheEnabled: this.cacheEnabled,
       cacheTtl: this.cacheTtl,
       forceUserIdentity: this.forceUserIdentity,
+      validationSchema: this.validationSchema,
     };
   }
 }

@@ -18,7 +18,10 @@ suite('Microservice/Config', function() {
       backend: 'Backend',
       docs: 'Docs',
       frontend: 'Frontend',
-      models: 'Models',
+      models: 'Data/Models',
+      validation: 'Data/Validation',
+      fixtures: 'Data/Fixtures',
+      migration: 'Data/Migration',
     },
   };
 
