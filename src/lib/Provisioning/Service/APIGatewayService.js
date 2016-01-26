@@ -926,12 +926,16 @@ export class APIGatewayService extends AbstractService {
    */
   _getMethodCorsHeaders(prefix, httpMethod, resourceMethods = null) {
     let headers = {};
+    let exposedHeaders = ['x-amzn-RequestId', 'x-amzn-original-RequestId'];
 
     headers[`${prefix}.Access-Control-Allow-Origin`] = resourceMethods ? "'*'" : true;
 
     if (httpMethod === 'OPTIONS') {
       headers[`${prefix}.Access-Control-Allow-Headers`] = resourceMethods ? APIGatewayService.ALLOWED_CORS_HEADERS : true;
       headers[`${prefix}.Access-Control-Allow-Methods`] = resourceMethods ? `'${resourceMethods.join(',')}'` : true;
+    } else {
+      headers[`${prefix}.Access-Control-Expose-Headers`] = resourceMethods ? `'${exposedHeaders.join(',')}'` : true;
+      headers[`${prefix}.x-amzn-original-RequestId`] = resourceMethods ? "'integration.response.header.x-amzn-RequestId'" : true;
     }
 
     return headers;
