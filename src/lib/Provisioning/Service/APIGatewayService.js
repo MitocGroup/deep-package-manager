@@ -935,7 +935,7 @@ export class APIGatewayService extends AbstractService {
       headers[`${prefix}.Access-Control-Allow-Methods`] = resourceMethods ? `'${resourceMethods.join(',')}'` : true;
     } else {
       headers[`${prefix}.Access-Control-Expose-Headers`] = resourceMethods ? `'${exposedHeaders.join(',')}'` : true;
-      headers[`${prefix}.x-amzn-original-RequestId`] = resourceMethods ? "'integration.response.header.x-amzn-RequestId'" : true;
+      headers[`${prefix}.x-amzn-original-RequestId`] = resourceMethods ? "integration.response.header.x-amzn-RequestId" : true;
     }
 
     return headers;
