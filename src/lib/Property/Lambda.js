@@ -251,7 +251,7 @@ export class Lambda {
 
     validationSchemas.forEach((schema) => {
       let schemaPath = schema.schemaPath;
-      let destinationSchemaPath = Path.join(schemasPath, schema.name);
+      let destinationSchemaPath = Path.join(schemasPath, `${schema.name}.js`);
 
       if (useSymlink) {
         FileSystemExtra.ensureSymlinkSync(schemaPath, destinationSchemaPath);

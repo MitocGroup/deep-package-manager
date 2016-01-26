@@ -6,6 +6,7 @@
 
 import {FileWalker} from '../Helpers/FileWalker';
 import Path from 'path';
+import FileSystem from 'fs';
 
 export class ValidationSchema {
   /**
@@ -36,17 +37,20 @@ export class ValidationSchema {
       }
 
       let dir = directories[i];
-      let files = walker.walk(dir, filter);
 
-      for (let j in files) {
-        if (!files.hasOwnProperty(j)) {
-          continue;
+      if (FileSystem.existsSync(dir)) {
+        let files = walker.walk(dir, filter);
+
+        for (let j in files) {
+          if (!files.hasOwnProperty(j)) {
+            continue;
+          }
+
+          let schemaFile = files[j];
+          let name = Path.basename(schemaFile, `.${ValidationSchema.EXTENSION}`);
+
+          validationSchemas.push(new ValidationSchema(name, schemaFile));
         }
-
-        let schemaFile = files[j];
-        let name = Path.basename(schemaFile, `.${ValidationSchema.EXTENSION}`);
-
-        validationSchemas.push(new ValidationSchema(name, schemaFile));
       }
     }
 
