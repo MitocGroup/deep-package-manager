@@ -70,8 +70,10 @@ suite('Provisioning/Service/APIGatewayService', function() {
     chai.expect(apiGatewayService.getJsonResponseTemplate('OPTIONS')).to.be.eql(expectedResult);
   });
 
-  test('Check ALLOWED_CORS_HEADERS static getter returns valid string', function() {
-    chai.expect(APIGatewayService.ALLOWED_CORS_HEADERS).to.be.equal("'Content-Type,X-Amz-Date,X-Amz-Security-Token,Authorization'");
+  test('Check ALLOWED_CORS_HEADERS static getter returns valid Array of headers', function() {
+    let corsHeaders = ['Content-Type', 'X-Amz-Date', 'X-Amz-Security-Token', 'Authorization'];
+
+    chai.expect(APIGatewayService.ALLOWED_CORS_HEADERS).to.be.eql(corsHeaders);
   });
 
   test('Check jsonEmptyModel getter returns valid { "application/json": "Empty" }', function() {
@@ -169,6 +171,8 @@ suite('Provisioning/Service/APIGatewayService', function() {
     let httpMethod = 'GET';
     let expectedResult = {
       'method.response.header.Access-Control-Allow-Origin': true,
+      'method.response.header.Access-Control-Expose-Headers': true,
+      'method.response.header.x-amzn-original-RequestId': true,
     };
 
     try {
@@ -194,6 +198,8 @@ suite('Provisioning/Service/APIGatewayService', function() {
 
     let expectedResult = {
       'method.request.header.Access-Control-Allow-Origin': true,
+      'method.request.header.Access-Control-Expose-Headers': true,
+      'method.request.header.x-amzn-original-RequestId': true,
       'method.request.querystring._deepQsHash': true,
     };
 
@@ -365,7 +371,9 @@ suite('Provisioning/Service/APIGatewayService', function() {
         'application/json': 'Empty',
       },
       requestParameters: {
-        'method.request.header.Access-Control-Allow-Origin': true
+        'method.request.header.Access-Control-Allow-Origin': true,
+        'method.request.header.Access-Control-Expose-Headers': true,
+        'method.request.header.x-amzn-original-RequestId': true,
       },
       resourceId: 'test1Id',
       resourcePath: 'testTesourcePath1',
