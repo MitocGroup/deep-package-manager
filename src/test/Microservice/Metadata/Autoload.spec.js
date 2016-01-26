@@ -8,7 +8,10 @@ suite('Microservice/Metadata/Autoload', function() {
     backend: 'Backend',
     docs: 'Docs',
     frontend: 'Frontend',
-    models: 'Models',
+    models: 'Data/Models',
+    validation: 'Data/Validation',
+    fixtures: 'Data/Fixtures',
+    migration: 'Data/Migration',
   };
   let basePath = 'basePath';
   let configExpectedResult = {
@@ -16,6 +19,9 @@ suite('Microservice/Metadata/Autoload', function() {
     docs: `${basePath}/${configInput.docs}`,
     frontend: `${basePath}/${configInput.frontend}`,
     models: `${basePath}/${configInput.models}`,
+    validation: `${basePath}/${configInput.validation}`,
+    fixtures: `${basePath}/${configInput.fixtures}`,
+    migration: `${basePath}/${configInput.migration}`,
   };
 
   let autoload = new Autoload(configInput, basePath);
@@ -25,7 +31,7 @@ suite('Microservice/Metadata/Autoload', function() {
   });
 
   test('Check frontend getter returns valid value for frontend', function() {
-    chai.expect(autoload.frontend).to.be.equal(`${basePath}/${configInput.frontend}`);
+    chai.expect(autoload.frontend).to.be.equal(configExpectedResult.frontend);
   });
 
   test('Check backend getter returns valid value for backend', function() {
@@ -38,6 +44,18 @@ suite('Microservice/Metadata/Autoload', function() {
 
   test('Check models getter returns valid value for models', function() {
     chai.expect(autoload.models).to.be.equal(configExpectedResult.models);
+  });
+
+  test('Check validation getter returns valid value for validation', function() {
+    chai.expect(autoload.validation).to.be.equal(configExpectedResult.validation);
+  });
+
+  test('Check fixtures getter returns valid value for fixtures', function() {
+    chai.expect(autoload.fixtures).to.be.equal(configExpectedResult.fixtures);
+  });
+
+  test('Check migration getter returns valid value for migration', function() {
+    chai.expect(autoload.migration).to.be.equal(configExpectedResult.migration);
   });
 
   test('Check extract method returns valid istance of Autoload', function() {

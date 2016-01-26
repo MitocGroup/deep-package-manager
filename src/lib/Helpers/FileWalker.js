@@ -150,11 +150,11 @@ export class FileWalker {
   }
 
   /**
-   * @param {Function} originalFilter
-   * @param {String[]} extensions
+   * @param {Function|null} originalFilter
+   * @param {String|*} extensions
    * @returns {Function}
    */
-  static matchExtensionsFilter(originalFilter, ...extensions) {
+  static matchExtensionsFilter(originalFilter = null, ...extensions) {
     let extensionsPlain = extensions.join('|');
     let regex = new RegExp(`\\.(${extensionsPlain})$`, 'i');
 
@@ -164,10 +164,10 @@ export class FileWalker {
   }
 
   /**
-   * @param {Function} originalFilter
+   * @param {Function|null} originalFilter
    * @returns {Function}
    */
-  static skipDotsFilter(originalFilter) {
+  static skipDotsFilter(originalFilter = null) {
     return (file) => {
       let basename = path.basename(file);
 

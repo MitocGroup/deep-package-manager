@@ -2,3 +2,5 @@ test
 tests
 /lib
 .gitignore
+.parameters.json
+testDirectories

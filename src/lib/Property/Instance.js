@@ -19,6 +19,7 @@ import {Lambda} from './Lambda';
 import {WaitFor} from '../Helpers/WaitFor';
 import {Frontend} from './Frontend';
 import {Model} from './Model';
+import {ValidationSchema} from './ValidationSchema';
 import {S3Service} from '../Provisioning/Service/S3Service';
 import {Config} from './Config';
 import {Hash} from '../Helpers/Hash';
@@ -265,6 +266,7 @@ export class Instance {
     }
 
     let modelsDirs = [];
+    let validationSchemasDirs = [];
 
     for (let i in microservices) {
       if (!microservices.hasOwnProperty(i)) {
@@ -292,11 +294,13 @@ export class Instance {
       microservicesConfig[microserviceConfig.identifier] = microserviceConfig;
 
       modelsDirs.push(microservice.autoload.models);
+      validationSchemasDirs.push(microservice.autoload.validation);
     }
 
     this._config.microservices = microservicesConfig;
 
     let models = Model.create(...modelsDirs);
+    let validationSchemas = ValidationSchema.create(...validationSchemasDirs);
 
     this._config.models = models.map(m => m.extract());
 
