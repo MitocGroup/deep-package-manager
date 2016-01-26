@@ -201,7 +201,9 @@ export class Exec {
     let realArgs = (cmd === realCmd ) ? this._args: cmd.replace(realCmd, '').trim().split(' ').concat(this._args);
     let uncaughtError = false;
 
-    let proc = spawn(realCmd, realArgs, {
+    let spawnCmd = Env.isWin ? spawn: ChildProcess.spawn;
+
+    let proc = spawnCmd(realCmd, realArgs, {
       cwd: this._cwd,
       stdio: [process.stdin, 'pipe', 'pipe'],
     });
