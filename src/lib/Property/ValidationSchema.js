@@ -25,8 +25,7 @@ export class ValidationSchema {
     let walker = new FileWalker(FileWalker.RECURSIVE);
     let filter = FileWalker.matchExtensionsFilter(
       FileWalker.skipDotsFilter(),
-      ValidationSchema.EXTENSION_JSON,
-      ValidationSchema.EXTENSION_JS
+      ValidationSchema.EXTENSION
     );
 
     let validationSchemas = [];
@@ -45,7 +44,7 @@ export class ValidationSchema {
         }
 
         let schemaFile = files[j];
-        let name = Path.basename(schemaFile).replace(/\.[^/.]+$/, '');
+        let name = Path.basename(schemaFile, `.${ValidationSchema.EXTENSION}`);
 
         validationSchemas.push(new ValidationSchema(name, schemaFile));
       }
@@ -71,14 +70,7 @@ export class ValidationSchema {
   /**
    * @returns {String}
    */
-  static get EXTENSION_JSON() {
-    return 'json';
-  }
-
-  /**
-   * @returns {String}
-   */
-  static get EXTENSION_JS() {
+  static get EXTENSION() {
     return 'js';
   }
 }

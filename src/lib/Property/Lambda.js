@@ -239,6 +239,29 @@ export class Lambda {
   }
 
   /**
+   * @param {Object[]} validationSchemas
+   * @param {Boolean} useSymlink
+   */
+  injectValidationSchemas(validationSchemas, useSymlink = false) {
+    let schemasPath = Path.join(this.path, Core.AWS.Lambda.Runtime.VALIDATION_SCHEMAS_DIR);
+
+    if (FileSystem.existsSync(validationSchemas)) {
+      FileSystemExtra.removeSync(validationSchemas);
+    }
+
+    validationSchemas.forEach((schema) => {
+      let schemaPath = schema.schemaPath;
+      let destinationSchemaPath = Path.join(schemasPath, schema.name);
+
+      if (useSymlink) {
+        FileSystemExtra.ensureSymlinkSync(schemaPath, destinationSchemaPath);
+      } else {
+        FileSystemExtra.copySync(schemaPath, destinationSchemaPath);
+      }
+    });
+  }
+
+  /**
    * @param {Function} callback
    * @returns {Lambda}
    */

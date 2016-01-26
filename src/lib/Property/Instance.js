@@ -303,6 +303,12 @@ export class Instance {
     let validationSchemas = ValidationSchema.create(...validationSchemasDirs);
 
     this._config.models = models.map(m => m.extract());
+    this._config.validationSchemas = validationSchemas.map((s) => {
+      return {
+        name: s.name,
+        schemaPath: s.schemaPath,
+      };
+    });
 
     let lambdaInstances = [];
 
@@ -346,6 +352,9 @@ export class Instance {
           region: lambdaInstance.region,
           localPath: Path.join(lambdaInstance.path, 'bootstrap.js'),
         };
+
+        // inject symlinks
+        lambdaInstance.injectValidationSchemas(this._config.validationSchemas, true);
 
         lambdaInstances.push(lambdaInstance);
       }
@@ -412,6 +421,7 @@ export class Instance {
     }
 
     let modelsDirs = [];
+    let validationSchemasDirs = [];
 
     for (let i in microservices) {
       if (!microservices.hasOwnProperty(i)) {
@@ -443,13 +453,21 @@ export class Instance {
       microservicesConfig[microserviceConfig.identifier] = microserviceConfig;
 
       modelsDirs.push(microservice.autoload.models);
+      validationSchemasDirs.push(microservice.autoload.validation);
     }
 
     this._config.microservices = microservicesConfig;
 
     let models = Model.create(...modelsDirs);
+    let validationSchemas = ValidationSchema.create(...validationSchemasDirs);
 
     this._config.models = models.map(m => m.extract());
+    this._config.validationSchemas = validationSchemas.map((s) => {
+      return {
+        name: s.name,
+        schemaPath: s.schemaPath,
+      };
+    });
 
     if (skipProvision) {
       callback();
@@ -524,6 +542,8 @@ export class Instance {
             region: lambdaInstance.region,
             arn: lambdaInstance.arn,
           };
+
+        lambdaInstance.injectValidationSchemas(this._config.validationSchemas);
 
         lambdas.push(lambdaInstance);
       }
