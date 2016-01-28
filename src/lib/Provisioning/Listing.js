@@ -97,7 +97,7 @@ export class Listing {
 
   /**
    * @param {String} name
-   * @returns {AbstractService}
+   * @returns {AbstractService|*}
    */
   _createAwsService(name) {
     return this._property.provisioning.getAwsServiceByName(name);
@@ -110,7 +110,7 @@ export class Listing {
     return [
       'APIGateway', 'IAM', 'CognitoIdentity',
       'Lambda', 'CloudFront', 'DynamoDB', 'S3',
-      'CloudWatchLogs', 'SQS',
+      'CloudWatchLogs', 'SQS'
     ];
   }
 }

@@ -11,6 +11,7 @@ import {S3Service} from './Service/S3Service';
 import {CognitoIdentityService} from './Service/CognitoIdentityService';
 import {IAMService} from './Service/IAMService';
 import {CloudFrontService} from './Service/CloudFrontService';
+import {ACMService} from './Service/ACMService.js';
 import {SNSService} from './Service/SNSService';
 import {LambdaService} from './Service/LambdaService';
 import {KinesisService} from './Service/KinesisService';
@@ -62,6 +63,9 @@ export class Instance {
     });
     this._sqs = new property.AWS.SQS({
       region: this.getAwsServiceRegion(SQSService, property.config.awsRegion),
+    });
+    this._acm = new property.AWS.ACM({
+      region: this.getAwsServiceRegion(ACMService, property.config.awsRegion),
     });
 
     // set region for services that depend on other services region
@@ -123,6 +127,13 @@ export class Instance {
    */
   get property() {
     return this._property;
+  }
+
+  /**
+   * @returns {Object}
+   */
+  get acm() {
+    return this._acm;
   }
 
   /**
@@ -218,6 +229,7 @@ export class Instance {
       case 'IAM':
       case 'SNS':
       case 'SQS':
+      case 'ACM':
         name = name.toLowerCase();
         break;
       case 'APIGateway':
@@ -244,6 +256,7 @@ export class Instance {
         new SNSService(this),
         new IAMService(this),
         new CognitoIdentityService(this),
+        new ACMService(this),
         new CloudFrontService(this),
         new LambdaService(this),
         new APIGatewayService(this),
