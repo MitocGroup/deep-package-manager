@@ -56,6 +56,7 @@
   "dependencies": {
     "deep-db": "^1.x.x",
     "deep-core": "^1.x.x",
+    "deep-fs": "^1.x.x",
     "joi": "^6.4.x",
     "jsonfile": "^1.1.x",
     "moment": "^2.10.x",

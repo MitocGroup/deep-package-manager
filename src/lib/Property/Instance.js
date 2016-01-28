@@ -19,6 +19,7 @@ import {Lambda} from './Lambda';
 import {WaitFor} from '../Helpers/WaitFor';
 import {Frontend} from './Frontend';
 import {Model} from './Model';
+import {Migration} from './Migration';
 import {ValidationSchema} from './ValidationSchema';
 import {S3Service} from '../Provisioning/Service/S3Service';
 import {Config} from './Config';
@@ -33,6 +34,7 @@ import {ProvisioningCollisionsListingException} from './Exception/ProvisioningCo
 import {ProvisioningCollisionsDetectedException} from './Exception/ProvisioningCollisionsDetectedException';
 import {AbstractService} from '../Provisioning/Service/AbstractService';
 import {DeployID} from '../Helpers/DeployID';
+import {MigrationsRegistry} from './MigrationsRegistry';
 
 /**
  * Property instance
@@ -663,10 +665,83 @@ export class Instance {
 
     this.provisioning.postDeployProvision((config) => {
       this._config.provisioning = config;
-      this._runPostDeployMsHooks(callback);
+      this._runPostDeployMsHooks(() => {
+        this._runMigrations(callback);
+      });
     }, this._isUpdate);
 
     return this;
+  }
+
+  /**
+   * @param {Function} callback
+   * @private
+   */
+  _runMigrations(callback) {
+    let microservices = this.microservices;
+    let migrationDirs = [];
+
+    for (let i in microservices) {
+      if (!microservices.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let microservice = microservices[i];
+
+      migrationDirs.push(microservice.autoload.migration);
+    }
+
+    let migrations = Migration.create(...migrationDirs);
+
+    if (migrations.length <= 0) {
+      console.log('No migrations to be loaded. Skipping...');
+
+      callback();
+      return;
+    }
+
+    let registry = MigrationsRegistry.create(this);
+
+    console.log('Loading migrations registry');
+
+    registry.load((error) => {
+      if (error) {
+        console.error(error);
+        callback();
+        return;
+      }
+
+      let wait = new WaitFor();
+      let remaining = migrations.length;
+
+      migrations.forEach((migration) => {
+        migration.registry = registry;
+
+        migration.up(this, (error) => {
+          if (error) {
+            console.error(error);
+          }
+
+          remaining--;
+        });
+      });
+
+      wait.push(() => {
+        return remaining <= 0;
+      });
+
+      wait.ready(() => {
+        console.log('Persisting migrations registry');
+
+        registry.dump((error) => {
+          if (error) {
+            console.error(error);
+          }
+
+          callback();
+        });
+      });
+    });
   }
 
   /**
