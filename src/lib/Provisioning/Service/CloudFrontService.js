@@ -22,12 +22,15 @@ export class CloudFrontService extends AbstractService {
    */
   constructor(...args) {
     super(...args);
-
     this._distMetadata = {
       ViewerProtocolPolicy: 'allow-all',
       ViewerCertificate: {
         CloudFrontDefaultCertificate: true,
         CertificateSource: 'cloudfront',
+      },
+      Aliases: {
+        Quantity: 0,
+        Items: [],
       },
     };
   }
@@ -168,6 +171,7 @@ export class CloudFrontService extends AbstractService {
           ],
           Quantity: 1,
         },
+        Aliases: this._distMetadata.Aliases,
       },
     };
 

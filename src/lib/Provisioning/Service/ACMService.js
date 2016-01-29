@@ -88,6 +88,11 @@ export class ACMService extends AbstractService {
           //};
           //
           //distMetadata.ViewerProtocolPolicy = 'redirect-to-https';
+          //
+          //distMetadata.Aliases = {
+          //  Quantity: 1,
+          //  Items: [domain],
+          //};
 
           this._config.certificateArn = certificateArn;
         }
@@ -131,11 +136,10 @@ export class ACMService extends AbstractService {
    */
   _ensureCertificate(services, cb) {
     let domain = this._certificateDomain;
-    let domainName = `*.${domain}`;
 
     let listing = new ACMListing(
       this.provisioning.acm,
-      new RegExp(`^${ACMService._escapeRegExp(domainName)}$`, 'i')
+      new RegExp(`^${ACMService._escapeRegExp(domain)}$`, 'i')
     );
 
     listing.list(() => {
@@ -148,14 +152,14 @@ export class ACMService extends AbstractService {
 
         let certData = certificates[certArn];
 
-        if (domainName === certData.DomainName) {
-          console.log(`Reusing certificate '${certArn}' for '${domainName}'`);
+        if (domain === certData.DomainName) {
+          console.log(`Reusing certificate '${certArn}' for '${domain}'`);
           cb(certArn);
           return;
         }
       }
 
-      console.log(`Creating certificate for '${domainName}'`);
+      console.log(`Creating certificate for '${domain}'`);
 
       this._createCertificate(services, (...args) => {
         cb(...args);
@@ -173,7 +177,7 @@ export class ACMService extends AbstractService {
     let acm = this.provisioning.acm;
 
     let payload = {
-      DomainName: `*.${domain}`,
+      DomainName: domain,
       IdempotencyToken: Hash.md5(`${this.provisioning.property.identifier}|${domain}`),
     };
 
