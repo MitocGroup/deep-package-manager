@@ -22,6 +22,7 @@ suite('Provisioning/Instance', function() {
     kinesis: {},
     s3: {},
     sns: {},
+    acm: {},
   };
 
   test('Class Instance exists in Provisioning/Instance', function() {
