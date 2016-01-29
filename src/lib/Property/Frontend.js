@@ -115,6 +115,7 @@ export class Frontend {
             type: action.type,
             methods: action.methods,
             forceUserIdentity: action.forceUserIdentity,
+            validationSchema: action.validationSchema,
             apiCache: {
               enabled: action.cacheEnabled,
               ttl: action.cacheTtl,
