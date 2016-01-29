@@ -5,6 +5,7 @@
 'use strict';
 
 import FileSystem from 'fs';
+import FileSystemExtra from 'fs-extra';
 import Path from 'path';
 import {Exec} from '../Helpers/Exec';
 import {FileWalker} from '../Helpers/FileWalker';
@@ -63,6 +64,9 @@ export class Frontend {
       identityProviders: '',
       microservices: {},
       globals: propertyConfig.globals,
+      validationSchemas: propertyConfig.validationSchemas.map((validationSchema) => {
+        return validationSchema.name;
+      }),
     };
 
     let apiGatewayBaseUrl = '';
@@ -274,6 +278,34 @@ export class Frontend {
 
   /**
    * @param {Object} propertyConfig
+   * @param {String} dumpPath
+   * @param {Boolean} useSymlink
+   * @returns {Frontend}
+   */
+  static dumpValidationSchemas(propertyConfig, dumpPath, useSymlink = false) {
+    let validationSchemas = propertyConfig.validationSchemas;
+    let schemasPath = Path.join(dumpPath, Core.AWS.Lambda.Runtime.VALIDATION_SCHEMAS_DIR);
+
+    if (FileSystem.existsSync(validationSchemas)) {
+      FileSystemExtra.removeSync(validationSchemas);
+    }
+
+    validationSchemas.forEach((schema) => {
+      let schemaPath = schema.schemaPath;
+      let destinationSchemaPath = Path.join(schemasPath, `${schema.name}.js`);
+
+      if (useSymlink) {
+        FileSystemExtra.ensureSymlinkSync(schemaPath, destinationSchemaPath);
+      } else {
+        FileSystemExtra.copySync(schemaPath, destinationSchemaPath);
+      }
+    });
+
+    return this;
+  }
+
+  /**
+   * @param {Object} propertyConfig
    * @param {Function} callback
    */
   build(propertyConfig, callback = () => {}) {
@@ -318,6 +350,8 @@ export class Frontend {
         walker.copy(frontendPath, modulePath);
       }
     }
+
+    Frontend.dumpValidationSchemas(propertyConfig, this.path);
 
     JsonFile.writeFileSync(this.configPath, propertyConfig);
 
