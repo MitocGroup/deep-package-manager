@@ -68,39 +68,37 @@ export class ACMService extends AbstractService {
    * @returns {ACMService}
    */
   _postProvision(services) {
+    let domain = this._certificateDomain;
 
-    // @todo: Figure out a way to avoid this!
-    // Disable due to the error:
-    // Failed to create CloudFront distribution:
-    //      InvalidViewerCertificate:
-    //          The specified SSL certificate doesn't exist, isn't valid,
-    //          or doesn't include a valid certificate chain.
+    if (domain) {
+      this._ensureCertificate(services, (certificateArn) => {
+        if (certificateArn) {
+          // @todo: Figure out a way to avoid this!
+          // Disable due to the error:
+          // Failed to create CloudFront distribution:
+          //      InvalidViewerCertificate:
+          //          The specified SSL certificate doesn't exist, isn't valid,
+          //          or doesn't include a valid certificate chain.
 
+          //let distMetadata = services.find(CloudFrontService).distMetadata;
+          //
+          //distMetadata.ViewerCertificate = {
+          //  Certificate: certificateArn,
+          //  CertificateSource: 'acm',
+          //};
+          //
+          //distMetadata.ViewerProtocolPolicy = 'redirect-to-https';
 
-    //let domain = this._certificateDomain;
-    //
-    //if (domain) {
-    //  this._ensureCertificate(services, (certificateArn) => {
-    //    if (certificateArn) {
-    //      let distMetadata = services.find(CloudFrontService).distMetadata;
-    //
-    //      distMetadata.ViewerCertificate = {
-    //        Certificate: certificateArn,
-    //        CertificateSource: 'acm',
-    //      };
-    //
-    //      distMetadata.ViewerProtocolPolicy = 'redirect-to-https';
-    //
-    //      this._config.certificateArn = certificateArn;
-    //    }
-    //
-    //    this._readyTeardown = true;
-    //
-    //    this._allowRunCf = true;
-    //  });
-    //
-    //  return this;
-    //}
+          this._config.certificateArn = certificateArn;
+        }
+
+        this._readyTeardown = true;
+
+        this._allowRunCf = true;
+      });
+
+      return this;
+    }
 
     this._allowRunCf = true;
 
@@ -157,14 +155,9 @@ export class ACMService extends AbstractService {
         }
       }
 
+      console.log(`Creating certificate for '${domainName}'`);
+
       this._createCertificate(services, (...args) => {
-
-        // @todo: change the message?
-        console.log(`
-              The CloudFront distribution certificate for the '${domain}' was requested.
-              Please approve the request manually via the email AWS will send to the domain owner email.
-            `);
-
         cb(...args);
       });
     });
