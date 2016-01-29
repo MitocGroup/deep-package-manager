@@ -351,7 +351,7 @@ export class Frontend {
       }
     }
 
-    Frontend.dumpValidationSchemas(propertyConfig, this.path);
+    Frontend.dumpValidationSchemas(this._property.config, this.path);
 
     JsonFile.writeFileSync(this.configPath, propertyConfig);
 
