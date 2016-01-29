@@ -245,8 +245,8 @@ export class Lambda {
   injectValidationSchemas(validationSchemas, useSymlink = false) {
     let schemasPath = Path.join(this.path, Core.AWS.Lambda.Runtime.VALIDATION_SCHEMAS_DIR);
 
-    if (FileSystem.existsSync(validationSchemas)) {
-      FileSystemExtra.removeSync(validationSchemas);
+    if (FileSystem.existsSync(schemasPath)) {
+      FileSystemExtra.removeSync(schemasPath);
     }
 
     validationSchemas.forEach((schema) => {

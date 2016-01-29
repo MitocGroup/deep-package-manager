@@ -286,8 +286,8 @@ export class Frontend {
     let validationSchemas = propertyConfig.validationSchemas;
     let schemasPath = Path.join(dumpPath, Core.AWS.Lambda.Runtime.VALIDATION_SCHEMAS_DIR);
 
-    if (FileSystem.existsSync(validationSchemas)) {
-      FileSystemExtra.removeSync(validationSchemas);
+    if (FileSystem.existsSync(schemasPath)) {
+      FileSystemExtra.removeSync(schemasPath);
     }
 
     validationSchemas.forEach((schema) => {
