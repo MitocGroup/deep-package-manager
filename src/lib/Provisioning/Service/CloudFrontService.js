@@ -12,6 +12,7 @@ import {FailedToCreateCloudFrontDistributionException} from './Exception/FailedT
 import {FailedToRequestCloudFrontDistributionCertificateException} from './Exception/FailedToRequestCloudFrontDistributionCertificateException';
 import {Hash} from '../../Helpers/Hash';
 import {WaitFor} from '../../Helpers/WaitFor';
+import objectMerge from 'object-merge';
 
 /**
  * CloudFront service
@@ -22,6 +23,7 @@ export class CloudFrontService extends AbstractService {
    */
   constructor(...args) {
     super(...args);
+
     this._distMetadata = {
       ViewerProtocolPolicy: 'allow-all',
       ViewerCertificate: {
@@ -102,6 +104,58 @@ export class CloudFrontService extends AbstractService {
     });
 
     return this;
+  }
+
+  /**
+   * @param {Object} configChanges
+   * @param {Function} cb
+   */
+  updateDistribution(configChanges, cb) {
+    this.fetchDistributionConfig((error, data) => {
+      if (error) {
+        cb(error, null);
+        return;
+      }
+
+      let cf = this.provisioning.cloudFront;
+
+      let eTag = data.ETag;
+      let config = objectMerge(data.DistributionConfig, configChanges);
+
+      let payload = {
+        DistributionConfig: config,
+        Id: this._config.id, // This is validated in fetchDistributionConfig()
+        IfMatch: eTag,
+      };
+
+      cf.updateDistribution(payload, cb);
+    });
+  }
+
+  /**
+   * @param {Function} cb
+   */
+  fetchDistributionConfig(cb) {
+    let cf = this.provisioning.cloudFront;
+    let cfId = this._config.id;
+
+    if (!cfId) {
+      cb(new Error('No CloudFront distribution provisioned'), null);
+      return;
+    }
+
+    let payload = {
+      Id: cfId,
+    };
+
+    cf.getDistributionConfig(payload, (error, data) => {
+      if (error) {
+        cb(error, null);
+        return;
+      }
+
+      cb(null, data);
+    });
   }
 
   /**

@@ -71,7 +71,11 @@ export class ACMService extends AbstractService {
     let domain = this._certificateDomain;
 
     if (domain) {
-      this._ensureCertificate(services, (certificateArn) => {
+      this.ensureCertificate(domain, (error, certificateArn) => {
+        if (error) {
+          console.error(error);
+        }
+
         if (certificateArn) {
           // @todo: Figure out a way to avoid this!
           // Disable due to the error:
@@ -130,13 +134,49 @@ export class ACMService extends AbstractService {
   }
 
   /**
-   * @param {Core.Generic.ObjectStorage} services
+   * @param {String} domain
    * @param {Function} cb
-   * @private
    */
-  _ensureCertificate(services, cb) {
-    let domain = this._certificateDomain;
+  ensureCertificate(domain, cb) {
+    this.getDomainCertificateArn(domain, (certArn) => {
+      if (certArn) {
+        cb(null, certArn);
+        return;
+      }
 
+      this.createCertificate(domain, (error, certArn) => {
+        cb(error, certArn);
+      });
+    });
+  }
+
+  /**
+   * @param {String} domain
+   * @param {Function} cb
+   */
+  createCertificate(domain, cb) {
+    let acm = this.provisioning.acm;
+
+    let payload = {
+      DomainName: domain,
+      IdempotencyToken: Hash.md5(`${this.provisioning.property.identifier}|${domain}`),
+    };
+
+    acm.requestCertificate(payload, (error, data) => {
+      if (error) {
+        cb(new FailedToRequestCloudFrontDistributionCertificateException(error), null);
+        return;
+      }
+
+      cb(null, data.CertificateArn);
+    });
+  }
+
+  /**
+   * @param {String} domain
+   * @param {Function} cb
+   */
+  getDomainCertificateArn(domain, cb) {
     let listing = new ACMListing(
       this.provisioning.acm,
       new RegExp(`^${ACMService._escapeRegExp(domain)}$`, 'i')
@@ -153,40 +193,33 @@ export class ACMService extends AbstractService {
         let certData = certificates[certArn];
 
         if (domain === certData.DomainName) {
-          console.log(`Reusing certificate '${certArn}' for '${domain}'`);
           cb(certArn);
           return;
         }
       }
 
-      console.log(`Creating certificate for '${domain}'`);
-
-      this._createCertificate(services, (...args) => {
-        cb(...args);
-      });
+      cb(null);
     });
   }
 
   /**
-   * @param {Core.Generic.ObjectStorage} services
+   * @param {String} certArn
    * @param {Function} cb
-   * @private
    */
-  _createCertificate(services, cb) {
-    let domain = this._certificateDomain;
+  isCertificateIssued(certArn, cb) {
     let acm = this.provisioning.acm;
 
     let payload = {
-      DomainName: domain,
-      IdempotencyToken: Hash.md5(`${this.provisioning.property.identifier}|${domain}`),
+      CertificateArn: certArn,
     };
 
-    acm.requestCertificate(payload, (error, data) => {
+    acm.describeCertificate(payload, (error, data) => {
       if (error) {
-        throw new FailedToRequestCloudFrontDistributionCertificateException(error);
+        cb(error, null);
+        return;
       }
 
-      cb(data.CertificateArn);
+      cb(null, data.Certificate.Status === 'ISSUED');
     });
   }
 
