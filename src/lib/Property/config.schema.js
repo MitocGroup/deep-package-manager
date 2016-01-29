@@ -26,8 +26,11 @@ export default {
         }).optional(),
       }).optional(),
       appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).required(),
-      env: JoiHelper.stringEnum(['dev', 'stage', 'test', 'prod']).optional().default('dev'),
+      env: JoiHelper.stringEnum(['dev', 'stage', 'test', 'prod']).optional().lowercase().default('dev'),
       awsAccountId: Joi.number().required(),
+      domain: Joi.string().optional().lowercase()
+        .regex(/^([a-zA-Z0-9-_]+\.)+[a-zA-Z]+?$/i)
+        .replace(/^www\./i, ''),
       aws: Joi.object().keys({
         accessKeyId: JoiHelper.string().required(),
         secretAccessKey: JoiHelper.string().required(),
