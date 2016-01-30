@@ -200,5 +200,5 @@ after(function () {
   Remover.rmdir('test/testMaterials/testPack');
 
   //@todo - need to move in other test which generate this folder
-  Remover.rmdir('test/testMaterials/Property2/_public');
+  //Remover.rmdir('test/testMaterials/Property2/_public');
 })

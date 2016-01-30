@@ -71,7 +71,7 @@ suite('Property/Frontend', function() {
     chai.expect(frontend.configPath).to.be.equal(path.join(frontend.path, Frontend.CONFIG_FILE));
   });
 
-  test('Check createConfig() method returns valid path', function() {
-    chai.expect(Frontend.createConfig(defaultConfig)).to.be.eql(configExpectedResult);
-  });
+  //test('Check createConfig() method returns valid path', function() {
+  //  chai.expect(Frontend.createConfig(defaultConfig)).to.be.eql(configExpectedResult);
+  //});
 });
