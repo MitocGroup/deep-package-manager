@@ -74,6 +74,7 @@ suite('Property/Frontend', function() {
     chai.expect(frontend.configPath).to.be.equal(path.join(frontend.path, Frontend.CONFIG_FILE));
   });
 
+  //@todo - need to add if validationSchemas exists
   test('Check createConfig() method returns valid path', function() {
     chai.expect(Frontend.createConfig(defaultConfig)).to.be.eql(configExpectedResult);
   });
