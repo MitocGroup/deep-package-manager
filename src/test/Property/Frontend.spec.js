@@ -38,6 +38,8 @@ suite('Property/Frontend', function() {
       env: 'dev',
       appIdentifier: '59e6913c9ed3afe744b5434817ce6345',
     },
+    validationSchemas: [],
+
   };
   let configExpectedResult = {
     env: defaultConfig.env,
@@ -48,6 +50,7 @@ suite('Property/Frontend', function() {
     identityProviders: '',
     microservices: {},
     globals: defaultConfig.globals,
+    validationSchemas: [],
   };
 
   test('Class Frontend exists in Property/Frontend', function() {
@@ -71,6 +74,7 @@ suite('Property/Frontend', function() {
     chai.expect(frontend.configPath).to.be.equal(path.join(frontend.path, Frontend.CONFIG_FILE));
   });
 
+  //@todo - need to add if validationSchemas exists
   test('Check createConfig() method returns valid path', function() {
     chai.expect(Frontend.createConfig(defaultConfig)).to.be.eql(configExpectedResult);
   });
