@@ -349,7 +349,7 @@ export class Instance {
         this._config
           .microservices[microserviceIdentifier]
           .lambdas[lambdaIdentifier] = {
-          arn: lambdaInstance.arn,
+          arn: lambdaInstance.arnGeneralized,
           name: lambdaInstance.functionName,
           region: lambdaInstance.region,
           localPath: Path.join(lambdaInstance.path, 'bootstrap.js'),
@@ -372,10 +372,10 @@ export class Instance {
       let lambdaInstance = lambdaInstances[i];
 
       // assure localRuntime flag set true!
-      lambdas[lambdaInstance.arn] = lambdaInstance.createConfig(this._config, true);
+      lambdas[lambdaInstance.arnGeneralized] = lambdaInstance.createConfig(this._config, true);
 
-      lambdas[lambdaInstance.arn].name = lambdaInstance.functionName;
-      lambdas[lambdaInstance.arn].path = Path.join(lambdaInstance.path, 'bootstrap.js');
+      lambdas[lambdaInstance.arnGeneralized].name = lambdaInstance.functionName;
+      lambdas[lambdaInstance.arnGeneralized].path = Path.join(lambdaInstance.path, 'bootstrap.js');
     }
 
     return lambdas;

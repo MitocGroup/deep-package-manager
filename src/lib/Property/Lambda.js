@@ -162,6 +162,15 @@ export class Lambda {
   }
 
   /**
+   * Mainly used for local server
+   *
+   * @returns {String}
+   */
+  get arnGeneralized() {
+    return `arn:aws:lambda:::function:${this.functionName}`;
+  }
+
+  /**
    * @returns {String}
    */
   get runtime() {
