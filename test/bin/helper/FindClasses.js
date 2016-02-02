@@ -29,8 +29,8 @@ export class FindClasses {
 
     for (let filepath of classFiles) {
       let relativePath = filepath.substr(this._libPath.length + 1);
-      let testFilePath = path.join(this._testsPath, relativePath);
-      console.log('testFilePath: ', testFilePath);
+
+      let testFilePath = path.join(this._testsPath, relativePath.replace('.js', '.spec.js'));
 
       if (!fs.existsSync(testFilePath)) {
         let testContent = FindClasses._genTestSuite(relativePath);
