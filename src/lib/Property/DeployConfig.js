@@ -63,7 +63,7 @@ export class DeployConfig {
 
     return path.join(
       this._property.path,
-      `.${this.baseHash}.${deployEnv}.deeploy.json`
+      `.${this.baseHash}.${deployEnv}.provisioning.json`
     );
   }
 
