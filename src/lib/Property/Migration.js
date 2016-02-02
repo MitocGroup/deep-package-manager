@@ -11,16 +11,19 @@ import {InvalidMigrationException} from './Exception/InvalidMigrationException';
 import Core from 'deep-core';
 import {AwsRequestSyncStack} from '../Helpers/AwsRequestSyncStack';
 import {WaitFor} from '../Helpers/WaitFor';
+import {Hash} from '../Helpers/Hash';
 
 export class Migration {
   /**
    * @param {String} name
    * @param {String} migrationPath
+   * @param {String|null} versionPrefix
    */
-  constructor(name, migrationPath) {
+  constructor(name, migrationPath, versionPrefix = null) {
     this._name = name;
     this._migrationPath = migrationPath;
     this._migration = null;
+    this._versionPrefix = versionPrefix;
 
     this._registry = {
       ensure: (version, onMissingDb) => {
@@ -29,6 +32,13 @@ export class Migration {
       },
       remove: (version) => {}
     };
+  }
+
+  /**
+   * @returns {String}
+   */
+  get versionPrefix() {
+    return this._versionPrefix;
   }
 
   /**
@@ -66,6 +76,7 @@ export class Migration {
       let dir = directories[i];
 
       if (FileSystem.existsSync(dir)) {
+        let versionPrefix = Hash.md5(dir);
         let files = walker.walk(dir, filter);
 
         for (let j in files) {
@@ -76,7 +87,7 @@ export class Migration {
           let migrationFile = files[j];
           let name = Path.basename(migrationFile, `.${Migration.EXTENSION}`);
 
-          validationSchemas.push(new Migration(name, migrationFile));
+          validationSchemas.push(new Migration(name, migrationFile, versionPrefix));
         }
       }
     }
@@ -167,7 +178,15 @@ export class Migration {
    * @returns {String|null}
    */
   get version() {
-    return this._name.replace(/^version(\d+)$/i, '$1') || null;
+    let tsVersion = this._name.replace(/^version(\d+)$/i, '$1') || null;
+
+    if (!tsVersion) {
+      return null;
+    }
+
+    return this._versionPrefix ?
+      `${this._versionPrefix}_${tsVersion}` :
+      tsVersion;
   }
 
   /**
