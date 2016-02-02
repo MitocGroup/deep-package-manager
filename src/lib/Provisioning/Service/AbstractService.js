@@ -343,6 +343,23 @@ export class AbstractService extends Core.OOP.Interface {
   }
 
   /**
+   * @param {String} resourceName
+   * @returns {String}
+   */
+  static extractEnvFromResourceName(resourceName) {
+    let rawRegexp = `^(?:.*\/)?${AbstractService.AWS_RESOURCES_PREFIX}`;
+    rawRegexp += `(?:\.|_)?(dev|stage|test|prod).+[a-z0-9]{${AbstractService.MAIN_HASH_SIZE}}$`;
+
+    let matches = resourceName.match(new RegExp(rawRegexp, 'i'));
+
+    if (!matches) {
+      return null;
+    }
+
+    return matches[1].toLowerCase();
+  }
+
+  /**
    * @returns {Number}
    */
   static get MAIN_HASH_SIZE() {

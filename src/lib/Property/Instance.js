@@ -21,6 +21,7 @@ import {Frontend} from './Frontend';
 import {Model} from './Model';
 import {Migration} from './Migration';
 import {ValidationSchema} from './ValidationSchema';
+import {AbstractService} from '../Provisioning/Service/AbstractService';
 import {S3Service} from '../Provisioning/Service/S3Service';
 import {Config} from './Config';
 import {Hash} from '../Helpers/Hash';
@@ -30,11 +31,13 @@ import {Exec} from '../Helpers/Exec';
 import OS from 'os';
 import objectMerge from 'object-merge';
 import {Listing} from '../Provisioning/Listing';
+import {Undeploy} from '../Provisioning/Undeploy'; // Fixes weird issue on calling super()
+import {PropertyMatcher} from '../Provisioning/UndeployMatcher/PropertyMatcher';
 import {ProvisioningCollisionsListingException} from './Exception/ProvisioningCollisionsListingException';
 import {ProvisioningCollisionsDetectedException} from './Exception/ProvisioningCollisionsDetectedException';
-import {AbstractService} from '../Provisioning/Service/AbstractService';
 import {DeployID} from '../Helpers/DeployID';
 import {MigrationsRegistry} from './MigrationsRegistry';
+import {DeployConfig} from './DeployConfig';
 
 /**
  * Property instance
@@ -61,6 +64,15 @@ export class Instance {
     this._microservicesToUpdate = [];
 
     this._config.deployId = new DeployID(this).toString();
+
+    this._configObj = new DeployConfig(this);
+  }
+
+  /**
+   * @returns {DeployConfig}
+   */
+  get configObj() {
+    return this._configObj;
   }
 
   /**
@@ -71,12 +83,7 @@ export class Instance {
   verifyProvisioningCollisions(callback, throwError = true) {
     this.getProvisioningCollisions((error, resources) => {
       if (!error && resources) {
-        let mainHash = AbstractService.generateUniqueResourceHash(
-          this.config.awsAccountId,
-          this.identifier
-        );
-
-        error = new ProvisioningCollisionsDetectedException(resources, mainHash);
+        error = new ProvisioningCollisionsDetectedException(resources, this._configObj.baseHash);
       }
 
       if (error && throwError) {
@@ -84,17 +91,25 @@ export class Instance {
       }
 
       callback(error);
-    });
+    }, new PropertyMatcher(this));
 
     return this;
   }
 
   /**
    * @param {Function} callback
+   * @param {AbstractMatcher|*} matcher
    * @returns {Instance}
    */
-  getProvisioningCollisions(callback) {
+  getProvisioningCollisions(callback, matcher = null) {
     let resourcesLister = new Listing(this);
+    resourcesLister.hash = function (resourceName) {
+      if (matcher) {
+        return matcher.match(this.constructor.name.replace(/Driver$/i, ''), resourceName);
+      }
+
+      return AbstractService.extractBaseHashFromResourceName(resourceName) === this._configObj.baseHash;
+    };
 
     resourcesLister.list((result) => {
       if (Object.keys(result.errors).length > 0) {
@@ -102,7 +117,18 @@ export class Instance {
       } else if (result.matchedResources <= 0) {
         callback(null, null);
       } else {
-        callback(null, result.resources);
+        let filteredResources = result.resources;
+
+        if (matcher) {
+          filteredResources = matcher.filter(result.resources);
+
+          if (Object.keys(filteredResources).length <= 0) {
+            callback(null, null);
+            return;
+          }
+        }
+
+        callback(null, filteredResources);
       }
     });
 
@@ -831,24 +857,20 @@ export class Instance {
   }
 
   /**
-   * @param {Object} propertyConfigSnapshot
    * @param {Function} callback
+   * @param {Object|null} propertyConfigSnapshot
    * @param {Microservice[]} microservicesToUpdate
    * @returns {Instance}
    */
-  update(propertyConfigSnapshot, callback, microservicesToUpdate = []) {
+  update(callback, propertyConfigSnapshot = null, microservicesToUpdate = []) {
     this._isUpdate = true;
     this.microservicesToUpdate = microservicesToUpdate;
 
-    // keep initial deployId
-    let deployId = this.deployId;
-
-    this._config = propertyConfigSnapshot;
-    this._config.deployId = deployId;
-
-    this._provisioning.injectConfig(
-      this._config.provisioning
-    );
+    if (propertyConfigSnapshot) {
+      this._configObj.updateConfig(propertyConfigSnapshot);
+    } else {
+      this._configObj.tryReadFromDump();
+    }
 
     return this.install((...args) => {
       this._isUpdate = false;
@@ -868,10 +890,10 @@ export class Instance {
     }
 
     if (!this._isUpdate) {
-      console.log(`Checking possible provisioning collisions for application #${this.identifier}`);
+      console.log(`Checking possible provisioning collisions for application #${this.identifier}/${this._config.env}`);
 
       this.verifyProvisioningCollisions(() => {
-        console.log(`Start installing application #${this.identifier}`);
+        console.log(`Start installing application #${this.identifier}/${this._config.env}`);
 
         this.build(() => {
           console.log(`Build is done`);
@@ -887,7 +909,7 @@ export class Instance {
       return this;
     }
 
-    console.log(`Start updating application #${this.identifier}`);
+    console.log(`Start updating application #${this.identifier}/${this._config.env}`);
 
     return this.build(() => {
       console.log(`Build is done`);

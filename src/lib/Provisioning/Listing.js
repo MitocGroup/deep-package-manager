@@ -72,14 +72,14 @@ export class Listing {
   }
 
   /**
-   * @returns {String|RegExp}
+   * @returns {String|RegExp|Function}
    */
   get hash() {
     return this._hash;
   }
 
   /**
-   * @param {String|RegExp} hash
+   * @param {String|RegExp|Function} hash
    */
   set hash(hash) {
     this._hash = hash;

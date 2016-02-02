@@ -11,6 +11,7 @@ import {Exec} from '../Helpers/Exec';
 import Tmp from 'tmp';
 import OS from 'os';
 import FileSystem from 'fs';
+import {DeployConfig} from './DeployConfig';
 
 export default {
   validation: () => {
@@ -26,7 +27,8 @@ export default {
         }).optional(),
       }).optional(),
       appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).required(),
-      env: JoiHelper.stringEnum(['dev', 'stage', 'test', 'prod']).optional().lowercase().default('dev'),
+      env: JoiHelper.stringEnum(DeployConfig.AVAILABLE_ENV).optional()
+        .lowercase().default(DeployConfig.AVAILABLE_ENV[0]),
       awsAccountId: Joi.number().required(),
       domain: Joi.string().optional().lowercase()
         .regex(/^([a-zA-Z0-9-_]+\.)+[a-zA-Z]+?$/i)
@@ -54,7 +56,7 @@ export default {
         }).optional(),
       }).optional(),
       appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).optional().default(buildAppId()),
-      env: JoiHelper.stringEnum(['dev', 'stage', 'test', 'prod']).optional().default('dev'),
+      env: JoiHelper.stringEnum(DeployConfig.AVAILABLE_ENV).optional().default(DeployConfig.AVAILABLE_ENV[0]),
       awsAccountId: Joi.number().optional().default(guessAwsAccountId(guessedAwsCredentials)),
       aws: Joi.object().keys({
         accessKeyId: JoiHelper.string().required(),
