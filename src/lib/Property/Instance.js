@@ -958,7 +958,7 @@ export class Instance {
     let suitableEngine = frontendEngineManager.findSuitable(...microservices);
 
     if (!suitableEngine) {
-      throw new NoMatchingFrontendEngineException(frontendEngineManager.rawEngines);
+      throw new Error(`No suitable engine found (looking for ${frontendEngineManager.rawEngines.join(', ')})`);
     }
 
     let engineRepo = FrontendEngine.getEngineRepository(suitableEngine);
