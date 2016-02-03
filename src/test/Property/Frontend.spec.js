@@ -4,7 +4,7 @@ import chai from 'chai';
 import {Frontend} from '../../lib/Property/Frontend';
 import path from 'path';
 
-suite('Property/Frontend', function() {
+suite('Property/Frontend', () => {
   let basePath = './Property/';
   let basePathTrimmed = 'Property/';
   let microservicesConfig = {};
@@ -53,29 +53,29 @@ suite('Property/Frontend', function() {
     validationSchemas: [],
   };
 
-  test('Class Frontend exists in Property/Frontend', function() {
-    chai.expect(typeof Frontend).to.equal('function');
+  test('Class Frontend exists in Property/Frontend', () => {
+    chai.expect(Frontend).to.be.an('function');
   });
 
-  test('Check constructor sets valid values', function() {
+  test('Check constructor sets valid values', () => {
     chai.expect(frontend.basePath).to.be.equal(basePathTrimmed);
     chai.expect(frontend._microservicesConfig).to.be.eql(microservicesConfig);
   });
 
-  test('Check path getter returns valid path', function() {
+  test('Check path getter returns valid path', () => {
     chai.expect(frontend.path).to.be.equal(path.join(frontend.basePath, Frontend.PUBLIC_FOLDER));
   });
 
-  test('Check modulePath() method returns valid path', function() {
+  test('Check modulePath() method returns valid path', () => {
     chai.expect(frontend.modulePath(moduleIdentifier)).to.be.equal(path.join(frontend.path, moduleIdentifier));
   });
 
-  test('Check configPath getter returns valid path', function() {
+  test('Check configPath getter returns valid path', () => {
     chai.expect(frontend.configPath).to.be.equal(path.join(frontend.path, Frontend.CONFIG_FILE));
   });
 
   //@todo - need to add if validationSchemas exists
-  test('Check createConfig() method returns valid path', function() {
+  test('Check createConfig() method returns valid path', () => {
     chai.expect(Frontend.createConfig(defaultConfig)).to.be.eql(configExpectedResult);
   });
 });

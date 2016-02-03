@@ -6,7 +6,7 @@ import sinonChai from 'sinon-chai';
 import {DeployIdInjector} from '../../lib/Assets/DeployIdInjector';
 import fsExtra from 'fs-extra';
 
-suite('Assets/DeployIdInjector', function() {
+suite('Assets/DeployIdInjector', () => {
   let path = './test/testMaterials/assets/testFiles';
   let deployId = 'test_deploy_ID';
   let deployIdInjector = new DeployIdInjector(path, deployId);
@@ -16,25 +16,25 @@ suite('Assets/DeployIdInjector', function() {
   let testCssFilePath = './test/testMaterials/assets/testFiles/data.css';
   let testHtmlFilePath = './test/testMaterials/assets/testFiles/data.html';
 
-  test('Class DeployIdInjector exists in Assets/DeployIdInjector', function() {
-    chai.expect(typeof DeployIdInjector).to.equal('function');
+  test('Class DeployIdInjector exists in Assets/DeployIdInjector', () => {
+    chai.expect(DeployIdInjector).to.be.an('function');
   });
 
-  test('Check constructor sets _path', function() {
+  test('Check constructor sets _path', () => {
     chai.expect(deployIdInjector.path).to.equal(path);
   });
 
-  test('Check constructor sets _deployId', function() {
+  test('Check constructor sets _deployId', () => {
     chai.expect(deployIdInjector.deployId).to.equal(deployId);
   });
 
-  test('Check constructor sets _versionedExtensions', function() {
+  test('Check constructor sets _versionedExtensions', () => {
     chai.expect(deployIdInjector.versionedExtensions).to.eql(
       DeployIdInjector.DEFAULT_VERSIONED_EXTENSIONS
     );
   });
 
-  test('Check versionedExtensions setter', function() {
+  test('Check versionedExtensions setter', () => {
     let versionedExtensions = ['css', 'html', 'xhtml'];
 
     deployIdInjector.versionedExtensions = versionedExtensions;
@@ -42,11 +42,11 @@ suite('Assets/DeployIdInjector', function() {
     chai.expect(deployIdInjector.versionedExtensions).to.eql(versionedExtensions);
   });
 
-  test('Check IGNORE_FILE getter returns ".deepinjectignore"', function() {
+  test('Check IGNORE_FILE getter returns ".deepinjectignore"', () => {
     chai.expect(DeployIdInjector.IGNORE_FILE).to.equal('.deepinjectignore');
   });
 
-  test('Check _findAssets() returns ', function() {
+  test('Check _findAssets() returns ', () => {
     fsExtra.copySync(rawCssFilePath, testCssFilePath);
     fsExtra.copySync(rawHtmlFilePath, testHtmlFilePath);
 
@@ -58,7 +58,7 @@ suite('Assets/DeployIdInjector', function() {
     chai.expect(deployIdInjector._findAssets()).to.eql(expectedResult);
   });
 
-  test('Check prepare() executes successfully', function() {
+  test('Check prepare() executes successfully', () => {
     //arrange
     let spyCallback = sinon.spy();
 
@@ -79,7 +79,7 @@ suite('Assets/DeployIdInjector', function() {
 
   });
 
-  test('Check prepare() executes with error', function() {
+  test('Check prepare() executes with error', () => {
     let spyCallback = sinon.spy();
     let invalidFilePath = './test/testMaterials/assets/testFiles/test.xhtml';
 

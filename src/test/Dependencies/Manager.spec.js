@@ -21,7 +21,7 @@ class DependencyDriver extends  AbstractDriver{
   }
 }
 
-suite('Dependencies/Manager', function() {
+suite('Dependencies/Manager', () => {
   let dependencyDriver = new DependencyDriver();
   let manager = new Manager(dependencyDriver);
   //let dryRunInput = true;
@@ -30,15 +30,15 @@ suite('Dependencies/Manager', function() {
   //let identifierInput = 'identifierTest';
   //let expectedResult = null;
 
-  test('Class Manager exists in Dependencies/Manager', function() {
-    chai.expect(typeof Manager).to.equal('function');
+  test('Class Manager exists in Dependencies/Manager', () => {
+    chai.expect(Manager).to.be.an('function');
   });
 
-  test('Check constructor sets valid value for _driver', function() {
+  test('Check constructor sets valid value for _driver', () => {
     chai.expect(manager.driver).to.be.eql(dependencyDriver);
   });
 
-  test('Check constructor throws exception for !(driver instanceof AbstractDriver)', function() {
+  test('Check constructor throws exception for !(driver instanceof AbstractDriver)', () => {
     let error = null;
     try {
       new Manager();
@@ -49,17 +49,17 @@ suite('Dependencies/Manager', function() {
     chai.expect(error).to.be.not.equal(null);
   });
 
-  test('Check constructor sets valid value for _uploader', function() {
+  test('Check constructor sets valid value for _uploader', () => {
     //todo
     chai.expect(manager.uploader).to.be.not.equal(null);
   });
 
-  test('Check constructor sets valid value for _resolver', function() {
+  test('Check constructor sets valid value for _resolver', () => {
     //todo
     chai.expect(manager.resolver).to.be.not.equal(null);
   });
 
-  test('Check pushBatch() method return valid value', function() {
+  test('Check pushBatch() method return valid value', () => {
     //todo
     //chai.expect(manager.pushBatch(['test'])).to.be.not.equal(null);
   });

@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {FailedToCreateIdentityPoolException} from '../../../../lib/Provisioning/Service/Exception/FailedToCreateIdentityPoolException';
 
-suite('Provisioning/Service/Exception/FailedToCreateIdentityPoolException', function() {
+suite('Provisioning/Service/Exception/FailedToCreateIdentityPoolException', () => {
 
-  test('Class FailedToCreateIdentityPoolException', function() {
+  test('Class FailedToCreateIdentityPoolException', () => {
     let e = new FailedToCreateIdentityPoolException('Test exception');
     chai.expect(e).to.be.an.instanceof(FailedToCreateIdentityPoolException);
   });

@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {FailedToCreateApiResourceException} from '../../../../lib/Provisioning/Service/Exception/FailedToCreateApiResourceException';
 
-suite('Provisioning/Service/Exception/FailedToCreateApiResourceException', function() {
+suite('Provisioning/Service/Exception/FailedToCreateApiResourceException', () => {
 
-  test('Class FailedToCreateApiResourceException', function() {
+  test('Class FailedToCreateApiResourceException', () => {
     let e = new FailedToCreateApiResourceException([]);
     chai.expect(e).to.be.an.instanceof(FailedToCreateApiResourceException);
   });

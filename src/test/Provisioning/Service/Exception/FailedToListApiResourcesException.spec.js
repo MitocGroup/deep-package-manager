@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {FailedToListApiResourcesException} from '../../../../lib/Provisioning/Service/Exception/FailedToListApiResourcesException';
 
-suite('Provisioning/Service/Exception/FailedToListApiResourcesException', function() {
+suite('Provisioning/Service/Exception/FailedToListApiResourcesException', () => {
 
-  test('Class FailedToListApiResourcesException', function() {
+  test('Class FailedToListApiResourcesException', () => {
     let exception = null;
     try {
       exception = new FailedToListApiResourcesException('Test exception');

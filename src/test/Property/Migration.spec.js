@@ -5,11 +5,11 @@ import path from 'path';
 import {Migration} from '../../lib/Property/Migration';
 import {Hash} from '../../lib/Helpers/Hash';
 
-suite('Property/Migration', function() {
+suite('Property/Migration', () => {
   let testMigrationVersion = '1111111111';
   let migrationFile = path.join(__dirname, 'sampleMigration', `Version${testMigrationVersion}.js`);
 
-  let registry = function() {
+  let registry = () => {
     let _db = [];
 
     return {
@@ -44,8 +44,8 @@ suite('Property/Migration', function() {
 
   let migration = createMigration();
 
-  test('Class Migration exists in Property/Migration', function() {
-    chai.expect(typeof Migration).to.equal('function');
+  test('Class Migration exists in Property/Migration', () => {
+    chai.expect(Migration).to.be.an('function');
   });
 
   test('Check Migration.name getter', () => {

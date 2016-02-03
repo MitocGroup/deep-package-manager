@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {Exception} from '../../../lib/Dependencies/Exception/Exception';
 
-suite('Dependencies/Exception', function() {
+suite('Dependencies/Exception', () => {
 
-  test('Class Exception', function() {
+  test('Class Exception', () => {
     let e = new Exception('Test exception');
     chai.expect(e).to.be.an.instanceof(Exception);
   });

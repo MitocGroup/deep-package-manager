@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {NoMatchingFrontendEngineException} from '../../../lib/Dependencies/Exception/NoMatchingFrontendEngineException';
 
-suite('Dependencies/NoMatchingFrontendEngineException', function() {
+suite('Dependencies/NoMatchingFrontendEngineException', () => {
 
-  test('Class NoMatchingFrontendEngineException', function() {
+  test('Class NoMatchingFrontendEngineException', () => {
     let e = new NoMatchingFrontendEngineException(['engine1', 'engine2']);
     chai.expect(e).to.be.an.instanceof(NoMatchingFrontendEngineException);
   });

@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {FailedToCreateAccessPolicyException} from '../../../../lib/Provisioning/Service/Exception/FailedToCreateAccessPolicyException';
 
-suite('Provisioning/Service/Exception/FailedToCreateAccessPolicyException', function() {
+suite('Provisioning/Service/Exception/FailedToCreateAccessPolicyException', () => {
 
-  test('Class FailedToCreateAccessPolicyException', function() {
+  test('Class FailedToCreateAccessPolicyException', () => {
     let e = new FailedToCreateAccessPolicyException('Test exception');
     chai.expect(e).to.be.an.instanceof(FailedToCreateAccessPolicyException);
   });
