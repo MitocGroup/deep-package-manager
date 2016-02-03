@@ -8,6 +8,6 @@ import Core from 'deep-core';
 
 export class AbstractStrategy extends Core.OOP.Interface {
   constructor() {
-    super(['getModuleLocation', 'getDbLocation']);
+    super(['getModuleLocation', 'getModuleConfigLocation', 'getModuleBaseLocation', 'getDbLocation']);
   }
 }

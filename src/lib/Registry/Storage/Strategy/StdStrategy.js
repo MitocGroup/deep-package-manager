@@ -5,6 +5,8 @@
 'use strict';
 
 import {AbstractStrategy} from './AbstractStrategy';
+import {Config} from '../../../Property/Config';
+import {Module} from '../../Module';
 
 export class StdStrategy extends AbstractStrategy {
   constructor() {
@@ -14,10 +16,28 @@ export class StdStrategy extends AbstractStrategy {
   /**
    * @param {String} moduleName
    * @param {String} moduleVersion
+   * @returns {String}
+   */
+  getModuleBaseLocation(moduleName, moduleVersion) {
+    return `${moduleName}/@${moduleVersion}`;
+  }
+
+  /**
+   * @param {String} moduleName
+   * @param {String} moduleVersion
+   * @returns {*}
+   */
+  getModuleConfigLocation(moduleName, moduleVersion) {
+    return `${this.getModuleBaseLocation(moduleName, moduleVersion)}/${Config.DEFAULT_FILENAME}`;
+  }
+
+  /**
+   * @param {String} moduleName
+   * @param {String} moduleVersion
    * @returns {*}
    */
   getModuleLocation(moduleName, moduleVersion) {
-    return `${moduleName}/@${moduleVersion}`;
+    return `${this.getModuleBaseLocation(moduleName, moduleVersion)}/${Config.MODULE_FILE}`;
   }
 
   /**
@@ -26,6 +46,13 @@ export class StdStrategy extends AbstractStrategy {
    */
   getDbLocation(moduleName) {
     return `${moduleName}/${StdStrategy.DB_FILE}`;
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get MODULE_FILE() {
+    return `module.${Module.ARCHIVE_EXTENSION}`;
   }
 
   /**

@@ -7,7 +7,10 @@
 import {Exception} from '../../Exception/Exception';
 
 export class BrokenModuleDBException extends Exception {
-  constructor() {
-    super('Unable to decode module DB file');
+  /**
+   * @param {String} moduleName
+   */
+  constructor(moduleName) {
+    super(`Unable to decode module DB file for ${moduleName}`);
   }
 }

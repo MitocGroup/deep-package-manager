@@ -8,24 +8,37 @@ import {BrokenModuleDBException} from './Exception/BrokenModuleDBException';
 
 export class ModuleDB {
   /**
+   * @param {String} moduleName
    * @param {Object} config
+   * @param {Storage|*} storage
    */
-  constructor(config) {
+  constructor(moduleName, config, storage) {
+    this._moduleName = moduleName;
     this._config = config;
+    this._storage = storage;
   }
 
   /**
+   * @param {Function} cb
+   */
+  dump(cb) {
+    this._storage.dumpModuleDb(this, cb);
+  }
+
+  /**
+   * @param {String} moduleName
+   * @param {Storage|*} storage
    * @param {String} rawConfig
    * @returns {ModuleDB}
    */
-  static createFromRawConfig(rawConfig) {
+  static createFromRawConfig(moduleName, storage, rawConfig) {
     let config = ModuleDB._decode(rawConfig);
 
     if (!config) {
-      throw new BrokenModuleDBException();
+      throw new BrokenModuleDBException(this._moduleName);
     }
 
-    return new ModuleDB(config);
+    return new ModuleDB(moduleName, config, storage);
   }
 
   /**
@@ -33,6 +46,20 @@ export class ModuleDB {
    */
   toString() {
     return ModuleDB._encode(this.config);
+  }
+
+  /**
+   * @returns {String}
+   */
+  get moduleName() {
+    return this._moduleName;
+  }
+
+  /**
+   * @returns {Storage|*}
+   */
+  get storage() {
+    return this._storage;
   }
 
   /**

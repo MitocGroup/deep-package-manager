@@ -7,6 +7,8 @@
 import {TmpFSDriver} from './Driver/TmpFSDriver';
 import {StdStrategy} from './Strategy/StdStrategy';
 import {ModuleDB} from '../ModuleDB';
+import {ModuleConfig} from '../ModuleConfig';
+import {Module} from '../Module';
 
 export class Storage {
   /**
@@ -16,6 +18,106 @@ export class Storage {
   constructor(driver = null, strategy = null) {
     this._driver = driver || Storage.DEFAULT_DRIVER;
     this._strategy = strategy || Storage.DEFAULT_STRATEGY;
+  }
+
+  /**
+   * @param {String} moduleName
+   * @param {String} moduleVersion
+   * @param {Function} cb
+   */
+  moduleExists(moduleName, moduleVersion, cb) {
+    this._driver.hasObj(this._strategy.getModuleLocation(moduleName, moduleVersion), cb);
+  }
+
+  /**
+   * @param {String} moduleName
+   * @param {String} moduleVersion
+   * @param {Function} cb
+   */
+  readModule(moduleName, moduleVersion, cb) {
+    this._driver.readObj(this._strategy.getModuleLocation(moduleName, moduleVersion), (error, rawContent) => {
+      if (error) {
+        cb(error, null);
+        return;
+      }
+
+      try {
+        cb(null, new Module(moduleName, moduleVersion, rawContent, this));
+      } catch (error) {
+        cb(error, null);
+      }
+    });
+  }
+
+  /**
+   * @param {Module} module
+   * @param {Function} cb
+   */
+  uploadModule(module, cb) {
+    this._driver.putObj(
+      this._strategy.getModuleLocation(module.moduleName, module.moduleVersion),
+      module,
+      cb
+    );
+  }
+
+  /**
+   * @param {String} moduleName
+   * @param {String} moduleVersion
+   * @param {Function} cb
+   */
+  deleteModule(moduleName, moduleVersion, cb) {
+    this._driver.deleteObj(this._strategy.getModuleLocation(moduleName, moduleVersion), cb);
+  }
+
+  /**
+   * @param {String} moduleName
+   * @param {String} moduleVersion
+   * @param {Function} cb
+   */
+  moduleConfigExists(moduleName, moduleVersion, cb) {
+    this._driver.hasObj(this._strategy.getModuleConfigLocation(moduleName, moduleVersion), cb);
+  }
+
+  /**
+   * @param {String} moduleName
+   * @param {String} moduleVersion
+   * @param {Function} cb
+   */
+  readModuleConfig(moduleName, moduleVersion, cb) {
+    this._driver.readObj(this._strategy.getModuleConfigLocation(moduleName, moduleVersion), (error, rawContent) => {
+      if (error) {
+        cb(error, null);
+        return;
+      }
+
+      try {
+        cb(null, new ModuleConfig(moduleName, moduleVersion, rawContent, this));
+      } catch (error) {
+        cb(error, null);
+      }
+    });
+  }
+
+  /**
+   * @param {ModuleConfig} moduleConfig
+   * @param {Function} cb
+   */
+  dumpModuleConfig(moduleConfig, cb) {
+    this._driver.putObj(
+      this._strategy.getModuleConfigLocation(moduleConfig.moduleName, moduleConfig.moduleVersion),
+      moduleConfig,
+      cb
+    );
+  }
+
+  /**
+   * @param {String} moduleName
+   * @param {String} moduleVersion
+   * @param {Function} cb
+   */
+  deleteModuleConfig(moduleName, moduleVersion, cb) {
+    this._driver.deleteObj(this._strategy.getModuleConfigLocation(moduleName, moduleVersion), cb);
   }
 
   /**
@@ -38,7 +140,7 @@ export class Storage {
       }
 
       try {
-        cb(null, ModuleDB.createFromRawConfig(rawContent));
+        cb(null, ModuleDB.createFromRawConfig(moduleName, this, rawContent));
       } catch (error) {
         cb(error, null);
       }
@@ -46,12 +148,11 @@ export class Storage {
   }
 
   /**
-   * @param {String} moduleName
-   * @param {ModuleDB|String} moduleDb
+   * @param {ModuleDB} moduleDb
    * @param {Function} cb
    */
-  dumpModuleDb(moduleName, moduleDb, cb) {
-    this._driver.putObj(this._strategy.getDbLocation(moduleName), moduleDb, cb);
+  dumpModuleDb(moduleDb, cb) {
+    this._driver.putObj(this._strategy.getDbLocation(moduleDb.moduleName), moduleDb, cb);
   }
 
   /**
