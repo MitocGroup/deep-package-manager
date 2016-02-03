@@ -8,7 +8,7 @@ suite('Provisioning/Service/KinesisService', () => {
   let kinesisService = new KinesisService();
 
   test('Class KinesisService exists in Provisioning/Service/KinesisService', () => {
-    chai.expect(typeof KinesisService).to.equal('function');
+    chai.expect(KinesisService).to.be.an('function');
   });
 
   test('Check constructor sets valid default values', () => {

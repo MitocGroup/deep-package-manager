@@ -28,7 +28,7 @@ suite('Microservice/Instance', () => {
   let instance = new Instance(config, parameters, basePath);
 
   test('Class Instance exists in Microservice/Instance', () => {
-    chai.expect(typeof Instance).to.equal('function');
+    chai.expect(Instance).to.be.an('function');
   });
 
   test('Contructor throws TypeError when called as a function', () => {

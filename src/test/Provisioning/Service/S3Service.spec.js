@@ -7,7 +7,7 @@ suite('Provisioning/Service/S3Service', () => {
   let s3Service = new S3Service();
 
   test('Class S3Service exists in Provisioning/Service/S3Service', () => {
-    chai.expect(typeof S3Service).to.equal('function');
+    chai.expect(S3Service).to.be.an('function');
   });
 
   test('Check constructor sets valid default values', () => {

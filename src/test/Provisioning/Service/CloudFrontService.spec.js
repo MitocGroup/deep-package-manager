@@ -16,7 +16,7 @@ suite('Provisioning/Service/CloudFrontService', () => {
   let provisioningInstance = null;
 
   test('Class CloudFrontService exists in Provisioning/Service/CloudFrontService', () => {
-    chai.expect(typeof CloudFrontService).to.equal('function');
+    chai.expect(CloudFrontService).to.be.an('function');
   });
 
   test('Check constructor sets valid default values', () => {

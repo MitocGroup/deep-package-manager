@@ -21,7 +21,7 @@ suite('Property/Config', () => {
   let configName = './test/testMaterials/Property1/deeploy.test.json';
 
   test('Class Config exists in Property/Config', () => {
-    chai.expect(typeof Config).to.equal('function');
+    chai.expect(Config).to.be.an('function');
   });
 
   test('Check constructor sets  _rawConfig', () => {

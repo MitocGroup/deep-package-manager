@@ -6,7 +6,7 @@ import Joi from 'joi';
 
 suite('Helpers/JoiHelper', () => {
   test('Class JoiHelper exists in Helpers/JoiHelper', () => {
-    chai.expect(typeof JoiHelper).to.equal('function');
+    chai.expect(JoiHelper).to.be.an('function');
   });
 
   test('Check website() returns valid joi object', () => {

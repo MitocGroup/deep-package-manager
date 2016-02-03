@@ -22,7 +22,7 @@ suite('Assets/Replacer/UrlReplacer', () => {
   let htmlContent = fsExtra.readFileSync(testHtmlFilePath, 'utf8');
 
   test('Class UrlReplacer exists in Assets/Replacer/UrlReplacer', () => {
-    chai.expect(typeof UrlReplacer).to.equal('function');
+    chai.expect(UrlReplacer).to.be.an('function');
   });
 
   test('Check constructor sets version', () => {

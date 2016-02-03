@@ -9,7 +9,7 @@ suite('Property/Model', () => {
   let modelInstance = new Model();
 
   test('Class Model exists in Property/Model', () => {
-    chai.expect(typeof Model).to.equal('function');
+    chai.expect(Model).to.be.an('function');
   });
 
   test('Check constructor sets valid default values', () => {

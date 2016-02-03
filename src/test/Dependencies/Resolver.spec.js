@@ -21,7 +21,7 @@ suite('Dependencies/Resolver', () => {
   let resolver = new DependencyResolver(driver);
 
   test('Class Resolver exists in Dependencies/Resolver', () => {
-    chai.expect(typeof Resolver).to.equal('function');
+    chai.expect(Resolver).to.be.an('function');
   });
 
   test('Check constructor sets valid value for _resolveStack=[]', () => {

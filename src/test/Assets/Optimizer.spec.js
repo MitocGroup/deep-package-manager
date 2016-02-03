@@ -10,7 +10,7 @@ suite('Assets/Optimizer', () => {
   let optimizer = new Optimizer(path);
 
   test('Class Optimizer exists in Assets/Optimizer', () => {
-    chai.expect(typeof Optimizer).to.equal('function');
+    chai.expect(Optimizer).to.be.an('function');
   });
 
   test('Check constructor sets _path', () => {

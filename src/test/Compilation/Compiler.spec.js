@@ -29,7 +29,7 @@ suite('Compilation/Compiler', () => {
   let compiler = new Compiler();
 
   test('Class Compiler exists in Compilation/Compiler', () => {
-    chai.expect(typeof Compiler).to.equal('function');
+    chai.expect(Compiler).to.be.an('function');
   });
 
   test('Class compiler successfully created', () => {

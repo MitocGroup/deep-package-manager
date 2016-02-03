@@ -17,7 +17,7 @@ suite('Assets/DeployIdInjector', () => {
   let testHtmlFilePath = './test/testMaterials/assets/testFiles/data.html';
 
   test('Class DeployIdInjector exists in Assets/DeployIdInjector', () => {
-    chai.expect(typeof DeployIdInjector).to.equal('function');
+    chai.expect(DeployIdInjector).to.be.an('function');
   });
 
   test('Check constructor sets _path', () => {

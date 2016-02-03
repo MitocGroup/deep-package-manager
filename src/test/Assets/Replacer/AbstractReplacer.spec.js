@@ -9,7 +9,7 @@ suite('Assets/Replacer/AbstractReplacer', () => {
   let abstractReplacer = new AbstractReplacerMock(version);
 
   test('Class AbstractReplacer exists in Assets/Replacer/AbstractReplacer', () => {
-    chai.expect(typeof AbstractReplacer).to.equal('function');
+    chai.expect(AbstractReplacer).to.be.an('function');
   });
 
   test('Check constructor sets version', () => {

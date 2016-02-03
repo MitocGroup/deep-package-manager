@@ -9,7 +9,7 @@ suite('Helpers/Exec', () => {
   let exec = new Exec(cmd, args);
 
   test('Class Exec exists in Helpers/Exec', () => {
-    chai.expect(typeof Exec).to.equal('function');
+    chai.expect(Exec).to.be.an('function');
   });
 
   test('Check constructor sets value for _cmd', () => {

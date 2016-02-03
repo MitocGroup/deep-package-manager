@@ -7,7 +7,7 @@ suite('Provisioning/Service/ElasticacheService', () => {
   let elasticacheService = new ElasticacheService();
 
   test('Class ElasticacheService exists in Provisioning/Service/ElasticacheService', () => {
-    chai.expect(typeof ElasticacheService).to.equal('function');
+    chai.expect(ElasticacheService).to.be.an('function');
   });
 
   test('Check constructor sets valid default values', () => {

@@ -14,7 +14,7 @@ suite('Helpers/FileWalker', () => {
   let error = null;
 
   test('Class FileWalker exists in Helpers/FileWalker', () => {
-    chai.expect(typeof FileWalker).to.equal('function');
+    chai.expect(FileWalker).to.be.an('function');
   });
 
   test('Check constructor sets valid default value for _type', () => {

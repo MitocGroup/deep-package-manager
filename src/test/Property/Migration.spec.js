@@ -45,7 +45,7 @@ suite('Property/Migration', () => {
   let migration = createMigration();
 
   test('Class Migration exists in Property/Migration', () => {
-    chai.expect(typeof Migration).to.equal('function');
+    chai.expect(Migration).to.be.an('function');
   });
 
   test('Check Migration.name getter', () => {

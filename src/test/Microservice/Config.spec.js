@@ -28,7 +28,7 @@ suite('Microservice/Config', () => {
   let config = new Config(configInput);
 
   test('Class Config exists in Microservice/Config', () => {
-    chai.expect(typeof Config).to.equal('function');
+    chai.expect(Config).to.be.an('function');
   });
 
   test('Check constructor sets valid default value for _rawConfig={}', () => {

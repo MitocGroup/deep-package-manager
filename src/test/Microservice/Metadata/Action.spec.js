@@ -26,7 +26,7 @@ suite('Microservice/Metadata/Action', () => {
   let action = new Action(configInput.resourceName, configInput.name, configInput);
 
   test('Class Action exists in Microservice/Metadata/Action', () => {
-    chai.expect(typeof Action).to.equal('function');
+    chai.expect(Action).to.be.an('function');
   });
 
   test('Check HTTP_VERBS static getter returns \'external\'', () => {

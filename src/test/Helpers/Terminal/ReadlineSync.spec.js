@@ -25,7 +25,7 @@ suite('Helpers/Terminal/ReadlineSync', () => {
   let readlineSync = new ReadlineSync();
 
   test('Class ReadlineSync exists in Helpers/Terminal/ReadlineSync', () => {
-    chai.expect(typeof ReadlineSync).to.equal('function');
+    chai.expect(ReadlineSync).to.be.an('function');
   });
 
   test('Check constructor sets valid default value for _options={}', () => {

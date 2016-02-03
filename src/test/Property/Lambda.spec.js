@@ -37,7 +37,7 @@ suite('Property/Lambda', () => {
   let timeoutInput = 128;
 
   test('Class Lambda exists in Property/Lambda', () => {
-    chai.expect(typeof Lambda).to.equal('function');
+    chai.expect(Lambda).to.be.an('function');
   });
 
   //test('Check constructor set valid default value for _uploadedLambda', () => {

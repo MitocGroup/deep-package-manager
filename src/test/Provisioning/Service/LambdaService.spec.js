@@ -15,7 +15,7 @@ suite('Provisioning/Service/LambdaService', () => {
   let provisioningInstance = null;
 
   test('Class LambdaService exists in Provisioning/Service/LambdaService', () => {
-    chai.expect(typeof LambdaService).to.equal('function');
+    chai.expect(LambdaService).to.be.an('function');
   });
 
   test('Check constructor sets valid default values', () => {

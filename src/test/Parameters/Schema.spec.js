@@ -38,7 +38,7 @@ suite('Parameters/Schema', () => {
   let schema = new Schema(ramlModel);
 
   test('Class Schema exists in Parameters/Schema', () => {
-    chai.expect(typeof Schema).to.equal('function');
+    chai.expect(Schema).to.be.an('function');
   });
 
   test('Check constructor sets valid default value for ramlModel', () => {
@@ -46,11 +46,11 @@ suite('Parameters/Schema', () => {
   });
 
   test('Check validator getter returns RamlValidator function', () => {
-    chai.expect(typeof schema.validator).to.equal('function');
+    chai.expect(schema.validator).to.be.an('function');
   });
 
   test('Check sanitizer getter returns RamlSanitizer function', () => {
-    chai.expect(typeof schema.sanitizer).to.equal('function');
+    chai.expect(schema.sanitizer).to.be.an('function');
   });
 
   test('Check validate() method returns object w/o errors', () => {

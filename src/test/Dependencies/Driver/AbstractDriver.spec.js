@@ -25,7 +25,7 @@ suite('Dependencies/Driver/AbstractDriver', () => {
   let expectedResult = null;
 
   test('Class AbstractDriver exists in Dependencies/Driver/AbstractDriver', () => {
-    chai.expect(typeof AbstractDriver).to.equal('function');
+    chai.expect(AbstractDriver).to.be.an('function');
   });
 
   test('Check constructor sets valid value for _dryRun=false', () => {

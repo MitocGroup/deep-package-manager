@@ -7,7 +7,7 @@ suite('Provisioning/Service/SNSService', () => {
   let snsService = new SNSService();
 
   test('Class SNSService exists in Provisioning/Service/SNSService', () => {
-    chai.expect(typeof SNSService).to.equal('function');
+    chai.expect(SNSService).to.be.an('function');
   });
 
   test('Check name() static method returns \'sns\'', () => {

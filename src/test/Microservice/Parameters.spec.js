@@ -7,7 +7,7 @@ suite('Microservice/Parameters', () => {
   let parameters = new Parameters();
 
   test('Class Parameters exists in Microservice/Parameters', () => {
-    chai.expect(typeof Parameters).to.equal('function');
+    chai.expect(Parameters).to.be.an('function');
   });
 
   test('Check constructor sets valid default value for _rawParameters={}', () => {

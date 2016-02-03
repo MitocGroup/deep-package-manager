@@ -19,7 +19,7 @@ suite('Helpers/WaitFor', () => {
   };
 
   test('Class WaitFor exists in Helpers/WaitFor', () => {
-    chai.expect(typeof WaitFor).to.equal('function');
+    chai.expect(WaitFor).to.be.an('function');
   });
 
   test('Check constructor sets valid default value for _children', () => {

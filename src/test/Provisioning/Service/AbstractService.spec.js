@@ -51,7 +51,7 @@ suite('Provisioning/Service/AbstractService', () => {
   let service = new AbstractServiceTest(provisioningInput);
 
   test('Class AbstractService exists in Provisioning/Service/AbstractService', () => {
-    chai.expect(typeof AbstractServiceTest).to.equal('function');
+    chai.expect(AbstractServiceTest).to.be.an('function');
   });
 
   test('Check AbstractService constructor sets valid default values for _readyTeardown=false', () => {

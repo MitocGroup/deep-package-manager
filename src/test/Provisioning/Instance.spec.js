@@ -26,7 +26,7 @@ suite('Provisioning/Instance', () => {
   };
 
   test('Class Instance exists in Provisioning/Instance', () => {
-    chai.expect(typeof Instance).to.equal('function');
+    chai.expect(Instance).to.be.an('function');
   });
 
   test('Check constructor throws InvalidArgumentException exception when passed parameter is not instanceof PropertyInstance', () => {

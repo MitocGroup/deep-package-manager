@@ -31,7 +31,7 @@ suite('Dependencies/Manager', () => {
   //let expectedResult = null;
 
   test('Class Manager exists in Dependencies/Manager', () => {
-    chai.expect(typeof Manager).to.equal('function');
+    chai.expect(Manager).to.be.an('function');
   });
 
   test('Check constructor sets valid value for _driver', () => {

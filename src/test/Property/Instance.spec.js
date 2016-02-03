@@ -15,7 +15,7 @@ suite('Property/Instance', () => {
   let propertyInstance = null;
 
   test('Class Instance exists in Property/Instance', () => {
-    chai.expect(typeof PropertyInstance).to.equal('function');
+    chai.expect(PropertyInstance).to.be.an('function');
   });
 
   test('Check constructor throws Exception if config file doesn\'t exist', () => {

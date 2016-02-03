@@ -17,7 +17,7 @@ suite('Microservice/FrontendEngine', () => {
   let latestEngineVersion = '0.0.1';
 
   test('Class Config exists in Microservice/FrontendEngine', () => {
-    chai.expect(typeof FrontendEngine).to.equal('function');
+    chai.expect(FrontendEngine).to.be.an('function');
   });
 
   test('Check constructor sets valid default value for rawEngines', () => {

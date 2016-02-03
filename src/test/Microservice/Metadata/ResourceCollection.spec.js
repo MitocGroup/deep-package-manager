@@ -8,7 +8,7 @@ suite('Microservice/Metadata/ResourceCollection', () => {
   let resourceCollection = new ResourceCollection(configInput);
 
   test('Class ResourceCollection exists in Microservice/Metadata/ResourceCollection', () => {
-    chai.expect(typeof ResourceCollection).to.equal('function');
+    chai.expect(ResourceCollection).to.be.an('function');
   });
 
   test('Check models getter returns valid value for models', () => {

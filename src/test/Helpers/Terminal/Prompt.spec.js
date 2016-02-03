@@ -27,7 +27,7 @@ suite('Helpers/Terminal/Prompt', () => {
   let prompt = new Prompt(text);
 
   test('Class Prompt exists in Helpers/Terminal/Prompt', () => {
-    chai.expect(typeof Prompt).to.equal('function');
+    chai.expect(Prompt).to.be.an('function');
   });
 
   test('Check _noInteractionMode() returns false', () => {

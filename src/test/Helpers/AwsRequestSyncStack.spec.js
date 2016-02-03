@@ -7,7 +7,7 @@ suite('Helpers/AwsRequestSyncStack', () => {
   let awsRequestSyncStack = new AwsRequestSyncStack();
 
   test('Class AwsRequestSyncStack exists in Helpers/AwsRequestSyncStack', () => {
-    chai.expect(typeof AwsRequestSyncStack).to.equal('function');
+    chai.expect(AwsRequestSyncStack).to.be.an('function');
   });
 
   test('Check constructor sets valid values', () => {

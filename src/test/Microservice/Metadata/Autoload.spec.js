@@ -27,7 +27,7 @@ suite('Microservice/Metadata/Autoload', () => {
   let autoload = new Autoload(configInput, basePath);
 
   test('Class Autoload exists in Microservice/Metadata/Autoload', () => {
-    chai.expect(typeof Autoload).to.equal('function');
+    chai.expect(Autoload).to.be.an('function');
   });
 
   test('Check frontend getter returns valid value for frontend', () => {

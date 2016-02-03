@@ -13,7 +13,7 @@ suite('Dependencies/Dispatcher', () => {
   let dispatcher = new DispatcherMock(driver);
 
   test('Class Dispatcher exists in Dependencies/Dispatcher', () => {
-    chai.expect(typeof Dispatcher).to.equal('function');
+    chai.expect(Dispatcher).to.be.an('function');
   });
 
   test('Check constructor sets valid value for _driver', () => {

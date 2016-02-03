@@ -9,7 +9,7 @@ suite('Helpers/DeployID', () => {
   let deployID = new DeployID(propertyInstance);
 
   test('Class DeployID exists in Helpers/DeployID', () => {
-    chai.expect(typeof DeployID).to.equal('function');
+    chai.expect(DeployID).to.be.an('function');
   });
 
   test('Check constructor sets value for _property', () => {

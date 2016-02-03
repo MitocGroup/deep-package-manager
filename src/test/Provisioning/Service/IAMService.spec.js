@@ -8,7 +8,7 @@ suite('Provisioning/Service/IAMService', () => {
   let iamService = new IAMService();
 
   test('Class IAMService exists in Provisioning/Service/IAMService', () => {
-    chai.expect(typeof IAMService).to.equal('function');
+    chai.expect(IAMService).to.be.an('function');
   });
 
   test('Check constructor sets valid default values', () => {

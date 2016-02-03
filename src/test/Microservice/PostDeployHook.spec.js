@@ -10,7 +10,7 @@ suite('Microservice/PostDeployHook', () => {
   let postDeployHook = new PostDeployHook(microservice);
 
   test('Class PostDeployHook exists in Microservice/PostDeployHook', () => {
-    chai.expect(typeof PostDeployHook).to.equal('function');
+    chai.expect(PostDeployHook).to.be.an('function');
   });
 
   test('Check constructor sets valid  value for _microservice', () => {

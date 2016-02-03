@@ -17,7 +17,7 @@ suite('Provisioning/Service/APIGatewayService', () => {
   let objectStorage = null;
 
   test('Class APIGatewayService exists in Provisioning/Service/APIGatewayService', () => {
-    chai.expect(typeof APIGatewayService).to.equal('function');
+    chai.expect(APIGatewayService).to.be.an('function');
   });
 
   test('Check constructor sets valid default values', () => {

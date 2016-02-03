@@ -30,7 +30,7 @@ suite('Parameters/PathTransformer', () => {
   };
 
   test('Class PathTransformer exists in Parameters/PathTransformer', () => {
-    chai.expect(typeof PathTransformer).to.equal('function');
+    chai.expect(PathTransformer).to.be.an('function');
   });
 
   test('Check _embedObject static method returns valid object', () => {

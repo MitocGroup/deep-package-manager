@@ -21,7 +21,7 @@ suite('Dependencies/Uploader', () => {
   let uploader = new DependencyUploader(driver);
 
   test('Class Uploader exists in Dependencies/Uploader', () => {
-    chai.expect(typeof Uploader).to.equal('function');
+    chai.expect(Uploader).to.be.an('function');
   });
 
   test('Class uploader successfully created', () => {

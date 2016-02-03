@@ -16,7 +16,7 @@ suite('Provisioning/Service/CognitoIdentityService', () => {
   let objectStorage = null;
 
   test('Class CognitoIdentityService exists in Provisioning/Service/CognitoIdentityService', () => {
-    chai.expect(typeof CognitoIdentityService).to.equal('function');
+    chai.expect(CognitoIdentityService).to.be.an('function');
   });
 
   test('Check constructor sets valid default values', () => {

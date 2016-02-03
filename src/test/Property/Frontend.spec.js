@@ -54,7 +54,7 @@ suite('Property/Frontend', () => {
   };
 
   test('Class Frontend exists in Property/Frontend', () => {
-    chai.expect(typeof Frontend).to.equal('function');
+    chai.expect(Frontend).to.be.an('function');
   });
 
   test('Check constructor sets valid values', () => {

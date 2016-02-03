@@ -22,7 +22,7 @@ suite('Helpers/SharedAwsConfig', () => {
   let sharedAwsConfig = new SharedAwsConfig();
 
   test('Class SharedAwsConfig exists in Helpers/SharedAwsConfig', () => {
-    chai.expect(typeof SharedAwsConfig).to.equal('function');
+    chai.expect(SharedAwsConfig).to.be.an('function');
   });
 
   test('Check constructor sets valid default value for _credentials', () => {

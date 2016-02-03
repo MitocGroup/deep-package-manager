@@ -10,7 +10,7 @@ suite('Helpers/Hash', () => {
   let actualResult = null;
 
   test('Class Hash exists in Helpers/Hash', () => {
-    chai.expect(typeof Hash).to.equal('function');
+    chai.expect(Hash).to.be.an('function');
   });
 
   test('Check crc32() static method returns crc32 value', () => {

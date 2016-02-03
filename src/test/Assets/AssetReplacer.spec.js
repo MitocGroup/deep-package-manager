@@ -12,7 +12,7 @@ suite('Assets/AssetReplacer', () => {
   let assetReplacer = new AssetReplacer(version);
 
   test('Class AssetReplacer exists in Assets/AssetReplacer', () => {
-    chai.expect(typeof AssetReplacer).to.equal('function');
+    chai.expect(AssetReplacer).to.be.an('function');
   });
 
   test('Check constructor sets version', () => {

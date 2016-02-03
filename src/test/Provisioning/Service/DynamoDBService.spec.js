@@ -19,7 +19,7 @@ suite('Provisioning/Service/DynamoDBService', () => {
   let provisioningInstance = null;
 
   test('Class DynamoDBService exists in Provisioning/Service/DynamoDBService', () => {
-    chai.expect(typeof DynamoDBService).to.equal('function');
+    chai.expect(DynamoDBService).to.be.an('function');
   });
 
   test('Check constructor sets valid default values', () => {

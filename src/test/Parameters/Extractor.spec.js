@@ -10,7 +10,7 @@ suite('Parameters/Extractor', () => {
   let actualResult = null;
 
   test('Class Extractor exists in Parameters/Extractor', () => {
-    chai.expect(typeof Extractor).to.equal('function');
+    chai.expect(Extractor).to.be.an('function');
   });
 
   test('Check constructor sets valid default value for _schema=null', () => {
