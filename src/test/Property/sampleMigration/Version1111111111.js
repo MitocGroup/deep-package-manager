@@ -3,6 +3,6 @@
  */
 
 module.exports = {
-  up: function() {
+  up: () => {
   },
 };

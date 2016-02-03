@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {FailedUploadingFileToS3Exception} from '../../../lib/Property/Exception/FailedUploadingFileToS3Exception';
 
-suite('Property/Exception/FailedUploadingFileToS3Exception', function() {
+suite('Property/Exception/FailedUploadingFileToS3Exception', () => {
 
-  test('Class FailedUploadingFileToS3Exception', function() {
+  test('Class FailedUploadingFileToS3Exception', () => {
     let e = new FailedUploadingFileToS3Exception('Test exception');
     chai.expect(e).to.be.an.instanceof(FailedUploadingFileToS3Exception);
   });

@@ -6,39 +6,39 @@ import {Remover} from './Remover';
 import FileSystem from 'fs';
 import path from 'path';
 
-suite('Helpers/FileWalker', function() {
+suite('Helpers/FileWalker', () => {
   let fileWalker = new FileWalker();
   let ignoreFile = 'ignoreFilePath';
   let directoryPath = 'testDirectory';
   let directoryWithSubPaths = 'testDirectories/subdir/dir';
   let error = null;
 
-  test('Class FileWalker exists in Helpers/FileWalker', function() {
+  test('Class FileWalker exists in Helpers/FileWalker', () => {
     chai.expect(typeof FileWalker).to.equal('function');
   });
 
-  test('Check constructor sets valid default value for _type', function() {
+  test('Check constructor sets valid default value for _type', () => {
     chai.expect(fileWalker.type).to.be.equal(FileWalker.SIMPLE);
   });
 
-  test('Check constructor sets valid default value for _ignoreFile=null', function() {
+  test('Check constructor sets valid default value for _ignoreFile=null', () => {
     chai.expect(fileWalker.ignoreFile).to.be.equal(null);
   });
 
-  test('Check ignoreFile setter sets _ignoreFile = "ignoreFilePath"', function() {
+  test('Check ignoreFile setter sets _ignoreFile = "ignoreFilePath"', () => {
     fileWalker.ignoreFile = ignoreFile;
     chai.expect(fileWalker.ignoreFile).to.be.equal(ignoreFile);
   });
 
-  test('Check RECURSIVE static getter returns "recursive"', function() {
+  test('Check RECURSIVE static getter returns "recursive"', () => {
     chai.expect(FileWalker.RECURSIVE).to.be.equal('recursive');
   });
 
-  test('Check SIMPLE getter returns "simple"', function() {
+  test('Check SIMPLE getter returns "simple"', () => {
     chai.expect(FileWalker.SIMPLE).to.be.equal('simple');
   });
 
-  test('Check mkdir() method creates simple directory and returns undefined', function() {
+  test('Check mkdir() method creates simple directory and returns undefined', () => {
     error = null;
 
     try {
@@ -55,7 +55,7 @@ suite('Helpers/FileWalker', function() {
     chai.expect(FileSystem.existsSync(directoryPath)).to.be.equal(false);
   });
 
-  test('Check mkdir() method creates directory and any necessary subdirectories', function() {
+  test('Check mkdir() method creates directory and any necessary subdirectories', () => {
     error = null;
     try {
       fileWalker._type = FileWalker.RECURSIVE;
@@ -73,7 +73,7 @@ suite('Helpers/FileWalker', function() {
     chai.expect(FileSystem.existsSync(directoryWithSubPaths)).to.be.equal(false);
   });
 
-  test('Check _buildIgnoreFilter() return true with configured ignore file', function() {
+  test('Check _buildIgnoreFilter() return true with configured ignore file', () => {
     fileWalker.ignoreFile = '.gitignore';
     let dirPath = path.join(__dirname, '../testMaterials/Helpers');
 
@@ -82,13 +82,13 @@ suite('Helpers/FileWalker', function() {
     chai.expect(actualResult()).to.eql(true);
   });
 
-  test('Check _buildIgnoreFilter() returns true', function() {
+  test('Check _buildIgnoreFilter() returns true', () => {
     let actualResult = fileWalker._buildIgnoreFilter('testMaterials');
 
     chai.expect(actualResult()).to.equal(true);
   });
 
-  test('Check copy() copies content from source to destination folder', function() {
+  test('Check copy() copies content from source to destination folder', () => {
     let fileName = '.gitignore';
     let sourcePath = path.join(__dirname, '../testMaterials/Helpers/');
     let destinationPath = path.join(__dirname, '../testMaterials/Helpers/Destination/');
@@ -103,7 +103,7 @@ suite('Helpers/FileWalker', function() {
     Remover.rmdir(destinationPath);
   });
 
-  test('Check walk() method', function () {
+  test('Check walk() method', () => {
     let dirPath = path.join(__dirname, '../testMaterials/assets');
     let expectedResult = [
       path.join(__dirname, '../testMaterials/assets/expectedResults/content.css.js'),

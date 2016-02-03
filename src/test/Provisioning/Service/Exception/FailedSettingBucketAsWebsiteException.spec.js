@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {FailedSettingBucketAsWebsiteException} from '../../../../lib/Provisioning/Service/Exception/FailedSettingBucketAsWebsiteException';
 
-suite('Provisioning/Service/Exception/FailedSettingBucketAsWebsiteException', function() {
+suite('Provisioning/Service/Exception/FailedSettingBucketAsWebsiteException', () => {
 
-  test('Class FailedSettingBucketAsWebsiteException', function() {
+  test('Class FailedSettingBucketAsWebsiteException', () => {
     let e = new FailedSettingBucketAsWebsiteException('Test exception');
     chai.expect(e).to.be.an.instanceof(FailedSettingBucketAsWebsiteException);
   });

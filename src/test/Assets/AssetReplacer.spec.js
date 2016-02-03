@@ -7,23 +7,23 @@ import {AbstractReplacerMock} from '../mock/Assets/Replacer/AbstractReplacerMock
 import {AbstractReplacer} from '../../lib/Assets/Replacer/AbstractReplacer';
 import fsExtra from 'fs-extra';
 
-suite('Assets/AssetReplacer', function() {
+suite('Assets/AssetReplacer', () => {
   let version = 'test_version';
   let assetReplacer = new AssetReplacer(version);
 
-  test('Class AssetReplacer exists in Assets/AssetReplacer', function() {
+  test('Class AssetReplacer exists in Assets/AssetReplacer', () => {
     chai.expect(typeof AssetReplacer).to.equal('function');
   });
 
-  test('Check constructor sets version', function() {
+  test('Check constructor sets version', () => {
     chai.expect(assetReplacer.version).to.equal(version);
   });
 
-  test('Check constructor sets _replacers to []', function() {
+  test('Check constructor sets _replacers to []', () => {
     chai.expect(assetReplacer.replacers).to.eql([]);
   });
 
-  test('Check _getExtension() method returns "json"', function() {
+  test('Check _getExtension() method returns "json"', () => {
     let file = './test/testMaterials/Property1/deeploy.test.json';
     let expectedResult = 'json';
 
@@ -32,13 +32,13 @@ suite('Assets/AssetReplacer', function() {
     chai.expect(actualResult).to.eql(expectedResult);
   });
 
-  test('Check _getExtension() method returns ""', function() {
+  test('Check _getExtension() method returns ""', () => {
     let actualResult = AssetReplacer._getExtension();
 
     chai.expect(actualResult).to.eql('');
   });
 
-  test('Check _ucFirst() method returns "ToUpperCaseFirstChar"', function() {
+  test('Check _ucFirst() method returns "ToUpperCaseFirstChar"', () => {
     let str = 'toUpperCaseFirstChar';
     let expectedResult = 'ToUpperCaseFirstChar';
 
@@ -47,7 +47,7 @@ suite('Assets/AssetReplacer', function() {
     chai.expect(actualResult).to.eql(expectedResult);
   });
 
-  test('Check _ucFirst() method returns "ToUpperCaseFirstChar"', function() {
+  test('Check _ucFirst() method returns "ToUpperCaseFirstChar"', () => {
     let str = 'ToUpperCaseFirstChar';
     let expectedResult = 'ToUpperCaseFirstChar';
 
@@ -56,7 +56,7 @@ suite('Assets/AssetReplacer', function() {
     chai.expect(actualResult).to.eql(expectedResult);
   });
 
-  test('Check addReplacer(replacer) for typeof replacer === string', function() {
+  test('Check addReplacer(replacer) for typeof replacer === string', () => {
     let replacer = 'url';
 
     assetReplacer.addReplacer(replacer);
@@ -66,7 +66,7 @@ suite('Assets/AssetReplacer', function() {
     chai.expect(actualResult.version).to.contains(assetReplacer.version);
   });
 
-  test('Check addReplacer(replacer) for typeof replacer !== string', function() {
+  test('Check addReplacer(replacer) for typeof replacer !== string', () => {
     let testVersion = 'replacer_test_version';
     let replacer = new UrlReplacer(testVersion);
 
@@ -77,7 +77,7 @@ suite('Assets/AssetReplacer', function() {
     chai.expect(actualResult.version).to.contains(testVersion);
   });
 
-  test('Check create() returns valid instance of AssetReplacer', function() {
+  test('Check create() returns valid instance of AssetReplacer', () => {
     let testVersion = 'abstract_replacer_test_version';
     let replacer = new AbstractReplacerMock(testVersion);
 
@@ -92,7 +92,7 @@ suite('Assets/AssetReplacer', function() {
     chai.expect(urlReplacer.version).to.contains(version);
   });
 
-  test('Check replace() returns valid istance AssetReplace', function() {
+  test('Check replace() returns valid istance AssetReplace', () => {
     //arrange
     let rawCssFilePath = './test/testMaterials/assets/rawFiles/data.css';
     let rawHtmlFilePath = './test/testMaterials/assets/rawFiles/data.html';

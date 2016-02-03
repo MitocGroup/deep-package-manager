@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {FailedToCreateElasticacheClusterException} from '../../../../lib/Provisioning/Service/Exception/FailedToCreateElasticacheClusterException';
 
-suite('Provisioning/Service/Exception/FailedToCreateElasticacheClusterException', function() {
+suite('Provisioning/Service/Exception/FailedToCreateElasticacheClusterException', () => {
 
-  test('Class FailedToCreateElasticacheClusterException', function() {
+  test('Class FailedToCreateElasticacheClusterException', () => {
     let e = new FailedToCreateElasticacheClusterException('Test exception');
     chai.expect(e).to.be.an.instanceof(FailedToCreateElasticacheClusterException);
   });

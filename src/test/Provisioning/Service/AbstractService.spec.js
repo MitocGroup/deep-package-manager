@@ -46,51 +46,51 @@ class AbstractServiceTest extends AbstractService {
   }
 }
 
-suite('Provisioning/Service/AbstractService', function() {
+suite('Provisioning/Service/AbstractService', () => {
   let provisioningInput = 'provisioning';
   let service = new AbstractServiceTest(provisioningInput);
 
-  test('Class AbstractService exists in Provisioning/Service/AbstractService', function() {
+  test('Class AbstractService exists in Provisioning/Service/AbstractService', () => {
     chai.expect(typeof AbstractServiceTest).to.equal('function');
   });
 
-  test('Check AbstractService constructor sets valid default values for _readyTeardown=false', function() {
+  test('Check AbstractService constructor sets valid default values for _readyTeardown=false', () => {
     chai.expect(service.readyTeardown).to.equal(false);
   });
 
-  test('Check AbstractService constructor sets valid default values for _ready=false', function() {
+  test('Check AbstractService constructor sets valid default values for _ready=false', () => {
     chai.expect(service.ready).to.equal(false);
   });
 
-  test('Check AbstractService constructor sets valid default values for _isUpdate=false', function() {
+  test('Check AbstractService constructor sets valid default values for _isUpdate=false', () => {
     chai.expect(service.isUpdate).to.equal(false);
   });
 
-  test('Check AbstractService constructor sets valid default values for _provisioning', function() {
+  test('Check AbstractService constructor sets valid default values for _provisioning', () => {
     chai.expect(service.provisioning).to.equal(provisioningInput);
   });
 
-  test('Check AbstractService constructor sets valid default values for _config={}', function() {
+  test('Check AbstractService constructor sets valid default values for _config={}', () => {
     chai.expect(service.config()).to.eql({});
   });
 
-  test('Check DELIMITER_UPPER_CASE static getter returns \'upperCase\'', function() {
+  test('Check DELIMITER_UPPER_CASE static getter returns \'upperCase\'', () => {
     chai.expect(AbstractServiceTest.DELIMITER_UPPER_CASE).to.be.equal('upperCase');
   });
 
-  test('Check DELIMITER_DOT static getter returns \'.\'', function() {
+  test('Check DELIMITER_DOT static getter returns \'.\'', () => {
     chai.expect(AbstractServiceTest.DELIMITER_DOT).to.be.equal('.');
   });
 
-  test('Check DELIMITER_UNDERSCORE static getter returns \'_\'', function() {
+  test('Check DELIMITER_UNDERSCORE static getter returns \'_\'', () => {
     chai.expect(AbstractServiceTest.DELIMITER_UNDERSCORE).to.be.equal('_');
   });
 
-  test('Check AWS_RESOURCES_PREFIX static getter returns \'deep\'', function() {
+  test('Check AWS_RESOURCES_PREFIX static getter returns \'deep\'', () => {
     chai.expect(AbstractServiceTest.AWS_RESOURCES_PREFIX).to.be.equal('deep');
   });
 
-  test('Check getApiVersions for a service throws an exception when something is not ok an array', function() {
+  test('Check getApiVersions for a service throws an exception when something is not ok an array', () => {
     let e = null;
     try {
       service.getApiVersions('S3');
@@ -101,7 +101,7 @@ suite('Provisioning/Service/AbstractService', function() {
     chai.expect(e).to.be.an.instanceOf(Exception);
   });
 
-  test('Check postProvision() method', function() {
+  test('Check postProvision() method', () => {
     let e = null;
     try {
       service.postProvision('services');
@@ -112,7 +112,7 @@ suite('Provisioning/Service/AbstractService', function() {
     chai.expect(e).to.be.equal(null);
   });
 
-  test('Check isUpdate setter ', function() {
+  test('Check isUpdate setter ', () => {
     service.isUpdate = false;
     chai.expect(service.isUpdate).to.equal(false);
     service.isUpdate = true;
@@ -121,7 +121,7 @@ suite('Provisioning/Service/AbstractService', function() {
     chai.expect(service.isUpdate).to.equal(false);
   });
 
-  test('Check generateAwsResourceName() method throws an exception when delimiter is not ok', function() {
+  test('Check generateAwsResourceName() method throws an exception when delimiter is not ok', () => {
     let e = null;
     let resourceName = 'test';
     let awsService = 'cloudfront';
@@ -143,7 +143,7 @@ suite('Provisioning/Service/AbstractService', function() {
     chai.expect(e).to.be.an.instanceOf(Exception);
   });
 
-  test('Check generateAwsResourceName() method', function() {
+  test('Check generateAwsResourceName() method', () => {
     let e = null;
     let resourceName = 'test';
     let awsService = 'cloudfront';

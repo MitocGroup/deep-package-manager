@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {MissingRootException} from '../../../lib/Property/Exception/MissingRootException';
 
-suite('Property/Exception/MissingRootException', function() {
+suite('Property/Exception/MissingRootException', () => {
 
-  test('Class MissingRootException', function() {
+  test('Class MissingRootException', () => {
     let e = new MissingRootException('Test exception');
     chai.expect(e).to.be.an.instanceof(MissingRootException);
   });

@@ -4,7 +4,7 @@ import chai from 'chai';
 import {Schema} from '../../lib/Parameters/Schema';
 import {InvalidValuesException} from '../../lib/Parameters/Exception/InvalidValuesException';
 
-suite('Parameters/Schema', function() {
+suite('Parameters/Schema', () => {
   let ramlModel = {
     username: {
       type: 'string',
@@ -37,31 +37,31 @@ suite('Parameters/Schema', function() {
 
   let schema = new Schema(ramlModel);
 
-  test('Class Schema exists in Parameters/Schema', function() {
+  test('Class Schema exists in Parameters/Schema', () => {
     chai.expect(typeof Schema).to.equal('function');
   });
 
-  test('Check constructor sets valid default value for ramlModel', function() {
+  test('Check constructor sets valid default value for ramlModel', () => {
     chai.expect(schema.ramlModel).to.be.equal(ramlModel);
   });
 
-  test('Check validator getter returns RamlValidator function', function() {
+  test('Check validator getter returns RamlValidator function', () => {
     chai.expect(typeof schema.validator).to.equal('function');
   });
 
-  test('Check sanitizer getter returns RamlSanitizer function', function() {
+  test('Check sanitizer getter returns RamlSanitizer function', () => {
     chai.expect(typeof schema.sanitizer).to.equal('function');
   });
 
-  test('Check validate() method returns object w/o errors', function() {
+  test('Check validate() method returns object w/o errors', () => {
     chai.expect(schema.validate(testPositiveObject)).to.be.eql(validResult);
   });
 
-  test('Check validate() method returns object with errors', function() {
+  test('Check validate() method returns object with errors', () => {
     chai.expect(schema.validate(testNegativeObject)).to.be.eql(invalidResult);
   });
 
-  test('Check constructor sets valid default values', function() {
+  test('Check constructor sets valid default values', () => {
     let error = null;
     try {
       schema.extract(testNegativeObject);
@@ -74,7 +74,7 @@ suite('Parameters/Schema', function() {
   });
 
   //todo - TBD
-  test('Check extractInteractive() method returns {}', function() {
+  test('Check extractInteractive() method returns {}', () => {
     //chai.expect(schema.extractInteractive()).to.be.eql({});
   });
 });

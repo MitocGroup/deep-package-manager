@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {FailedLambdaUploadException} from '../../../lib/Property/Exception/FailedLambdaUploadException';
 
-suite('Property/Exception/FailedLambdaUploadException', function() {
+suite('Property/Exception/FailedLambdaUploadException', () => {
 
-  test('Class FailedLambdaUploadException', function() {
+  test('Class FailedLambdaUploadException', () => {
     let e = new FailedLambdaUploadException('Test exception');
     chai.expect(e).to.be.an.instanceof(FailedLambdaUploadException);
   });

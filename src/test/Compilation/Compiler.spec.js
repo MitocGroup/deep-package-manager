@@ -6,7 +6,7 @@ import {Instance} from '../../lib/Microservice/Instance';
 import {Parameters} from '../../lib/Microservice/Parameters';
 import {Config} from '../../lib/Microservice/Config';
 
-suite('Compilation/Compiler', function() {
+suite('Compilation/Compiler', () => {
   let configInput = {
     name: 'config',
     propertyRoot: false,
@@ -28,24 +28,24 @@ suite('Compilation/Compiler', function() {
 
   let compiler = new Compiler();
 
-  test('Class Compiler exists in Compilation/Compiler', function() {
+  test('Class Compiler exists in Compilation/Compiler', () => {
     chai.expect(typeof Compiler).to.equal('function');
   });
 
-  test('Class compiler successfully created', function() {
+  test('Class compiler successfully created', () => {
     chai.expect(compiler).to.not.equal(null);
   });
 
-  test('Check compilers static getter returns []', function() {
+  test('Check compilers static getter returns []', () => {
     chai.expect(Compiler.compilers).to.be.eql([]);
   });
 
-  test('Check compile() static method compiles microservice by using all compilers', function() {
+  test('Check compile() static method compiles microservice by using all compilers', () => {
     //todo - TBD
     chai.expect(Compiler.compile(microservice)).to.be.not.equal(null);
   });
 
-  test('Check buildLambdas() static method builds Lambdas', function() {
+  test('Check buildLambdas() static method builds Lambdas', () => {
     //todo - TBD
     chai.expect(Compiler.buildLambdas(microservice)).to.be.not.equal(null);
   });

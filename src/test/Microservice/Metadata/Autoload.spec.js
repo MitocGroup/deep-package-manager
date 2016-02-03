@@ -3,7 +3,7 @@
 import chai from 'chai';
 import {Autoload} from '../../../lib/Microservice/Metadata/Autoload';
 
-suite('Microservice/Metadata/Autoload', function() {
+suite('Microservice/Metadata/Autoload', () => {
   let configInput = {
     backend: 'Backend',
     docs: 'Docs',
@@ -26,39 +26,39 @@ suite('Microservice/Metadata/Autoload', function() {
 
   let autoload = new Autoload(configInput, basePath);
 
-  test('Class Autoload exists in Microservice/Metadata/Autoload', function() {
+  test('Class Autoload exists in Microservice/Metadata/Autoload', () => {
     chai.expect(typeof Autoload).to.equal('function');
   });
 
-  test('Check frontend getter returns valid value for frontend', function() {
+  test('Check frontend getter returns valid value for frontend', () => {
     chai.expect(autoload.frontend).to.be.equal(configExpectedResult.frontend);
   });
 
-  test('Check backend getter returns valid value for backend', function() {
+  test('Check backend getter returns valid value for backend', () => {
     chai.expect(autoload.backend).to.be.equal(configExpectedResult.backend);
   });
 
-  test('Check docs getter returns valid value for docs', function() {
+  test('Check docs getter returns valid value for docs', () => {
     chai.expect(autoload.docs).to.be.equal(configExpectedResult.docs);
   });
 
-  test('Check models getter returns valid value for models', function() {
+  test('Check models getter returns valid value for models', () => {
     chai.expect(autoload.models).to.be.equal(configExpectedResult.models);
   });
 
-  test('Check validation getter returns valid value for validation', function() {
+  test('Check validation getter returns valid value for validation', () => {
     chai.expect(autoload.validation).to.be.equal(configExpectedResult.validation);
   });
 
-  test('Check fixtures getter returns valid value for fixtures', function() {
+  test('Check fixtures getter returns valid value for fixtures', () => {
     chai.expect(autoload.fixtures).to.be.equal(configExpectedResult.fixtures);
   });
 
-  test('Check migration getter returns valid value for migration', function() {
+  test('Check migration getter returns valid value for migration', () => {
     chai.expect(autoload.migration).to.be.equal(configExpectedResult.migration);
   });
 
-  test('Check extract method returns valid istance of Autoload', function() {
+  test('Check extract method returns valid istance of Autoload', () => {
     chai.expect(autoload.extract()).to.be.eql(configExpectedResult);
   });
 });

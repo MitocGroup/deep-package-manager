@@ -16,15 +16,15 @@ class DependencyUploader extends Uploader {
   }
 }
 
-suite('Dependencies/Uploader', function() {
+suite('Dependencies/Uploader', () => {
   let driver = 'driverTest';
   let uploader = new DependencyUploader(driver);
 
-  test('Class Uploader exists in Dependencies/Uploader', function() {
+  test('Class Uploader exists in Dependencies/Uploader', () => {
     chai.expect(typeof Uploader).to.equal('function');
   });
 
-  test('Class uploader successfully created', function() {
+  test('Class uploader successfully created', () => {
     chai.expect(uploader).to.not.equal(null);
   });
 });

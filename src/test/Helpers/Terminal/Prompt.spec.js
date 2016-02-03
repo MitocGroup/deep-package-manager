@@ -11,7 +11,7 @@ import requireProxy from 'proxyquire';
 
 chai.use(sinonChai);
 
-suite('Helpers/Terminal/Prompt', function() {
+suite('Helpers/Terminal/Prompt', () => {
   let text = 'test text';
 
   //mocking readline
@@ -26,29 +26,29 @@ suite('Helpers/Terminal/Prompt', function() {
 
   let prompt = new Prompt(text);
 
-  test('Class Prompt exists in Helpers/Terminal/Prompt', function() {
+  test('Class Prompt exists in Helpers/Terminal/Prompt', () => {
     chai.expect(typeof Prompt).to.equal('function');
   });
 
-  test('Check _noInteractionMode() returns false', function() {
+  test('Check _noInteractionMode() returns false', () => {
     chai.expect(Prompt._noInteractionMode).to.equal(false);
   });
 
-  test('Check constructor sets  value for _text', function() {
+  test('Check constructor sets  value for _text', () => {
     chai.expect(prompt.text).to.be.equal(text);
   });
 
-  test('Check constructor sets valid default value for _syncMode=false', function() {
+  test('Check constructor sets valid default value for _syncMode=false', () => {
     chai.expect(prompt.syncMode).to.be.equal(false);
   });
 
-  test('Check _createReadlineInterface() returns instance of ReadlineSync for sync', function() {
+  test('Check _createReadlineInterface() returns instance of ReadlineSync for sync', () => {
     let actualResult = Prompt._createReadlineInterface(true);
 
     chai.expect(actualResult).to.be.an.instanceof(ReadlineSync);
   });
 
-  test('Check _choicesError() returns valid string', function() {
+  test('Check _choicesError() returns valid string', () => {
     let choices = ['first test string', 'second test string'];
 
     let actualResult = Prompt._choicesError(choices);
@@ -56,7 +56,7 @@ suite('Helpers/Terminal/Prompt', function() {
     chai.expect(actualResult).to.equal(`You have to choose one of the following values: ${choices.join(', ')}`);
   });
 
-  test('Check _oct() converts octal number in decimal', function() {
+  test('Check _oct() converts octal number in decimal', () => {
     chai.expect(Prompt._oct(0)).to.equal(0);
     chai.expect(Prompt._oct(5)).to.equal(5);
     chai.expect(Prompt._oct('11')).to.equal(9);
@@ -67,7 +67,7 @@ suite('Helpers/Terminal/Prompt', function() {
     chai.expect(Prompt._oct('8')).to.equal(0);
   });
 
-  test('Check _trigger() calls readlineInterface and returns answer in cb', function() {
+  test('Check _trigger() calls readlineInterface and returns answer in cb', () => {
     let readlineSyncMock = new ReadlineSyncMock();
     let spyCallback = sinon.spy();
 
@@ -81,7 +81,7 @@ suite('Helpers/Terminal/Prompt', function() {
     chai.expect(callbackArgs).to.eql([ReadlineSyncMock.DATA]);
   });
 
-  test('Check syncMode setter', function() {
+  test('Check syncMode setter', () => {
     prompt.syncMode = false;
     chai.expect(prompt.syncMode).to.be.equal(false);
 
@@ -89,7 +89,7 @@ suite('Helpers/Terminal/Prompt', function() {
     chai.expect(prompt.syncMode).to.be.equal(true);
   });
 
-  test('Check _prompt() calls _trigger->readlineInterface and returns answer in cb', function() {
+  test('Check _prompt() calls _trigger->readlineInterface and returns answer in cb', () => {
     let spyCallback = sinon.spy();
     let text = 'test _prompt()';
 
@@ -104,7 +104,7 @@ suite('Helpers/Terminal/Prompt', function() {
     chai.expect(callbackArgs).to.eql([`${text}:`]);
   });
 
-  test('Check read() calls _prompt() and returns answer in cb', function() {
+  test('Check read() calls _prompt() and returns answer in cb', () => {
     let spyCallback = sinon.spy();
     let text = 'test read()';
 
@@ -120,7 +120,7 @@ suite('Helpers/Terminal/Prompt', function() {
     chai.expect(callbackArgs).to.eql([`${text}:`]);
   });
 
-  test('Check readWithDefaults() calls _prompt() and returns answer in cb', function() {
+  test('Check readWithDefaults() calls _prompt() and returns answer in cb', () => {
     let spyCallback = sinon.spy();
     let text = 'test readWithDefaults()';
     let defaultValue = 'def val test';
@@ -137,7 +137,7 @@ suite('Helpers/Terminal/Prompt', function() {
     chai.expect(callbackArgs).to.eql([`${text} [${defaultValue}]:`]);
   });
 
-  test('Check _promptHidden() for !_syncMode', function() {
+  test('Check _promptHidden() for !_syncMode', () => {
     let spyCallback = sinon.spy();
     let text = 'test _promptHidden()';
 
@@ -153,7 +153,7 @@ suite('Helpers/Terminal/Prompt', function() {
     chai.expect(callbackArgs).to.eql([`${text}:`]);
   });
 
-  test('Check readHidden()', function() {
+  test('Check readHidden()', () => {
     let spyCallback = sinon.spy();
     let text = 'test _promptHidden()';
 
@@ -170,7 +170,7 @@ suite('Helpers/Terminal/Prompt', function() {
   });
 
   //@todo - add smart logic
-  //test('Check readChoice() returns answer in cb', function() {
+  //test('Check readChoice() returns answer in cb', () => {
   //  let spyCallback = sinon.spy();
   //
   //  prompt.syncMode = false;
@@ -184,7 +184,7 @@ suite('Helpers/Terminal/Prompt', function() {
   //  chai.expect(callbackArgs).to.eql([ReadlineMock.DATA]);
   //});
 
-  test('Check _noInteractionMode() returns true', function() {
+  test('Check _noInteractionMode() returns true', () => {
     process.env['DEEP_NO_INTERACTION'] = 1;
     chai.expect(Prompt._noInteractionMode).to.equal(true);
 
@@ -193,7 +193,7 @@ suite('Helpers/Terminal/Prompt', function() {
     chai.expect(Prompt._noInteractionMode).to.equal(false);
   });
 
-  test('Check read() for _noInteractionMode returns "" in cb', function() {
+  test('Check read() for _noInteractionMode returns "" in cb', () => {
     let spyCallback = sinon.spy();
 
     process.env['DEEP_NO_INTERACTION'] = 1;
@@ -204,7 +204,7 @@ suite('Helpers/Terminal/Prompt', function() {
     chai.expect(actualResult).to.be.an.instanceof(Prompt);
   });
 
-  test('Check readWithDefaults() for _noInteractionMode returns second argument in cb', function() {
+  test('Check readWithDefaults() for _noInteractionMode returns second argument in cb', () => {
     let spyCallback = sinon.spy();
     let defaultValue = 'default';
 
@@ -216,7 +216,7 @@ suite('Helpers/Terminal/Prompt', function() {
     chai.expect(actualResult).to.be.an.instanceof(Prompt);
   });
 
-  test('Check readHidden() for _noInteractionMode returns "" in cb', function() {
+  test('Check readHidden() for _noInteractionMode returns "" in cb', () => {
     let spyCallback = sinon.spy();
 
     process.env['DEEP_NO_INTERACTION'] = 1;
@@ -227,7 +227,7 @@ suite('Helpers/Terminal/Prompt', function() {
     chai.expect(actualResult).to.be.an.instanceof(Prompt);
   });
 
-  test('Check readConfirm() for _noInteractionMode returns true in cb', function() {
+  test('Check readConfirm() for _noInteractionMode returns true in cb', () => {
     let spyCallback = sinon.spy();
 
     process.env['DEEP_NO_INTERACTION'] = 1;
@@ -238,7 +238,7 @@ suite('Helpers/Terminal/Prompt', function() {
     chai.expect(actualResult).to.be.an.instanceof(Prompt);
   });
 
-  test('Check readChoice() for _noInteractionMode returns "" in cb', function() {
+  test('Check readChoice() for _noInteractionMode returns "" in cb', () => {
     let spyCallback = sinon.spy();
 
     process.env['DEEP_NO_INTERACTION'] = 1;
@@ -249,7 +249,7 @@ suite('Helpers/Terminal/Prompt', function() {
     chai.expect(actualResult).to.be.an.instanceof(Prompt);
   });
 
-  test('Check readChoice() for _noInteractionMode returns first choice in cb', function() {
+  test('Check readChoice() for _noInteractionMode returns first choice in cb', () => {
     let spyCallback = sinon.spy();
 
     process.env['DEEP_NO_INTERACTION'] = 1;

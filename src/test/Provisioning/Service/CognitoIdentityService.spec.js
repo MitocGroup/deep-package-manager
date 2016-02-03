@@ -8,18 +8,18 @@ import {PropertyInstanceMock} from '../../mock/Property/PropertyInstanceMock';
 import {ProvisioningInstanceMock} from '../../mock/Provisioning/ProvisioningInstanceMock';
 
 
-suite('Provisioning/Service/CognitoIdentityService', function() {
+suite('Provisioning/Service/CognitoIdentityService', () => {
   let cognitoIdentityServiceInstance = null;
   let propertyInstance = null;
   let provisioningInstance = null;
   let objectStorageInput = null;
   let objectStorage = null;
 
-  test('Class CognitoIdentityService exists in Provisioning/Service/CognitoIdentityService', function() {
+  test('Class CognitoIdentityService exists in Provisioning/Service/CognitoIdentityService', () => {
     chai.expect(typeof CognitoIdentityService).to.equal('function');
   });
 
-  test('Check constructor sets valid default values', function() {
+  test('Check constructor sets valid default values', () => {
     objectStorageInput = [{firstItem: 'value0'}, {secondItem: 'value1'}];
     let e = null;
     try {
@@ -36,36 +36,36 @@ suite('Provisioning/Service/CognitoIdentityService', function() {
     chai.expect(cognitoIdentityServiceInstance._ready).to.be.equal(false);
   });
 
-  test('Check name() method returns \'cognito-identity\'', function() {
+  test('Check name() method returns \'cognito-identity\'', () => {
     chai.expect(cognitoIdentityServiceInstance.name()).to.be.equal('cognito-identity');
   });
 
-  test('Check AVAILABLE_REGIONS() static method returns array of available regions', function() {
+  test('Check AVAILABLE_REGIONS() static method returns array of available regions', () => {
     chai.expect(CognitoIdentityService.AVAILABLE_REGIONS).to.be.an('array');
     chai.expect(CognitoIdentityService.AVAILABLE_REGIONS.length).to.be.equal(2);
     chai.expect(CognitoIdentityService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.US_EAST_N_VIRGINIA);
     chai.expect(CognitoIdentityService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.EU_IRELAND);
   });
 
-  test('Check DEVELOPER_PROVIDER_NAME static getter returns \'deep.mg\'', function() {
+  test('Check DEVELOPER_PROVIDER_NAME static getter returns \'deep.mg\'', () => {
     chai.expect(CognitoIdentityService.DEVELOPER_PROVIDER_NAME).to.be.equal('deep.mg');
   });
 
-  test('Check ROLE_AUTH static getter returns \'authenticated\'', function() {
+  test('Check ROLE_AUTH static getter returns \'authenticated\'', () => {
     chai.expect(CognitoIdentityService.ROLE_AUTH).to.be.equal('authenticated');
   });
 
-  test('Check ROLE_UNAUTH static getter returns \'unauthenticated\'', function() {
+  test('Check ROLE_UNAUTH static getter returns \'unauthenticated\'', () => {
     chai.expect(CognitoIdentityService.ROLE_UNAUTH).to.be.equal('unauthenticated');
   });
 
-  test('Check ROLE_TYPES() static getter returns array of available regions', function() {
+  test('Check ROLE_TYPES() static getter returns array of available regions', () => {
     chai.expect(CognitoIdentityService.ROLE_TYPES.length).to.be.equal(2);
     chai.expect(CognitoIdentityService.ROLE_TYPES).to.be.include(CognitoIdentityService.ROLE_AUTH);
     chai.expect(CognitoIdentityService.ROLE_TYPES).to.be.include(CognitoIdentityService.ROLE_UNAUTH);
   });
 
-  test('Check _setup() method returns this._ready="true" for isUpdate', function() {
+  test('Check _setup() method returns this._ready="true" for isUpdate', () => {
     let e = null;
     cognitoIdentityServiceInstance._ready = false;
     cognitoIdentityServiceInstance._isUpdate = true;
@@ -81,7 +81,7 @@ suite('Provisioning/Service/CognitoIdentityService', function() {
     chai.expect(actualResult._ready).to.be.equal(true);
   });
 
-  test('Check _postProvision() method returns this._readyTeardown="true" for isUpdate', function() {
+  test('Check _postProvision() method returns this._readyTeardown="true" for isUpdate', () => {
     let e = null;
     cognitoIdentityServiceInstance._readyTeardown = false;
     cognitoIdentityServiceInstance._isUpdate = true;
@@ -97,7 +97,7 @@ suite('Provisioning/Service/CognitoIdentityService', function() {
     chai.expect(actualResult._readyTeardown).to.be.equal(true);
   });
 
-  test('Check _setIdentityPoolRoles() method sets identity pool roles', function() {
+  test('Check _setIdentityPoolRoles() method sets identity pool roles', () => {
     let e = null;
     let actualResult = null;
 
@@ -110,7 +110,7 @@ suite('Provisioning/Service/CognitoIdentityService', function() {
     chai.expect(e).to.be.equal(null);
   });
 
-  test('Check _updateCognitoRolesPolicy() method updates cognito roles policy', function() {
+  test('Check _updateCognitoRolesPolicy() method updates cognito roles policy', () => {
     let e = null;
     let actualResult = null;
     let roles = {

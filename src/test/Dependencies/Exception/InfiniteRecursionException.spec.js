@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {InfiniteRecursionException} from '../../../lib/Dependencies/Exception/InfiniteRecursionException';
 
-suite('Dependencies/InfiniteRecursionException', function() {
+suite('Dependencies/InfiniteRecursionException', () => {
 
-  test('Class InfiniteRecursionException', function() {
+  test('Class InfiniteRecursionException', () => {
     let e = new InfiniteRecursionException('Test exception');
     chai.expect(e).to.be.an.instanceof(InfiniteRecursionException);
   });
