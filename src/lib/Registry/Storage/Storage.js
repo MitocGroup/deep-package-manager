@@ -147,6 +147,10 @@ export class Storage {
     });
   }
 
+  updateModuleDb(moduleName, moduleVersion, cb) {
+
+  }
+
   /**
    * @param {ModuleDB} moduleDb
    * @param {Function} cb

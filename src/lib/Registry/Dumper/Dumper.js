@@ -73,11 +73,9 @@ export class Dumper {
       });
 
       wait.ready(() => {
-        if (cbCalled) {
-          return;
+        if (!cbCalled) {
+          cb(null);
         }
-
-        cb(null);
       });
     });
   }
@@ -90,11 +88,15 @@ export class Dumper {
    * @private
    */
   _dumpSingle(moduleName, moduleVersion, cb) {
+    console.log(`Fetching '${moduleName}@${moduleVersion}' module data`);
+
     this._storage.readModule(moduleName, moduleVersion, (error, module) => {
       if (error) {
         cb(error);
         return;
       }
+
+      console.log(`Dumping '${moduleName}@${moduleVersion}' module`);
 
       this._dumpDriver.dump(module, cb);
     });

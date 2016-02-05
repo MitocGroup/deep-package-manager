@@ -34,12 +34,16 @@ export class DependenciesResolver {
    * @todo: Find out an elegant way to define optional strategy
    */
   static createUsingRawVersion(storage, strategy /* = null */, moduleName, moduleVersion, cb) {
+    console.log(`Looking for '${moduleName}' module DB`);
+
     this._storage.moduleDbExists(moduleName, (error, state) => {
       if (error) {
         cb(error, null);
       } else if(!state) {
         cb(new MissingModuleDBException(moduleName), null);
       } else {
+        console.log(`Fetching '${moduleName}' module DB`);
+
         storage.readModuleDb(moduleName, (error, moduleDB) => {
           if (error) {
             cb(error, null);
@@ -54,6 +58,8 @@ export class DependenciesResolver {
             cb(new NoVersionMatchingException(moduleName, moduleVersion, moduleDB), null);
             return;
           }
+
+          console.log(`Fetching '${moduleName}' module config`);
 
           storage.readModuleConfig(moduleName, matchedVersion, (error, moduleConfig) => {
             if (error) {
@@ -211,6 +217,8 @@ export class DependenciesResolver {
         return;
       }
 
+      console.log(`Resolving '${dependencyName}@${dependencyVersion}'`);
+
       let matchedVersion = this._strategy.resolve(moduleDB, dependencyVersion);
 
       if (!matchedVersion) {
@@ -232,9 +240,13 @@ export class DependenciesResolver {
     let cacheKey = `${moduleName}@${moduleVersion}`;
 
     if (this._configCache.hasOwnProperty(cacheKey)) {
+      console.log(`Reading '${moduleName}@${moduleVersion}' module config from cache`);
+
       cb(null, this._configCache[cacheKey]);
       return;
     }
+
+    console.log(`Fetching '${moduleName}@${moduleVersion}' module config`);
 
     this._storage.readModuleConfig(moduleName, moduleVersion, (error, moduleConfig) => {
       if (error) {
@@ -255,9 +267,13 @@ export class DependenciesResolver {
    */
   _getModuleDb(moduleName, cb) {
     if (this._dbCache.hasOwnProperty(moduleName)) {
+      console.log(`Reading '${moduleName}' module DB from cache`);
+
       cb(null, this._dbCache[moduleName]);
       return;
     }
+
+    console.log(`Looking for '${moduleName}' module DB`);
 
     this._storage.moduleDbExists(moduleName, (error, state) => {
       if (error) {
@@ -265,6 +281,8 @@ export class DependenciesResolver {
       } else if(!state) {
         cb(new MissingModuleDBException(moduleName), null);
       } else {
+        console.log(`Fetching '${moduleName}' module DB`);
+
         this._storage.readModuleDb(moduleName, (error, moduleDB) => {
           if (error) {
             cb(error, null);

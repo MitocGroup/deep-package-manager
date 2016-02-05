@@ -6,6 +6,9 @@
 
 import {Config} from '../Microservice/Config';
 import {BrokenModuleConfigException} from './Exception/BrokenModuleConfigException';
+import fse from 'fs-extra';
+import path from 'path';
+import {Instance as Microservice} from '../Microservice/Instance';
 
 export class ModuleConfig {
   /**
@@ -30,6 +33,30 @@ export class ModuleConfig {
     } catch (e) {
       throw new BrokenModuleConfigException(moduleName, moduleVersion);
     }
+  }
+
+  /**
+   * @param {Storage|*} storage
+   * @param {String} modulePath
+   * @param {Function} cb
+   */
+  static createFromModulePath(storage, modulePath, cb) {
+    fse.readJson(path.join(modulePath, Microservice.CONFIG_FILE), (error, configObj) => {
+      if (error) {
+        cb(error, null);
+        return;
+      }
+
+      cb(
+        null,
+        new ModuleConfig(
+          configObj.identifier,
+          configObj.version,
+          configObj,
+          storage
+        )
+      );
+    })
   }
 
   /**

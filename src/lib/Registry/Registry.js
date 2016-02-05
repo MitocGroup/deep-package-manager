@@ -8,8 +8,11 @@ import {WaitFor} from '../Helpers/WaitFor';
 import {Dumper} from './Dumper/Dumper';
 import {Storage} from './Storage/Storage';
 import {S3Driver} from './Storage/Driver/S3Driver';
+import {FSDriver as StorageFSDriver} from './Storage/Driver/FSDriver';
 import {FSDriver} from './Dumper/Driver/FSDriver';
 import {DependenciesResolver} from './Resolver/DependenciesResolver';
+import {Module} from './Module';
+import {ModuleConfig} from './ModuleConfig';
 
 export class Registry {
   /**
@@ -17,6 +20,15 @@ export class Registry {
    */
   constructor(storage) {
     this._storage = storage;
+  }
+
+  /**
+   * @param {String} storagePath
+   */
+  static createLocalRegistry(storagePath) {
+    let storage = new Storage(new StorageFSDriver(storagePath));
+
+    return new Registry(storage);
   }
 
   /**
@@ -69,11 +81,71 @@ export class Registry {
     });
 
     wait.ready(() => {
-      if (cbSent) {
+      if (!cbSent) {
+        cb(null);
+      }
+    });
+  }
+
+  /**
+   * @param {String} modulePath
+   * @param {Function} cb
+   */
+  publishModule(modulePath, cb) {
+    let moduleConfig = ModuleConfig.createFromModulePath(this._storage, modulePath, (error, moduleConfig) => {
+      if (error) {
+        cb(error);
         return;
       }
 
-      cb();
+      console.log(`Publishing '${moduleConfig.moduleName}@${moduleConfig.moduleVersion}' module`);
+
+      let module = new Module(
+        moduleConfig.moduleName,
+        moduleConfig.moduleVersion,
+        '',
+        this._storage
+      );
+
+      console.log(`Archiving '${moduleConfig.moduleName}@${moduleConfig.moduleVersion}' module content`);
+
+      module.load(modulePath, () => {
+        console.log(`Uploading '${moduleConfig.moduleName}@${moduleConfig.moduleVersion}' module to remote registry`);
+
+        module.upload((error) => {
+          if (error) {
+            cb(error);
+            return;
+          }
+
+          console.log(
+            `Saving '${moduleConfig.moduleName}@${moduleConfig.moduleVersion}' module config to remote registry`
+          );
+
+          moduleConfig.dump((error) => {
+            if (error) {
+              cb(error);
+              return;
+            }
+
+            console.log(`Updating '${moduleConfig.moduleName}@${moduleConfig.moduleVersion}' module DB`);
+
+            this._storage.updateModuleDb(moduleConfig.moduleName, moduleConfig.moduleVersion, (error) => {
+              if (error) {
+                console.log(
+                  `Module '${moduleConfig.moduleName}@${moduleConfig.moduleVersion}' publication failed: ${error}`
+                );
+              } else {
+                console.log(
+                  `Module '${moduleConfig.moduleName}@${moduleConfig.moduleVersion}' successfully published`
+                );
+              }
+
+              cb(error);
+            });
+          });
+        });
+      });
     });
   }
 
@@ -95,7 +167,7 @@ export class Registry {
           return;
         }
 
-        let dumpDriver = this._getFSDumpDriver(dumpPath);
+        let dumpDriver = Registry._getFSDumpDriver(dumpPath);
         let dumper = new Dumper(dependenciesResolver, this._storage, dumpDriver);
 
         dumper.dump(cb);
@@ -107,7 +179,7 @@ export class Registry {
    * @param {String} basePath
    * @private
    */
-  _getFSDumpDriver(basePath) {
+  static _getFSDumpDriver(basePath) {
     return new FSDriver(basePath);
   }
 }

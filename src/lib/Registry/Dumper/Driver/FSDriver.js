@@ -5,6 +5,7 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
+import path from 'path';
 
 export class FSDriver extends AbstractDriver {
   /**
@@ -28,6 +29,6 @@ export class FSDriver extends AbstractDriver {
    * @param {Function} cb
    */
   dump(module, cb) {
-    module.extract(this._basePath, cb);
+    module.extract(path.join(this._basePath, module.moduleName), cb);
   }
 }

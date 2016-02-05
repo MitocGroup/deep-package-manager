@@ -5,16 +5,19 @@
 'use strict';
 
 import {FSDriver} from './FSDriver';
+import path from 'path';
 
 export class S3Driver extends FSDriver {
   /**
    * @param {AWS.S3} s3
    * @param {String} bucket
+   * @param {String} prefix
    */
-  constructor(s3, bucket) {
+  constructor(s3, bucket, prefix = '') {
     super(bucket);
 
     this._s3 = s3;
+    this._prefix = prefix;
   }
 
   /**
@@ -27,8 +30,26 @@ export class S3Driver extends FSDriver {
   /**
    * @returns {String}
    */
+  get prefix() {
+    return this._prefix;
+  }
+
+  /**
+   * @returns {String}
+   */
   get bucket() {
     return this._dir;
+  }
+
+  /**
+   * @param {String} objPath
+   * @returns {String}
+   * @private
+   */
+  _fullObjPath(objPath) {
+    objPath = path.join(this._prefix, objPath);
+
+    return path.normalize(objPath).replace(/(?:\/|\\)/i, '/');
   }
 
   /**
@@ -38,7 +59,7 @@ export class S3Driver extends FSDriver {
   hasObj(objPath, cb) {
     let payload = {
       Bucket: this.bucket,
-      Key: objPath,
+      Key: this._fullObjPath(objPath),
     };
 
     this._s3.headObject(payload, (error) => {
@@ -58,7 +79,7 @@ export class S3Driver extends FSDriver {
   readObj(objPath, cb) {
     let payload = {
       Bucket: this.bucket,
-      Key: objPath,
+      Key: this._fullObjPath(objPath),
     };
 
     this._s3.getObject(payload, (error, data) => {
@@ -79,7 +100,7 @@ export class S3Driver extends FSDriver {
   putObj(objPath, data, cb) {
     let payload = {
       Bucket: this.bucket,
-      Key: objPath,
+      Key: this._fullObjPath(objPath),
       Body: data.toString(),
     };
 
@@ -95,7 +116,7 @@ export class S3Driver extends FSDriver {
   deleteObj(objPath, cb) {
     let payload = {
       Bucket: this.bucket,
-      Key: objPath,
+      Key: this._fullObjPath(objPath),
     };
 
     this._s3.deleteObject(payload, (error) => {
