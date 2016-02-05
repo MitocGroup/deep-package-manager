@@ -7,6 +7,11 @@
 import {ModuleConfig} from './ModuleConfig';
 import fse from 'fs-extra';
 import tar from 'tar-stream';
+import string2stream from 'string2stream';
+import {FileWalker} from '../Helpers/FileWalker';
+import {WaitFor} from '../Helpers/WaitFor';
+import path from 'path';
+import fs from 'fs';
 
 export class Module {
   /**
@@ -23,11 +28,46 @@ export class Module {
   }
 
   /**
-   * @param {String} sourcesPath
+   * @param {String} modulePath
    * @param {Function} cb
    */
-  load(sourcesPath, cb) {
-    // @todo: pack
+  load(modulePath, cb) {
+    let tarStream = tar.pack();
+
+    let walker = new FileWalker(FileWalker.RECURSIVE);
+    let files = walker.walk(modulePath);
+    let remaining = files.length;
+
+    let wait = new WaitFor();
+
+    wait.push(() => {
+      return files <= 0;
+    });
+
+    files.forEach((file) => {
+      let entryName = path.relative(modulePath, file);
+
+      fs.createReadStream(file).pipe(tarStream.entry({name: entryName,}, (error) => {
+        remaining--;
+      }));
+    });
+
+    wait.ready(() => {
+      tarStream.finalize();
+
+      let outputStream = string2stream();
+
+      tarStream.on('finish', () => {
+        this._rawContent = outputStream.toString();
+
+        cb();
+      });
+
+      tarStream
+        .finalize()
+        .pipe(outputStream)
+      ;
+    });
   }
 
   /**
@@ -41,12 +81,40 @@ export class Module {
         return;
       }
 
-      // @todo: unpack
+      let extractStream = this.createExtractStream();
+      let wait = new WaitFor();
+      let filesToExtract = 0;
+
+      wait.push(() => {
+        return filesToExtract <= 0;
+      });
+
+      extractStream.on('entry', (header, stream, callback) => {
+        let file = path.join(dumpPath, header.name);
+
+        filesToExtract++;
+
+        stream.pipe(fs.createWriteStream(file));
+
+        stream.on('end', () => {
+          filesToExtract--;
+        });
+      });
+
+      extractStream.on('finish', () => {
+        wait.ready(cb);
+      });
     });
   }
 
+  /**
+   * @returns {stream}
+   */
   createExtractStream() {
-    
+    let contentStream = string2stream(this._rawContent);
+    let unTarStream = tar.extract();
+
+    return contentStream.pipe(unTarStream);
   }
 
   /**

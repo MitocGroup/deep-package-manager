@@ -19,6 +19,21 @@ export class ModuleDB {
   }
 
   /**
+   * @returns {String[]}
+   */
+  getVersions() {
+    return Object.keys(this._config);
+  }
+
+  /**
+   * @param {String} version
+   * @returns {Object}
+   */
+  getVersionDetails(version) {
+    return this._config[version];
+  }
+
+  /**
    * @param {Function} cb
    */
   dump(cb) {

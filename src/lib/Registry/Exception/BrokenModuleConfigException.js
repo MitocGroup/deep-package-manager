@@ -4,9 +4,9 @@
 
 'use strict';
 
-import {Exception} from '../../Exception/Exception';
+import {RegistryException} from './RegistryException';
 
-export class BrokenModuleConfigException extends Exception {
+export class BrokenModuleConfigException extends RegistryException {
   /**
    * @param {String} moduleName
    * @param {String} moduleVersion

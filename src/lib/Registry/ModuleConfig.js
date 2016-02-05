@@ -4,7 +4,7 @@
 
 'use strict';
 
-import {Config} from '../Property/Config';
+import {Config} from '../Microservice/Config';
 import {BrokenModuleConfigException} from './Exception/BrokenModuleConfigException';
 
 export class ModuleConfig {
