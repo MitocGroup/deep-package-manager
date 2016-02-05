@@ -413,6 +413,9 @@ export class Lambda {
 
     let syncStack = new AwsRequestSyncStack();
 
+    // @todo: Remove when exec role assign fixed
+    syncStack.level(1).joinTimeout = 5000;
+
     syncStack.push(s3.putObject(s3Params), (error, data) => {
       if (error) {
         throw new FailedUploadingLambdaToS3Exception(objectKey, tmpBucket, error);
@@ -426,17 +429,15 @@ export class Lambda {
         FunctionName: this.functionName,
       };
 
-      if (this._wasPreviouslyDeployed) {
-        let params = {
+      if (update || this._wasPreviouslyDeployed) {
+        request = lambda.updateFunctionCode({
           S3Bucket: tmpBucket,
           S3Key: objectKey,
           S3ObjectVersion: data.VersionId,
           FunctionName: this.functionName,
-        };
-
-        request = lambda.updateFunctionCode(params);
+        });
       } else {
-        let params = {
+        request = lambda.createFunction({
           Code: {
             S3Bucket: tmpBucket,
             S3Key: objectKey,
@@ -448,9 +449,7 @@ export class Lambda {
           Runtime: this._runtime,
           MemorySize: this._memorySize,
           Timeout: this._timeout,
-        };
-
-        request = lambda.createFunction(params);
+        });
       }
 
       syncStack.level(1).push(request, (error, data) => {
