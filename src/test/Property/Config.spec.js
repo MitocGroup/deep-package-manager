@@ -10,9 +10,6 @@ suite('Property/Config', () => {
       region: 'us-west-2',
       secretAccessKey: 'to_pass_string_validation',
     },
-    dependencies: {
-      bucket: 'testbucket',
-    },
     env: 'test',
     awsAccountId: 123456789012,
     appIdentifier: 'test_appId-432423-generated',
@@ -50,9 +47,6 @@ suite('Property/Config', () => {
         accessKeyId: 'to_pass_string_validation',
         region: 'us-west-2',
         secretAccessKey: 'to_pass_string_validation',
-      },
-      dependencies: {
-        bucket: 'testbucket',
       },
       env: 'test',
       awsAccountId: 123456789012,

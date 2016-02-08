@@ -26,7 +26,6 @@ import {S3Service} from '../Provisioning/Service/S3Service';
 import {Config} from './Config';
 import {Hash} from '../Helpers/Hash';
 import {FrontendEngine} from '../Microservice/FrontendEngine';
-import {NoMatchingFrontendEngineException} from '../Dependencies/Exception/NoMatchingFrontendEngineException';
 import {Exec} from '../Helpers/Exec';
 import OS from 'os';
 import objectMerge from 'object-merge';

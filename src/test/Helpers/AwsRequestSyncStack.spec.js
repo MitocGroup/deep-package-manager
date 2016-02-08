@@ -47,6 +47,7 @@ suite('Helpers/AwsRequestSyncStack', () => {
     let actualResult = null;
     let expectedResult = {
       _completed: 0,
+      _joinTimeout: 0,
       _levels: [],
       _stack: [],
     };
@@ -78,6 +79,7 @@ suite('Helpers/AwsRequestSyncStack', () => {
     let awsRequestSyncStackNegative = new AwsRequestSyncStack();
     let expectedResult = {
       _completed: 0,
+      _joinTimeout: 0,
       _levels: [],
       _stack: [],
     };
