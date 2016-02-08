@@ -90,7 +90,7 @@ export class Dumper {
   _dumpSingle(moduleName, moduleVersion, cb) {
     console.log(`Fetching '${moduleName}@${moduleVersion}' module data`);
 
-    this._storage.readModule(moduleName, moduleVersion, (error, module) => {
+    this._storage.readModule(moduleName, moduleVersion, (error, moduleObj) => {
       if (error) {
         cb(error);
         return;
@@ -98,7 +98,7 @@ export class Dumper {
 
       console.log(`Dumping '${moduleName}@${moduleVersion}' module`);
 
-      this._dumpDriver.dump(module, cb);
+      this._dumpDriver.dump(moduleObj, cb);
     });
   }
 

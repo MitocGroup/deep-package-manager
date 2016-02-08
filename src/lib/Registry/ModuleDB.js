@@ -19,6 +19,14 @@ export class ModuleDB {
   }
 
   /**
+   * @param {String} moduleVersion
+   * @param {Object} versionMetadata
+   */
+  addVersion(moduleVersion, versionMetadata = {}) {
+    this._config[moduleVersion] = versionMetadata;
+  }
+
+  /**
    * @returns {String[]}
    */
   getVersions() {

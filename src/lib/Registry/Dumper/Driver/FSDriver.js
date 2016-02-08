@@ -25,10 +25,10 @@ export class FSDriver extends AbstractDriver {
   }
 
   /**
-   * @param {Module|*} module
+   * @param {ModuleInstance|*} moduleObj
    * @param {Function} cb
    */
-  dump(module, cb) {
-    module.extract(path.join(this._basePath, module.moduleName), cb);
+  dump(moduleObj, cb) {
+    moduleObj.extract(path.join(this._basePath, moduleObj.moduleName), cb);
   }
 }

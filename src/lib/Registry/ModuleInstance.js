@@ -13,7 +13,7 @@ import {WaitFor} from '../Helpers/WaitFor';
 import path from 'path';
 import fs from 'fs';
 
-export class Module {
+export class ModuleInstance {
   /**
    * @param {String} moduleName
    * @param {String} moduleVersion
@@ -36,23 +36,28 @@ export class Module {
 
     let walker = new FileWalker(FileWalker.RECURSIVE);
     let files = walker.walk(modulePath);
-    let remaining = files.length;
 
-    let wait = new WaitFor();
-
-    wait.push(() => {
-      return files <= 0;
-    });
-
-    files.forEach((file) => {
+    WaitFor.waterfall((file) => {
+      let isReady = false;
       let entryName = path.relative(modulePath, file);
 
-      fs.createReadStream(file).pipe(tarStream.entry({name: entryName,}, (error) => {
-        remaining--;
-      }));
-    });
+      let readStream = fs.createReadStream(file);
+      let entry = tarStream.entry({name: entryName,}, (error) => {
+        // @todo: deal with the errors somehow?
 
-    wait.ready(() => {
+        isReady = true;
+      });
+
+      readStream.on('data', (chunk) => {
+        entry.write(chunk.toString());
+      });
+
+      readStream.on('finish', entry.end);
+
+      return () => {
+        return isReady;
+      };
+    }, () => {
       tarStream.finalize();
 
       let outputStream = string2stream();
@@ -67,7 +72,7 @@ export class Module {
         .finalize()
         .pipe(outputStream)
       ;
-    });
+    }, ...files);
   }
 
   /**

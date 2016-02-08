@@ -6,7 +6,7 @@
 
 import {AbstractStrategy} from './AbstractStrategy';
 import {Config} from '../../../Property/Config';
-import {Module} from '../../Module';
+import {ModuleInstance} from '../../ModuleInstance';
 
 export class StdStrategy extends AbstractStrategy {
   constructor() {
@@ -52,7 +52,7 @@ export class StdStrategy extends AbstractStrategy {
    * @returns {String}
    */
   static get MODULE_FILE() {
-    return `module.${Module.ARCHIVE_EXTENSION}`;
+    return `module.${ModuleInstance.ARCHIVE_EXTENSION}`;
   }
 
   /**

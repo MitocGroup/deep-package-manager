@@ -11,7 +11,7 @@ import {S3Driver} from './Storage/Driver/S3Driver';
 import {FSDriver as StorageFSDriver} from './Storage/Driver/FSDriver';
 import {FSDriver} from './Dumper/Driver/FSDriver';
 import {DependenciesResolver} from './Resolver/DependenciesResolver';
-import {Module} from './Module';
+import {ModuleInstance} from './ModuleInstance';
 import {ModuleConfig} from './ModuleConfig';
 
 export class Registry {
@@ -100,7 +100,7 @@ export class Registry {
 
       console.log(`Publishing '${moduleConfig.moduleName}@${moduleConfig.moduleVersion}' module`);
 
-      let module = new Module(
+      let moduleObj = new ModuleInstance(
         moduleConfig.moduleName,
         moduleConfig.moduleVersion,
         '',
@@ -109,10 +109,10 @@ export class Registry {
 
       console.log(`Archiving '${moduleConfig.moduleName}@${moduleConfig.moduleVersion}' module content`);
 
-      module.load(modulePath, () => {
+      moduleObj.load(modulePath, () => {
         console.log(`Uploading '${moduleConfig.moduleName}@${moduleConfig.moduleVersion}' module to remote registry`);
 
-        module.upload((error) => {
+        moduleObj.upload((error) => {
           if (error) {
             cb(error);
             return;

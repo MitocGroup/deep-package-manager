@@ -8,7 +8,8 @@ import {TmpFSDriver} from './Driver/TmpFSDriver';
 import {StdStrategy} from './Strategy/StdStrategy';
 import {ModuleDB} from '../ModuleDB';
 import {ModuleConfig} from '../ModuleConfig';
-import {Module} from '../Module';
+import {ModuleInstance} from '../ModuleInstance';
+import {ModuleDBLockedException} from './Exception/ModuleDBLockedException';
 
 export class Storage {
   /**
@@ -42,7 +43,7 @@ export class Storage {
       }
 
       try {
-        cb(null, new Module(moduleName, moduleVersion, rawContent, this));
+        cb(null, new ModuleInstance(moduleName, moduleVersion, rawContent, this));
       } catch (error) {
         cb(error, null);
       }
@@ -50,13 +51,13 @@ export class Storage {
   }
 
   /**
-   * @param {Module} module
+   * @param {ModuleInstance} moduleObj
    * @param {Function} cb
    */
-  uploadModule(module, cb) {
+  uploadModule(moduleObj, cb) {
     this._driver.putObj(
-      this._strategy.getModuleLocation(module.moduleName, module.moduleVersion),
-      module,
+      this._strategy.getModuleLocation(moduleObj.moduleName, moduleObj.moduleVersion),
+      moduleObj,
       cb
     );
   }
@@ -147,8 +148,46 @@ export class Storage {
     });
   }
 
+  /**
+   * @param {String} moduleName
+   * @param {String} moduleVersion
+   * @param {Function} cb
+   */
   updateModuleDb(moduleName, moduleVersion, cb) {
+    let dbObjPath = this._strategy.getDbLocation(moduleName);
 
+    this._driver.isObjLocked(dbObjPath, (error, state) => {
+      if (error) {
+        cb(error);
+      } else if (state) {
+        cb(new ModuleDBLockedException(moduleName));
+      } else {
+        this._driver.lockObj(dbObjPath, (error) => {
+          if (error) {
+            cb(error);
+            return;
+          }
+
+          this.readModuleDb(moduleName, (error, moduleDb) => {
+            if (error) {
+              this._driver.releaseObjLock(dbObjPath, () => {
+                cb(error);
+              });
+
+              return;
+            }
+
+            moduleDb.addVersion(moduleVersion);
+
+            this.dumpModuleDb(moduleDb, (error) => {
+              this._driver.releaseObjLock(dbObjPath, () => {
+                cb(error);
+              });
+            });
+          });
+        });
+      }
+    });
   }
 
   /**
