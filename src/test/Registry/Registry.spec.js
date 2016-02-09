@@ -25,33 +25,33 @@ suite('Registry/Registry', function() {
   test('Check Property1(_v2|_dep|_dep2|_dep2_nested)/Microservice published in local registry', (done) => {
     localRegistry.publishModule(path.join(testMaterialsPath, 'Property1', 'Microservice'), (error) => {
       chai.expect(error).to.not.exist;
-      chai.expect(fs.existsSync(path.join(registryPath, 'microservice1/db.json'))).to.be.ok;
-      chai.expect(fs.existsSync(path.join(registryPath, 'microservice1/@0.0.1/deepkg.json'))).to.be.ok;
-      chai.expect(fs.existsSync(path.join(registryPath, 'microservice1/@0.0.1/module.tar'))).to.be.ok;
+      chai.expect(fs.existsSync(path.join(registryPath, 'microservice1', 'db.json'))).to.be.ok;
+      chai.expect(fs.existsSync(path.join(registryPath, 'microservice1', '@0.0.1', 'deepkg.json'))).to.be.ok;
+      chai.expect(fs.existsSync(path.join(registryPath, 'microservice1', '@0.0.1', 'module.tar'))).to.be.ok;
 
       localRegistry.publishModule(path.join(testMaterialsPath, 'Property1_v2', 'Microservice'), (error) => {
         chai.expect(error).to.not.exist;
-        chai.expect(fs.existsSync(path.join(registryPath, 'microservice1/db.json'))).to.be.ok;
-        chai.expect(fs.existsSync(path.join(registryPath, 'microservice1/@0.2.0/deepkg.json'))).to.be.ok;
-        chai.expect(fs.existsSync(path.join(registryPath, 'microservice1/@0.2.0/module.tar'))).to.be.ok;
+        chai.expect(fs.existsSync(path.join(registryPath, 'microservice1', 'db.json'))).to.be.ok;
+        chai.expect(fs.existsSync(path.join(registryPath, 'microservice1', '@0.2.0', 'deepkg.json'))).to.be.ok;
+        chai.expect(fs.existsSync(path.join(registryPath, 'microservice1', '@0.2.0', 'module.tar'))).to.be.ok;
 
         localRegistry.publishModule(path.join(testMaterialsPath, 'Property1_dep', 'Microservice'), (error) => {
           chai.expect(error).to.not.exist;
-          chai.expect(fs.existsSync(path.join(registryPath, 'microservice1dep/db.json'))).to.be.ok;
-          chai.expect(fs.existsSync(path.join(registryPath, 'microservice1dep/@0.1.0/deepkg.json'))).to.be.ok;
-          chai.expect(fs.existsSync(path.join(registryPath, 'microservice1dep/@0.1.0/module.tar'))).to.be.ok;
+          chai.expect(fs.existsSync(path.join(registryPath, 'microservice1dep', 'db.json'))).to.be.ok;
+          chai.expect(fs.existsSync(path.join(registryPath, 'microservice1dep', '@0.1.0', 'deepkg.json'))).to.be.ok;
+          chai.expect(fs.existsSync(path.join(registryPath, 'microservice1dep', '@0.1.0', 'module.tar'))).to.be.ok;
 
           localRegistry.publishModule(path.join(testMaterialsPath, 'Property1_dep2', 'Microservice'), (error) => {
             chai.expect(error).to.not.exist;
-            chai.expect(fs.existsSync(path.join(registryPath, 'microservice1dep2/db.json'))).to.be.ok;
-            chai.expect(fs.existsSync(path.join(registryPath, 'microservice1dep2/@2.0.0/deepkg.json'))).to.be.ok;
-            chai.expect(fs.existsSync(path.join(registryPath, 'microservice1dep2/@2.0.0/module.tar'))).to.be.ok;
+            chai.expect(fs.existsSync(path.join(registryPath, 'microservice1dep2', 'db.json'))).to.be.ok;
+            chai.expect(fs.existsSync(path.join(registryPath, 'microservice1dep2', '@2.0.0', 'deepkg.json'))).to.be.ok;
+            chai.expect(fs.existsSync(path.join(registryPath, 'microservice1dep2', '@2.0.0', 'module.tar'))).to.be.ok;
 
             localRegistry.publishModule(path.join(testMaterialsPath, 'Property1_dep2_nested', 'Microservice'), (error) => {
               chai.expect(error).to.not.exist;
-              chai.expect(fs.existsSync(path.join(registryPath, 'microservice1dep2nested/db.json'))).to.be.ok;
-              chai.expect(fs.existsSync(path.join(registryPath, 'microservice1dep2nested/@3.0.0/deepkg.json'))).to.be.ok;
-              chai.expect(fs.existsSync(path.join(registryPath, 'microservice1dep2nested/@3.0.0/module.tar'))).to.be.ok;
+              chai.expect(fs.existsSync(path.join(registryPath, 'microservice1dep2nested', 'db.json'))).to.be.ok;
+              chai.expect(fs.existsSync(path.join(registryPath, 'microservice1dep2nested', '@3.0.0', 'deepkg.json'))).to.be.ok;
+              chai.expect(fs.existsSync(path.join(registryPath, 'microservice1dep2nested', '@3.0.0', 'module.tar'))).to.be.ok;
 
               done();
             });
@@ -72,6 +72,14 @@ suite('Registry/Registry', function() {
 
     localRegistry.install(property, (error) => {
       chai.expect(error).to.not.exist;
+      chai.expect(fs.existsSync(path.join(propertyRealPath, 'Microservice'))).to.be.ok;
+      chai.expect(fs.existsSync(path.join(propertyRealPath, 'Microservice', 'deepkg.json'))).to.be.ok;
+      chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep'))).to.be.ok;
+      chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep', 'deepkg.json'))).to.be.ok;
+      chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2'))).to.be.ok;
+      chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2', 'deepkg.json'))).to.be.ok;
+      chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2nested'))).to.be.ok;
+      chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2nested', 'deepkg.json'))).to.be.ok;
 
       done();
     });
