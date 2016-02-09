@@ -104,7 +104,9 @@ export class ModuleInstance {
         return;
       }
 
-      let extractStream = this.createExtractStream();
+      let contentStream = string2stream(this._rawContent);
+      let unTarStream = tar.extract();
+
       let wait = new WaitFor();
       let filesToExtract = 0;
 
@@ -112,21 +114,25 @@ export class ModuleInstance {
         return filesToExtract <= 0;
       });
 
-      extractStream.on('entry', (header, stream, callback) => {
+      unTarStream.on('entry', (header, stream, next) => {
         let file = path.join(dumpPath, header.name);
 
         filesToExtract++;
 
-        stream.pipe(fs.createWriteStream(file));
+        stream.pipe(fse.createOutputStream(file));
 
         stream.on('end', () => {
           filesToExtract--;
+
+          next();
         });
       });
 
-      extractStream.on('finish', () => {
+      unTarStream.on('finish', () => {
         wait.ready(cb);
       });
+
+      contentStream.pipe(unTarStream);
     });
   }
 
