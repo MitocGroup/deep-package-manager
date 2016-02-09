@@ -5,7 +5,7 @@
 'use strict';
 
 import {AbstractStrategy} from './AbstractStrategy';
-import {Config} from '../../../Property/Config';
+import {Instance as Microservice} from '../../../Microservice/Instance';
 import {ModuleInstance} from '../../ModuleInstance';
 
 export class StdStrategy extends AbstractStrategy {
@@ -28,7 +28,7 @@ export class StdStrategy extends AbstractStrategy {
    * @returns {*}
    */
   getModuleConfigLocation(moduleName, moduleVersion) {
-    return `${this.getModuleBaseLocation(moduleName, moduleVersion)}/${Config.DEFAULT_FILENAME}`;
+    return `${this.getModuleBaseLocation(moduleName, moduleVersion)}/${Microservice.CONFIG_FILE}`;
   }
 
   /**
@@ -37,7 +37,7 @@ export class StdStrategy extends AbstractStrategy {
    * @returns {*}
    */
   getModuleLocation(moduleName, moduleVersion) {
-    return `${this.getModuleBaseLocation(moduleName, moduleVersion)}/${Config.MODULE_FILE}`;
+    return `${this.getModuleBaseLocation(moduleName, moduleVersion)}/${StdStrategy.MODULE_FILE}`;
   }
 
   /**

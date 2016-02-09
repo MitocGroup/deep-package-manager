@@ -115,9 +115,17 @@ export class Dumper {
       version: depsTree.version,
     });
 
-    depsTree.dependencies.forEach((nestedDepsTree) => {
+    let deps = depsTree.dependencies || {};
+
+    for (let depName in deps) {
+      if (!deps.hasOwnProperty(depName)) {
+        continue;
+      }
+
+      let nestedDepsTree = deps[depName];
+
       depsVector = depsVector.concat(Dumper._collectDepsObjects(nestedDepsTree));
-    });
+    }
 
     return depsVector;
   }

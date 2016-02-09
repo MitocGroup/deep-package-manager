@@ -18,7 +18,6 @@ export class SemVerStrategy extends AbstractStrategy {
    * @returns {String|null}
    */
   resolve(moduleDb, version) {
-    version = SemVerStrategy._cleanupVersion(version);
     let availableVersions = moduleDb.getVersions();
 
     for (let i in availableVersions) {
@@ -26,9 +25,9 @@ export class SemVerStrategy extends AbstractStrategy {
         continue;
       }
 
-      let versionToMatch = availableVersions[i];
+      let versionToMatch = semver.clean(availableVersions[i]);
 
-      if (semver.satisfies(semver.clean(versionToMatch), version)) {
+      if (semver.satisfies(versionToMatch, version)) {
         return versionToMatch;
       }
     }

@@ -1,0 +1,10 @@
+{
+  "aws": {
+    "accessKeyId": "to_pass_string_validation",
+    "region": "us-west-2",
+    "secretAccessKey": "to_pass_string_validation"
+  },
+  "env": "test",
+  "awsAccountId": 123456789012,
+  "appIdentifier": "generated"
+}

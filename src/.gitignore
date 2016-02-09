@@ -105,3 +105,5 @@ node_modules
 npm-debug.log
 
 .parameters.json
+
+test/testMaterials/registry

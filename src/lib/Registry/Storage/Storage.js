@@ -168,7 +168,7 @@ export class Storage {
             return;
           }
 
-          this.readModuleDb(moduleName, (error, moduleDb) => {
+          this.moduleDbExists(moduleName, (error, state) => {
             if (error) {
               this._driver.releaseObjLock(dbObjPath, () => {
                 cb(error);
@@ -177,13 +177,35 @@ export class Storage {
               return;
             }
 
-            moduleDb.addVersion(moduleVersion);
+            if (state) {
+              this.readModuleDb(moduleName, (error, moduleDb) => {
+                if (error) {
+                  this._driver.releaseObjLock(dbObjPath, () => {
+                    cb(error);
+                  });
 
-            this.dumpModuleDb(moduleDb, (error) => {
-              this._driver.releaseObjLock(dbObjPath, () => {
-                cb(error);
+                  return;
+                }
+
+                moduleDb.addVersion(moduleVersion);
+
+                this.dumpModuleDb(moduleDb, (error) => {
+                  this._driver.releaseObjLock(dbObjPath, () => {
+                    cb(error);
+                  });
+                });
               });
-            });
+            } else {
+              let moduleDb = ModuleDB.createFromRawConfig(moduleName, this, '{}');
+
+              moduleDb.addVersion(moduleVersion);
+
+              this.dumpModuleDb(moduleDb, (error) => {
+                this._driver.releaseObjLock(dbObjPath, () => {
+                  cb(error);
+                });
+              });
+            }
           });
         });
       }

@@ -13,8 +13,6 @@ export class NoVersionMatchingException extends RegistryException {
    * @param {ModuleDB} moduleDB
    */
   constructor(moduleName, moduleVersion, moduleDB) {
-    super(`No matching version of '${moduleName}' found.
-    Requested '${moduleVersion}'.
-    Looking in ${moduleDB.getVersions().join(', ')}`);
+    super(`No matching version of '${moduleName}' found. '${moduleVersion}' --> (${moduleDB.getVersions().join(', ')})`);
   }
 }

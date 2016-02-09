@@ -52,7 +52,15 @@ export class FSDriver extends AbstractDriver {
    * @param {Function} cb
    */
   putObj(objPath, data, cb) {
-    fs.writeFile(this._resolvePath(objPath), data.toString(), cb);
+    let objRealPath = this._resolvePath(objPath);
+
+    fse.ensureDir(path.dirname(objRealPath), (error) => {
+      if (error) {
+        cb(err)
+      }
+
+      fs.writeFile(objRealPath, data.toString(), cb);
+    });
   }
 
   /**

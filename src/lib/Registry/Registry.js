@@ -132,7 +132,7 @@ export class Registry {
 
             this._storage.updateModuleDb(moduleConfig.moduleName, moduleConfig.moduleVersion, (error) => {
               if (error) {
-                console.log(
+                console.error(
                   `Module '${moduleConfig.moduleName}@${moduleConfig.moduleVersion}' publication failed: ${error}`
                 );
               } else {
@@ -156,6 +156,8 @@ export class Registry {
    * @param {Function} cb
    */
   installModule(moduleName, moduleRawVersion, dumpPath, cb) {
+    console.log(`Installing '${moduleName}@${moduleRawVersion}' module into '${dumpPath}'`);
+
     DependenciesResolver.createUsingRawVersion(
       this._storage,
       null,
@@ -163,6 +165,7 @@ export class Registry {
       moduleRawVersion,
       (error, dependenciesResolver) => {
         if (error) {
+          console.error(`Module '${moduleName}@${moduleRawVersion}' installation failed: ${error}`);
           cb(error);
           return;
         }
@@ -170,7 +173,15 @@ export class Registry {
         let dumpDriver = Registry._getFSDumpDriver(dumpPath);
         let dumper = new Dumper(dependenciesResolver, this._storage, dumpDriver);
 
-        dumper.dump(cb);
+        dumper.dump((error) => {
+          if (error) {
+            console.error(`Module '${moduleName}@${moduleRawVersion}' installation failed: ${error}`);
+          } else {
+            console.log(`Module '${moduleName}@${moduleRawVersion}' successfully installed`);
+          }
+
+          cb(error);
+        });
       }
     );
   }

@@ -12,6 +12,7 @@ import {FileWalker} from '../Helpers/FileWalker';
 import {WaitFor} from '../Helpers/WaitFor';
 import path from 'path';
 import fs from 'fs';
+import stream from 'stream';
 
 export class ModuleInstance {
   /**
@@ -38,40 +39,57 @@ export class ModuleInstance {
     let files = walker.walk(modulePath);
 
     WaitFor.waterfall((file) => {
-      let isReady = false;
+      let entryReady = false;
       let entryName = path.relative(modulePath, file);
 
       let readStream = fs.createReadStream(file);
-      let entry = tarStream.entry({name: entryName,}, (error) => {
-        // @todo: deal with the errors somehow?
 
-        isReady = true;
+      fs.stat(file, (error, fileStats) => {
+        if (error) {
+          console.error(error);
+          entryReady = true;
+          return;
+        }
+
+        let entry = tarStream.entry({name: entryName, size: fileStats.size,}, (error) => {
+          if (error) {
+            console.error(error);
+            entryReady = true;
+          }
+        });
+
+        readStream.on('data', (chunk) => {
+          if (!entryReady) {
+            try {
+              entry.write(chunk.toString());
+            } catch (error) {
+              console.error(error);
+              entryReady = true;
+            }
+          }
+        });
+
+        readStream.on('end', () => {
+          if (!entryReady) {
+            entry.end();
+
+            entryReady = true;
+          }
+        });
       });
-
-      readStream.on('data', (chunk) => {
-        entry.write(chunk.toString());
-      });
-
-      readStream.on('finish', entry.end);
 
       return () => {
-        return isReady;
+        return entryReady;
       };
     }, () => {
-      tarStream.finalize();
+      this._rawContent = '';
 
-      let outputStream = string2stream();
-
-      tarStream.on('finish', () => {
-        this._rawContent = outputStream.toString();
-
-        cb();
+      tarStream.on('data', (chunk) => {
+        this._rawContent += chunk.toString();
       });
 
-      tarStream
-        .finalize()
-        .pipe(outputStream)
-      ;
+      tarStream.on('end', cb);
+      tarStream.finalize();
     }, ...files);
   }
 

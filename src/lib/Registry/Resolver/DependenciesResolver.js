@@ -36,7 +36,7 @@ export class DependenciesResolver {
   static createUsingRawVersion(storage, strategy /* = null */, moduleName, moduleVersion, cb) {
     console.log(`Looking for '${moduleName}' module DB`);
 
-    this._storage.moduleDbExists(moduleName, (error, state) => {
+    storage.moduleDbExists(moduleName, (error, state) => {
       if (error) {
         cb(error, null);
       } else if(!state) {
@@ -59,7 +59,7 @@ export class DependenciesResolver {
             return;
           }
 
-          console.log(`Fetching '${moduleName}' module config`);
+          console.log(`Fetching '${moduleName}@${matchedVersion}' module config`);
 
           storage.readModuleConfig(moduleName, matchedVersion, (error, moduleConfig) => {
             if (error) {
@@ -106,7 +106,7 @@ export class DependenciesResolver {
    * @param {Function} cb
    */
   resolve(cb) {
-    this._resolve(this._baseModuleConfig.dependencies || {}, (error, depsTree) => {
+    this._resolve(this._baseModuleConfig.config.dependencies || {}, (error, depsTree) => {
       if (error) {
         cb(error, null);
         return;
@@ -128,7 +128,7 @@ export class DependenciesResolver {
    */
   _resolve(deps, cb) {
     let cbCalled = false;
-    let remaining = deps.length;
+    let remaining = Object.keys(deps).length;
     let wait = new WaitFor();
     let depsTree = {};
 
@@ -142,6 +142,8 @@ export class DependenciesResolver {
       }
 
       let dependencyVersion = deps[dependencyName];
+
+      console.log(`Resolving dependency '${dependencyName}@${dependencyVersion}'`);
 
       this._resolveSingle(dependencyName, dependencyVersion, (error, versionMatched) => {
         if (error || cbCalled) {
@@ -200,7 +202,7 @@ export class DependenciesResolver {
         return;
       }
 
-      this._resolve(moduleConfig.dependencies || {}, cb);
+      this._resolve(moduleConfig.config.dependencies || {}, cb);
     })
   }
 
