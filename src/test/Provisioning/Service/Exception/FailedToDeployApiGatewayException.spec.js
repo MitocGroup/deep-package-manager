@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {FailedToDeployApiGatewayException} from '../../../../lib/Provisioning/Service/Exception/FailedToDeployApiGatewayException';
 
-suite('Provisioning/Service/Exception/FailedToDeployApiGatewayException', function() {
+suite('Provisioning/Service/Exception/FailedToDeployApiGatewayException', () => {
 
-  test('Class FailedToDeployApiGatewayException', function() {
+  test('Class FailedToDeployApiGatewayException', () => {
     let e = new FailedToDeployApiGatewayException('Test exception');
     chai.expect(e).to.be.an.instanceof(FailedToDeployApiGatewayException);
   });

@@ -5,27 +5,27 @@ import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 import {Optimizer} from '../../lib/Assets/Optimizer';
 
-suite('Assets/Optimizer', function() {
+suite('Assets/Optimizer', () => {
   let path = './test/testMaterials/assets/rawFiles';
   let optimizer = new Optimizer(path);
 
-  test('Class Optimizer exists in Assets/Optimizer', function() {
-    chai.expect(typeof Optimizer).to.equal('function');
+  test('Class Optimizer exists in Assets/Optimizer', () => {
+    chai.expect(Optimizer).to.be.an('function');
   });
 
-  test('Check constructor sets _path', function() {
+  test('Check constructor sets _path', () => {
     chai.expect(optimizer.path).to.equal(path);
   });
 
-  test('Check constructor sets _compressionLevel', function() {
+  test('Check constructor sets _compressionLevel', () => {
     chai.expect(optimizer.compressionLevel).to.equal(Optimizer.COMPRESSION_LEVEL);
   });
 
-  test('Check COMPRESSION_LEVEL static getter', function() {
+  test('Check COMPRESSION_LEVEL static getter', () => {
     chai.expect(Optimizer.COMPRESSION_LEVEL).to.equal(9);
   });
 
-  test('Check compressionLevel setter', function() {
+  test('Check compressionLevel setter', () => {
     optimizer.compressionLevel = -2.1;
     chai.expect(optimizer.compressionLevel).to.equal(-2);
 

@@ -5,6 +5,7 @@
 'use strict';
 
 import FileSystem from 'fs';
+import path from 'path';
 
 export class PostDeployHook {
   /**
@@ -53,7 +54,7 @@ export class PostDeployHook {
    * @private
    */
   _getHookFile() {
-    return `${this._microservice.basePath}/${PostDeployHook.HOOK_BASENAME}`;
+    return path.join(this._microservice.basePath, PostDeployHook.HOOK_BASENAME);
   }
 
   /**

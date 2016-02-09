@@ -343,6 +343,23 @@ export class AbstractService extends Core.OOP.Interface {
   }
 
   /**
+   * @param {String} resourceName
+   * @returns {String}
+   */
+  static extractEnvFromResourceName(resourceName) {
+    let rawRegexp = `^(?:.*\/)?${AbstractService.AWS_RESOURCES_PREFIX}`;
+    rawRegexp += `(?:\.|_)?(dev|stage|test|prod).+[a-z0-9]{${AbstractService.MAIN_HASH_SIZE}}$`;
+
+    let matches = resourceName.match(new RegExp(rawRegexp, 'i'));
+
+    if (!matches) {
+      return null;
+    }
+
+    return matches[1].toLowerCase();
+  }
+
+  /**
    * @returns {Number}
    */
   static get MAIN_HASH_SIZE() {
@@ -378,6 +395,10 @@ export class AbstractService extends Core.OOP.Interface {
         awsServiceLimit = 255;
         break;
 
+      case Core.AWS.Service.SIMPLE_QUEUE_SERVICE:
+        awsServiceLimit = 80;
+        break;
+
       default:
         throw new Exception(`Naming limits for aws service ${awsService} are not defined.`);
     }
@@ -395,5 +416,13 @@ export class AbstractService extends Core.OOP.Interface {
    */
   static capitalizeFirst(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  /**
+   * @param {String} str
+   * @returns {String}
+   */
+  static lowerCaseFirst(str) {
+    return str.charAt(0).toLowerCase() + str.slice(1);
   }
 }

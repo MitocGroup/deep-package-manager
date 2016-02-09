@@ -5,6 +5,7 @@
 "use strict";
 
 import Joi from 'joi';
+import semver from 'semver';
 
 /**
  * Abstraction on Joi validation expressions
@@ -63,7 +64,7 @@ export class JoiHelper {
    * @returns {*}
    */
   static semver() {
-    return JoiHelper.string().regex(/^\d+\.\d+\.\d+([a-zA-Z])?$/);
+    return JoiHelper.string().regex(/^.+$/);
   }
 
   /**

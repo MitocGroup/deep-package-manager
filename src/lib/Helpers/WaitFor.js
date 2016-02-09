@@ -31,10 +31,34 @@ export class WaitFor {
   }
 
   /**
-   * @param {WaitFor} child
+   * @param {Function} executor
+   * @param {Function} cb
+   * @param {Array[]} series
    * @returns {WaitFor}
    */
-  addChild(child) {
+  static waterfall(executor, cb, ...series) {
+    let wait = new WaitFor();
+    let readyCb = executor(series.pop());
+
+    wait.push(readyCb);
+
+    wait.ready(() => {
+      if (series.length > 0) {
+        WaitFor.waterfall(executor, cb, ...series);
+        return;
+      }
+
+      cb();
+    });
+  }
+
+  /**
+   * @param {WaitFor|null} child
+   * @returns {WaitFor}
+   */
+  addChild(child = null) {
+    child = child || new WaitFor();
+
     if (!(child instanceof WaitFor)) {
       throw new InvalidArgumentException(child, WaitFor);
     }

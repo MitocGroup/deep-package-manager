@@ -19,6 +19,21 @@ export class AbstractDriver extends Core.OOP.Interface {
     this._awsService = awsService;
     this._debug = debug;
     this._stack = [];
+    this._retries = AbstractDriver.DEFAULT_RETRIES;
+  }
+
+  /**
+   * @param {Number} retries
+   */
+  set retries(retries) {
+    this._retries = retries;
+  }
+
+  /**
+   * @returns {Number}
+   */
+  get retries() {
+    return this._retries;
   }
 
   /**
@@ -55,6 +70,7 @@ export class AbstractDriver extends Core.OOP.Interface {
   _execute(cb, resources) {
     let wait = new WaitFor();
     let resourcesRemaining = resources.length;
+    let resourceIds = [];
 
     wait.push(() => {
       return resourcesRemaining <= 0;
@@ -69,7 +85,15 @@ export class AbstractDriver extends Core.OOP.Interface {
       let resourceId = resourceInfo.id;
       let resourceData = resourceInfo.data;
 
-      this._removeResource(resourceId, resourceData, (error) => {
+      // manage duplicate resources
+      if (resourceIds.indexOf(resourceId) !== -1) {
+        resourcesRemaining--;
+        continue;
+      }
+
+      resourceIds.push(resourceId);
+
+      this._removeResourceRetryable(resourceId, resourceData, (error) => {
         resourcesRemaining--;
 
         if (!error) {
@@ -82,6 +106,39 @@ export class AbstractDriver extends Core.OOP.Interface {
     }
 
     wait.ready(() => {
+      cb(null);
+    });
+  }
+
+  /**
+   * @param {String} resourceId
+   * @param {Object|String} resourceData
+   * @param {Function} cb
+   * @param {Number|null} retries
+   * @private
+   */
+  _removeResourceRetryable(resourceId, resourceData, cb, retries = null) {
+    retries = retries === null ? this._retries : retries;
+
+    this._removeResource(resourceId, resourceData, (error) => {
+      if (error) {
+        if (retries <= 0) {
+          cb(error);
+          return;
+        }
+
+        let retriesDelay = parseInt(2000 / retries);
+
+        this._logError(
+          `Retrying undeploy on ${this.service()}:${resourceId} in ${retriesDelay} ms due to the error: ${error}`
+        );
+
+        setTimeout(() => {
+          this._removeResourceRetryable(resourceId, resourceData, cb, retries - 1);
+        }, retriesDelay);
+        return;
+      }
+
       cb(null);
     });
   }
@@ -184,6 +241,14 @@ export class AbstractDriver extends Core.OOP.Interface {
     }
 
     return resourcesVector;
+  }
+
+  /**
+   * @returns {Number}
+   * @constructor
+   */
+  static get DEFAULT_RETRIES() {
+    return 3;
   }
 
   /**

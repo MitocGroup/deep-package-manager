@@ -5,8 +5,8 @@
 'use strict';
 
 import AWS from 'aws-sdk';
-import StringUtils from 'underscore.string';
 import FileSystem from 'fs';
+import FileSystemExtra from 'fs-extra';
 import Path from 'path';
 import {Instance as Provisioning} from '../Provisioning/Instance';
 import {Exception} from '../Exception/Exception';
@@ -19,19 +19,24 @@ import {Lambda} from './Lambda';
 import {WaitFor} from '../Helpers/WaitFor';
 import {Frontend} from './Frontend';
 import {Model} from './Model';
+import {Migration} from './Migration';
+import {ValidationSchema} from './ValidationSchema';
+import {AbstractService} from '../Provisioning/Service/AbstractService';
 import {S3Service} from '../Provisioning/Service/S3Service';
 import {Config} from './Config';
 import {Hash} from '../Helpers/Hash';
 import {FrontendEngine} from '../Microservice/FrontendEngine';
-import {NoMatchingFrontendEngineException} from '../Dependencies/Exception/NoMatchingFrontendEngineException';
 import {Exec} from '../Helpers/Exec';
 import OS from 'os';
 import objectMerge from 'object-merge';
 import {Listing} from '../Provisioning/Listing';
+import {Undeploy} from '../Provisioning/Undeploy'; // Fixes weird issue on calling super()
+import {PropertyMatcher} from '../Provisioning/UndeployMatcher/PropertyMatcher';
 import {ProvisioningCollisionsListingException} from './Exception/ProvisioningCollisionsListingException';
 import {ProvisioningCollisionsDetectedException} from './Exception/ProvisioningCollisionsDetectedException';
-import {AbstractService} from '../Provisioning/Service/AbstractService';
 import {DeployID} from '../Helpers/DeployID';
+import {MigrationsRegistry} from './MigrationsRegistry';
+import {DeployConfig} from './DeployConfig';
 
 /**
  * Property instance
@@ -49,13 +54,24 @@ export class Instance {
     // @todo: move it?
     AWS.config.update(this._config.aws);
 
-    this._path = StringUtils.rtrim(path, '/');
+    this._path = Path.normalize(path);
     this._microservices = null;
     this._localDeploy = false;
     this._provisioning = new Provisioning(this);
     this._isUpdate = false;
 
     this._microservicesToUpdate = [];
+
+    this._config.deployId = new DeployID(this).toString();
+
+    this._configObj = new DeployConfig(this);
+  }
+
+  /**
+   * @returns {DeployConfig}
+   */
+  get configObj() {
+    return this._configObj;
   }
 
   /**
@@ -66,12 +82,7 @@ export class Instance {
   verifyProvisioningCollisions(callback, throwError = true) {
     this.getProvisioningCollisions((error, resources) => {
       if (!error && resources) {
-        let mainHash = AbstractService.generateUniqueResourceHash(
-          this.config.awsAccountId,
-          this.identifier
-        );
-
-        error = new ProvisioningCollisionsDetectedException(resources, mainHash);
+        error = new ProvisioningCollisionsDetectedException(resources, this._configObj.baseHash);
       }
 
       if (error && throwError) {
@@ -79,17 +90,25 @@ export class Instance {
       }
 
       callback(error);
-    });
+    }, new PropertyMatcher(this));
 
     return this;
   }
 
   /**
    * @param {Function} callback
+   * @param {AbstractMatcher|*} matcher
    * @returns {Instance}
    */
-  getProvisioningCollisions(callback) {
+  getProvisioningCollisions(callback, matcher = null) {
     let resourcesLister = new Listing(this);
+    resourcesLister.hash = function (resourceName) {
+      if (matcher) {
+        return matcher.match(this.constructor.name.replace(/Driver$/i, ''), resourceName);
+      }
+
+      return AbstractService.extractBaseHashFromResourceName(resourceName) === this._configObj.baseHash;
+    };
 
     resourcesLister.list((result) => {
       if (Object.keys(result.errors).length > 0) {
@@ -97,7 +116,18 @@ export class Instance {
       } else if (result.matchedResources <= 0) {
         callback(null, null);
       } else {
-        callback(null, result.resources);
+        let filteredResources = result.resources;
+
+        if (matcher) {
+          filteredResources = matcher.filter(result.resources);
+
+          if (Object.keys(filteredResources).length <= 0) {
+            callback(null, null);
+            return;
+          }
+        }
+
+        callback(null, filteredResources);
       }
     });
 
@@ -154,10 +184,6 @@ export class Instance {
    * @returns {String}
    */
   get deployId() {
-    if (!this._config.deployId) {
-      this._config.deployId = new DeployID(this).toString();
-    }
-
     return this._config.deployId;
   }
 
@@ -267,6 +293,7 @@ export class Instance {
     }
 
     let modelsDirs = [];
+    let validationSchemasDirs = [];
 
     for (let i in microservices) {
       if (!microservices.hasOwnProperty(i)) {
@@ -294,13 +321,21 @@ export class Instance {
       microservicesConfig[microserviceConfig.identifier] = microserviceConfig;
 
       modelsDirs.push(microservice.autoload.models);
+      validationSchemasDirs.push(microservice.autoload.validation);
     }
 
     this._config.microservices = microservicesConfig;
 
     let models = Model.create(...modelsDirs);
+    let validationSchemas = ValidationSchema.create(...validationSchemasDirs);
 
     this._config.models = models.map(m => m.extract());
+    this._config.validationSchemas = validationSchemas.map((s) => {
+      return {
+        name: s.name,
+        schemaPath: s.schemaPath,
+      };
+    });
 
     let lambdaInstances = [];
 
@@ -339,11 +374,14 @@ export class Instance {
         this._config
           .microservices[microserviceIdentifier]
           .lambdas[lambdaIdentifier] = {
-          arn: lambdaInstance.arn,
+          arn: lambdaInstance.arnGeneralized,
           name: lambdaInstance.functionName,
           region: lambdaInstance.region,
           localPath: Path.join(lambdaInstance.path, 'bootstrap.js'),
         };
+
+        // inject symlinks
+        lambdaInstance.injectValidationSchemas(this._config.validationSchemas, true);
 
         lambdaInstances.push(lambdaInstance);
       }
@@ -359,10 +397,10 @@ export class Instance {
       let lambdaInstance = lambdaInstances[i];
 
       // assure localRuntime flag set true!
-      lambdas[lambdaInstance.arn] = lambdaInstance.createConfig(this._config, true);
+      lambdas[lambdaInstance.arnGeneralized] = lambdaInstance.createConfig(this._config, true);
 
-      lambdas[lambdaInstance.arn].name = lambdaInstance.functionName;
-      lambdas[lambdaInstance.arn].path = Path.join(lambdaInstance.path, 'bootstrap.js');
+      lambdas[lambdaInstance.arnGeneralized].name = lambdaInstance.functionName;
+      lambdas[lambdaInstance.arnGeneralized].path = Path.join(lambdaInstance.path, 'bootstrap.js');
     }
 
     return lambdas;
@@ -410,6 +448,7 @@ export class Instance {
     }
 
     let modelsDirs = [];
+    let validationSchemasDirs = [];
 
     for (let i in microservices) {
       if (!microservices.hasOwnProperty(i)) {
@@ -441,13 +480,21 @@ export class Instance {
       microservicesConfig[microserviceConfig.identifier] = microserviceConfig;
 
       modelsDirs.push(microservice.autoload.models);
+      validationSchemasDirs.push(microservice.autoload.validation);
     }
 
     this._config.microservices = microservicesConfig;
 
     let models = Model.create(...modelsDirs);
+    let validationSchemas = ValidationSchema.create(...validationSchemasDirs);
 
     this._config.models = models.map(m => m.extract());
+    this._config.validationSchemas = validationSchemas.map((s) => {
+      return {
+        name: s.name,
+        schemaPath: s.schemaPath,
+      };
+    });
 
     if (skipProvision) {
       callback();
@@ -522,6 +569,8 @@ export class Instance {
             region: lambdaInstance.region,
             arn: lambdaInstance.arn,
           };
+
+        lambdaInstance.injectValidationSchemas(this._config.validationSchemas);
 
         lambdas.push(lambdaInstance);
       }
@@ -623,7 +672,7 @@ export class Instance {
    * @returns {Frontend}
    */
   buildFrontend(dumpPath = null, callback = () => {}) {
-    let frontend = new Frontend(this._config.microservices, dumpPath || this._path, this.deployId);
+    let frontend = new Frontend(this, this._config.microservices, dumpPath || this._path, this.deployId);
 
     frontend.build(Frontend.createConfig(this._config), callback.bind(this, frontend));
 
@@ -641,10 +690,83 @@ export class Instance {
 
     this.provisioning.postDeployProvision((config) => {
       this._config.provisioning = config;
-      this._runPostDeployMsHooks(callback);
+      this._runPostDeployMsHooks(() => {
+        this._runMigrations(callback);
+      });
     }, this._isUpdate);
 
     return this;
+  }
+
+  /**
+   * @param {Function} callback
+   * @private
+   */
+  _runMigrations(callback) {
+    let microservices = this.microservices;
+    let migrationDirs = [];
+
+    for (let i in microservices) {
+      if (!microservices.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let microservice = microservices[i];
+
+      migrationDirs.push(microservice.autoload.migration);
+    }
+
+    let migrations = Migration.create(...migrationDirs);
+
+    if (migrations.length <= 0) {
+      console.log('No migrations to be loaded. Skipping...');
+
+      callback();
+      return;
+    }
+
+    let registry = MigrationsRegistry.create(this);
+
+    console.log('Loading migrations registry');
+
+    registry.load((error) => {
+      if (error) {
+        console.error(error);
+        callback();
+        return;
+      }
+
+      let wait = new WaitFor();
+      let remaining = migrations.length;
+
+      migrations.forEach((migration) => {
+        migration.registry = registry;
+
+        migration.up(this, (error) => {
+          if (error) {
+            console.error(error);
+          }
+
+          remaining--;
+        });
+      });
+
+      wait.push(() => {
+        return remaining <= 0;
+      });
+
+      wait.ready(() => {
+        console.log('Persisting migrations registry');
+
+        registry.dump((error) => {
+          if (error) {
+            console.error(error);
+          }
+
+          callback();
+        });
+      });
+    });
   }
 
   /**
@@ -734,22 +856,20 @@ export class Instance {
   }
 
   /**
-   * @param {Object} propertyConfigSnapshot
    * @param {Function} callback
+   * @param {Object|null} propertyConfigSnapshot
    * @param {Microservice[]} microservicesToUpdate
    * @returns {Instance}
    */
-  update(propertyConfigSnapshot, callback, microservicesToUpdate = []) {
+  update(callback, propertyConfigSnapshot = null, microservicesToUpdate = []) {
     this._isUpdate = true;
     this.microservicesToUpdate = microservicesToUpdate;
-    this._config = propertyConfigSnapshot;
 
-    // @todo: remove it?
-    this._config.deployId = null;
-
-    this._provisioning.injectConfig(
-      this._config.provisioning
-    );
+    if (propertyConfigSnapshot) {
+      this._configObj.updateConfig(propertyConfigSnapshot);
+    } else {
+      this._configObj.tryReadFromDump();
+    }
 
     return this.install((...args) => {
       this._isUpdate = false;
@@ -769,10 +889,10 @@ export class Instance {
     }
 
     if (!this._isUpdate) {
-      console.log(`Checking possible provisioning collisions for application #${this.identifier}`);
+      console.log(`Checking possible provisioning collisions for application #${this.identifier}/${this._config.env}`);
 
       this.verifyProvisioningCollisions(() => {
-        console.log(`Start installing application #${this.identifier}`);
+        console.log(`Start installing application #${this.identifier}/${this._config.env}`);
 
         this.build(() => {
           console.log(`Build is done`);
@@ -788,7 +908,7 @@ export class Instance {
       return this;
     }
 
-    console.log(`Start updating application #${this.identifier}`);
+    console.log(`Start updating application #${this.identifier}/${this._config.env}`);
 
     return this.build(() => {
       console.log(`Build is done`);
@@ -837,7 +957,7 @@ export class Instance {
     let suitableEngine = frontendEngineManager.findSuitable(...microservices);
 
     if (!suitableEngine) {
-      throw new NoMatchingFrontendEngineException(frontendEngineManager.rawEngines);
+      throw new Error(`No suitable engine found (looking for ${frontendEngineManager.rawEngines.join(', ')})`);
     }
 
     let engineRepo = FrontendEngine.getEngineRepository(suitableEngine);
@@ -848,8 +968,10 @@ export class Instance {
     let repoName = engineRepo.replace(/^.+\/([^\/]+)\.git$/i, '$1');
     let repoDir = Path.join(tmpDir, repoName);
 
+    FileSystemExtra.removeSync(repoDir);
+
     // @todo: replace it with https://www.npmjs.com/package/nodegit
-    new Exec(`rm -rf ${repoDir}; git clone --depth=1 ${engineRepo} ${repoDir}`)
+    new Exec(`git clone --depth=1 ${engineRepo} ${repoDir}`)
       .avoidBufferOverflow()
       .run((result) => {
         if (result.failed) {
@@ -857,7 +979,7 @@ export class Instance {
           return;
         }
 
-        new Exec(`cp -R ${repoDir}/src/* ${this._path}/`)
+        new Exec(`cp -R ${repoDir}${Path.sep}src${Path.sep}. ${this._path}`)
           .avoidBufferOverflow()
           .run((result) => {
             this._microservices = null; // @todo: reset microservices?

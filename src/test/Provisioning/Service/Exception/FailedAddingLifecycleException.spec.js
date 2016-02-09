@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {FailedAddingLifecycleException} from '../../../../lib/Provisioning/Service/Exception/FailedAddingLifecycleException';
 
-suite('Provisioning/Service/Exception/FailedAddingLifecycleException', function() {
+suite('Provisioning/Service/Exception/FailedAddingLifecycleException', () => {
 
-  test('Class FailedAddingLifecycleException', function() {
+  test('Class FailedAddingLifecycleException', () => {
     let e = new FailedAddingLifecycleException('Test exception');
     chai.expect(e).to.be.an.instanceof(FailedAddingLifecycleException);
   });

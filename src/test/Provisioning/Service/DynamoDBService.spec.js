@@ -11,18 +11,18 @@ import {ProvisioningInstanceMock} from '../../mock/Provisioning/ProvisioningInst
 
 chai.use(sinonChai);
 
-suite('Provisioning/Service/DynamoDBService', function() {
+suite('Provisioning/Service/DynamoDBService', () => {
   let dynamoDBService = new DynamoDBService();
   let objectStorageInput = null;
   let objectStorage = null;
   let propertyInstance = null;
   let provisioningInstance = null;
 
-  test('Class DynamoDBService exists in Provisioning/Service/DynamoDBService', function() {
-    chai.expect(typeof DynamoDBService).to.equal('function');
+  test('Class DynamoDBService exists in Provisioning/Service/DynamoDBService', () => {
+    chai.expect(DynamoDBService).to.be.an('function');
   });
 
-  test('Check constructor sets valid default values', function() {
+  test('Check constructor sets valid default values', () => {
     objectStorageInput = [{firstItem: 'value0'}, {secondItem: 'value1'},];
     let e = null;
 
@@ -39,28 +39,28 @@ suite('Provisioning/Service/DynamoDBService', function() {
     chai.expect(dynamoDBService._ready).to.be.equal(false);
   });
 
-  test('Check name() method returns \'dynamodb\'', function() {
+  test('Check name() method returns \'dynamodb\'', () => {
     chai.expect(dynamoDBService.name()).to.be.equal('dynamodb');
   });
 
-  test('Check AVAILABLE_REGIONS() static method returns array of available regions', function() {
+  test('Check AVAILABLE_REGIONS() static method returns array of available regions', () => {
     chai.expect(DynamoDBService.AVAILABLE_REGIONS.length).to.be.equal(1);
     chai.expect(DynamoDBService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.ANY);
   });
 
-  test('Check _postProvision() method returns this._readyTeardown=\'true\'', function() {
+  test('Check _postProvision() method returns this._readyTeardown=\'true\'', () => {
     chai.expect(dynamoDBService._readyTeardown).to.be.equal(false);
     let actualResult = dynamoDBService._postProvision('service');
     chai.expect(actualResult._readyTeardown).to.be.equal(true);
   });
 
-  test('Check _postDeployProvision() method returns this._ready=\'true\'', function() {
+  test('Check _postDeployProvision() method returns this._ready=\'true\'', () => {
     dynamoDBService._ready = false;
     let actualResult = dynamoDBService._postDeployProvision('service');
     chai.expect(actualResult._ready).to.be.equal(true);
   });
 
-  test('Check _postProvision() method returns instance with this._readyTeardown = true for isUpdate', function() {
+  test('Check _postProvision() method returns instance with this._readyTeardown = true for isUpdate', () => {
     let e = null;
     dynamoDBService._isUpdate = true;
     dynamoDBService._readyTeardown = false;
@@ -76,7 +76,7 @@ suite('Provisioning/Service/DynamoDBService', function() {
     chai.expect(actualResult._readyTeardown).to.be.equal(true);
   });
 
-  test('Check _objectValues() static method returns array of values', function() {
+  test('Check _objectValues() static method returns array of values', () => {
     let e = null;
     let actualResult = null;
     let input = {
@@ -98,7 +98,7 @@ suite('Provisioning/Service/DynamoDBService', function() {
     chai.expect(actualResult).to.be.include(input.key3);
   });
 
-  test('Check _createDbTables() method', function() {
+  test('Check _createDbTables() method', () => {
     let e = null;
     dynamoDBService._isUpdate = true;
     let actualResult = null;
@@ -113,7 +113,7 @@ suite('Provisioning/Service/DynamoDBService', function() {
     //chai.expect(e).to.be.equal(null);
   });
 
-  test('Check _removeMissingTables() method', function() {
+  test('Check _removeMissingTables() method', () => {
     let e = null;
     let actualResult = null;
     let missingTablesNames = ['table1', 'table2'];

@@ -15,6 +15,21 @@ export class AwsRequestSyncStack {
     this._stack = [];
     this._levels = [];
     this._completed = 0;
+    this._joinTimeout = 0;
+  }
+
+  /**
+   * @returns {Number}
+   */
+  get joinTimeout() {
+    return this._joinTimeout;
+  }
+
+  /**
+   * @param {Number} timeout
+   */
+  set joinTimeout(timeout) {
+    this._joinTimeout = timeout;
   }
 
   /**
@@ -104,13 +119,15 @@ export class AwsRequestSyncStack {
    * @returns {WaitFor}
    */
   join(topOnly = false) {
-    for (let i in this._stack) {
-      if (!this._stack.hasOwnProperty(i)) {
-        continue;
-      }
+    setTimeout(() => {
+      for (let i in this._stack) {
+        if (!this._stack.hasOwnProperty(i)) {
+          continue;
+        }
 
-      this._stack[i].send();
-    }
+        this._stack[i].send();
+      }
+    }, this._joinTimeout);
 
     let wait = new WaitFor();
 

@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {FailedToCreateIamRoleException} from '../../../../lib/Provisioning/Service/Exception/FailedToCreateIamRoleException';
 
-suite('Provisioning/Service/Exception/FailedToCreateIamRoleException', function() {
+suite('Provisioning/Service/Exception/FailedToCreateIamRoleException', () => {
 
-  test('Class FailedToCreateIamRoleException', function() {
+  test('Class FailedToCreateIamRoleException', () => {
     let e = new FailedToCreateIamRoleException('Test exception');
     chai.expect(e).to.be.an.instanceof(FailedToCreateIamRoleException);
   });

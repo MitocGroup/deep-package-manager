@@ -6,8 +6,8 @@
 
 import {Action} from './Action';
 import {Instance as Microservice} from '../Instance';
-import StringUtils from 'underscore.string';
 import Joi from 'joi';
+import path from 'path';
 import deepActionSchema from './action.schema';
 import {InvalidConfigException} from '../Exception/InvalidConfigException';
 import {InvalidArgumentException} from '../../Exception/InvalidArgumentException';
@@ -60,9 +60,9 @@ export class ResourceCollection {
    * @param {Boolean} strict
    */
   static create(backendPath, strict = false) {
-    backendPath = StringUtils.rtrim(backendPath, '/');
+    backendPath = path.normalize(backendPath);
 
-    let resourcesFile = `${backendPath}/${Microservice.RESOURCES_FILE}`;
+    let resourcesFile = path.join(backendPath, Microservice.RESOURCES_FILE);
 
     let rawResources = {};
 

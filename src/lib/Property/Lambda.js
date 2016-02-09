@@ -4,7 +4,6 @@
 
 'use strict';
 
-import StringUtils from 'underscore.string';
 import Archiver from 'archiver';
 import FileSystem from 'fs';
 import {FailedLambdaUploadException} from './Exception/FailedLambdaUploadException';
@@ -40,9 +39,9 @@ export class Lambda {
     this._identifier = identifier;
     this._name = name;
     this._execRole = execRole;
-    this._path = StringUtils.rtrim(path, '/');
-    this._outputPath = StringUtils.rtrim(property.path, '/');
-    this._zipPath = `${this._outputPath}/${microserviceIdentifier}_lambda_${identifier}.zip`;
+    this._path = Path.normalize(path);
+    this._outputPath = Path.normalize(property.path);
+    this._zipPath = Path.join(this._outputPath, `${microserviceIdentifier}_lambda_${identifier}.zip`);
 
     this._memorySize = Lambda.DEFAULT_MEMORY_LIMIT;
     this._timeout = Lambda.DEFAULT_TIMEOUT;
@@ -163,6 +162,15 @@ export class Lambda {
   }
 
   /**
+   * Mainly used for local server
+   *
+   * @returns {String}
+   */
+  get arnGeneralized() {
+    return `arn:aws:lambda:::function:${this.functionName}`;
+  }
+
+  /**
    * @returns {String}
    */
   get runtime() {
@@ -237,6 +245,29 @@ export class Lambda {
    */
   get uploadedLambda() {
     return this._uploadedLambda;
+  }
+
+  /**
+   * @param {Object[]} validationSchemas
+   * @param {Boolean} useSymlink
+   */
+  injectValidationSchemas(validationSchemas, useSymlink = false) {
+    let schemasPath = Path.join(this.path, Core.AWS.Lambda.Runtime.VALIDATION_SCHEMAS_DIR);
+
+    if (FileSystem.existsSync(schemasPath)) {
+      FileSystemExtra.removeSync(schemasPath);
+    }
+
+    validationSchemas.forEach((schema) => {
+      let schemaPath = schema.schemaPath;
+      let destinationSchemaPath = Path.join(schemasPath, `${schema.name}.js`);
+
+      if (useSymlink) {
+        FileSystemExtra.ensureSymlinkSync(schemaPath, destinationSchemaPath);
+      } else {
+        FileSystemExtra.copySync(schemaPath, destinationSchemaPath);
+      }
+    });
   }
 
   /**
@@ -371,7 +402,7 @@ export class Lambda {
     let s3 = this._property.provisioning.s3;
     let tmpBucket = this._property.config.provisioning.s3.buckets[S3Service.TMP_BUCKET].name;
 
-    let objectKey = this._zipPath.split('/').pop();
+    let objectKey = this._zipPath.split(Path.sep).pop();
 
     let s3Params = {
       Bucket: tmpBucket,
@@ -381,6 +412,9 @@ export class Lambda {
     };
 
     let syncStack = new AwsRequestSyncStack();
+
+    // @todo: Remove when exec role assign fixed
+    syncStack.level(1).joinTimeout = 5000;
 
     syncStack.push(s3.putObject(s3Params), (error, data) => {
       if (error) {
@@ -395,17 +429,15 @@ export class Lambda {
         FunctionName: this.functionName,
       };
 
-      if (this._wasPreviouslyDeployed) {
-        let params = {
+      if (update || this._wasPreviouslyDeployed) {
+        request = lambda.updateFunctionCode({
           S3Bucket: tmpBucket,
           S3Key: objectKey,
           S3ObjectVersion: data.VersionId,
           FunctionName: this.functionName,
-        };
-
-        request = lambda.updateFunctionCode(params);
+        });
       } else {
-        let params = {
+        request = lambda.createFunction({
           Code: {
             S3Bucket: tmpBucket,
             S3Key: objectKey,
@@ -417,9 +449,7 @@ export class Lambda {
           Runtime: this._runtime,
           MemorySize: this._memorySize,
           Timeout: this._timeout,
-        };
-
-        request = lambda.createFunction(params);
+        });
       }
 
       syncStack.level(1).push(request, (error, data) => {
@@ -480,7 +510,7 @@ export class Lambda {
     FileSystemExtra.ensureDirSync(this.path);
 
     JsonFile.writeFileSync(
-      `${this.path}/_config.json`,
+      Path.join(this.path, Lambda.CONFIG_FILE),
       this.createConfig(this._property.config)
     );
 
@@ -514,7 +544,7 @@ export class Lambda {
    * @returns {String}
    */
   static get CONFIG_FILE() {
-    return '_config.json';
+    return Frontend.CONFIG_FILE;
   }
 
   /**

@@ -75,8 +75,22 @@ export class APIGatewayService extends AbstractService {
   /**
    * @returns {String}
    */
+  static get ORIGINAL_REQUEST_ID_HEADER() {
+    return 'x-amzn-original-RequestId';
+  }
+
+  /**
+   * @returns {String[]}
+   */
   static get ALLOWED_CORS_HEADERS() {
-    return "'Content-Type,X-Amz-Date,X-Amz-Security-Token,Authorization'";
+    return ['Content-Type', 'X-Amz-Date', 'X-Amz-Security-Token', 'Authorization'];
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get ALLOWED_EXPOSED_HEADERS() {
+    return ['x-amzn-RequestId', APIGatewayService.ORIGINAL_REQUEST_ID_HEADER];
   }
 
   /**
@@ -930,8 +944,17 @@ export class APIGatewayService extends AbstractService {
     headers[`${prefix}.Access-Control-Allow-Origin`] = resourceMethods ? "'*'" : true;
 
     if (httpMethod === 'OPTIONS') {
-      headers[`${prefix}.Access-Control-Allow-Headers`] = resourceMethods ? APIGatewayService.ALLOWED_CORS_HEADERS : true;
-      headers[`${prefix}.Access-Control-Allow-Methods`] = resourceMethods ? `'${resourceMethods.join(',')}'` : true;
+      headers[`${prefix}.Access-Control-Allow-Headers`] = resourceMethods ?
+        `'${APIGatewayService.ALLOWED_CORS_HEADERS.join(',')}'` : true;
+
+      headers[`${prefix}.Access-Control-Allow-Methods`] = resourceMethods ?
+        `'${resourceMethods.join(',')}'` : true;
+    } else {
+      headers[`${prefix}.Access-Control-Expose-Headers`] = resourceMethods ?
+        `'${APIGatewayService.ALLOWED_EXPOSED_HEADERS.join(',')}'` : true;
+
+      headers[`${prefix}.${APIGatewayService.ORIGINAL_REQUEST_ID_HEADER}`] = resourceMethods ?
+        "integration.response.header.x-amzn-RequestId" : true;
     }
 
     return headers;

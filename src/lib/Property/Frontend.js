@@ -4,8 +4,9 @@
 
 'use strict';
 
-import StringUtils from 'underscore.string';
 import FileSystem from 'fs';
+import FileSystemExtra from 'fs-extra';
+import Path from 'path';
 import {Exec} from '../Helpers/Exec';
 import {FileWalker} from '../Helpers/FileWalker';
 import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
@@ -20,6 +21,7 @@ import Tmp from 'tmp';
 import OS from 'os';
 import ZLib from 'zlib';
 import {APIGatewayService} from '../Provisioning/Service/APIGatewayService';
+import {SQSService} from '../Provisioning/Service/SQSService';
 import {DeployIdInjector} from '../Assets/DeployIdInjector';
 import {Optimizer} from '../Assets/Optimizer';
 
@@ -28,13 +30,15 @@ import {Optimizer} from '../Assets/Optimizer';
  */
 export class Frontend {
   /**
+   * @param {Property} property
    * @param {Object} microservicesConfig
    * @param {String} basePath
    * @param {String} deployId
    */
-  constructor(microservicesConfig, basePath, deployId) {
+  constructor(property, microservicesConfig, basePath, deployId) {
+    this._property = property;
     this._microservicesConfig = microservicesConfig;
-    this._basePath = StringUtils.rtrim(basePath, '/');
+    this._basePath = Path.normalize(basePath);
     this._deployId = deployId;
   }
 
@@ -60,6 +64,9 @@ export class Frontend {
       identityProviders: '',
       microservices: {},
       globals: propertyConfig.globals,
+      validationSchemas: propertyConfig.validationSchemas.map((validationSchema) => {
+        return validationSchema.name;
+      }),
     };
 
     let apiGatewayBaseUrl = '';
@@ -71,6 +78,9 @@ export class Frontend {
       config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders;
 
       apiGatewayBaseUrl = propertyConfig.provisioning[Core.AWS.Service.API_GATEWAY].api.baseUrl;
+
+      let sqsQueues = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_QUEUE_SERVICE].queues;
+      config.rumQueue = sqsQueues[SQSService.RUM_QUEUE] || '';
     }
 
     for (let microserviceIdentifier in propertyConfig.microservices) {
@@ -109,6 +119,7 @@ export class Frontend {
             type: action.type,
             methods: action.methods,
             forceUserIdentity: action.forceUserIdentity,
+            validationSchema: action.validationSchema,
             apiCache: {
               enabled: action.cacheEnabled,
               ttl: action.cacheTtl,
@@ -146,7 +157,8 @@ export class Frontend {
    * @returns {WaitFor}
    */
   deploy(AWS, bucketName) {
-    //let s3 = new AWS.S3();
+    let s3 = this._property.provisioning.s3;
+    let bucketRegion = s3.config.region;
 
     let syncStack = new AwsRequestSyncStack();
 
@@ -168,7 +180,7 @@ export class Frontend {
     console.log(`Syncing ${this.path} with ${bucketName} (non HTML, TTL=86400)`);
 
     let syncResultNoHtml = this
-      ._getSyncCommandNoHtml(credentialsFile, bucketName)
+      ._getSyncCommandNoHtml(credentialsFile, bucketName, bucketRegion)
       .runSync();
 
     if (syncResultNoHtml.failed) {
@@ -178,7 +190,7 @@ export class Frontend {
     console.log(`Syncing ${this.path} with ${bucketName} (HTML only, TTL=600)`);
 
     let syncResultHtml = this
-      ._getSyncCommandHtmlOnly(credentialsFile, bucketName)
+      ._getSyncCommandHtmlOnly(credentialsFile, bucketName, bucketRegion)
       .runSync();
 
     if (syncResultHtml.failed) {
@@ -216,13 +228,15 @@ export class Frontend {
   /**
    * @param {String} credentialsFile
    * @param {String} bucketName
+   * @param {String} bucketRegion
    * @private
    */
-  _getSyncCommandNoHtml(credentialsFile, bucketName) {
+  _getSyncCommandNoHtml(credentialsFile, bucketName, bucketRegion) {
     return new Exec(
       `export AWS_CONFIG_FILE=${credentialsFile};`,
       'aws s3 sync',
       '--profile=deep',
+      `--region=${bucketRegion}`,
       '--storage-class=REDUCED_REDUNDANCY',
       Frontend._contentEncodingExecOption,
       '--cache-control="max-age=86400"',
@@ -235,13 +249,15 @@ export class Frontend {
   /**
    * @param {String} credentialsFile
    * @param {String} bucketName
+   * @param {String} bucketRegion
    * @private
    */
-  _getSyncCommandHtmlOnly(credentialsFile, bucketName) {
+  _getSyncCommandHtmlOnly(credentialsFile, bucketName, bucketRegion) {
     return new Exec(
       `export AWS_CONFIG_FILE=${credentialsFile};`,
       'aws s3 sync',
       '--profile=deep',
+      `--region=${bucketRegion}`,
       '--storage-class=REDUCED_REDUNDANCY',
       Frontend._contentEncodingExecOption,
       '--cache-control="max-age=600"',
@@ -262,6 +278,34 @@ export class Frontend {
 
   /**
    * @param {Object} propertyConfig
+   * @param {String} dumpPath
+   * @param {Boolean} useSymlink
+   * @returns {Frontend}
+   */
+  static dumpValidationSchemas(propertyConfig, dumpPath, useSymlink = false) {
+    let validationSchemas = propertyConfig.validationSchemas;
+    let schemasPath = Path.join(dumpPath, Core.AWS.Lambda.Runtime.VALIDATION_SCHEMAS_DIR);
+
+    if (FileSystem.existsSync(schemasPath)) {
+      FileSystemExtra.removeSync(schemasPath);
+    }
+
+    validationSchemas.forEach((schema) => {
+      let schemaPath = schema.schemaPath;
+      let destinationSchemaPath = Path.join(schemasPath, `${schema.name}.js`);
+
+      if (useSymlink) {
+        FileSystemExtra.ensureSymlinkSync(schemaPath, destinationSchemaPath);
+      } else {
+        FileSystemExtra.copySync(schemaPath, destinationSchemaPath);
+      }
+    });
+
+    return this;
+  }
+
+  /**
+   * @param {Object} propertyConfig
    * @param {Function} callback
    */
   build(propertyConfig, callback = () => {}) {
@@ -270,7 +314,6 @@ export class Frontend {
     }
 
     FileSystem.mkdirSync(this.path);
-    JsonFile.writeFileSync(this.configPath, propertyConfig);
 
     for (let identifier in this._microservicesConfig) {
       if (!this._microservicesConfig.hasOwnProperty(identifier)) {
@@ -288,7 +331,7 @@ export class Frontend {
       // @todo: implement this in a smarter way
       if (config.isRoot) {
         try {
-          let indexFile = `${frontendPath}/index.html`;
+          let indexFile = Path.join(frontendPath, 'index.html');
           let indexStats = FileSystem.lstatSync(indexFile);
 
           if (!indexStats.isFile()) {
@@ -307,6 +350,10 @@ export class Frontend {
         walker.copy(frontendPath, modulePath);
       }
     }
+
+    Frontend.dumpValidationSchemas(this._property.config, this.path);
+
+    JsonFile.writeFileSync(this.configPath, propertyConfig);
 
     if (Frontend._skipInjectDeployNumber) {
       return this._optimizeAssets(callback);
@@ -372,26 +419,34 @@ export class Frontend {
    * @returns {String}
    */
   modulePath(moduleIdentifier) {
-    let base = this.path;
-
-    return `${base}/${moduleIdentifier}`;
+    return Path.join(this.path, moduleIdentifier);
   }
 
   /**
    * @returns {String}
    */
   get configPath() {
-    let base = this.path;
-
-    return `${base}/_config.json`;
+    return Path.join(this.path, Frontend.CONFIG_FILE);
   }
 
   /**
    * @returns {String}
    */
   get path() {
-    let base = this._basePath;
+    return Path.join(this._basePath, Frontend.PUBLIC_FOLDER);
+  }
 
-    return `${base}/_public`;
+  /**
+   * @returns {String}
+   */
+  static get PUBLIC_FOLDER() {
+    return '_public';
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get CONFIG_FILE() {
+    return '_config.json';
   }
 }

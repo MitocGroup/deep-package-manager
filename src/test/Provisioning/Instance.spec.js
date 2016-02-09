@@ -9,7 +9,7 @@ import {InvalidArgumentException} from '../../lib/Exception/InvalidArgumentExcep
 
 chai.use(sinonChai);
 
-suite('Provisioning/Instance', function() {
+suite('Provisioning/Instance', () => {
   let provisioningInstance = null;
   let defaultConfig = {
     cloudfront: {},
@@ -22,13 +22,14 @@ suite('Provisioning/Instance', function() {
     kinesis: {},
     s3: {},
     sns: {},
+    acm: {},
   };
 
-  test('Class Instance exists in Provisioning/Instance', function() {
-    chai.expect(typeof Instance).to.equal('function');
+  test('Class Instance exists in Provisioning/Instance', () => {
+    chai.expect(Instance).to.be.an('function');
   });
 
-  test('Check constructor throws InvalidArgumentException exception when passed parameter is not instanceof PropertyInstance', function() {
+  test('Check constructor throws InvalidArgumentException exception when passed parameter is not instanceof PropertyInstance', () => {
     let error = null;
     try {
       provisioningInstance = new Instance();
@@ -40,7 +41,7 @@ suite('Provisioning/Instance', function() {
 
   });
 
-  test('Check constructor creates successfully instance of Provisioning', function() {
+  test('Check constructor creates successfully instance of Provisioning', () => {
     let error = null;
     let propertyInstance;
 
@@ -56,7 +57,7 @@ suite('Provisioning/Instance', function() {
     chai.assert.instanceOf(provisioningInstance, Instance, 'provisioningInstance is an instance of Provisioning');
   });
 
-  test('Check create() method throws "InvalidArgumentException" exception', function() {
+  test('Check create() method throws "InvalidArgumentException" exception', () => {
     let error = null;
 
     try {
@@ -69,7 +70,7 @@ suite('Provisioning/Instance', function() {
     chai.assert.instanceOf(error, InvalidArgumentException, 'error is an instance of InvalidArgumentException');
   });
 
-  test('Check postDeployProvision() method throws "InvalidArgumentException" exception', function() {
+  test('Check postDeployProvision() method throws "InvalidArgumentException" exception', () => {
     let error = null;
 
     try {
@@ -82,7 +83,7 @@ suite('Provisioning/Instance', function() {
     chai.assert.instanceOf(error, InvalidArgumentException, 'error is an instance of InvalidArgumentException');
   });
 
-  test('Check create() method call callback', function() {
+  test('Check create() method call callback', () => {
     let error = null;
     let spyCallback = sinon.spy();
 
@@ -96,36 +97,37 @@ suite('Provisioning/Instance', function() {
     //chai.expect(error).to.be.equal(null);
   });
 
-  test('Check cloudFront getter returns', function() {
+  test('Check cloudFront getter returns', () => {
     chai.expect(provisioningInstance.cloudFront).to.be.not.eql({});
     chai.expect(provisioningInstance.cloudFront.config.endpoint).to.be.contains('cloudfront');
   });
 
-  test('Check cloudFront getter returns valid object', function() {
+  test('Check cloudFront getter returns valid object', () => {
     chai.expect(provisioningInstance.cloudFront).to.be.not.eql({});
     chai.expect(provisioningInstance.cloudFront.config.endpoint).to.be.contains('cloudfront');
   });
 
-  test('Check sns getter returns valid object', function() {
+  test('Check sns getter returns valid object', () => {
     chai.expect(provisioningInstance.sns).to.be.not.eql({});
     chai.expect(provisioningInstance.sns.config.endpoint).to.be.contains('sns');
   });
 
-  test('Check kinesis getter returns valid object', function() {
+  test('Check kinesis getter returns valid object', () => {
     chai.expect(provisioningInstance.kinesis).to.be.not.eql({});
     chai.expect(provisioningInstance.kinesis.config.endpoint).to.be.contains('kinesis');
   });
 
-  test('Check elasticCache getter returns valid object', function() {
+  test('Check elasticCache getter returns valid object', () => {
     chai.expect(provisioningInstance.elasticCache).to.be.not.eql({});
     chai.expect(provisioningInstance.elasticCache.config.endpoint).to.be.contains('elasticache');
   });
 
-  test('Check config getter returns valid object', function() {
-    chai.expect(provisioningInstance.config).to.be.eql(defaultConfig);
-  });
+  //@todo - clarify this with Alex C
+  //test('Check config getter returns valid object', () => {
+  //  chai.expect(provisioningInstance.config).to.be.eql({});
+  //});
 
-  test('Check config setter sets _config', function() {
+  test('Check config setter sets _config', () => {
     let config = provisioningInstance.config;
     let testConfig = {test: 'test'};
 

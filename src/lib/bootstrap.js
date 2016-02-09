@@ -8,20 +8,21 @@
 
 import {FileWalker} from './Helpers/FileWalker';
 import path from 'path';
+import os from 'os';
 
 let walker = new FileWalker(FileWalker.RECURSIVE);
 
 let classFiles = walker.walk(__dirname, FileWalker.skipDotsFilter((file) => {
-  return /^(.*\/)?[A-Z][^\/]+\.js$/.test(file);
+  return /^(.*[\/|\\])?[A-Z][^\/\\]+\.js$/.test(file);
 })).map((file) => file.substr(__dirname.length));
 
 let exp = {};
 
 classFiles.forEach((classFile) => {
-  let matches = classFile.match(/^(?:.*\/)?([A-Z][^\/]+)\.js$/);
+  let matches = classFile.match(/^(?:.*[\/|\\])?([A-Z][^\/\\]+)\.js$/);
   let className = matches[1];
 
-  let nsParts = classFile.split('/').filter((part) => !!part);
+  let nsParts = classFile.split(path.sep).filter((part) => !!part);
   nsParts.pop();
 
   let jsObj = require(path.join(__dirname, classFile));

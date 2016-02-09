@@ -7,11 +7,18 @@
 import Joi from 'joi';
 import {JoiHelper} from '../Helpers/JoiHelper';
 import {FrontendEngine} from '../Microservice/FrontendEngine';
+import path from 'path';
 
 let FRONTEND = 'Frontend';
 let BACKEND = 'Backend';
 let DOCS = 'Docs';
-let MODELS = 'Models';
+
+// base data path
+let DATA_BASE_DIR = 'Data';
+let MODELS = path.join(DATA_BASE_DIR, 'Models');
+let VALIDATION = path.join(DATA_BASE_DIR, 'Validation');
+let FIXTURES = path.join(DATA_BASE_DIR, 'Fixtures');
+let MIGRATION = path.join(DATA_BASE_DIR, 'Migration');
 
 export default Joi.object().keys({
   identifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/),
@@ -31,15 +38,21 @@ export default Joi.object().keys({
   })),
   dependencies: Joi.object().unknown().pattern(/^[a-zA-Z0-9_-]+$/, JoiHelper.semver()),
   autoload: Joi.object().keys({
-    frontend: JoiHelper.maybeString().default(FRONTEND),
-    backend: JoiHelper.maybeString().default(BACKEND),
-    docs: JoiHelper.maybeString().default(DOCS),
-    models: JoiHelper.maybeString().default(MODELS),
+    frontend: JoiHelper.maybeString().default(FRONTEND).replace(/\//gi, path.sep),
+    backend: JoiHelper.maybeString().default(BACKEND).replace(/\//gi, path.sep),
+    docs: JoiHelper.maybeString().default(DOCS).replace(/\//gi, path.sep),
+    models: JoiHelper.maybeString().default(MODELS).replace(/\//gi, path.sep),
+    validation: JoiHelper.maybeString().default(VALIDATION).replace(/\//gi, path.sep),
+    fixtures:JoiHelper.maybeString().default(FIXTURES).replace(/\//gi, path.sep),
+    migration: JoiHelper.maybeString().default(MIGRATION).replace(/\//gi, path.sep),
   }).default({
     frontend: FRONTEND,
     backend: BACKEND,
     docs: DOCS,
     models: MODELS,
+    validation: VALIDATION,
+    fixtures: FIXTURES,
+    migration: MIGRATION,
   }),
   frontendEngine: Joi.array()
     .unique()
