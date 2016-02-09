@@ -5,9 +5,11 @@
 import chai from 'chai';
 import path from 'path';
 import {Registry} from '../../lib/Registry/Registry';
+import {Exec} from '../../lib/Helpers/Exec';
 import {Instance as Property} from '../../lib/Property/Instance';
 import fs from 'fs';
 import fse from 'fs-extra';
+import aws from 'aws-sdk';
 
 // @todo: Add more advanced tests
 suite('Registry/Registry', function() {
@@ -84,4 +86,48 @@ suite('Registry/Registry', function() {
       done();
     });
   });
+
+  //test('Test remote S3 registry', (done) => {
+  //  let bucket = 'test-deep-registry';
+  //  let prefix = '__deep_registry__';
+  //  let s3 = new aws.S3({
+  //    accessKeyId: '<access_key>',
+  //    secretAccessKey: '<secret_access_key>',
+  //    region: 'us-east-1',
+  //  });
+  //
+  //  let s3Registry = Registry.createS3Registry(s3, bucket, prefix);
+  //
+  //  new Exec(
+  //    'aws s3 sync',
+  //    '--profile=default',
+  //    '--region=us-east-1',
+  //    '--delete',
+  //    '--storage-class=REDUCED_REDUNDANCY',
+  //    `'${registryPath}'`,
+  //    `'s3://${bucket}/${prefix}'`
+  //  ).runSync();
+  //
+  //  let propertyPath = path.join(testMaterialsPath, 'Property1_v2');
+  //  let propertyRealPath = path.join(registryPath, '_test_property_s3_');
+  //
+  //  fse.copySync(propertyPath, propertyRealPath);
+  //  fse.copySync(path.join(propertyRealPath, 'deeploy.test.json'), path.join(propertyRealPath, 'deeploy.json'));
+  //
+  //  let property = new Property(propertyRealPath);
+  //
+  //  s3Registry.install(property, (error) => {
+  //    chai.expect(error).to.not.exist;
+  //    chai.expect(fs.existsSync(path.join(propertyRealPath, 'Microservice'))).to.be.ok;
+  //    chai.expect(fs.existsSync(path.join(propertyRealPath, 'Microservice', 'deepkg.json'))).to.be.ok;
+  //    chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep'))).to.be.ok;
+  //    chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep', 'deepkg.json'))).to.be.ok;
+  //    chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2'))).to.be.ok;
+  //    chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2', 'deepkg.json'))).to.be.ok;
+  //    chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2nested'))).to.be.ok;
+  //    chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2nested', 'deepkg.json'))).to.be.ok;
+  //
+  //    done();
+  //  });
+  //});
 });

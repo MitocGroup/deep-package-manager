@@ -63,7 +63,10 @@ export class S3Driver extends FSDriver {
     };
 
     this._s3.headObject(payload, (error) => {
-      if (error && error.code !== 'NoSuchKey') {
+      if (error &&
+        error.code !== 'NoSuchKey' && // object not exists
+        error.code !== 301) { // object located in another region
+
         cb(error, null);
         return;
       }

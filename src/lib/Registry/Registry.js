@@ -34,9 +34,10 @@ export class Registry {
   /**
    * @param {AWS.S3|*} s3
    * @param {String} bucket
+   * @param {String} prefix
    */
-  static createS3Registry(s3, bucket) {
-    let storage = new Storage(new S3Driver(s3, bucket));
+  static createS3Registry(s3, bucket, prefix = '') {
+    let storage = new Storage(new S3Driver(s3, bucket, prefix));
 
     return new Registry(storage);
   }
