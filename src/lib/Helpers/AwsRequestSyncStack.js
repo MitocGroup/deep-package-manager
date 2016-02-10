@@ -55,12 +55,7 @@ export class AwsRequestSyncStack {
    * @param {Boolean} strict
    * @returns {AwsRequestSyncStack}
    */
-  level(level, strict) {
-    // @todo: remove implementing late call...
-    if (level > 1) {
-      throw new Exception('Avoid using level > 1 until late call is implemented!');
-    }
-
+  level(level, strict = false) {
     while (this.levelsDepth < level) {
       if (strict) {
         let depth = this.levelsDepth;
@@ -130,29 +125,52 @@ export class AwsRequestSyncStack {
     }, this._joinTimeout);
 
     let wait = new WaitFor();
+    let waitChildren = false;
+    let triggerMainReady = false;
 
     wait.push(() => {
-      if (this.remaining > 0) {
+      if (this.remaining > 0 || waitChildren) {
         return false;
+      } else if (triggerMainReady) {
+        return true;
       }
 
       this._completed = 0;
       this._stack = [];
 
-      if (!topOnly) {
-        for (let i in this._levels) {
-          if (!this._levels.hasOwnProperty(i)) {
-            continue;
-          }
+      if (!topOnly && this.levelsDepth > 0) {
+        waitChildren = true;
 
-          wait.addChild(this._levels[i].join());
-        }
+        this._waitChildren(0, () => {
+          waitChildren = false;
+          triggerMainReady = true;
+        });
+
+        return false;
       }
 
       return true;
     });
 
     return wait;
+  }
+
+  /**
+   * @param {Number} level
+   * @param {Function} cb
+   * @private
+   */
+  _waitChildren(level, cb) {
+    if (level >= this.levelsDepth) {
+      cb();
+      return;
+    }
+
+    let subStack = this._levels[level];
+
+    subStack.join().ready(() => {
+      this._waitChildren(level + 1, cb);
+    });
   }
 
   /**

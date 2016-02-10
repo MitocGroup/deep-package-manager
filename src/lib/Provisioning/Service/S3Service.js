@@ -12,6 +12,7 @@ import {FailedSettingBucketAsWebsiteException} from './Exception/FailedSettingBu
 import {FailedAddingLifecycleException} from './Exception/FailedAddingLifecycleException';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {Hash} from '../../Helpers/Hash';
+import {FailedSettingCORSException} from './Exception/FailedSettingCORSException';
 
 /**
  * S3 service
@@ -206,6 +207,14 @@ export class S3Service extends AbstractService {
 
             buckets[bucketSuffix].website = this.getWebsiteAddress(bucketName);
           });
+
+          let corsConfig = S3Service.getCORSConfig(bucketName);
+
+          syncStack.level(2).push(s3.putBucketCors(corsConfig), (error) => {
+            if (error) {
+              throw new FailedSettingCORSException(bucketName, error);
+            }
+          });
         } else if (S3Service.isBucketTmp(bucketName)) {
           tmpBucket = bucketName;
         }
@@ -321,6 +330,33 @@ export class S3Service extends AbstractService {
     resource.descriptor = `${bucketName}/*`;
 
     return statement;
+  }
+
+  /**
+   * @todo: Allow other methods out there?
+   *
+   * @param {String} bucketName
+   * @returns {Object}
+   */
+  static getCORSConfig(bucketName) {
+    return {
+      Bucket: bucketName,
+      CORSConfiguration: {
+        CORSRules: [
+          {
+            AllowedMethods: [
+              'HEAD',
+            ],
+            AllowedOrigins: [
+              '*',
+            ],
+            AllowedHeaders: [
+              '*',
+            ],
+          },
+        ],
+      },
+    };
   }
 
   /**
