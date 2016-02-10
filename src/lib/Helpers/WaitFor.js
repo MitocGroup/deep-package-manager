@@ -13,71 +13,6 @@ export class WaitFor {
   constructor() {
     this._stack = [];
     this._toSkip = [];
-    this._children = [];
-  }
-
-  /**
-   * @returns {Number}
-   */
-  get childrenCount() {
-    return this._children.length;
-  }
-
-  /**
-   * @returns {Array}
-   */
-  get children() {
-    return this._children;
-  }
-
-  /**
-   * @param {Function} executor
-   * @param {Function} cb
-   * @param {Array[]} series
-   * @returns {WaitFor}
-   */
-  static waterfall(executor, cb, ...series) {
-    let wait = new WaitFor();
-    let readyCb = executor(series.pop());
-
-    wait.push(readyCb);
-
-    wait.ready(() => {
-      if (series.length > 0) {
-        WaitFor.waterfall(executor, cb, ...series);
-        return;
-      }
-
-      cb();
-    });
-  }
-
-  /**
-   * @param {WaitFor|null} child
-   * @returns {WaitFor}
-   */
-  addChild(child = null) {
-    child = child || new WaitFor();
-
-    if (!(child instanceof WaitFor)) {
-      throw new InvalidArgumentException(child, WaitFor);
-    }
-
-    this._children.push(child);
-
-    return this;
-  }
-
-  /**
-   * @param {Number} index
-   * @returns {WaitFor}
-   */
-  child(index) {
-    if (this.childrenCount < index) {
-      throw new InvalidArgumentException(index, 'existing index');
-    }
-
-    return this._children[index];
   }
 
   /**
@@ -140,43 +75,8 @@ export class WaitFor {
         this.ready(callback);
       }, WaitFor.TICK_TTL);
     } else {
-      this._readyChildren(callback, 0);
-    }
-  }
-
-  /**
-   * @param {Function} callback
-   * @param {Number} level
-   */
-  _readyChildren(callback, level) {
-    let remaining = this._children.length - level;
-
-    if (remaining <= 0) {
       callback();
-      return;
     }
-
-    let subWait = new WaitFor();
-
-    for (let i in this._children) {
-      if (!this._children.hasOwnProperty(i)) {
-        continue;
-      }
-
-      this._children[i].ready(() => {
-        remaining--;
-      });
-
-      level++;
-    }
-
-    subWait.push(() => {
-      return remaining <= 0;
-    });
-
-    subWait.ready(() => {
-      this._readyChildren(callback, level + 1);
-    });
   }
 
   /**
