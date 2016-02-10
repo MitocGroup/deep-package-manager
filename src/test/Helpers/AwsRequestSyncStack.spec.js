@@ -29,19 +29,6 @@ suite('Helpers/AwsRequestSyncStack', () => {
     chai.expect(awsRequestSyncStack.levelsDepth).to.be.equal(2);
   });
 
-  test('Check level() throws exception when level > 1', () => {
-    let error = null;
-
-    try {
-      awsRequestSyncStack.level(2, true);
-    } catch (e) {
-      error = e;
-    }
-
-    chai.assert.instanceOf(error, Error, 'e is an instance of Exception');
-    chai.expect(error.message).to.be.contains('Avoid using level > 1 until late call is implemented!');
-  });
-
   test('Check level() for level 1 with levelsDepth=2 and strict mode', () => {
     let error = null;
     let actualResult = null;
