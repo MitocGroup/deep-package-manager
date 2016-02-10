@@ -16,16 +16,6 @@ import {DeployConfig} from './DeployConfig';
 export default {
   validation: () => {
     return Joi.object().keys({
-      dependencies: Joi.object().keys({
-        bucket: JoiHelper.string().required(),
-        prefix: JoiHelper.string().optional().allow(''),
-        aws: Joi.object().keys({
-          accessKeyId: JoiHelper.string().required(),
-          secretAccessKey: JoiHelper.string().required(),
-          region: JoiHelper.string().required(),
-          httpOptions: Joi.object().optional(),
-        }).optional(),
-      }).optional(),
       appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).required(),
       env: JoiHelper.stringEnum(DeployConfig.AVAILABLE_ENV).optional()
         .lowercase().default(DeployConfig.AVAILABLE_ENV[0]),
@@ -45,16 +35,6 @@ export default {
     let guessedAwsCredentials = guessAwsSdkConfig();
 
     return Joi.object().keys({
-      dependencies: Joi.object().keys({
-        bucket: JoiHelper.string().required(),
-        prefix: JoiHelper.string().optional().allow(''),
-        aws: Joi.object().keys({
-          accessKeyId: JoiHelper.string().required(),
-          secretAccessKey: JoiHelper.string().required(),
-          region: JoiHelper.string().required(),
-          httpOptions: Joi.object().optional(),
-        }).optional(),
-      }).optional(),
       appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).optional().default(buildAppId()),
       env: JoiHelper.stringEnum(DeployConfig.AVAILABLE_ENV).optional().default(DeployConfig.AVAILABLE_ENV[0]),
       awsAccountId: Joi.number().optional().default(guessAwsAccountId(guessedAwsCredentials)),

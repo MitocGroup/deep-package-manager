@@ -26,7 +26,6 @@ import {S3Service} from '../Provisioning/Service/S3Service';
 import {Config} from './Config';
 import {Hash} from '../Helpers/Hash';
 import {FrontendEngine} from '../Microservice/FrontendEngine';
-import {NoMatchingFrontendEngineException} from '../Dependencies/Exception/NoMatchingFrontendEngineException';
 import {Exec} from '../Helpers/Exec';
 import OS from 'os';
 import objectMerge from 'object-merge';
@@ -958,7 +957,7 @@ export class Instance {
     let suitableEngine = frontendEngineManager.findSuitable(...microservices);
 
     if (!suitableEngine) {
-      throw new NoMatchingFrontendEngineException(frontendEngineManager.rawEngines);
+      throw new Error(`No suitable engine found (looking for ${frontendEngineManager.rawEngines.join(', ')})`);
     }
 
     let engineRepo = FrontendEngine.getEngineRepository(suitableEngine);
