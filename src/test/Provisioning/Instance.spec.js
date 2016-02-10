@@ -83,20 +83,20 @@ suite('Provisioning/Instance', () => {
     chai.assert.instanceOf(error, InvalidArgumentException, 'error is an instance of InvalidArgumentException');
   });
 
-  test('Check create() method call callback', () => {
-    let error = null;
-    let spyCallback = sinon.spy();
-
-    try {
-      provisioningInstance.create(spyCallback, true);
-    } catch (e) {
-      error = e;
-    }
-
-    //todo - TBD
-    //chai.expect(error).to.be.equal(null);
-  });
-
+  //test('Check create() method call callback', () => {
+  //  let error = null;
+  //  let spyCallback = sinon.spy();
+  //
+  //  try {
+  //    provisioningInstance.create(spyCallback, true);
+  //  } catch (e) {
+  //    error = e;
+  //  }
+  //
+  //  //todo - TBD
+  //  //chai.expect(error).to.be.equal(null);
+  //});
+  //
   test('Check cloudFront getter returns', () => {
     chai.expect(provisioningInstance.cloudFront).to.be.not.eql({});
     chai.expect(provisioningInstance.cloudFront.config.endpoint).to.be.contains('cloudfront');
