@@ -20,6 +20,7 @@ import Mime from 'mime';
 import FileSystemExtra from 'fs-extra';
 import {InvalidConfigException} from './Exception/InvalidConfigException';
 import {Exception} from '../Exception/Exception';
+import {DeepConfigDriver} from '../Tags/Driver/DeepConfigDriver';
 
 /**
  * Lambda instance
@@ -329,9 +330,10 @@ export class Lambda {
   /**
    * @param {String} lambdaPath
    * @param {String} packageFile
+   * @param {String|null} runtime
    * @returns {WaitFor}
    */
-  static injectPackageConfig(lambdaPath, packageFile) {
+  static injectPackageConfig(lambdaPath, packageFile, runtime = null) {
     let wait = new WaitFor();
     let ready = false;
 
@@ -345,10 +347,43 @@ export class Lambda {
       throw new InvalidConfigException(`Config file not found in ${configFile}!`);
     }
 
+    let cmd = `zip -r ${packageFile} ${Lambda.CONFIG_FILE}`;
+
+    let bootstrapFile = Path.join(lambdaPath, 'bootstrap.js');
+    let bootstrapBckFile = `${bootstrapFile}.${new Date().getTime()}.bck`;
+    let bootstrapBck = false;
+
+    // read bootstrap file from the archive (fail silently)
+    if (runtime === 'nodejs') {
+      if (FileSystem.existsSync(bootstrapFile)) {
+        bootstrapBck = true;
+        FileSystemExtra.copySync(bootstrapFile, bootstrapBckFile);
+      }
+
+      // @todo: remove this temporary hook by rewriting it in a native way
+      let result = new Exec(`unzip -p ${packageFile} bootstrap.js > ${bootstrapFile}`)
+        .runSync();
+
+      if (result.succeed) {
+        Lambda._tryInjectDeepConfigIntoBootstrapFile(bootstrapFile, configFile);
+
+        cmd += ` && zip -r ${packageFile} bootstrap.js`;
+      } else if(result.error) {
+        console.error(result); //@todo: remove?
+      }
+    }
+
     // @todo: remove this temporary hook by rewriting it in a native way
-    new Exec(`cd ${Path.dirname(configFile)} && zip -r ${packageFile} ${Lambda.CONFIG_FILE}`)
+    new Exec(`cd ${Path.dirname(configFile)} && ${cmd}`)
       .avoidBufferOverflow()
       .run((result) => {
+
+        // restore original bootstrap.js
+        if (runtime === 'nodejs' && bootstrapBck) {
+          FileSystemExtra.copySync(bootstrapBckFile, bootstrapFile);
+          FileSystemExtra.removeSync(bootstrapBckFile);
+        }
+
         if (result.failed) {
           throw new Exception(`Error while adding ${Lambda.CONFIG_FILE} to lambda build: ${result.error}`);
         }
@@ -370,6 +405,7 @@ export class Lambda {
     console.log(`Start packing lambda ${this._identifier}`);
 
     this.persistConfig();
+    this._injectDeepConfigIntoBootstrap();
 
     let buildFile = `${this._path}.zip`;
 
@@ -378,9 +414,42 @@ export class Lambda {
 
       FileSystemExtra.copySync(buildFile, this._zipPath);
 
-      return Lambda.injectPackageConfig(this._path, this._zipPath);
+      return Lambda.injectPackageConfig(this._path, this._zipPath, this._runtime);
     } else {
       return Lambda.createPackage(this._path, this._zipPath);
+    }
+  }
+
+  /**
+   * @private
+   */
+  _injectDeepConfigIntoBootstrap(runtime) {
+    if (this._runtime === 'nodejs') { // the only supported runtime
+      let bootstrapFile = Path.join(this.path, 'bootstrap.js');
+      let configFile = Path.join(this.path, Lambda.CONFIG_FILE);
+
+      Lambda._tryInjectDeepConfigIntoBootstrapFile(bootstrapFile, configFile);
+    }
+  }
+
+  /**
+   * @param {String} bootstrapFile
+   * @param {String} configFile
+   * @private
+   */
+  static _tryInjectDeepConfigIntoBootstrapFile(bootstrapFile, configFile) {
+    if (FileSystem.existsSync(configFile) && FileSystem.existsSync(bootstrapFile)) {
+      let cfgPlain = `
+// This code was injected by deepify on ${new Date().toLocaleString()}
+global.${DeepConfigDriver.DEEP_CFG_VAR} =
+  global.${DeepConfigDriver.DEEP_CFG_VAR} ||
+  ${FileSystem.readFileSync(configFile).toString()};
+`;
+
+      FileSystem.writeFileSync(
+        bootstrapFile,
+        cfgPlain + FileSystem.readFileSync(bootstrapFile).toString()
+      );
     }
   }
 
