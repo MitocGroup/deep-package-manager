@@ -24,6 +24,7 @@ import {APIGatewayService} from '../Provisioning/Service/APIGatewayService';
 import {SQSService} from '../Provisioning/Service/SQSService';
 import {DeployIdInjector} from '../Assets/DeployIdInjector';
 import {Optimizer} from '../Assets/Optimizer';
+import {Injector as TagsInjector} from '../Tags/Injector';
 
 /**
  * Frontend
@@ -354,6 +355,14 @@ export class Frontend {
     Frontend.dumpValidationSchemas(this._property.config, this.path);
 
     JsonFile.writeFileSync(this.configPath, propertyConfig);
+
+    TagsInjector.fileInjectAll(
+      Path.join(this.path, 'index.html'),
+      propertyConfig,
+
+      // @todo: separate GTM functionality?
+      propertyConfig.globals.gtmContainerId // it may be empty/undefined
+    );
 
     if (Frontend._skipInjectDeployNumber) {
       return this._optimizeAssets(callback);
