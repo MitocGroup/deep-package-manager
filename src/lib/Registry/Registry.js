@@ -9,6 +9,7 @@ import {Dumper} from './Dumper/Dumper';
 import {Storage} from './Storage/Storage';
 import {S3Driver} from './Storage/Driver/S3Driver';
 import {FSDriver as StorageFSDriver} from './Storage/Driver/FSDriver';
+import {ApiDriver as ApiDriverDriver} from './Storage/Driver/ApiDriver';
 import {FSDriver} from './Dumper/Driver/FSDriver';
 import {DependenciesResolver} from './Resolver/DependenciesResolver';
 import {ModuleInstance} from './ModuleInstance';
@@ -20,6 +21,17 @@ export class Registry {
    */
   constructor(storage) {
     this._storage = storage;
+  }
+
+  /**
+   * @param {String} baseHost
+   * @param {Function} cb
+   * @param {Boolean} silent
+   */
+  static createApiRegistry(baseHost, cb, silent = true) {
+    ApiDriverDriver.autoDiscover(baseHost, (apiDriver) => {
+      cb(new Registry(new Storage(apiDriver)));
+    }, silent);
   }
 
   /**
