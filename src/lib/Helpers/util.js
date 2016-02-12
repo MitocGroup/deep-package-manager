@@ -10,6 +10,6 @@ export default util._extend(util, {
    * @returns {Boolean}
    */
   isObject: util.isObject || ((o) => {
-    return o != null && typeof o === 'object' && !isArray(o);
+    return o != null && typeof o === 'object' && !Array.isArray(o);
   }),
 });
