@@ -8,7 +8,7 @@ import {AbstractDriver} from './AbstractDriver';
 import path from 'path';
 import request from 'fetchy-request';
 import {Hash} from '../../../Helpers/Hash';
-import util from 'util';
+import util from '../../../Helpers/util';
 import {RegistryAutoDiscovery} from './Helpers/Api/RegistryAutoDiscovery';
 
 export class ApiDriver extends AbstractDriver {
