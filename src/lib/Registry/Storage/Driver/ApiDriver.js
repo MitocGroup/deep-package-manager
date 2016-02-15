@@ -18,6 +18,7 @@ export class ApiDriver extends AbstractDriver {
   constructor(registryConfig) {
     super();
 
+    this._authorizer = null;
     this._registryConfig = registryConfig;
     this._endpoints = registryConfig.extract();
   }
@@ -41,6 +42,20 @@ export class ApiDriver extends AbstractDriver {
           cb(error, null);
         }
       });
+  }
+
+  /**
+   * @returns {Authorizer|null}
+   */
+  get authorizer() {
+    return this._authorizer;
+  }
+
+  /**
+   * @param {Authorizer|null} authorizer
+   */
+  set authorizer(authorizer) {
+    this._authorizer = authorizer;
   }
 
   /**
@@ -157,6 +172,10 @@ export class ApiDriver extends AbstractDriver {
       headers: {'Content-Type': 'application/json',},
       body: JSON.stringify(payload),
     };
+
+    if (this._authorizer) {
+      this._authorizer.injectIntoRequest(requestData);
+    }
 
     request(requestData)
       .then((response) => {

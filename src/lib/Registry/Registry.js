@@ -25,10 +25,18 @@ export class Registry {
   }
 
   /**
+   * @returns {Storage|*}
+   */
+  get storage() {
+    return this._storage;
+  }
+
+  /**
    * @param {String} repositoryPath
    * @param {String} baseHost
    * @param {Function} cb
    * @param {Boolean} cached
+   * @returns {Server|*}
    */
   static startApiServerAndCreateRegistry(repositoryPath, baseHost, cb, cached = false) {
     let server = new Server(repositoryPath);
@@ -51,6 +59,8 @@ export class Registry {
         cb(null, registry);
       }, cached);
     });
+
+    return server;
   }
 
   /**

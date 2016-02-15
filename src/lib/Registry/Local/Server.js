@@ -21,10 +21,26 @@ export class Server {
 
     this._storage = new FSDriver(this._repositoryPath);
 
+    this._authorizer = null;
+
     this._port = port;
     this._host = host;
     this._server = null;
     this._logger = global.console;
+  }
+
+  /**
+   * @returns {Authorizer|null}
+   */
+  get authorizer() {
+    return this._authorizer;
+  }
+
+  /**
+   * @param {Authorizer|null} authorizer
+   */
+  set authorizer(authorizer) {
+    this._authorizer = authorizer;
   }
 
   /**
@@ -134,12 +150,12 @@ export class Server {
   }
 
   /**
-   * @param {Http.Request|Request|*} request
+   * @param {Http.IncomingMessage|IncomingMessage|*} request
    * @param {Http.ServerResponse|ServerResponse|*} response
    * @private
    */
   _handleRequest(request, response) {
-    this.logger.log(`---> [${request.method}] ${request.url}`);
+    this.logger.log(`---> [${request.method}] ${this.baseUrl}${request.url}`);
 
     new Core.Runtime.Sandbox(() => {
       let urlParts = Url.parse(request.url);
@@ -158,10 +174,17 @@ export class Server {
         return;
       }
 
-      this._proxyStoreCall(uri.replace(/\//g, ''), request, response);
+      this._authorize(request, (authError) => {
+        if (authError) {
+          Server._send(this.logger, response, authError.message);
+          return;
+        }
+
+        this._proxyStoreCall(uri.replace(/\//g, ''), request, response);
+      });
     })
       .fail((error) => {
-        Server._send(this.logger, response, error.toString());
+        Server._send(this.logger, response, error.message);
 
         // @todo: remove it?
         this.logger.error(error.message, "\n", error.stack);
@@ -169,8 +192,27 @@ export class Server {
   }
 
   /**
+   * @param {Http.IncomingMessage|IncomingMessage|*} request
+   * @param {Function} cb
+   * @private
+   */
+  _authorize(request, cb) {
+    if (!this._authorizer) {
+      cb(null);
+      return;
+    }
+
+    let authHeaders = Object.keys(request.headers);
+
+    // @todo: abstract this somehow?
+    this.logger.log(`---> [AUTHORIZE] Looking for token in headers: ${authHeaders.join(', ')}`);
+
+    this._authorizer.authorize(request, cb);
+  }
+
+  /**
    * @param {String} callType
-   * @param {Http.Request|Request|*} request
+   * @param {Http.IncomingMessage|IncomingMessage|*} request
    * @param {Http.ServerResponse|ServerResponse|*} response
    * @private
    */
@@ -203,7 +245,7 @@ export class Server {
   }
 
   /**
-   * @param {Http.Request|Request|*} request
+   * @param {Http.IncomingMessage|IncomingMessage|*} request
    * @param {Function} cb
    * @private
    */

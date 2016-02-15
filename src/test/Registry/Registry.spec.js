@@ -6,6 +6,7 @@ import chai from 'chai';
 import path from 'path';
 import {Registry} from '../../lib/Registry/Registry';
 import {Server} from '../../lib/Registry/Local/Server';
+import {Authorizer} from '../../lib/Registry/Storage/Driver/Helpers/Api/Auth/Authorizer';
 import {Exec} from '../../lib/Helpers/Exec';
 import {Instance as Property} from '../../lib/Property/Instance';
 import fs from 'fs';
@@ -90,11 +91,16 @@ suite('Registry/Registry', function() {
   });
 
   test('Check Property1_v2 is fetching deps from local api registry server', (done) => {
-    Registry.startApiServerAndCreateRegistry(
+    let authToken = `deep-auth-token-${(new Date()).getTime()}`;
+    let authorizer = Authorizer.createHeaderToken(authToken);
+
+    let registryServer = Registry.startApiServerAndCreateRegistry(
       registryPath,
       Server.DEFAULT_REGISTRY_HOST,
       (error, apiRegistry) => {
         chai.expect(error).to.not.exist;
+
+        apiRegistry.storage.driver.authorizer = authorizer;
 
         let propertyPath = path.join(testMaterialsPath, 'Property1_v2');
         let propertyRealPath = path.join(registryPath, '_test_property_api_');
@@ -123,6 +129,8 @@ suite('Registry/Registry', function() {
         });
       }
     );
+
+    registryServer.authorizer = authorizer;
   });
 
   //test('Test remote S3 registry', (done) => {
