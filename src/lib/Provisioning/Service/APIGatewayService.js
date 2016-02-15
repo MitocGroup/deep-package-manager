@@ -1110,20 +1110,33 @@ export class APIGatewayService extends AbstractService {
       if (resource) {
         this._createApiChildResources(resource, pathParts.slice(1), restApiId, callback);
       } else {
+        let retries = 0;
+        let maxRetries = 3;
+        let retryIntervalMs = 600;
         let params = {
           parentId: parentResource.id,
           pathPart: pathParts[0],
           restApiId: restApiId,
         };
 
-        this.apiGatewayClient.createResource(params, (error, resource) => {
-          if (error) {
-            throw new FailedToCreateApiResourceException(params.pathPart, error);
-          }
+        var createResourceFunc = () => {
+          this.apiGatewayClient.createResource(params, (error, resource) => {
+            if (error) {
+              retries++;
+              if (retries > maxRetries) {
+                throw new FailedToCreateApiResourceException(params.pathPart, error);
+              }
 
-          this._apiResources[resource.path] = resource;
-          this._createApiChildResources(resource, pathParts.slice(1), restApiId, callback);
-        });
+              // Retry request in case it fails (e.g. TooManyRequestsException)
+              setTimeout(createResourceFunc, retryIntervalMs * retries);
+            } else {
+              this._apiResources[resource.path] = resource;
+              this._createApiChildResources(resource, pathParts.slice(1), restApiId, callback);
+            }
+          });
+        };
+
+        createResourceFunc();
       }
     });
   }
