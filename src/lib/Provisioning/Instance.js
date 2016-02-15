@@ -60,8 +60,6 @@ export class Instance {
     });
     this._apiGateway = new property.AWS.APIGateway({
       region: this.getAwsServiceRegion(APIGatewayService, property.config.awsRegion),
-      maxRetries: 3,
-      retryDelayOptions: {base: 600},
     });
     this._sqs = new property.AWS.SQS({
       region: this.getAwsServiceRegion(SQSService, property.config.awsRegion),
