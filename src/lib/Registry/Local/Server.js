@@ -8,6 +8,7 @@ import http from 'http';
 import {RegistryAutoDiscovery} from '../Storage/Driver/Helpers/Api/RegistryAutoDiscovery';
 import {FSDriver} from '../Storage/Driver/FSDriver';
 import Url from 'url';
+import Core from 'deep-core';
 
 export class Server {
   /**
@@ -140,23 +141,31 @@ export class Server {
   _handleRequest(request, response) {
     this.logger.log(`---> [${request.method}] ${request.url}`);
 
-    let urlParts = Url.parse(request.url);
-    let uri = urlParts.pathname;
+    new Core.Runtime.Sandbox(() => {
+      let urlParts = Url.parse(request.url);
+      let uri = urlParts.pathname;
 
-    if (Server._matchAutoDiscoveryRequest(uri)) {
-      this.logger.log(`<--- Send auto discovery config for '${this.baseUrl}'`);
+      if (Server._matchAutoDiscoveryRequest(uri)) {
+        this.logger.log(`<--- [SUCCEED] Sending auto discovery config`);
 
-      Server._sendRaw(response, {
-        hasObj: `${this.baseUrl}/hasObj`,
-        readObj: `${this.baseUrl}/readObj`,
-        putObj: `${this.baseUrl}/putObj`,
-        deleteObj: `${this.baseUrl}/deleteObj`,
-      });
+        Server._sendRaw(response, {
+          hasObj: `${this.baseUrl}/hasObj`,
+          readObj: `${this.baseUrl}/readObj`,
+          putObj: `${this.baseUrl}/putObj`,
+          deleteObj: `${this.baseUrl}/deleteObj`,
+        });
 
-      return;
-    }
+        return;
+      }
 
-    this._proxyStoreCall(uri.replace(/\//g, ''), request, response);
+      this._proxyStoreCall(uri.replace(/\//g, ''), request, response);
+    })
+      .fail((error) => {
+        Server._send(this.logger, response, error.toString());
+
+        // @todo: remove it?
+        this.logger.error(error.message, "\n", error.stack);
+      }).run();
   }
 
   /**
@@ -189,7 +198,7 @@ export class Server {
         Server._send(this.logger, response, error, result);
       });
 
-      proxyMethod(...args);
+      proxyMethod.apply(this._storage, args);
     });
   }
 
@@ -202,16 +211,19 @@ export class Server {
     if (request.method === 'POST') {
       let rawData = '';
 
-      request.on('data', function(chunk) {
+      request.on('data', (chunk) => {
         rawData += chunk.toString();
       });
 
-      request.on('end', function() {
+      request.on('end', () => {
+        let parsedData = null;
+
         try {
-          cb(JSON.parse(rawData));
+          parsedData = JSON.parse(rawData);
         } catch (error) {
-          cb(null);
         }
+
+        cb(parsedData);
       });
     } else {
       cb(null);
@@ -227,26 +239,33 @@ export class Server {
    */
   static _send(logger, response, error, data = null) {
     if (error) {
-      logger.error(`<--- Error: ${error}`);
-    } else {
-      logger.log(`<--- Sending back the result set`);
+      logger.error(`<--- [ERROR] ${error}`);
     }
 
-    Server._sendRaw(response, {
+    let bytesSent = Server._sendRaw(response, {
       error,
       data,
     });
+
+    if (!error) {
+      logger.log(`<--- [SUCCEED] ${bytesSent} bytes sent`);
+    }
   }
 
   /**
    * @param {Http.ServerResponse|ServerResponse|*} response
    * @param {Object} data
+   * @returns {Number}
    * @private
    */
   static _sendRaw(response, data) {
+    let body = JSON.stringify(data);
+
     response.writeHead(200, {'Content-Type': 'application/json',});
-    response.write(JSON.stringify(data));
+    response.write(body);
     response.end();
+
+    return body.length;
   }
 
   /**

@@ -5,11 +5,11 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
-import path from 'path';
 import request from 'fetchy-request';
 import {Hash} from '../../../Helpers/Hash';
 import util from '../../../Helpers/util';
 import {RegistryAutoDiscovery} from './Helpers/Api/RegistryAutoDiscovery';
+import path from 'path';
 
 export class ApiDriver extends AbstractDriver {
   /**
@@ -25,10 +25,11 @@ export class ApiDriver extends AbstractDriver {
   /**
    * @param {String} baseHost
    * @param {Function} cb
+   * @param {Boolean} cached
    */
-  static autoDiscover(baseHost, cb) {
-    new RegistryAutoDiscovery(baseHost)
-      .discover((error, registryConfig) => {
+  static autoDiscover(baseHost, cb, cached = false) {
+    (new RegistryAutoDiscovery(baseHost))
+      [cached ? 'discoverCached' : 'discover']((error, registryConfig) => {
         if (error) {
           cb(error, null);
           return;
@@ -159,33 +160,40 @@ export class ApiDriver extends AbstractDriver {
 
     request(requestData)
       .then((response) => {
-        try {
-          let parsedData = null;
-          let data = response.safeJson(() => {
-            return ApiDriver._decodeData(response.text().then((s) => s.toString()));
+        response
+          .text()
+          .then((plainData) => {
+            let data = null;
+            let parsedData = null;
+
+            try {
+              data = JSON.parse(plainData);
+            } catch (error) {
+              data = ApiDriver._decodeData(plainData);
+            }
+
+            if (data.errorMessage) {
+              cb(ApiDriver._extractError(data.errorMessage), null);
+              return;
+            }
+
+            parsedData = util.isObject(data) ? data : {};
+
+            // mimic callback args
+            parsedData.data = parsedData.data || null;
+            parsedData.error = parsedData.error || null;
+
+            if (!parsedData.data && !parsedData.error) {
+              parsedData.error = new Error('Missing result data');
+            } else if (parsedData.error) {
+              parsedData.error = ApiDriver._extractError(parsedData.error);
+            }
+
+            cb(null, parsedData);
+          })
+          .catch((error) => {
+            cb(error, null);
           });
-
-          if (data.errorMessage) {
-            cb(ApiDriver._extractError(data.errorMessage), null);
-            return;
-          }
-
-          parsedData = util.isObject(parsedData) ? parsedData : {};
-
-          // mimic callback args
-          parsedData.data = parsedData.data || null;
-          parsedData.error = parsedData.error || null;
-
-          if (!parsedData.data && !parsedData.error) {
-            parsedData.error = new Error('Missing result data');
-          } else if (parsedData.error) {
-            parsedData.error = ApiDriver._extractError(parsedData.error);
-          }
-
-          cb(null, parsedData);
-        } catch (error) {
-          cb(error, null);
-        }
       }).catch((error) => {
         cb(error, null);
       });

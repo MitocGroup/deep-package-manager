@@ -6,6 +6,10 @@
 
 import {RegistryConfig} from './RegistryConfig';
 import request from 'fetchy-request';
+import os from 'os';
+import path from 'path';
+import fs from 'fs';
+import fse from 'fs-extra';
 
 export class RegistryAutoDiscovery {
   /**
@@ -15,6 +19,44 @@ export class RegistryAutoDiscovery {
     this._baseHost = baseHost;
 
     this._discoveryFileLocation = RegistryAutoDiscovery._getDiscoveryFileLocation(baseHost);
+  }
+
+  /**
+   * @param {Function} cb
+   * @param {String|null} cacheFile
+   * @returns {RegistryAutoDiscovery}
+   */
+  discoverCached(cb, cacheFile = null) {
+    cacheFile = cacheFile || RegistryAutoDiscovery.DEFAULT_CACHE_FILE;
+
+    if (!fs.existsSync(cacheFile)) {
+      this.discover((error, registryConfig) => {
+        if (error) {
+          cb(error, null);
+          return;
+        }
+
+        fse.outputJson(cacheFile, registryConfig.rawConfig, () => {
+
+          // @todo: fail on the error?
+          cb(null, registryConfig);
+        });
+      });
+
+      return this;
+    }
+
+    fse.readJson(cacheFile, (error, registryRawConfig) => {
+      if (error) {
+        fse.removeSync(cacheFile);
+        this.discoverCached(cb, cacheFile);
+        return;
+      }
+
+      cb(null, new RegistryConfig(registryRawConfig));
+    });
+
+    return this;
   }
 
   /**
@@ -74,6 +116,13 @@ export class RegistryAutoDiscovery {
     }
 
     return `${uri}${RegistryAutoDiscovery.AUTO_DISCOVERY_FILE}`;
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get DEFAULT_CACHE_FILE() {
+    return path.join(os.homedir(), '.deepRegistry', RegistryAutoDiscovery.AUTO_DISCOVERY_FILE);
   }
 
   /**

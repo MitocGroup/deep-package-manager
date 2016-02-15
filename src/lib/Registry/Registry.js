@@ -28,8 +28,9 @@ export class Registry {
    * @param {String} repositoryPath
    * @param {String} baseHost
    * @param {Function} cb
+   * @param {Boolean} cached
    */
-  static startApiServerAndCreateRegistry(repositoryPath, baseHost, cb) {
+  static startApiServerAndCreateRegistry(repositoryPath, baseHost, cb, cached = false) {
     let server = new Server(repositoryPath);
 
     server.start((error) => {
@@ -48,15 +49,16 @@ export class Registry {
         }
 
         cb(null, registry);
-      });
+      }, cached);
     });
   }
 
   /**
    * @param {String} baseHost
    * @param {Function} cb
+   * @param {Boolean} cached
    */
-  static createApiRegistry(baseHost, cb) {
+  static createApiRegistry(baseHost, cb, cached = false) {
     ApiDriverDriver.autoDiscover(baseHost, (error, apiDriver) => {
       if (error) {
         cb(error, null);
@@ -68,7 +70,7 @@ export class Registry {
       } catch (error) {
         cb(error, null);
       }
-    });
+    }, cached);
   }
 
   /**
