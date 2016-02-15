@@ -24,11 +24,18 @@ export class RegistryAutoDiscovery {
   discover(cb) {
     request(this._discoveryFileLocation)
       .then((response) => {
-        try {
-          cb(null, new RegistryConfig(response.json().toString()));
-        } catch (error) {
-          cb(error, null);
-        }
+        response
+          .text()
+          .then((plainJson) => {
+            try {
+              cb(null, new RegistryConfig(JSON.parse(plainJson.toString())));
+            } catch (error) {
+              cb(error, null);
+            }
+          })
+          .catch((error) => {
+            cb(error, null);
+          });
       })
       .catch((error) => {
         cb(error, null);
@@ -72,7 +79,7 @@ export class RegistryAutoDiscovery {
   /**
    * @returns {String}
    */
-  static AUTO_DISCOVERY_FILE() {
+  static get AUTO_DISCOVERY_FILE() {
     return 'registry.json';
   }
 }

@@ -7,6 +7,7 @@
 import http from 'http';
 import {RegistryAutoDiscovery} from '../Storage/Driver/Helpers/Api/RegistryAutoDiscovery';
 import {FSDriver} from '../Storage/Driver/FSDriver';
+import Url from 'url';
 
 export class Server {
   /**
@@ -14,7 +15,7 @@ export class Server {
    * @param {String|null} host
    * @param {Number} port
    */
-  constructor(repositoryPath, host = null, port = Server.DEFAULT_HOST) {
+  constructor(repositoryPath, host = null, port = Server.DEFAULT_PORT) {
     this._repositoryPath = repositoryPath;
 
     this._storage = new FSDriver(this._repositoryPath);
@@ -22,20 +23,39 @@ export class Server {
     this._port = port;
     this._host = host;
     this._server = null;
+    this._logger = global.console;
   }
 
   /**
    * @param {Function} cb
+   * @param {Number} timeout
    * @returns {Server}
    */
-  connect(cb) {
-    if (this._server) {
+  start(cb, timeout = Server.DEFAULT_TIMEOUT) {
+    if (this.isListening) {
       return this.stop(() => {
-        this.connect(cb);
+        this.start(cb);
       });
     }
 
-    let server = http.createServer(this._handle);
+    let cbCalled = false;
+    let cbWrapped = (error) => {
+      if (cbCalled) {
+        return;
+      }
+
+      cbCalled = true;
+
+      if (error) {
+        this.logger.error(`Error starting registry server: ${error}`);
+      } else {
+        this.logger.log(`Registry server has successfully started`);
+      }
+
+      cb(error);
+    };
+
+    let server = http.createServer(this._handleRequest.bind(this));
 
     let args = [this._port];
 
@@ -45,18 +65,22 @@ export class Server {
 
     args.push((error) => {
       if (error) {
-        cb(error);
+        cbWrapped(error);
         return;
       }
 
       this._server = server;
 
-      cb(null);
+      cbWrapped(null);
     });
 
-    server.listen(...args);
+    this.logger.log(`Starting registry server on '${this._host || '127.0.0.1'}:${this._port}'`);
+
+    this._listen(server, args, cbWrapped, timeout);
 
     process.on('exit', () => {
+      this.logger.log('Ensure registry server closed...');
+
       this.stop();
     });
 
@@ -64,11 +88,32 @@ export class Server {
   }
 
   /**
-   * @param {Function|Null} cb
+   * @param {http.Server|Server|*} server
+   * @param {*} args
+   * @param {Function} cb
+   * @param {Number} timeout
+   * @private
+   */
+  _listen(server, args, cb, timeout) {
+    server.listen(...args);
+
+    setTimeout(() => {
+      if (!this.isListening) {
+        this._server.close(() => {
+          cb(new Error(`Server startup timeout exceeded ${timeout} seconds`));
+        });
+      }
+    }, timeout * 1000);
+  }
+
+  /**
+   * @param {Function} cb
    * @returns {Server}
    */
-  stop(cb = null) {
-    if (this._server) {
+  stop(cb = () => {}) {
+    if (this.isListening) {
+      this.logger.log('Closing registry server');
+
       this._server.close(cb);
       this._server = null;
 
@@ -81,15 +126,26 @@ export class Server {
   }
 
   /**
+   * @returns {Boolean}
+   */
+  get isListening() {
+    return !!this._server;
+  }
+
+  /**
    * @param {Http.Request|Request|*} request
    * @param {Http.ServerResponse|ServerResponse|*} response
    * @private
    */
   _handleRequest(request, response) {
-    let urlParts = request.url;
+    this.logger.log(`---> [${request.method}] ${request.url}`);
+
+    let urlParts = Url.parse(request.url);
     let uri = urlParts.pathname;
 
     if (Server._matchAutoDiscoveryRequest(uri)) {
+      this.logger.log(`<--- Send auto discovery config for '${this.baseUrl}'`);
+
       Server._sendRaw(response, {
         hasObj: `${this.baseUrl}/hasObj`,
         readObj: `${this.baseUrl}/readObj`,
@@ -113,13 +169,13 @@ export class Server {
     let proxyMethod = this._storage[callType];
 
     if (typeof proxyMethod !== 'function') {
-      Server._send(response, 'Missing registry storage method');
+      Server._send(this.logger, response, 'Missing registry storage method');
       return;
     }
 
     this._getRequestData(request, (dataObj) => {
       if (!dataObj) {
-        Server._send(response, 'Missing or broken request payload (JSON object expected)');
+        Server._send(this.logger, response, 'Missing or broken request payload (JSON object expected)');
         return;
       }
 
@@ -130,7 +186,7 @@ export class Server {
       }
 
       args.push((error, result) => {
-        Server._send(response, error, result);
+        Server._send(this.logger, response, error, result);
       });
 
       proxyMethod(...args);
@@ -163,12 +219,19 @@ export class Server {
   }
 
   /**
+   * @param {Console|*} logger
    * @param {Http.ServerResponse|ServerResponse|*} response
    * @param {String|Error|null|*} error
    * @param {Object|null} data
    * @private
    */
-  static _send(response, error, data = null) {
+  static _send(logger, response, error, data = null) {
+    if (error) {
+      logger.error(`<--- Error: ${error}`);
+    } else {
+      logger.log(`<--- Sending back the result set`);
+    }
+
     Server._sendRaw(response, {
       error,
       data,
@@ -195,6 +258,20 @@ export class Server {
     let filePath = `/${RegistryAutoDiscovery.AUTO_DISCOVERY_FILE}`;
 
     return uri.toLowerCase() === filePath;
+  }
+
+  /**
+   * @returns {Console}
+   */
+  get logger() {
+    return this._logger;
+  }
+
+  /**
+   * @param {Console} logger
+   */
+  set logger(logger) {
+    this._logger = logger;
   }
 
   /**
@@ -235,7 +312,21 @@ export class Server {
   /**
    * @returns {Number}
    */
-  static get DEFAULT_HOST() {
+  static get DEFAULT_TIMEOUT() {
+    return 20;
+  }
+
+  /**
+   * @returns {Number}
+   */
+  static get DEFAULT_PORT() {
     return 8002;
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get DEFAULT_REGISTRY_HOST() {
+    return `http://127.0.0.1:${Server.DEFAULT_PORT}`;
   }
 }

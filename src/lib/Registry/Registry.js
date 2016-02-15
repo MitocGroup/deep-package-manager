@@ -14,6 +14,7 @@ import {FSDriver} from './Dumper/Driver/FSDriver';
 import {DependenciesResolver} from './Resolver/DependenciesResolver';
 import {ModuleInstance} from './ModuleInstance';
 import {ModuleConfig} from './ModuleConfig';
+import {Server} from './Local/Server';
 
 export class Registry {
   /**
@@ -24,14 +25,50 @@ export class Registry {
   }
 
   /**
+   * @param {String} repositoryPath
    * @param {String} baseHost
    * @param {Function} cb
-   * @param {Boolean} silent
    */
-  static createApiRegistry(baseHost, cb, silent = true) {
-    ApiDriverDriver.autoDiscover(baseHost, (apiDriver) => {
-      cb(new Registry(new Storage(apiDriver)));
-    }, silent);
+  static startApiServerAndCreateRegistry(repositoryPath, baseHost, cb) {
+    let server = new Server(repositoryPath);
+
+    server.start((error) => {
+      if (error) {
+        cb(error, null);
+        return;
+      }
+
+      Registry.createApiRegistry(baseHost, (error, registry) => {
+        if (error) {
+          server.stop(() => {
+            cb(error, null);
+          });
+
+          return;
+        }
+
+        cb(null, registry);
+      });
+    });
+  }
+
+  /**
+   * @param {String} baseHost
+   * @param {Function} cb
+   */
+  static createApiRegistry(baseHost, cb) {
+    ApiDriverDriver.autoDiscover(baseHost, (error, apiDriver) => {
+      if (error) {
+        cb(error, null);
+        return;
+      }
+
+      try {
+        cb(null, new Registry(new Storage(apiDriver)));
+      } catch (error) {
+        cb(error, null);
+      }
+    });
   }
 
   /**

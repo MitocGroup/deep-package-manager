@@ -25,16 +25,20 @@ export class ApiDriver extends AbstractDriver {
   /**
    * @param {String} baseHost
    * @param {Function} cb
-   * @param {Boolean} silent
    */
-  static autoDiscover(baseHost, cb, silent = true) {
+  static autoDiscover(baseHost, cb) {
     new RegistryAutoDiscovery(baseHost)
       .discover((error, registryConfig) => {
-        if (error && !silent) {
-          throw error;
+        if (error) {
+          cb(error, null);
+          return;
         }
 
-        cb(registryConfig);
+        try {
+          cb(null, new ApiDriver(registryConfig));
+        } catch (error) {
+          cb(error, null);
+        }
       });
   }
 
@@ -95,6 +99,39 @@ export class ApiDriver extends AbstractDriver {
     this._request('deleteObj', objPath, (error, data) => {
       cb(error || data.error);
     });
+  }
+
+  /**
+   * @param {String} objPath
+   * @param {Function} cb
+   */
+  lockObj(objPath, cb) {
+    this.putObj(ApiDriver._lockObjPath(objPath), '', cb);
+  }
+
+  /**
+   * @param {String} objPath
+   * @param {Function} cb
+   */
+  isObjLocked(objPath, cb) {
+    this.hasObj(ApiDriver._lockObjPath(objPath), cb);
+  }
+
+  /**
+   * @param {String} objPath
+   * @param {Function} cb
+   */
+  releaseObjLock(objPath, cb) {
+    this.deleteObj(ApiDriver._lockObjPath(objPath), cb);
+  }
+
+  /**
+   * @param {String} objPath
+   * @returns {String}
+   * @private
+   */
+  static _lockObjPath(objPath) {
+    return `${path.dirname(objPath)}/.${path.basename(objPath)}.lock`;
   }
 
   /**
