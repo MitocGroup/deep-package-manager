@@ -54,6 +54,24 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
+   * Max retries on request fails
+   *
+   * @returns {Number}
+   */
+  static get MAX_RETRIES() {
+    return 3;
+  }
+
+  /**
+   * Retry interval (ms)
+   *
+   * @returns {Number}
+   */
+  static get RETRY_INTERVAL() {
+    return 600;
+  }
+
+  /**
    * @returns {String[]}
    */
   static get CACHE_CLUSTER_SIZES() {
@@ -1111,8 +1129,6 @@ export class APIGatewayService extends AbstractService {
         this._createApiChildResources(resource, pathParts.slice(1), restApiId, callback);
       } else {
         let retries = 0;
-        let maxRetries = 3;
-        let retryIntervalMs = 600;
         let params = {
           parentId: parentResource.id,
           pathPart: pathParts[0],
@@ -1123,12 +1139,12 @@ export class APIGatewayService extends AbstractService {
           this.apiGatewayClient.createResource(params, (error, resource) => {
             if (error) {
               retries++;
-              if (retries > maxRetries) {
+              if (retries > APIGatewayService.MAX_RETRIES) {
                 throw new FailedToCreateApiResourceException(params.pathPart, error);
               }
 
               // Retry request in case it fails (e.g. TooManyRequestsException)
-              setTimeout(createResourceFunc, retryIntervalMs * retries);
+              setTimeout(createResourceFunc, APIGatewayService.RETRY_INTERVAL * retries);
             } else {
               this._apiResources[resource.path] = resource;
               this._createApiChildResources(resource, pathParts.slice(1), restApiId, callback);
@@ -1154,26 +1170,37 @@ export class APIGatewayService extends AbstractService {
       return;
     }
 
+    let retries = 0;
     let params = {
       restApiId: restApiId,
       limit: APIGatewayService.PAGE_LIMIT,
     };
 
-    // fetches mainly root resource that is automatically created along with restApi
-    this.apiGatewayClient.getResources(params, (error, data) => {
-      if (error) {
-        throw new FailedToListApiResourcesException(restApiId, error);
-      }
+    var getResourcesFunc = () => {
+      // fetches mainly root resource that is automatically created along with restApi
+      this.apiGatewayClient.getResources(params, (error, data) => {
+        if (error) {
+          retries++;
+          if (retries > APIGatewayService.MAX_RETRIES) {
+            throw new FailedToListApiResourcesException(restApiId, error);
+          }
 
-      data.items.forEach((resource) => {
-        this._apiResources[resource.path] = resource;
+          // Retry request in case it fails (e.g. TooManyRequestsException)
+          setTimeout(getResourcesFunc, APIGatewayService.RETRY_INTERVAL * retries);
+        } else {
+          data.items.forEach((resource) => {
+            this._apiResources[resource.path] = resource;
+          });
+
+          if (this._apiResources.hasOwnProperty(path)) {
+            matchedResource = this._apiResources[path];
+          }
+
+          callback(matchedResource);
+        }
       });
+    };
 
-      if (this._apiResources.hasOwnProperty(path)) {
-        matchedResource = this._apiResources[path];
-      }
-
-      callback(matchedResource);
-    });
+    getResourcesFunc();
   }
 }
