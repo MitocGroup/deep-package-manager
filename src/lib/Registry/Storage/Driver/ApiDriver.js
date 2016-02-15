@@ -84,7 +84,7 @@ export class ApiDriver extends AbstractDriver {
   putObj(objPath, data, cb) {
     this._request('putObj', objPath, (error, data) => {
       cb(error || data.error);
-    });
+    }, data);
   }
 
   /**
@@ -105,7 +105,6 @@ export class ApiDriver extends AbstractDriver {
    * @private
    */
   _request(endpointName, objPath, cb, data = null) {
-    let method = data ? 'POST' : 'GET';
     let payload = {objPath,};
 
     if (data) {
@@ -114,9 +113,9 @@ export class ApiDriver extends AbstractDriver {
 
     let requestData = {
       uri: this._endpoints[endpointName],
-      method: method,
+      method: 'POST',
       retry: ApiDriver.RETRY_COUNT,
-      displayName: `${method}:${endpointName}`,
+      displayName: `POST:${endpointName}`,
       headers: {'Content-Type': 'application/json',},
       body: JSON.stringify(payload),
     };
