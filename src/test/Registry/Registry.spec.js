@@ -75,9 +75,6 @@ suite('Registry/Registry', function() {
     let property = new Property(propertyRealPath);
 
     localRegistry.install(property, (error) => {
-
-      done();
-
       chai.expect(error).to.not.exist;
       chai.expect(fs.existsSync(path.join(propertyRealPath, 'Microservice'))).to.be.ok;
       chai.expect(fs.existsSync(path.join(propertyRealPath, 'Microservice', 'deepkg.json'))).to.be.ok;
@@ -87,6 +84,8 @@ suite('Registry/Registry', function() {
       chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2', 'deepkg.json'))).to.be.ok;
       chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2nested'))).to.be.ok;
       chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2nested', 'deepkg.json'))).to.be.ok;
+
+      done();
     });
   });
 
