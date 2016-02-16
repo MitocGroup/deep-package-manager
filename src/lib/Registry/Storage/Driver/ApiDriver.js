@@ -264,7 +264,6 @@ export class ApiDriver extends AbstractDriver {
   /**
    * @param {String|*} data
    * @returns {String|*}
-   * @private
    */
   static _encodeResponseData(data) {
     return data ? (new Buffer(data.toString())).toString('base64') : data;
@@ -273,7 +272,6 @@ export class ApiDriver extends AbstractDriver {
   /**
    * @param {String|*} rawData
    * @returns {String|*}
-   * @private
    */
   static _decodeResponseData(rawData) {
     return rawData ? (new Buffer(rawData.toString(), 'base64')).toString('ascii') : rawData;

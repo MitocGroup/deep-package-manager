@@ -7,6 +7,7 @@
 import http from 'http';
 import {RegistryAutoDiscovery} from '../Storage/Driver/Helpers/Api/RegistryAutoDiscovery';
 import {FSDriver} from '../Storage/Driver/FSDriver';
+import {ApiDriver} from '../Storage/Driver/ApiDriver';
 import Url from 'url';
 import Core from 'deep-core';
 
@@ -233,11 +234,11 @@ export class Server {
       let args = [dataObj.objPath,];
 
       if (args.hasOwnProperty('data')) {
-        args.push(dataObj.data);
+        args.push(ApiDriver._decodeResponseData(dataObj.data));
       }
 
-      args.push((error, result) => {
-        Server._send(this.logger, response, error, result);
+      args.push((error, data) => {
+        Server._send(this.logger, response, error, ApiDriver._encodeResponseData(data));
       });
 
       proxyMethod.apply(this._storage, args);
