@@ -30,7 +30,7 @@ export class LambdaProxyHandler extends Core.AWS.Lambda.Runtime {
    * @param {Object} proxyData
    */
   handle(proxyData) {
-    Core.Runtime.Sandbox(() => {
+    new Core.Runtime.Sandbox(() => {
       let storage = this._registryStorage;
 
       let args = [proxyData.objPath,];
@@ -49,6 +49,10 @@ export class LambdaProxyHandler extends Core.AWS.Lambda.Runtime {
       storage[this._storageMethod](...args);
     })
       .fail((error) => {
+
+        // @todo: remove this?
+        console.error(error);
+
         this.createResponse({
           error,
           data: null,
