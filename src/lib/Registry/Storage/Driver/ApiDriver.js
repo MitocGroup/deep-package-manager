@@ -179,6 +179,11 @@ export class ApiDriver extends AbstractDriver {
 
     request(requestData)
       .then((response) => {
+        if (!response.ok) {
+          cb(response._error || new Error(response.statusText), null);
+          return;
+        }
+
         response
           .text()
           .then((plainData) => {
