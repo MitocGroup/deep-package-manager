@@ -161,7 +161,7 @@ export class ApiDriver extends AbstractDriver {
     let payload = {objPath,};
 
     if (data) {
-      payload.data = ApiDriver._encodeResponseData(data);
+      payload.data = ApiDriver._encodeResponseData(endpointName, data);
     }
 
     let requestData = {
@@ -199,7 +199,7 @@ export class ApiDriver extends AbstractDriver {
             parsedData = util.isObject(data) ? data : {};
 
             // mimic callback args
-            parsedData.data = ApiDriver._decodeResponseData(parsedData.data || null);
+            parsedData.data = ApiDriver._decodeResponseData(endpointName, parsedData.data || null);
             parsedData.error = parsedData.error || null;
 
             if (!parsedData.data && !parsedData.error) {
@@ -262,18 +262,28 @@ export class ApiDriver extends AbstractDriver {
   }
 
   /**
+   * @param {String} endpointName
    * @param {String|*} data
    * @returns {String|*}
    */
-  static _encodeResponseData(data) {
+  static _encodeResponseData(endpointName, data) {
+    if (endpointName !== 'putObj') {
+      return data;
+    }
+
     return data ? (new Buffer(data.toString())).toString('base64') : data;
   }
 
   /**
+   * @param {String} endpointName
    * @param {String|*} rawData
    * @returns {String|*}
    */
-  static _decodeResponseData(rawData) {
+  static _decodeResponseData(endpointName, rawData) {
+    if (endpointName !== 'putObj') {
+      return rawData;
+    }
+
     return rawData ? (new Buffer(rawData.toString(), 'base64')).toString('ascii') : rawData;
   }
 

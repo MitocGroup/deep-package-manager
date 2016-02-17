@@ -234,11 +234,11 @@ export class Server {
       let args = [dataObj.objPath,];
 
       if (args.hasOwnProperty('data')) {
-        args.push(ApiDriver._decodeResponseData(dataObj.data));
+        args.push(ApiDriver._decodeResponseData(callType, dataObj.data));
       }
 
       args.push((error, data) => {
-        Server._send(this.logger, response, error, ApiDriver._encodeResponseData(data));
+        Server._send(this.logger, response, error, ApiDriver._encodeResponseData(callType, data));
       });
 
       proxyMethod.apply(this._storage, args);

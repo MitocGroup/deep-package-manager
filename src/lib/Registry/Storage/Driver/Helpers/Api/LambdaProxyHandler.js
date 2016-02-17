@@ -36,23 +36,19 @@ export class LambdaProxyHandler extends Core.AWS.Lambda.Runtime {
       let args = [proxyData.objPath,];
 
       if (proxyData.hasOwnProperty('data')) {
-        args.push(ApiRegistryStorage._decodeResponseData(proxyData.data));
+        args.push(ApiRegistryStorage._decodeResponseData(this._storageMethod, proxyData.data));
       }
 
       args.push((error, data) => {
         this.createResponse({
           error,
-          data: ApiRegistryStorage._encodeResponseData(data),
+          data: ApiRegistryStorage._encodeResponseData(this._storageMethod, data),
         }).send();
       });
 
       storage[this._storageMethod](...args);
     })
       .fail((error) => {
-
-        // @todo: remove this?
-        console.error(error);
-
         this.createResponse({
           error,
           data: null,

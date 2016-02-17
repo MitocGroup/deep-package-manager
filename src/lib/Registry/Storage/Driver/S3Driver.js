@@ -49,7 +49,10 @@ export class S3Driver extends FSDriver {
   _fullObjPath(objPath) {
     objPath = path.join(this._prefix, objPath);
 
-    return path.normalize(objPath).replace(/(?:\/|\\)/i, '/');
+    return path
+      .normalize(objPath)
+      .replace(/(?:\/|\\)/i, '/')
+      .replace(/^\/+/i, '');
   }
 
   /**
