@@ -267,7 +267,7 @@ export class ApiDriver extends AbstractDriver {
    * @returns {String|*}
    */
   static _encodeResponseData(endpointName, data) {
-    if (endpointName !== 'putObj') {
+    if (['putObj', 'readObj'].indexOf(endpointName) === -1) {
       return data;
     }
 
@@ -280,7 +280,7 @@ export class ApiDriver extends AbstractDriver {
    * @returns {String|*}
    */
   static _decodeResponseData(endpointName, rawData) {
-    if (endpointName !== 'putObj') {
+    if (['putObj', 'readObj'].indexOf(endpointName) === -1) {
       return rawData;
     }
 
