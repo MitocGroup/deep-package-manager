@@ -21,6 +21,7 @@ import {FailedToUpdateApiGatewayStageException} from './Exception/FailedToUpdate
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
+import {CloudWatchLogsService} from './CloudWatchLogsService';
 import Utils from 'util';
 import objectMerge from 'object-merge';
 import nodePath from 'path';
@@ -360,7 +361,7 @@ export class APIGatewayService extends AbstractService {
   _createApiIamRole(callback) {
     let iam = this.provisioning.iam;
     let roleName = this.generateAwsResourceName(
-      `${APIGatewayService.API_NAME_PREFIX}InvokeLambda`,
+      `${APIGatewayService.API_NAME_PREFIX}ExecAccess`,
       Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
     );
 
@@ -505,15 +506,17 @@ export class APIGatewayService extends AbstractService {
    */
   _addPolicyToApiRole(apiRole, callback) {
     let lambdaService = this.provisioning.services.find(LambdaService);
+    let cloudWatchService = this.provisioning.services.find(CloudWatchLogsService);
 
     let iam = this.provisioning.iam;
     let policy = new Core.AWS.IAM.Policy();
     policy.statement.add(lambdaService.generateAllowInvokeFunctionStatement());
+    policy.statement.add(cloudWatchService.generateAllowFullAccessStatement());
 
     let params = {
       PolicyDocument: policy.toString(),
       PolicyName: this.generateAwsResourceName(
-        `${APIGatewayService.API_NAME_PREFIX}InvokeLambdaPolicy`,
+        `${APIGatewayService.API_NAME_PREFIX}ExecAccessPolicy`,
         Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
       ),
       RoleName: apiRole.RoleName,
