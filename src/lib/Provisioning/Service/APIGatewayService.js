@@ -18,6 +18,7 @@ import {FailedToListApiResourcesException} from './Exception/FailedToListApiReso
 import {FailedToDeleteApiResourceException} from './Exception/FailedToDeleteApiResourceException';
 import {InvalidCacheClusterSizeException} from './Exception/InvalidCacheClusterSizeException';
 import {FailedToUpdateApiGatewayStageException} from './Exception/FailedToUpdateApiGatewayStageException';
+import {FailedToUpdateApiGatewayAccountException} from './Exception/FailedToUpdateApiGatewayAccountException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
@@ -493,6 +494,29 @@ export class APIGatewayService extends AbstractService {
     this.apiGatewayClient.updateStage(params, (error, data) => {
       if (error) {
         throw new FailedToUpdateApiGatewayStageException(apiId, stageName, error);
+      }
+
+      callback(data);
+    });
+  }
+
+  /**
+   * @param {String} roleArn
+   * @param {Function} callback
+   * @private
+   */
+  _updateAccount(roleArn, callback) {
+    let params = {
+      patchOperations: [{
+        op: 'replace',
+        path: '/cloudwatchRoleArn',
+        value: roleArn,
+      }],
+    };
+
+    this.apiGatewayClient.updateAccount(params, (error, data) => {
+      if (error) {
+        throw new FailedToUpdateApiGatewayAccountException(this.apiGatewayClient.config.region, error);
       }
 
       callback(data);
