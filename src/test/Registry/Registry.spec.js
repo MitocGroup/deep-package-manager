@@ -19,7 +19,7 @@ suite('Registry/Registry', function() {
     chai.expect(Registry).to.be.an('function');
   });
 
-  //const REMOTE_REGISTRY = 'http://d1dpcus9odpwj6.cloudfront.net';
+  //const REMOTE_REGISTRY = '<remote-registry-url>';
   const testMaterialsPath = path.join(__dirname, '..', 'testMaterials');
   const registryPath = path.join(testMaterialsPath, 'registry');
 
