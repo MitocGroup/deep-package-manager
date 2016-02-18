@@ -85,7 +85,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {String[]}
    */
   static get LOG_LEVELS() {
-    return ['INFO', 'ERROR'];
+    return ['OFF', 'INFO', 'ERROR'];
   }
 
   /**
@@ -247,7 +247,7 @@ export class APIGatewayService extends AbstractService {
         metrics: false,
         logging: {
           enabled: false,
-          loglevel: 'ERROR',
+          logLevel: 'OFF',
           dataTrace: false,
         },
       },
@@ -264,9 +264,9 @@ export class APIGatewayService extends AbstractService {
       );
     }
 
-    if (APIGatewayService.LOG_LEVELS.indexOf(config.cloudWatch.logging.loglevel) === -1) {
+    if (APIGatewayService.LOG_LEVELS.indexOf(config.cloudWatch.logging.logLevel) === -1) {
       throw new InvalidApiLogLevelException(
-        config.cloudWatch.logging.loglevel, APIGatewayService.LOG_LEVELS
+        config.cloudWatch.logging.logLevel, APIGatewayService.LOG_LEVELS
       );
     }
 
@@ -343,13 +343,10 @@ export class APIGatewayService extends AbstractService {
                 rolePolicy = data;
 
                 this._deployApi(apiId, (deployedApi) => {
-                  if (this.apiConfig.cache.enabled) {
-                    this._enableStageCaching(apiId, this.stageName, (data) => {
-                      callback(methods, integrations, rolePolicy, deployedApi);
-                    });
-                  } else {
+
+                  this._updateStage(apiId, this.stageName, apiRole, this.apiConfig, (data) => {
                     callback(methods, integrations, rolePolicy, deployedApi);
-                  }
+                  });
                 });
               });
             });
@@ -479,15 +476,87 @@ export class APIGatewayService extends AbstractService {
   /**
    * @param {String} apiId
    * @param {String} stageName
+   * @param {Object} apiRole
+   * @param {Object} apiConfig
    * @param {Function} callback
    * @private
    */
-  _enableStageCaching(apiId, stageName, callback) {
+  _updateStage(apiId, stageName, apiRole, apiConfig, callback) {
     let params = {
       restApiId: apiId,
       stageName: stageName,
       patchOperations: [],
     };
+
+    params.patchOperations = params.patchOperations.concat(
+      this._getStageUpdateOpsForCache(apiConfig.cache)
+    );
+
+    params.patchOperations = params.patchOperations.concat(
+      this._getStageUpdateOpsForLogs(apiConfig.cloudWatch)
+    );
+
+    this._updateAccount(apiRole, apiConfig, (data) => {
+
+      if (params.patchOperations.length === 0) {
+        callback(null);
+        return;
+      }
+
+      this.apiGatewayClient.updateStage(params, (error, data) => {
+        if (error) {
+          throw new FailedToUpdateApiGatewayStageException(apiId, stageName, error);
+        }
+
+        callback(data);
+      });
+    });
+  }
+
+  /**
+   * @param {Object} apiRole
+   * @param {Object} apiConfig
+   * @param {Function} callback
+   * @private
+   */
+  _updateAccount(apiRole, apiConfig, callback) {
+    let params = {
+      patchOperations: [],
+    };
+
+    if (apiConfig.cloudWatch.logging.enabled || apiConfig.cloudWatch.metrics) {
+      params.patchOperations.push({
+        op: 'replace',
+        path: '/cloudwatchRoleArn',
+        value: apiRole.Arn,
+      });
+    }
+
+    if (params.patchOperations.length === 0) {
+      callback();
+      return;
+    }
+
+    this.apiGatewayClient.updateAccount(params, (error, data) => {
+      if (error) {
+        throw new FailedToUpdateApiGatewayAccountException(this.apiGatewayClient.config.region, error);
+      }
+
+      callback(data);
+    });
+  }
+
+  /**
+   * @param {Object} cacheConfig
+   * @returns {Array}
+   * @private
+   */
+  _getStageUpdateOpsForCache(cacheConfig) {
+    let operations = [];
+
+    if (!cacheConfig.enabled) {
+      return operations;
+    }
 
     let resources = this._getResourcesToBeCached(this.property.microservices);
 
@@ -510,39 +579,44 @@ export class APIGatewayService extends AbstractService {
         value: `${resource.cacheTtl}`,
       };
 
-      params.patchOperations.push(enabledOp, ttlInSecondsOp);
+      operations.push(enabledOp, ttlInSecondsOp);
     }
 
-    this.apiGatewayClient.updateStage(params, (error, data) => {
-      if (error) {
-        throw new FailedToUpdateApiGatewayStageException(apiId, stageName, error);
-      }
-
-      callback(data);
-    });
+    return operations;
   }
 
   /**
-   * @param {String} roleArn
-   * @param {Function} callback
+   * @param {Object} logsConfig
+   * @returns {Array}
    * @private
    */
-  _updateAccount(roleArn, callback) {
-    let params = {
-      patchOperations: [{
+  _getStageUpdateOpsForLogs(logsConfig) {
+    let operations = [];
+
+    if (logsConfig.logging.enabled) {
+      operations.push(
+        {
+          op: 'replace',
+          path: '/*/*/logging/loglevel',
+          value: logsConfig.logging.logLevel,
+        },
+        {
+          op: 'replace',
+          path: '/*/*/logging/dataTrace',
+          value: logsConfig.logging.dataTrace,
+        }
+      );
+    }
+
+    if (logsConfig.metrics) {
+      operations.push({
         op: 'replace',
-        path: '/cloudwatchRoleArn',
-        value: roleArn,
-      }],
-    };
+        path: '/*/*/metrics/enabled',
+        value: logsConfig.metrics,
+      });
+    }
 
-    this.apiGatewayClient.updateAccount(params, (error, data) => {
-      if (error) {
-        throw new FailedToUpdateApiGatewayAccountException(this.apiGatewayClient.config.region, error);
-      }
-
-      callback(data);
-    });
+    return operations;
   }
 
   /**
