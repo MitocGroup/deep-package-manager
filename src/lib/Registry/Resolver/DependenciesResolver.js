@@ -22,6 +22,9 @@ export class DependenciesResolver {
 
     this._dbCache = {};
     this._configCache = {};
+
+    // circular deps avoidance stack
+    this._resolveUqStack = [];
   }
 
   /**
@@ -157,6 +160,26 @@ export class DependenciesResolver {
 
           cb(error, null);
           return;
+        }
+
+        // @todo: remove circular deps check?
+        let depUqKey = `${dependencyName}@${versionMatched}`;
+
+        if (this._resolveUqStack.indexOf(depUqKey) !== -1) {
+          console.log(`Circular dependency '${depUqKey}' found`);
+
+          depsTree[dependencyName] = {
+            name: dependencyName,
+            rawVersion: dependencyVersion,
+            version: versionMatched,
+            dependencies: null,
+            _isCircular: true,
+          };
+
+          remaining--;
+          return;
+        } else {
+          this._resolveUqStack.push(depUqKey);
         }
 
         let dependencyObject = {

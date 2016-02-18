@@ -10,6 +10,7 @@ import {Storage} from './Storage/Storage';
 import {S3Driver} from './Storage/Driver/S3Driver';
 import {FSDriver as StorageFSDriver} from './Storage/Driver/FSDriver';
 import {ApiDriver as ApiDriverDriver} from './Storage/Driver/ApiDriver';
+import {PropertyAwareFSDriver} from './Dumper/Driver/PropertyAwareFSDriver';
 import {FSDriver} from './Dumper/Driver/FSDriver';
 import {DependenciesResolver} from './Resolver/DependenciesResolver';
 import {ModuleInstance} from './ModuleInstance';
@@ -138,7 +139,7 @@ export class Registry {
           }
 
           remaining--;
-        });
+        }, property);
       }
     });
 
@@ -216,8 +217,11 @@ export class Registry {
    * @param {String} moduleRawVersion
    * @param {String} dumpPath
    * @param {Function} cb
+   * @param {Property|Instance|null|*} property
+   *
+   * @todo: Remove property argument?
    */
-  installModule(moduleName, moduleRawVersion, dumpPath, cb) {
+  installModule(moduleName, moduleRawVersion, dumpPath, cb, property = null) {
     console.log(`Installing '${moduleName}@${moduleRawVersion}' module into '${dumpPath}'`);
 
     DependenciesResolver.createUsingRawVersion(
@@ -232,7 +236,10 @@ export class Registry {
           return;
         }
 
-        let dumpDriver = Registry._getFSDumpDriver(dumpPath);
+        let dumpDriver = property ?
+          Registry._getPropertyAwareFSDumpDriver(dumpPath, property) :
+          Registry._getFSDumpDriver(dumpPath);
+
         let dumper = new Dumper(dependenciesResolver, this._storage, dumpDriver);
 
         dumper.dump((error) => {
@@ -250,6 +257,20 @@ export class Registry {
 
   /**
    * @param {String} basePath
+   * @param {Property|Instance|*} property
+   * @returns {PropertyAwareFSDriver|*}
+   * @private
+   */
+  static _getPropertyAwareFSDumpDriver(basePath, property) {
+    let driver = new PropertyAwareFSDriver(basePath);
+    driver.property = property;
+
+    return driver;
+  }
+
+  /**
+   * @param {String} basePath
+   * @returns {FSDriver|*}
    * @private
    */
   static _getFSDumpDriver(basePath) {
