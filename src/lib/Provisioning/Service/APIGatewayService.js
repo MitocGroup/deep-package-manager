@@ -17,6 +17,7 @@ import {FailedToExecuteApiGatewayMethodException} from './Exception/FailedToExec
 import {FailedToListApiResourcesException} from './Exception/FailedToListApiResourcesException';
 import {FailedToDeleteApiResourceException} from './Exception/FailedToDeleteApiResourceException';
 import {InvalidCacheClusterSizeException} from './Exception/InvalidCacheClusterSizeException';
+import {InvalidApiLogLevelException} from './Exception/InvalidApiLogLevelException';
 import {FailedToUpdateApiGatewayStageException} from './Exception/FailedToUpdateApiGatewayStageException';
 import {FailedToUpdateApiGatewayAccountException} from './Exception/FailedToUpdateApiGatewayAccountException';
 import {Action} from '../../Microservice/Metadata/Action';
@@ -78,6 +79,13 @@ export class APIGatewayService extends AbstractService {
    */
   static get CACHE_CLUSTER_SIZES() {
     return ['0.5', '1.6', '6.1', '13.5', '28.4', '58.2', '118', '237'];
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get LOG_LEVELS() {
+    return ['INFO', 'ERROR'];
   }
 
   /**
@@ -226,26 +234,40 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
-   * Returns cache cluster config
-   *
-   * @returns {{enabled: boolean, clusterSize: string}}
+   * @returns {Object}
    */
-  get cacheCluster() {
+  get apiConfig() {
+    // default config
     let config = {
-      enabled: false,
-      clusterSize: '0.5',
+      cache: {
+        enabled: false,
+        clusterSize: '0.5',
+      },
+      cloudWatch: {
+        metrics: false,
+        logging: {
+          enabled: false,
+          loglevel: 'ERROR',
+          dataTrace: false,
+        },
+      },
     };
 
     let globalsConfig = this.property.config.globals;
-    if (globalsConfig && globalsConfig.hasOwnProperty('api') && globalsConfig.api.hasOwnProperty('cache')) {
-      config.enabled = !!globalsConfig.api.cache.enabled;
-      if (globalsConfig.api.cache.hasOwnProperty('clusterSize')) {
-        config.clusterSize = globalsConfig.api.cache.clusterSize;
-      }
+    if (globalsConfig && globalsConfig.hasOwnProperty('api')) {
+      config = objectMerge(config, globalsConfig.api);
     }
 
-    if (APIGatewayService.CACHE_CLUSTER_SIZES.indexOf(config.clusterSize) === -1) {
-      throw new InvalidCacheClusterSizeException(config.clusterSize, APIGatewayService.CACHE_CLUSTER_SIZES);
+    if (APIGatewayService.CACHE_CLUSTER_SIZES.indexOf(config.cache.clusterSize) === -1) {
+      throw new InvalidCacheClusterSizeException(
+        config.cache.clusterSize, APIGatewayService.CACHE_CLUSTER_SIZES
+      );
+    }
+
+    if (APIGatewayService.LOG_LEVELS.indexOf(config.cloudWatch.logging.loglevel) === -1) {
+      throw new InvalidApiLogLevelException(
+        config.cloudWatch.logging.loglevel, APIGatewayService.LOG_LEVELS
+      );
     }
 
     return config;
@@ -321,7 +343,7 @@ export class APIGatewayService extends AbstractService {
                 rolePolicy = data;
 
                 this._deployApi(apiId, (deployedApi) => {
-                  if (this.cacheCluster.enabled) {
+                  if (this.apiConfig.cache.enabled) {
                     this._enableStageCaching(apiId, this.stageName, (data) => {
                       callback(methods, integrations, rolePolicy, deployedApi);
                     });
@@ -439,8 +461,8 @@ export class APIGatewayService extends AbstractService {
     let params = {
       restApiId: apiId,
       stageName: this.stageName,
-      cacheClusterEnabled: this.cacheCluster.enabled,
-      cacheClusterSize: this.cacheCluster.clusterSize,
+      cacheClusterEnabled: this.apiConfig.cache.enabled,
+      cacheClusterSize: this.apiConfig.cache.clusterSize,
       stageDescription: `Stage for "${this.env}" environment`,
       description: `Deployed on ${new Date().toTimeString()}`,
     };
