@@ -539,7 +539,7 @@ export class APIGatewayService extends AbstractService {
 
     this.apiGatewayClient.updateAccount(params, (error, data) => {
       if (error) {
-        throw new FailedToUpdateApiGatewayAccountException(this.apiGatewayClient.config.region, error);
+        throw new FailedToUpdateApiGatewayAccountException(this.apiGatewayClient.config.region, params, error);
       }
 
       callback(data);
@@ -603,7 +603,7 @@ export class APIGatewayService extends AbstractService {
         {
           op: 'replace',
           path: '/*/*/logging/dataTrace',
-          value: logsConfig.logging.dataTrace,
+          value: `${logsConfig.logging.dataTrace}`,
         }
       );
     }
@@ -612,7 +612,7 @@ export class APIGatewayService extends AbstractService {
       operations.push({
         op: 'replace',
         path: '/*/*/metrics/enabled',
-        value: logsConfig.metrics,
+        value: `${logsConfig.metrics}`,
       });
     }
 

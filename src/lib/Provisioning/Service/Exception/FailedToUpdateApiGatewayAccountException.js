@@ -12,9 +12,10 @@ import {Exception} from '../../../Exception/Exception';
 export class FailedToUpdateApiGatewayAccountException extends Exception {
   /**
    * @param {String} region
+   * @param {Object} params
    * @param {String} error
    */
-  constructor(region, error) {
-    super(`Error on updating API Gateway account for "${region}" region. ${error}`);
+  constructor(region, params, error) {
+    super(`Error on updating API Gateway account in "${region}" region with ${JSON.stringify(params)} request params. ${error}`);
   }
 }
