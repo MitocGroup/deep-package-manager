@@ -68,6 +68,20 @@ export class Instance {
   }
 
   /**
+   * @param {String} path
+   * @param {String} config
+   */
+  static create(path, config = Config.DEFAULT_FILENAME) {
+    let configFile = Path.join(path, config);
+
+    if (!FileSystem.existsSync(configFile)) {
+      FileSystemExtra.outputJsonSync(configFile, Config.generate());
+    }
+
+    return new Instance(path, config);
+  }
+
+  /**
    * @returns {DeployConfig}
    */
   get configObj() {
