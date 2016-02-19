@@ -78,14 +78,14 @@ export class DependenciesResolver {
   }
 
   /**
-   * @param {SemVerStrategy|AbstractStrategy|*} strategy
+   * @param {SemVerStrategy|AbstractStrategy} strategy
    */
   set strategy(strategy) {
     this._strategy = strategy;
   }
 
   /**
-   * @returns {SemVerStrategy|AbstractStrategy|*}
+   * @returns {SemVerStrategy|AbstractStrategy}
    */
   get strategy() {
     return this._strategy;

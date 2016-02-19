@@ -21,14 +21,14 @@ export class SemVerStrategy extends AbstractStrategy {
 
     // sort the versions descendant in order to
     // get the most fresh version matched first
-    let availableVersions = moduleDb.getVersions().sort(semver.rcompare);
+    let availableVersions = moduleDb.getVersions().sort(SemVerStrategy.SORT_FUNC);
 
     for (let i in availableVersions) {
       if (!availableVersions.hasOwnProperty(i)) {
         continue;
       }
 
-      let versionToMatch = semver.clean(availableVersions[i]);
+      let versionToMatch = SemVerStrategy.CLEAN_FUNC(availableVersions[i]);
 
       if (semver.satisfies(versionToMatch, version)) {
         return versionToMatch;
@@ -36,5 +36,19 @@ export class SemVerStrategy extends AbstractStrategy {
     }
 
     return null;
+  }
+
+  /**
+   * @returns {*|clean|Function}
+   */
+  static get CLEAN_FUNC() {
+    return semver.clean;
+  }
+
+  /**
+   * @returns {*|rcompare|Function}
+   */
+  static get SORT_FUNC() {
+    return semver.rcompare;
   }
 }
