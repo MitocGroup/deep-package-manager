@@ -18,20 +18,28 @@ export class CloudWatchLogsDriver extends AbstractDriver {
    * @param {Function} cb
    */
   list(cb) {
-    this._listLogGroups(cb);
+    let responses = 0;
+
+    CloudWatchLogsDriver.LOG_GROUP_PREFIXES.forEach((logGroupPrefix, index) => {
+      this._listLogGroups(logGroupPrefix, (result) => {
+        responses++;
+        if (responses === CloudWatchLogsDriver.LOG_GROUP_PREFIXES.length) {
+          cb(result);
+        }
+      });
+    });
   }
 
   /**
-   * @todo - Add a log prefix for API Gateway
-   *
+   * @param {String} logGroupPrefix
    * @param {Function} cb
    * @param {String|null} nextToken
    * @private
    */
-  _listLogGroups(cb, nextToken = null) {
+  _listLogGroups(logGroupPrefix, cb, nextToken = null) {
     let payload = {
       limit: CloudWatchLogsDriver.LIMIT,
-      logGroupNamePrefix: CloudWatchLogsDriver.LAMBDA_LOG_GROUP_PREFIX
+      logGroupNamePrefix: logGroupPrefix,
     };
 
     if (nextToken) {
@@ -58,7 +66,7 @@ export class CloudWatchLogsDriver extends AbstractDriver {
       if (data.logGroups.nextToken) {
         let nextBatchToken = data.logGroups.nextToken;
 
-        this._listDistributions(cb, nextBatchToken);
+        this._listLogGroups(logGroupPrefix, cb, nextBatchToken);
       } else {
         cb(null);
       }
@@ -70,6 +78,23 @@ export class CloudWatchLogsDriver extends AbstractDriver {
    */
   static get LAMBDA_LOG_GROUP_PREFIX() {
     return '/aws/lambda/';
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get API_GATEWAY_LOG_GROUP_PREFIX() {
+    return 'API-Gateway-Execution-Logs_';
+  }
+
+  /**
+   * @returns {Array}
+   */
+  static get LOG_GROUP_PREFIXES() {
+    return [
+      CloudWatchLogsDriver.LAMBDA_LOG_GROUP_PREFIX,
+      CloudWatchLogsDriver.API_GATEWAY_LOG_GROUP_PREFIX,
+    ];
   }
 
   /**
