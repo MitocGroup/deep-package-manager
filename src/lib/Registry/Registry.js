@@ -107,8 +107,9 @@ export class Registry {
   /**
    * @param {Property|*} property
    * @param {Function} cb
+   * @param {String[]|null} allowedMicroservices
    */
-  install(property, cb) {
+  install(property, cb, allowedMicroservices = null) {
     let dumpPath = property.path;
     let wait = new WaitFor();
 
@@ -121,7 +122,20 @@ export class Registry {
     });
 
     microservices.forEach((microservice) => {
+      if (allowedMicroservices &&
+        Array.isArray(allowedMicroservices) &&
+        allowedMicroservices.indexOf(microservice.identifier) === -1) {
+
+        remaining--;
+        return;
+      }
+
       let dependencies = microservice.config.dependencies || {};
+
+      if (Object.keys(dependencies).length <= 0) {
+        remaining--;
+        return;
+      }
 
       for (let dependencyName in dependencies) {
         if (!dependencies.hasOwnProperty(dependencyName)) {
