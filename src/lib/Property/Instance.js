@@ -26,8 +26,6 @@ import {S3Service} from '../Provisioning/Service/S3Service';
 import {Config} from './Config';
 import {Hash} from '../Helpers/Hash';
 import {FrontendEngine} from '../Microservice/FrontendEngine';
-import {Exec} from '../Helpers/Exec';
-import OS from 'os';
 import objectMerge from 'object-merge';
 import {Listing} from '../Provisioning/Listing';
 import {Undeploy} from '../Provisioning/Undeploy'; // Fixes weird issue on calling super()
@@ -950,7 +948,7 @@ export class Instance {
       let microservice = microservices[i];
 
       if (microservice.isRoot) {
-        callback(null, null);
+        callback(null);
         return this;
       }
     }
@@ -959,8 +957,6 @@ export class Instance {
   }
 
   /**
-   * @todo: force it for local use only?
-   *
    * @param {Function} callback
    * @returns {Instance}
    */
@@ -971,41 +967,19 @@ export class Instance {
     let suitableEngine = frontendEngineManager.findSuitable(...microservices);
 
     if (!suitableEngine) {
-      throw new Error(`No suitable engine found (looking for ${frontendEngineManager.rawEngines.join(', ')})`);
+      callback(new Error(`No suitable engine found (looking for ${frontendEngineManager.rawEngines.join(', ')})`));
+      return this;
     }
 
-    let engineRepo = FrontendEngine.getEngineRepository(suitableEngine);
+    FrontendEngine.fetch(this, suitableEngine, (error) => {
+      if (!error) {
 
-    console.log(`Checking out the frontend engine '${suitableEngine}' from '${engineRepo}'`);
+        // reset in order to get refreshed microservices
+        this._microservices = null;
+      }
 
-    let tmpDir = OS.tmpdir();
-    let repoName = engineRepo.replace(/^.+\/([^\/]+)\.git$/i, '$1');
-    let repoDir = Path.join(tmpDir, repoName);
-
-    FileSystemExtra.removeSync(repoDir);
-
-    // @todo: replace it with https://www.npmjs.com/package/nodegit
-    new Exec(`git clone --depth=1 ${engineRepo} ${repoDir}`)
-      .avoidBufferOverflow()
-      .run((result) => {
-        if (result.failed) {
-          callback(result.error, engineRepo);
-          return;
-        }
-
-        new Exec(`cp -R ${repoDir}${Path.sep}src${Path.sep}. ${this._path}`)
-          .avoidBufferOverflow()
-          .run((result) => {
-            this._microservices = null; // @todo: reset microservices?
-
-            if (result.failed) {
-              callback(result.error, null);
-              return;
-            }
-
-            callback(null, engineRepo);
-          });
-      });
+      callback(error);
+    });
 
     return this;
   }
