@@ -22,6 +22,8 @@ export class CloudWatchLogsDriver extends AbstractDriver {
   }
 
   /**
+   * @todo - Add a log prefix for API Gateway
+   *
    * @param {Function} cb
    * @param {String|null} nextToken
    * @private

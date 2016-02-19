@@ -537,13 +537,25 @@ export class APIGatewayService extends AbstractService {
       return;
     }
 
-    this.apiGatewayClient.updateAccount(params, (error, data) => {
-      if (error) {
-        throw new FailedToUpdateApiGatewayAccountException(this.apiGatewayClient.config.region, params, error);
-      }
+    var retries = 0;
+    var updateAccountFunc = () => {
+      this.apiGatewayClient.updateAccount(params, (error, data) => {
+        if (error) {
+          if (retries <= APIGatewayService.MAX_RETRIES) {
+            retries++;
+            setTimeout(updateAccountFunc, APIGatewayService.RETRY_INTERVAL * retries);
+          } else {
+            throw new FailedToUpdateApiGatewayAccountException(
+              this.apiGatewayClient.config.region, params, error
+            );
+          }
+        } else {
+          callback(data);
+        }
+      });
+    };
 
-      callback(data);
-    });
+    updateAccountFunc();
   }
 
   /**
