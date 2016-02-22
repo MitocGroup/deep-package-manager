@@ -24,10 +24,11 @@ export class RegistryAutoDiscovery {
   /**
    * @param {Function} cb
    * @param {String|null} cacheFile
+   * @param {Number} cacheTtl For one hour by default
    * @returns {RegistryAutoDiscovery}
    */
-  discoverCached(cb, cacheFile = null) {
-    cacheFile = cacheFile || RegistryAutoDiscovery.DEFAULT_CACHE_FILE;
+  discoverCached(cb, cacheFile = null, cacheTtl = 3600) {
+    cacheFile = cacheFile || this.DEFAULT_CACHE_FILE;
 
     if (!fs.existsSync(cacheFile)) {
       this.discover((error, registryConfig) => {
@@ -36,7 +37,7 @@ export class RegistryAutoDiscovery {
           return;
         }
 
-        fse.outputJson(cacheFile, registryConfig.rawConfig, () => {
+        fse.outputJson(cacheFile, {exp: RegistryAutoDiscovery._ts + cacheTtl, cfg: registryConfig.rawConfig}, () => {
 
           // @todo: fail on the error?
           cb(null, registryConfig);
@@ -47,13 +48,13 @@ export class RegistryAutoDiscovery {
     }
 
     fse.readJson(cacheFile, (error, registryRawConfig) => {
-      if (error) {
+      if (error || !registryRawConfig.exp || registryRawConfig.exp <= RegistryAutoDiscovery._ts) {
         fse.removeSync(cacheFile);
         this.discoverCached(cb, cacheFile);
         return;
       }
 
-      cb(null, new RegistryConfig(registryRawConfig));
+      cb(null, new RegistryConfig(registryRawConfig.cfg));
     });
 
     return this;
@@ -64,8 +65,16 @@ export class RegistryAutoDiscovery {
    * @returns {RegistryAutoDiscovery}
    */
   discover(cb) {
-    request(this._discoveryFileLocation)
+    request({
+      uri: this._discoveryFileLocation,
+      timeout: 3000, // @todo: make it configurable?
+    })
       .then((response) => {
+        if (!response.ok) {
+          cb(response._error || new Error(response.statusText), null);
+          return;
+        }
+
         response
           .text()
           .then((plainJson) => {
@@ -121,8 +130,30 @@ export class RegistryAutoDiscovery {
   /**
    * @returns {String}
    */
-  static get DEFAULT_CACHE_FILE() {
-    return path.join(RegistryAutoDiscovery._homeDir, '.deepRegistry', RegistryAutoDiscovery.AUTO_DISCOVERY_FILE);
+  get DEFAULT_CACHE_FILE() {
+    let baseHostEscaped = this._baseHost
+      .replace(/^https?:\/\//i, '')
+      .replace(/([^a-z0-9\._\-]+)/i, '-');
+
+    return path.join(
+      RegistryAutoDiscovery.DEFAULT_CONFIG_DIR,
+      `${baseHostEscaped}-${RegistryAutoDiscovery.AUTO_DISCOVERY_FILE}`
+    );
+  }
+
+  /**
+   * @returns {Number}
+   * @private
+   */
+  static get _ts() {
+    return Math.ceil((new Date()).getTime() / 1000);
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get DEFAULT_CONFIG_DIR() {
+    return path.join(RegistryAutoDiscovery._homeDir, '.deepRegistry');
   }
 
   /**
