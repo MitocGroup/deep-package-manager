@@ -122,7 +122,15 @@ export class RegistryAutoDiscovery {
    * @returns {String}
    */
   static get DEFAULT_CACHE_FILE() {
-    return path.join((os.homedir || (() => '~/'))(), '.deepRegistry', RegistryAutoDiscovery.AUTO_DISCOVERY_FILE);
+    return path.join(RegistryAutoDiscovery._homeDir, '.deepRegistry', RegistryAutoDiscovery.AUTO_DISCOVERY_FILE);
+  }
+
+  /**
+   * @returns {String}
+   * @private
+   */
+  static get _homeDir() {
+    return (os.homedir && os.homedir()) || process.env.HOME || process.env.USERPROFILE;
   }
 
   /**
