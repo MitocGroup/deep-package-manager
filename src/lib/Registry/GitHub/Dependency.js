@@ -11,6 +11,7 @@ import tar from 'tar-stream';
 import gunzip from 'gunzip-maybe';
 import {WaitFor} from '../../Helpers/WaitFor';
 import {StandardStrategy} from './ExtractStrategy/StandardStrategy';
+import {_extend as extend} from 'util';
 
 export class Dependency {
   /**
@@ -23,11 +24,36 @@ export class Dependency {
 
     this._repository = Dependency.parseDependencyRepository(dependencyName);
 
+    this._authHeader = null;
+
     if (!this._repository) {
       throw new Error(`Unable to parse GitHub repository ${this.shortDependencyName}`);
     }
 
     Dependency.__cache__ = [];
+  }
+
+  /**
+   * @param {String} username
+   * @param {String} token
+   * @returns {Dependency}
+   */
+  auth(username, token) {
+    let authHash = new Buffer(`${username}:${token}`).toString('base64');
+    let headerValue = `Basic ${authHash}`;
+
+    this._authHeader = {
+      Authorization: headerValue,
+    };
+
+    return this;
+  }
+
+  /**
+   * @returns {Object}
+   */
+  get authHeader() {
+    return this._authHeader;
   }
 
   /**
@@ -46,7 +72,7 @@ export class Dependency {
 
       console.log(`Fetching suitable '${this.shortDependencyName}' dependency version from '${tag.sourceUrl}'`);
 
-      request(Dependency._createRequestPayload(Dependency._normalizeSourceUrl(tag.sourceUrl)))
+      request(this._createRequestPayload(Dependency._normalizeSourceUrl(tag.sourceUrl)))
         .then((response) => {
           if (!response.ok) {
             cb(response._error || new Error(response.statusText));
@@ -159,7 +185,7 @@ export class Dependency {
    * @param {Function} cb
    */
   getAvailableTags(cb) {
-    request(Dependency._createRequestPayload(Dependency.TAGS_URI_TPL.replace(/\{repository\}/i, this._repository)))
+    request(this._createRequestPayload(Dependency.TAGS_URI_TPL.replace(/\{repository\}/i, this._repository)))
       .then((response) => {
         if (!response.ok) {
           cb(response._error || new Error(response.statusText), null);
@@ -211,7 +237,6 @@ export class Dependency {
     return this._repository;
   }
 
-
   /**
    * @param {String} sourceUrl
    * @returns {String}
@@ -238,8 +263,8 @@ export class Dependency {
    * @param {String} uri
    * @returns {Object}
    */
-  static _createRequestPayload(uri) {
-    return {
+  _createRequestPayload(uri) {
+    let payload = {
       uri: uri,
       method: 'GET',
       retry: 3,
@@ -249,6 +274,12 @@ export class Dependency {
         Accept: '*/*',
       },
     };
+
+    if (this._authHeader) {
+      payload.headers = extend(payload.headers, this._authHeader);
+    }
+
+    return payload;
   }
 
   /**
