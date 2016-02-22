@@ -12,6 +12,7 @@ import gunzip from 'gunzip-maybe';
 import {WaitFor} from '../../Helpers/WaitFor';
 import {StandardStrategy} from './ExtractStrategy/StandardStrategy';
 import {_extend as extend} from 'util';
+import url from 'url';
 
 export class Dependency {
   /**
@@ -23,7 +24,6 @@ export class Dependency {
     this._dependencyVersion = dependencyVersion;
 
     this._repository = Dependency.parseDependencyRepository(dependencyName);
-
     this._authHeader = null;
 
     if (!this._repository) {
@@ -72,53 +72,91 @@ export class Dependency {
 
       console.log(`Fetching suitable '${this.shortDependencyName}' dependency version from '${tag.sourceUrl}'`);
 
-      request(this._createRequestPayload(Dependency._normalizeSourceUrl(tag.sourceUrl)))
+      request(this._createRequestPayload(tag.sourceUrl))
         .then((response) => {
-          if (!response.ok) {
-            cb(response._error || new Error(response.statusText));
-            return;
-          }
+          Dependency._doOnRedirectResponse(response, (redirectUrl) => {
+            console.log(`Following redirection to ${redirectUrl}`);
 
-          console.log(`Dumping '${this.shortDependencyName}' dependency into '${dumpPath}'`);
-
-          extractStrategy = extractStrategy || new StandardStrategy(dumpPath);
-
-          let unTarStream = tar.extract();
-
-          let wait = new WaitFor();
-          let filesToExtract = 0;
-
-          wait.push(() => {
-            return filesToExtract <= 0;
+            request(this._createRequestPayload(redirectUrl))
+              .then((response) => {
+                this._extractResponse(response, dumpPath, cb, extractStrategy);
+              }).catch(cb);
+          }, (response) => {
+            this._extractResponse(response, dumpPath, cb, extractStrategy);
           });
-
-          unTarStream.on('entry', (header, stream, next) => {
-            if (header.type === 'directory') {
-              next();
-              return;
-            }
-
-            filesToExtract++;
-
-            let filePath = header.name.replace(/^([^\/]+\/)/, '');
-
-            extractStrategy.extract(filePath, stream, () => {
-              filesToExtract--;
-
-              next();
-            });
-          });
-
-          unTarStream.on('finish', () => {
-            wait.ready(cb);
-          });
-
-          response.body
-            .pipe(gunzip())
-            .pipe(unTarStream);
-
         }).catch(cb);
     });
+  }
+
+  /**
+   * @param {Response|*} response
+   * @param {String} dumpPath
+   * @param {Function} cb
+   * @param {AbstractStrategy|StandardStrategy|null} extractStrategy
+   * @private
+   */
+  _extractResponse(response, dumpPath, cb, extractStrategy) {
+    if (!response.ok) {
+      cb(response._error || new Error(response.statusText));
+      return;
+    }
+
+    console.log(`Dumping '${this.shortDependencyName}' dependency into '${dumpPath}'`);
+
+    extractStrategy = extractStrategy || new StandardStrategy(dumpPath);
+
+    let unTarStream = tar.extract();
+
+    let wait = new WaitFor();
+    let filesToExtract = 0;
+
+    wait.push(() => {
+      return filesToExtract <= 0;
+    });
+
+    unTarStream.on('entry', (header, stream, next) => {
+      if (header.type === 'directory') {
+        next();
+        return;
+      }
+
+      filesToExtract++;
+
+      let filePath = header.name.replace(/^([^\/]+\/)/, '');
+
+      extractStrategy.extract(filePath, stream, () => {
+        filesToExtract--;
+
+        next();
+      });
+    });
+
+    unTarStream.on('finish', () => {
+      wait.ready(cb);
+    });
+
+    let dataStream = response._raw;
+
+    dataStream
+      .pipe(gunzip())
+      .pipe(unTarStream);
+  }
+
+  /**
+   * @param {Object|*} response
+   * @param {Function} onRedirectCb
+   * @param {Function} otherwiseCb
+   * @private
+   */
+  static _doOnRedirectResponse(response, onRedirectCb, otherwiseCb) {
+    let headers = response.headers._headers;
+
+    if (!headers.hasOwnProperty('location')) {
+      otherwiseCb(response);
+      return;
+    }
+
+    onRedirectCb(headers.location[0]);
   }
 
   /**
@@ -212,6 +250,13 @@ export class Dependency {
   /**
    * @returns {String}
    */
+  get repositoryUser() {
+    return this._repository.split('/')[0];
+  }
+
+  /**
+   * @returns {String}
+   */
   get shortDependencyName() {
     return this._repository.split('/')[1];
   }
@@ -238,42 +283,27 @@ export class Dependency {
   }
 
   /**
-   * @param {String} sourceUrl
-   * @returns {String}
-   * @private
-   *
-   * @example https://codeload.github.com/MitocGroup/deep-microservices-todo-app/legacy.tar.gz/v0.0.1
-   *          ---->
-   *          https://api.github.com/repos/MitocGroup/deep-microservices-todo-app/tarball/v0.0.1
-   */
-  static _normalizeSourceUrl(sourceUrl) {
-    let matches = sourceUrl.match(/https?:\/\/api\.github\.com\/repos\/([^\/]+\/[^\/]+)\/tarball\/([^\/]+)$/i);
-
-    if (!matches || matches.length < 3) {
-      return sourceUrl;
-    }
-
-    let repo = matches[1];
-    let version = matches[2];
-
-    return `https://codeload.github.com/${repo}/legacy.tar.gz/${version}`;
-  }
-
-  /**
    * @param {String} uri
    * @returns {Object}
    */
   _createRequestPayload(uri) {
+    let uriParts = url.parse(uri, true);
+
     let payload = {
-      uri: uri,
+      uri: `${uriParts.protocol}//${uriParts.host}${uriParts.pathname}`,
       method: 'GET',
       retry: 3,
       headers: {
+        Host: uriParts.host,
         'User-Agent': 'User-Agent	Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11) ' +
                       'AppleWebKit/601.1.56 (KHTML, like Gecko) Version/9.0 Safari/601.1.56',
         Accept: '*/*',
       },
     };
+
+    if (uriParts.query && Object.keys(uriParts.query).length > 0) {
+      payload.qs = uriParts.query;
+    }
 
     if (this._authHeader) {
       payload.headers = extend(payload.headers, this._authHeader);
