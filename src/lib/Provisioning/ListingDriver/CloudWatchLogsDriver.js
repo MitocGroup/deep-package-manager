@@ -5,6 +5,7 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
+import {AbstractService} from '../Service/AbstractService';
 
 export class CloudWatchLogsDriver extends AbstractDriver {
   /**
@@ -12,6 +13,32 @@ export class CloudWatchLogsDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
+
+    this._originalBaseHash = this._baseHash;
+  }
+
+  /**
+   * Overrides common baseHash by adding support for custom API Gateway CloudWatch log group name
+   * e.g. API-Gateway-Execution-Logs_56fh4n843h/dev
+   *
+   * @returns {Function}
+   */
+  get baseHash() {
+    let apiCloudWatchLogGroup = null;
+
+    if (this._deployCfg && this._deployCfg.apigateway.api && this._deployCfg.apigateway.api.logGroupName) {
+      apiCloudWatchLogGroup = this._deployCfg.apigateway.api.logGroupName;
+    }
+
+    this._baseHash = (resource) => {
+      if (resource.indexOf(CloudWatchLogsDriver.API_GATEWAY_LOG_GROUP_PREFIX)) {
+        return apiCloudWatchLogGroup ? resource === apiCloudWatchLogGroup : false;
+      } else {
+        return AbstractService.extractBaseHashFromResourceName(resource) === this._originalBaseHash;
+      }
+    };
+
+    return this._baseHash;
   }
 
   /**

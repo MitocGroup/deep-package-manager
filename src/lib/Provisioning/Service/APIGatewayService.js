@@ -227,6 +227,11 @@ export class APIGatewayService extends AbstractService {
       this._config.api.rolePolicy = rolePolicy;
       this._config.api.deployedApi = deployedApi;
 
+      // generate cloud watch log group name for deployed API Gateway
+      if (this.apiConfig.cloudWatch.logging.enabled || this.apiConfig.cloudWatch.metrics) {
+        this._config.api.logGroupName = this._generateApiLogGroupName(this._config.api.id, this.stageName);
+      }
+
       this._ready = true;
     });
 
@@ -997,6 +1002,16 @@ export class APIGatewayService extends AbstractService {
    */
   _generateApiBaseUrl(apiId, region, stageName) {
     return `https://${apiId}.${Core.AWS.Service.API_GATEWAY_EXECUTE}.${region}.amazonaws.com/${stageName}`;
+  }
+
+  /**
+   * @param {String} apiId
+   * @param {String} stageName
+   * @returns {String}
+   * @private
+   */
+  _generateApiLogGroupName(apiId, stageName) {
+    return `API-Gateway-Execution-Logs_${apiId}/${stageName}`;
   }
 
   /**

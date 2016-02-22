@@ -43,7 +43,7 @@ export class Listing {
       let service = this._createAwsService(serviceName);
       let ServiceListerProto = require(`./ListingDriver/${serviceName}Driver`)[`${serviceName}Driver`];
 
-      let serviceLister = new ServiceListerProto(service, this._hash);
+      let serviceLister = new ServiceListerProto(service, this._hash, this.deployCfg);
 
       serviceLister.list((error) => {
         servicesRemaining--;
@@ -69,6 +69,13 @@ export class Listing {
    */
   get property() {
     return this._property;
+  }
+
+  /**
+   * @returns {Object|null}
+   */
+  get deployCfg() {
+    return this._property.config.provisioning || null;
   }
 
   /**
