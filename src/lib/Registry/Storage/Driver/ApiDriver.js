@@ -160,7 +160,7 @@ export class ApiDriver extends AbstractDriver {
   _request(endpointName, objPath, cb, data = null) {
     let payload = {objPath,};
 
-    if (data) {
+    if (data !== null) {
       payload.data = ApiDriver._encodeResponseData(endpointName, data);
     }
 
@@ -207,9 +207,7 @@ export class ApiDriver extends AbstractDriver {
             parsedData.data = ApiDriver._decodeResponseData(endpointName, parsedData.data || null);
             parsedData.error = parsedData.error || null;
 
-            if (!parsedData.data && !parsedData.error) {
-              parsedData.error = new Error('Missing result data');
-            } else if (parsedData.error) {
+            if (parsedData.error) {
               parsedData.error = ApiDriver._extractError(parsedData.error);
             }
 

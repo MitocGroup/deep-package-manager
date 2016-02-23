@@ -42,40 +42,16 @@ export class ModuleInstance {
       let entryReady = false;
       let entryName = path.relative(modulePath, file);
 
-      let readStream = fs.createReadStream(file);
-
-      fs.stat(file, (error, fileStats) => {
+      fs.readFile(file, {encoding: 'ascii',}, (error, fileContent) => {
         if (error) {
           console.error(error);
-          entryReady = true;
-          return;
+        } else {
+          let plainFileContent = fileContent.toString();
+
+          tarStream.entry({name: entryName, size: plainFileContent.length,}, plainFileContent);
         }
 
-        let entry = tarStream.entry({name: entryName, size: fileStats.size,}, (error) => {
-          if (error) {
-            console.error(error);
-            entryReady = true;
-          }
-        });
-
-        readStream.on('data', (chunk) => {
-          if (!entryReady) {
-            try {
-              entry.write(chunk.toString());
-            } catch (error) {
-              console.error(error);
-              entryReady = true;
-            }
-          }
-        });
-
-        readStream.on('end', () => {
-          if (!entryReady) {
-            entry.end();
-
-            entryReady = true;
-          }
-        });
+        entryReady = true;
       });
 
       return () => {

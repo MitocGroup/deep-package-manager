@@ -27,6 +27,7 @@ export class Server {
     this._port = port;
     this._host = host;
     this._server = null;
+    this._toId = null;
     this._logger = global.console;
   }
 
@@ -115,7 +116,7 @@ export class Server {
   _listen(server, args, cb, timeout) {
     server.listen(...args);
 
-    setTimeout(() => {
+    this._toId = setTimeout(() => {
       if (!this.isListening) {
         this._server.close(() => {
           cb(new Error(`Server startup timeout exceeded ${timeout} seconds`));
@@ -132,8 +133,11 @@ export class Server {
     if (this.isListening) {
       this.logger.log('Closing registry server');
 
+      clearTimeout(this._toId);
+
       this._server.close(cb);
       this._server = null;
+      this._toId = null;
 
       return this;
     }
@@ -233,7 +237,7 @@ export class Server {
 
       let args = [dataObj.objPath,];
 
-      if (args.hasOwnProperty('data')) {
+      if (dataObj.hasOwnProperty('data')) {
         args.push(ApiDriver._decodeResponseData(callType, dataObj.data));
       }
 
