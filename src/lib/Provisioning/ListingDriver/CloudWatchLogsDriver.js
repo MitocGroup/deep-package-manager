@@ -13,32 +13,34 @@ export class CloudWatchLogsDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
-
-    this._originalBaseHash = this._baseHash;
   }
 
   /**
-   * Overrides common baseHash by adding support for custom API Gateway CloudWatch log group name
+   * Overrides base _matchResource by adding support for custom API Gateway CloudWatch log group name
    * e.g. API-Gateway-Execution-Logs_56fh4n843h/dev
    *
-   * @returns {Function}
+   * @param {String} resource
+   * @returns {Boolean}
+   * @private
    */
-  get baseHash() {
-    let apiCloudWatchLogGroup = null;
+  _matchResource(resource) {
+    if (resource.indexOf(CloudWatchLogsDriver.API_GATEWAY_LOG_GROUP_PREFIX) !== -1) {
+      let apiCloudWatchLogGroup = null;
 
-    if (this._deployCfg && this._deployCfg.apigateway.api && this._deployCfg.apigateway.api.logGroupName) {
-      apiCloudWatchLogGroup = this._deployCfg.apigateway.api.logGroupName;
+      if (this._deployCfg && this._deployCfg.apigateway.api && this._deployCfg.apigateway.api.logGroupName) {
+        apiCloudWatchLogGroup = this._deployCfg.apigateway.api.logGroupName;
+      }
+
+      return apiCloudWatchLogGroup ? resource === apiCloudWatchLogGroup : false;
     }
 
-    this._baseHash = (resource) => {
-      if (resource.indexOf(CloudWatchLogsDriver.API_GATEWAY_LOG_GROUP_PREFIX)) {
-        return apiCloudWatchLogGroup ? resource === apiCloudWatchLogGroup : false;
-      } else {
-        return AbstractService.extractBaseHashFromResourceName(resource) === this._originalBaseHash;
-      }
-    };
+    if (typeof this._baseHash === 'function') {
+      return this._baseHash.bind(this)(resource);
+    } else if (this._baseHash instanceof RegExp) {
+      return this._baseHash.test(resource);
+    }
 
-    return this._baseHash;
+    return AbstractService.extractBaseHashFromResourceName(resource) === this._baseHash;
   }
 
   /**
