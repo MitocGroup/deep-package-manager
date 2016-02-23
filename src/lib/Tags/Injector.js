@@ -7,6 +7,7 @@
 import fs from 'fs';
 import {GTMDriver} from './Driver/GTMDriver';
 import {DeepConfigDriver} from './Driver/DeepConfigDriver';
+import {RootAssetsDriver} from './Driver/RootAssetsDriver';
 
 export class Injector {
   /**
@@ -20,8 +21,9 @@ export class Injector {
    * @param {String} htmlFile
    * @param {Object|null} deepConfig
    * @param {String|null} gtmContainerId
+   * @param {Object} microservices
    */
-  static fileInjectAll(htmlFile, deepConfig = null, gtmContainerId = null) {
+  static fileInjectAll(htmlFile, deepConfig = null, gtmContainerId = null, microservices = {}) {
     let drivers = [];
 
     if (deepConfig) {
@@ -30,6 +32,10 @@ export class Injector {
 
     if (gtmContainerId) {
       drivers.push(new GTMDriver(gtmContainerId));
+    }
+
+    if (microservices) {
+      drivers.push(new RootAssetsDriver(microservices));
     }
 
     if (drivers.length <= 0) {
