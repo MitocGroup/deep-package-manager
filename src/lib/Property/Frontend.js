@@ -362,7 +362,7 @@ export class Frontend {
 
       // @todo: separate GTM functionality?
       propertyConfig.globals.gtmContainerId, // it may be empty/undefined
-      propertyConfig.microservices
+      this._microservicesConfig
     );
 
     if (Frontend._skipInjectDeployNumber) {

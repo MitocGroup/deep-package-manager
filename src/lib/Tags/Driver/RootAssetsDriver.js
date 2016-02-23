@@ -5,6 +5,7 @@
 'use strict';
 
 import path from 'path';
+import OS from 'os';
 import FileSystem from 'graceful-fs';
 import {AbstractDriver} from './AbstractDriver';
 import {FileWalker} from '../../Helpers/FileWalker';
@@ -15,12 +16,12 @@ import {UnknownAssetException} from './Exception/UnknownAssetException';
  */
 export class RootAssetsDriver extends AbstractDriver {
   /**
-   * @param {Object} microservices
+   * @param {Object} microservicesConfig
    */
-  constructor(microservices) {
+  constructor(microservicesConfig) {
     super();
 
-    this._microservices = microservices;
+    this._microservicesConfig = microservicesConfig;
   }
 
   /**
@@ -28,7 +29,7 @@ export class RootAssetsDriver extends AbstractDriver {
    * @returns {*}
    */
   inject(htmlContent) {
-    let scriptContent = this._assetsPaths.map(this._buildAssetTag.bind(this)).join(/* OS.EOL */);
+    let scriptContent = this._assetsPaths.map(this._buildAssetTag.bind(this)).join(OS.EOL);
 
     return this.replaceTags(
       htmlContent,
@@ -42,22 +43,36 @@ export class RootAssetsDriver extends AbstractDriver {
    * @private
    */
   get _assetsPaths() {
-    // Object.values has browser compatibility issues
-    let msPaths = Object.keys(this._microservices).map((msIdentifier) => {
-      return path.join(this._microservices[msIdentifier].localPath, RootAssetsDriver.MS_ROOT_ASSETS_PATH)
-    });
+    let files = [];
 
-    return msPaths.reduce((files, msPath) => {
-      if (!FileSystem.existsSync(msPath)) {
-        return files;
+    for (let msIdentifier in this._microservicesConfig) {
+      if (!this._microservicesConfig.hasOwnProperty(msIdentifier)) {
+        continue;
       }
 
-      let msAssets = new FileWalker().walk(msPath, (file) => {
-        return file.test(RootAssetsDriver.ASSET_REGEXP);
+      let msConfig = this._microservicesConfig[msIdentifier];
+      let rootAssetsPath = path.join(
+        msConfig.autoload.frontend,
+        RootAssetsDriver.ROOT_ASSETS_FOLDER
+      );
+
+      if (!FileSystem.existsSync(rootAssetsPath)) {
+        continue;
+      }
+
+      let msRootAssets = new FileWalker().walk(rootAssetsPath, (file) => {
+        return RootAssetsDriver.ASSET_REGEXP.test(file);
       });
 
-      return files.concat(msAssets.map(file => file.substr(msPath.length)));
-    }, []);
+      files = files.concat(msRootAssets.map((file) => {
+        return path.join(
+          path.sep, msConfig.identifier,
+          RootAssetsDriver.ROOT_ASSETS_FOLDER, file.substr(rootAssetsPath.length)
+        );
+      }));
+    }
+
+    return files;
   }
 
   /**
@@ -88,7 +103,7 @@ export class RootAssetsDriver extends AbstractDriver {
   /**
    * @returns {string}
    */
-  static get MS_ROOT_ASSETS_PATH() {
+  static get ROOT_ASSETS_FOLDER() {
     return 'root_assets';
   }
 
