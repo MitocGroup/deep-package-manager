@@ -19,6 +19,7 @@ import {DynamoDBService} from './Service/DynamoDBService';
 import {ElasticacheService} from './Service/ElasticacheService';
 import {APIGatewayService} from './Service/APIGatewayService';
 import {SQSService} from './Service/SQSService';
+import {CloudWatchLogsService} from './Service/CloudWatchLogsService';
 import {Instance as PropertyInstance} from '../Property/Instance';
 import {WaitFor} from '../Helpers/WaitFor';
 
@@ -261,6 +262,7 @@ export class Instance {
         new LambdaService(this),
         new APIGatewayService(this),
         new SQSService(this),
+        new CloudWatchLogsService(this),
       ]);
     }
 

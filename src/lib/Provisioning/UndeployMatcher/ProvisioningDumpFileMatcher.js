@@ -183,6 +183,11 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
       this._deployConfig.CloudWatchLogs = this._deployConfig.Lambda.map((lambdaName) => {
         return `${CloudWatchLogsDriver.LAMBDA_LOG_GROUP_PREFIX}${lambdaName}`;
       });
+
+      if (deployProvisioning.apigateway && deployProvisioning.apigateway.api &&
+        deployProvisioning.apigateway.api.logGroupName) {
+        this._deployConfig.CloudWatchLogs.push(deployProvisioning.apigateway.api.logGroupName);
+      }
     } else {
       throw new MissingProvisioningConfig(this.fileName, 'provisioning');
     }

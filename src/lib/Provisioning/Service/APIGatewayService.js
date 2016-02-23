@@ -17,10 +17,13 @@ import {FailedToExecuteApiGatewayMethodException} from './Exception/FailedToExec
 import {FailedToListApiResourcesException} from './Exception/FailedToListApiResourcesException';
 import {FailedToDeleteApiResourceException} from './Exception/FailedToDeleteApiResourceException';
 import {InvalidCacheClusterSizeException} from './Exception/InvalidCacheClusterSizeException';
+import {InvalidApiLogLevelException} from './Exception/InvalidApiLogLevelException';
 import {FailedToUpdateApiGatewayStageException} from './Exception/FailedToUpdateApiGatewayStageException';
+import {FailedToUpdateApiGatewayAccountException} from './Exception/FailedToUpdateApiGatewayAccountException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
+import {CloudWatchLogsService} from './CloudWatchLogsService';
 import Utils from 'util';
 import objectMerge from 'object-merge';
 import nodePath from 'path';
@@ -76,6 +79,13 @@ export class APIGatewayService extends AbstractService {
    */
   static get CACHE_CLUSTER_SIZES() {
     return ['0.5', '1.6', '6.1', '13.5', '28.4', '58.2', '118', '237'];
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get LOG_LEVELS() {
+    return ['OFF', 'INFO', 'ERROR'];
   }
 
   /**
@@ -217,6 +227,11 @@ export class APIGatewayService extends AbstractService {
       this._config.api.rolePolicy = rolePolicy;
       this._config.api.deployedApi = deployedApi;
 
+      // generate cloud watch log group name for deployed API Gateway
+      if (this.apiConfig.cloudWatch.logging.enabled || this.apiConfig.cloudWatch.metrics) {
+        this._config.api.logGroupName = this._generateApiLogGroupName(this._config.api.id, this.stageName);
+      }
+
       this._ready = true;
     });
 
@@ -224,26 +239,40 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
-   * Returns cache cluster config
-   *
-   * @returns {{enabled: boolean, clusterSize: string}}
+   * @returns {Object}
    */
-  get cacheCluster() {
+  get apiConfig() {
+    // default config
     let config = {
-      enabled: false,
-      clusterSize: '0.5',
+      cache: {
+        enabled: false,
+        clusterSize: '0.5',
+      },
+      cloudWatch: {
+        metrics: false,
+        logging: {
+          enabled: false,
+          logLevel: 'OFF',
+          dataTrace: false,
+        },
+      },
     };
 
     let globalsConfig = this.property.config.globals;
-    if (globalsConfig && globalsConfig.hasOwnProperty('api') && globalsConfig.api.hasOwnProperty('cache')) {
-      config.enabled = !!globalsConfig.api.cache.enabled;
-      if (globalsConfig.api.cache.hasOwnProperty('clusterSize')) {
-        config.clusterSize = globalsConfig.api.cache.clusterSize;
-      }
+    if (globalsConfig && globalsConfig.hasOwnProperty('api')) {
+      config = objectMerge(config, globalsConfig.api);
     }
 
-    if (APIGatewayService.CACHE_CLUSTER_SIZES.indexOf(config.clusterSize) === -1) {
-      throw new InvalidCacheClusterSizeException(config.clusterSize, APIGatewayService.CACHE_CLUSTER_SIZES);
+    if (APIGatewayService.CACHE_CLUSTER_SIZES.indexOf(config.cache.clusterSize) === -1) {
+      throw new InvalidCacheClusterSizeException(
+        config.cache.clusterSize, APIGatewayService.CACHE_CLUSTER_SIZES
+      );
+    }
+
+    if (APIGatewayService.LOG_LEVELS.indexOf(config.cloudWatch.logging.logLevel) === -1) {
+      throw new InvalidApiLogLevelException(
+        config.cloudWatch.logging.logLevel, APIGatewayService.LOG_LEVELS
+      );
     }
 
     return config;
@@ -319,13 +348,10 @@ export class APIGatewayService extends AbstractService {
                 rolePolicy = data;
 
                 this._deployApi(apiId, (deployedApi) => {
-                  if (this.cacheCluster.enabled) {
-                    this._enableStageCaching(apiId, this.stageName, (data) => {
-                      callback(methods, integrations, rolePolicy, deployedApi);
-                    });
-                  } else {
+
+                  this._updateStage(apiId, this.stageName, apiRole, this.apiConfig, (data) => {
                     callback(methods, integrations, rolePolicy, deployedApi);
-                  }
+                  });
                 });
               });
             });
@@ -360,7 +386,7 @@ export class APIGatewayService extends AbstractService {
   _createApiIamRole(callback) {
     let iam = this.provisioning.iam;
     let roleName = this.generateAwsResourceName(
-      `${APIGatewayService.API_NAME_PREFIX}InvokeLambda`,
+      `${APIGatewayService.API_NAME_PREFIX}ExecAccess`,
       Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
     );
 
@@ -437,8 +463,8 @@ export class APIGatewayService extends AbstractService {
     let params = {
       restApiId: apiId,
       stageName: this.stageName,
-      cacheClusterEnabled: this.cacheCluster.enabled,
-      cacheClusterSize: this.cacheCluster.clusterSize,
+      cacheClusterEnabled: this.apiConfig.cache.enabled,
+      cacheClusterSize: this.apiConfig.cache.clusterSize,
       stageDescription: `Stage for "${this.env}" environment`,
       description: `Deployed on ${new Date().toTimeString()}`,
     };
@@ -455,15 +481,99 @@ export class APIGatewayService extends AbstractService {
   /**
    * @param {String} apiId
    * @param {String} stageName
+   * @param {Object} apiRole
+   * @param {Object} apiConfig
    * @param {Function} callback
    * @private
    */
-  _enableStageCaching(apiId, stageName, callback) {
+  _updateStage(apiId, stageName, apiRole, apiConfig, callback) {
     let params = {
       restApiId: apiId,
       stageName: stageName,
       patchOperations: [],
     };
+
+    params.patchOperations = params.patchOperations.concat(
+      this._getStageUpdateOpsForCache(apiConfig.cache)
+    );
+
+    params.patchOperations = params.patchOperations.concat(
+      this._getStageUpdateOpsForLogs(apiConfig.cloudWatch)
+    );
+
+    this._updateAccount(apiRole, apiConfig, (data) => {
+
+      if (params.patchOperations.length === 0) {
+        callback(null);
+        return;
+      }
+
+      this.apiGatewayClient.updateStage(params, (error, data) => {
+        if (error) {
+          throw new FailedToUpdateApiGatewayStageException(apiId, stageName, error);
+        }
+
+        callback(data);
+      });
+    });
+  }
+
+  /**
+   * @param {Object} apiRole
+   * @param {Object} apiConfig
+   * @param {Function} callback
+   * @private
+   */
+  _updateAccount(apiRole, apiConfig, callback) {
+    let params = {
+      patchOperations: [],
+    };
+
+    if (apiConfig.cloudWatch.logging.enabled || apiConfig.cloudWatch.metrics) {
+      params.patchOperations.push({
+        op: 'replace',
+        path: '/cloudwatchRoleArn',
+        value: apiRole.Arn,
+      });
+    }
+
+    if (params.patchOperations.length === 0) {
+      callback();
+      return;
+    }
+
+    var retries = 0;
+    var updateAccountFunc = () => {
+      this.apiGatewayClient.updateAccount(params, (error, data) => {
+        if (error) {
+          if (retries <= APIGatewayService.MAX_RETRIES) {
+            retries++;
+            setTimeout(updateAccountFunc, APIGatewayService.RETRY_INTERVAL * retries);
+          } else {
+            throw new FailedToUpdateApiGatewayAccountException(
+              this.apiGatewayClient.config.region, params, error
+            );
+          }
+        } else {
+          callback(data);
+        }
+      });
+    };
+
+    updateAccountFunc();
+  }
+
+  /**
+   * @param {Object} cacheConfig
+   * @returns {Array}
+   * @private
+   */
+  _getStageUpdateOpsForCache(cacheConfig) {
+    let operations = [];
+
+    if (!cacheConfig.enabled) {
+      return operations;
+    }
 
     let resources = this._getResourcesToBeCached(this.property.microservices);
 
@@ -486,16 +596,44 @@ export class APIGatewayService extends AbstractService {
         value: `${resource.cacheTtl}`,
       };
 
-      params.patchOperations.push(enabledOp, ttlInSecondsOp);
+      operations.push(enabledOp, ttlInSecondsOp);
     }
 
-    this.apiGatewayClient.updateStage(params, (error, data) => {
-      if (error) {
-        throw new FailedToUpdateApiGatewayStageException(apiId, stageName, error);
-      }
+    return operations;
+  }
 
-      callback(data);
-    });
+  /**
+   * @param {Object} logsConfig
+   * @returns {Array}
+   * @private
+   */
+  _getStageUpdateOpsForLogs(logsConfig) {
+    let operations = [];
+
+    if (logsConfig.logging.enabled) {
+      operations.push(
+        {
+          op: 'replace',
+          path: '/*/*/logging/loglevel',
+          value: logsConfig.logging.logLevel,
+        },
+        {
+          op: 'replace',
+          path: '/*/*/logging/dataTrace',
+          value: `${logsConfig.logging.dataTrace}`,
+        }
+      );
+    }
+
+    if (logsConfig.metrics) {
+      operations.push({
+        op: 'replace',
+        path: '/*/*/metrics/enabled',
+        value: `${logsConfig.metrics}`,
+      });
+    }
+
+    return operations;
   }
 
   /**
@@ -505,15 +643,17 @@ export class APIGatewayService extends AbstractService {
    */
   _addPolicyToApiRole(apiRole, callback) {
     let lambdaService = this.provisioning.services.find(LambdaService);
+    let cloudWatchService = this.provisioning.services.find(CloudWatchLogsService);
 
     let iam = this.provisioning.iam;
     let policy = new Core.AWS.IAM.Policy();
     policy.statement.add(lambdaService.generateAllowInvokeFunctionStatement());
+    policy.statement.add(cloudWatchService.generateAllowFullAccessStatement());
 
     let params = {
       PolicyDocument: policy.toString(),
       PolicyName: this.generateAwsResourceName(
-        `${APIGatewayService.API_NAME_PREFIX}InvokeLambdaPolicy`,
+        `${APIGatewayService.API_NAME_PREFIX}ExecAccessPolicy`,
         Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
       ),
       RoleName: apiRole.RoleName,
@@ -862,6 +1002,16 @@ export class APIGatewayService extends AbstractService {
    */
   _generateApiBaseUrl(apiId, region, stageName) {
     return `https://${apiId}.${Core.AWS.Service.API_GATEWAY_EXECUTE}.${region}.amazonaws.com/${stageName}`;
+  }
+
+  /**
+   * @param {String} apiId
+   * @param {String} stageName
+   * @returns {String}
+   * @private
+   */
+  _generateApiLogGroupName(apiId, stageName) {
+    return `API-Gateway-Execution-Logs_${apiId}/${stageName}`;
   }
 
   /**
