@@ -245,6 +245,9 @@ export class Instance {
       case 'APIGateway':
         name = 'apiGateway';
         break;
+      case 'ElastiCache':
+        name = 'elasticCache';
+        break;
       default:
         name = AbstractService.lowerCaseFirst(name);
     }

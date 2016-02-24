@@ -10,6 +10,7 @@ import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {FailedToCreateElasticacheClusterException} from './Exception/FailedToCreateElasticacheClusterException';
 import {Hash} from '../../Helpers/Hash';
 import {FailedToRetrieveDefaultSecurityGroupException} from './Exception/FailedToRetrieveDefaultSecurityGroupException';
+import {FailedToRetrieveLambdaSubnetGroupException} from './Exception/FailedToRetrieveLambdaSubnetGroupException';
 
 /**
  * Elasticache service
@@ -50,16 +51,19 @@ export class ElasticacheService extends AbstractService {
     }
 
     this._getDefaultSecurityGroupId((securityGroupId) => {
-      this._createCluster(
-        this.awsAccountId,
-        this.appIdentifier,
-        securityGroupId
-      )((clusterId, dsn) => {
-        this._config.clusterId = clusterId;
-        this._config.dsn = dsn;
-        this._config.securityGroupId = securityGroupId;
+      this._getLambdaSubnetGroup((subnetId) => {
+        this._createCluster(
+          this.awsAccountId,
+          this.appIdentifier,
+          securityGroupId
+        )((clusterId, dsn) => {
+          this._config.clusterId = clusterId;
+          this._config.dsn = dsn;
+          this._config.securityGroupId = securityGroupId;
+          this._config.subnetId = subnetId;
 
-        this._ready = true;
+          this._ready = true;
+        });
       });
     });
 
@@ -102,8 +106,40 @@ export class ElasticacheService extends AbstractService {
    * @param {Function} cb
    * @private
    */
+  _getLambdaSubnetGroup(cb) {
+    let payload = {
+      CacheSubnetGroupName: 'lambda',
+    };
+
+    this._provisioning.elasticCache.describeCacheSubnetGroups(payload, (error, data) => {
+      if (error) {
+        throw new FailedToRetrieveLambdaSubnetGroupException(error);
+      }
+
+      if (data.CacheSubnetGroups.length <= 0) {
+        throw new FailedToRetrieveLambdaSubnetGroupException('No Lambda subnet group assigned');
+      }
+
+      let subnets = data.CacheSubnetGroups[0].Subnets;
+
+      if (subnets.length <= 0) {
+        throw new FailedToRetrieveLambdaSubnetGroupException('No Lambda subnets available');
+      }
+
+      cb(subnets[0].SubnetIdentifier);
+    });
+  }
+
+  /**
+   * @param {Function} cb
+   * @private
+   */
   _getDefaultSecurityGroupId(cb) {
-    this._provisioning.ec2.describeSecurityGroups({GroupNames: ['default',],}, (error, data) => {
+    let payload = {
+      GroupNames: ['default',],
+    };
+
+    this._provisioning.ec2.describeSecurityGroups(payload, (error, data) => {
       if (error) {
         throw new FailedToRetrieveDefaultSecurityGroupException(error);
       }
@@ -128,7 +164,7 @@ export class ElasticacheService extends AbstractService {
     let ec = this.provisioning.elasticCache;
 
     let clusterId = this.generateAwsResourceName(
-      '',
+      'ec',
       Core.AWS.Service.ELASTIC_CACHE,
       '',
       AbstractService.DELIMITER_HYPHEN_LOWER_CASE
@@ -138,11 +174,11 @@ export class ElasticacheService extends AbstractService {
       CacheClusterId: clusterId,
       AutoMinorVersionUpgrade: true,
       AZMode: 'single-az',
-      PreferredAvailabilityZone: this._provisioning.lambda.config.region,
       Engine: ElasticacheService.ENGINE,
       CacheNodeType: ElasticacheService.INSTANCE,
       NumCacheNodes: ElasticacheService.CACHE_NODES,
       SecurityGroupIds: [securityGroupId,],
+      CacheSubnetGroupName: 'lambda',
     };
 
     syncStack.push(ec.createCacheCluster(parameters), (error, data) => {

@@ -91,7 +91,7 @@ export class AbstractService extends Core.OOP.Interface {
 
     regexp += '(.*\/)?'; // case CloudFrontLogs or similar...
     regexp += `(${AbstractService.AWS_RESOURCES_PREFIX}|${capitalizedResourcePrefix})`;
-    regexp += '(_|\.|[A-Z])';
+    regexp += '(-|_|\.|[A-Z])';
     regexp += '.+';
     regexp += `[a-zA-Z0-9]{${AbstractService.MAIN_HASH_SIZE}}`;
 

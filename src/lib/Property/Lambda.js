@@ -471,6 +471,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
     let s3 = this._property.provisioning.s3;
     let tmpBucket = this._property.config.provisioning.s3.buckets[S3Service.TMP_BUCKET].name;
     let securityGroupId = this._property.config.provisioning.elasticache.securityGroupId;
+    let subnetId = this._property.config.provisioning.elasticache.subnetId;
 
     let objectKey = this._zipPath.split(Path.sep).pop();
 
@@ -499,7 +500,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
         FunctionName: this.functionName,
       };
 
-      if (update || this._wasPreviouslyDeployed) {
+      if (update && this._wasPreviouslyDeployed) {
         request = lambda.updateFunctionCode({
           S3Bucket: tmpBucket,
           S3Key: objectKey,
@@ -521,6 +522,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
           Timeout: this._timeout,
           VpcConfig: {
             SecurityGroupIds: [securityGroupId,],
+            SubnetIds: [subnetId,],
           },
         });
       }
