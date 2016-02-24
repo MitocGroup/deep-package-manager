@@ -219,7 +219,7 @@ export class ElasticacheService extends AbstractService {
 
       if (nodes.length > 0) {
         let endpoint = nodes[0].Endpoint;
-        dsn = `redis://${endpoint.Address}:${endpoint.Port}`;
+        dsn = `${endpoint.Address}:${endpoint.Port}`;
         succeed = true;
       }
     });

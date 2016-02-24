@@ -386,15 +386,9 @@ export class LambdaService extends AbstractService {
     // @todo: move it to ElastiCacheService?
     let ec2Statement = policy.statement.add();
     ec2Statement.action.add(Core.AWS.Service.EC2, 'CreateNetworkInterface');
+    ec2Statement.action.add(Core.AWS.Service.EC2, 'DescribeNetworkInterfaces');
+    ec2Statement.action.add(Core.AWS.Service.EC2, 'DeleteNetworkInterface');
     ec2Statement.resource.add().any();
-
-    // @todo: figure out the right resource constraint
-    //ec2Statement.resource.add(
-    //  Core.AWS.Service.EC2,
-    //  Core.AWS.IAM.Policy.ANY,
-    //  this.awsAccountId,
-    //  Core.AWS.IAM.Policy.ANY
-    //);
 
     return policy;
   }
