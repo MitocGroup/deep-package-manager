@@ -98,13 +98,13 @@ export class Lambda {
     config.buckets = S3Service.fakeBucketsConfig(propertyConfig.appIdentifier);
     config.tablesNames = [];
 
-    //config.cacheDsn = '';
+    config.cacheDsn = '';
 
     if (propertyConfig.provisioning) {
       config.buckets = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_STORAGE_SERVICE].buckets;
       config.tablesNames = propertyConfig.provisioning[Core.AWS.Service.DYNAMO_DB].tablesNames;
 
-      //config.cacheDsn = propertyConfig.provisioning[Core.AWS.Service.ELASTIC_CACHE].dsn;
+      config.cacheDsn = propertyConfig.provisioning[Core.AWS.Service.ELASTIC_CACHE].dsn;
     }
 
     for (let microserviceIdentifier in propertyConfig.microservices) {
@@ -470,6 +470,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
     let lambda = this._property.provisioning.lambda;
     let s3 = this._property.provisioning.s3;
     let tmpBucket = this._property.config.provisioning.s3.buckets[S3Service.TMP_BUCKET].name;
+    let securityGroupId = this._property.config.provisioning.elasticache.securityGroupId;
 
     let objectKey = this._zipPath.split(Path.sep).pop();
 
@@ -518,6 +519,9 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
           Runtime: this._runtime,
           MemorySize: this._memorySize,
           Timeout: this._timeout,
+          VpcConfig: {
+            SecurityGroupIds: [securityGroupId,],
+          },
         });
       }
 

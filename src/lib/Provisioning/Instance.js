@@ -40,6 +40,7 @@ export class Instance {
     // deep-db instance
     this._db = null;
 
+    this._ec2 = new property.AWS.EC2(); // used for security groups retrieval
     this._elasticache = new property.AWS.ElastiCache();
     this._sns = new property.AWS.SNS();
     this._cloudFront = new property.AWS.CloudFront();
@@ -71,6 +72,7 @@ export class Instance {
 
     // set region for services that depend on other services region
     this._s3 = new property.AWS.S3({
+
       // This bucket must reside in the same AWS region where you are creating the Lambda function
       region: this._lambda.config.region,
     });
@@ -131,91 +133,98 @@ export class Instance {
   }
 
   /**
-   * @returns {Object}
+   * @returns {AWS.EC2|*}
+   */
+  get ec2() {
+    return this._ec2;
+  }
+
+  /**
+   * @returns {AWS.ACM|*}
    */
   get acm() {
     return this._acm;
   }
 
   /**
-   * @returns {Object}
+   * @returns {AWS.CloudWatchLogs|*}
    */
   get cloudWatchLogs() {
     return this._cloudWatchLogs;
   }
 
   /**
-   * @returns {Object}
+   * @returns {AWS.S3|*}
    */
   get s3() {
     return this._s3;
   }
 
   /**
-   * @returns {Object}
+   * @returns {AWS.DynamoDB|*}
    */
   get dynamoDB() {
     return this._dynamoDb;
   }
 
   /**
-   * @returns {Object}
+   * @returns {@returns {AWS.ElastiCache|*}}
    */
   get elasticCache() {
     return this._elasticache;
   }
 
   /**
-   * @returns {Object}
+   * @returns {@returns {AWS.Kinesis|*}}
    */
   get kinesis() {
     return this._kinesis;
   }
 
   /**
-   * @returns {Object}
+   * @returns {@returns {AWS.SNS|*}}
    */
   get sns() {
     return this._sns;
   }
 
   /**
-   * @returns {Object}
+   * @returns {@returns {AWS.Lambda|*}}
    */
   get lambda() {
     return this._lambda;
   }
 
   /**
-   * @returns {Object}
+   * @returns {@returns {AWS.IAM|*}}
    */
   get iam() {
     return this._iam;
   }
 
   /**
-   * @returns {Object}
+   * @returns {@returns {AWS.CognitoIdentity|*}}
    */
   get cognitoIdentity() {
     return this._cognitoIdentity;
   }
 
   /**
-   * @returns {Object}
+   * @returns {@returns {AWS.CloudFront|*}}
    */
   get cloudFront() {
     return this._cloudFront;
   }
 
   /**
-   * @returns {Object}
+   * @returns {@returns {AWS.ApiGateway|*}}
    */
   get apiGateway() {
     return this._apiGateway;
   }
 
   /**
-   * @returns {Object}
+   * @returns {@returns {AWS.SNS|*}}
    */
   get sqs() {
     return this._sqs;
@@ -250,8 +259,8 @@ export class Instance {
     if (this._services === null) {
       // @todo - add only required services that are configured in appConfig file
       this._services = new Core.Generic.ObjectStorage([
-        new S3Service(this),
         new ElasticacheService(this),
+        new S3Service(this),
         new DynamoDBService(this),
         new KinesisService(this),
         new SNSService(this),

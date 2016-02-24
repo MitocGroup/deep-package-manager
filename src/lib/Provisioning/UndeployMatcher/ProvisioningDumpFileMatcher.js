@@ -180,6 +180,10 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
         }
       }
 
+      if (deployProvisioning.elasticache) {
+        this._deployConfig.ElastiCache.push(deployProvisioning.elasticache.clusterId);
+      }
+
       this._deployConfig.CloudWatchLogs = this._deployConfig.Lambda.map((lambdaName) => {
         return `${CloudWatchLogsDriver.LAMBDA_LOG_GROUP_PREFIX}${lambdaName}`;
       });
