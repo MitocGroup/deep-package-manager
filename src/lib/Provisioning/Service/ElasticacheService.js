@@ -173,12 +173,10 @@ export class ElasticacheService extends AbstractService {
     let parameters = {
       CacheClusterId: clusterId,
       AutoMinorVersionUpgrade: true,
-      AZMode: 'single-az',
       Engine: ElasticacheService.ENGINE,
       CacheNodeType: ElasticacheService.INSTANCE,
       NumCacheNodes: ElasticacheService.CACHE_NODES,
       SecurityGroupIds: [securityGroupId,],
-      CacheSubnetGroupName: 'lambda',
     };
 
     syncStack.push(ec.createCacheCluster(parameters), (error, data) => {
