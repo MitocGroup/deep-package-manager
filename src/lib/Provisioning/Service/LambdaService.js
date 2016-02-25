@@ -383,6 +383,13 @@ export class LambdaService extends AbstractService {
     let sqsService = this.provisioning.services.find(SQSService);
     policy.statement.add(sqsService.generateAllowActionsStatement());
 
+    // @todo: move it to ElastiCacheService?
+    let ec2Statement = policy.statement.add();
+    ec2Statement.action.add(Core.AWS.Service.EC2, 'CreateNetworkInterface');
+    ec2Statement.action.add(Core.AWS.Service.EC2, 'DescribeNetworkInterfaces');
+    ec2Statement.action.add(Core.AWS.Service.EC2, 'DeleteNetworkInterface');
+    ec2Statement.resource.add().any();
+
     return policy;
   }
 

@@ -9,6 +9,8 @@ import Core from 'deep-core';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {FailedToCreateElasticacheClusterException} from './Exception/FailedToCreateElasticacheClusterException';
 import {Hash} from '../../Helpers/Hash';
+import {FailedToRetrieveDefaultSecurityGroupException} from './Exception/FailedToRetrieveDefaultSecurityGroupException';
+import {FailedToRetrieveLambdaSubnetGroupException} from './Exception/FailedToRetrieveLambdaSubnetGroupException';
 
 /**
  * Elasticache service
@@ -48,16 +50,25 @@ export class ElasticacheService extends AbstractService {
       return this;
     }
 
-    //this._createCluster(
-    //    this.awsAccountId,
-    //    this.appIdentifier
-    //)((dsn) => {
-    //    this._config.dsn = dsn;
-    //
-    //    this._ready = true;
-    //});
-
+    // @todo: uncomment when VPC issues fixed
+    // issues: accessing resources outside the VPC
     this._ready = true;
+    //this._getDefaultSecurityGroupId((securityGroupId) => {
+    //  this._getLambdaSubnetGroups((subnetIds) => {
+    //    this._createCluster(
+    //      this.awsAccountId,
+    //      this.appIdentifier,
+    //      securityGroupId
+    //    )((clusterId, dsn) => {
+    //      this._config.clusterId = clusterId;
+    //      this._config.dsn = dsn;
+    //      this._config.securityGroupId = securityGroupId;
+    //      this._config.subnetIds = subnetIds;
+    //
+    //      this._ready = true;
+    //    });
+    //  });
+    //});
 
     return this;
   }
@@ -95,24 +106,86 @@ export class ElasticacheService extends AbstractService {
   }
 
   /**
+   * @param {Function} cb
+   * @private
+   */
+  _getLambdaSubnetGroups(cb) {
+    let payload = {
+      CacheSubnetGroupName: 'lambda',
+    };
+
+    this._provisioning.elasticCache.describeCacheSubnetGroups(payload, (error, data) => {
+      if (error) {
+        throw new FailedToRetrieveLambdaSubnetGroupException(error);
+      }
+
+      if (data.CacheSubnetGroups.length <= 0) {
+        throw new FailedToRetrieveLambdaSubnetGroupException('No Lambda subnet group assigned');
+      }
+
+      let subnets = data.CacheSubnetGroups[0].Subnets;
+
+      if (subnets.length <= 0) {
+        throw new FailedToRetrieveLambdaSubnetGroupException('No Lambda subnets available');
+      }
+
+      let identifiers = [];
+
+      subnets.forEach((subnetData) => {
+        identifiers.push(subnetData.SubnetIdentifier);
+      });
+
+      cb(identifiers);
+    });
+  }
+
+  /**
+   * @param {Function} cb
+   * @private
+   */
+  _getDefaultSecurityGroupId(cb) {
+    let payload = {
+      GroupNames: ['default',],
+    };
+
+    this._provisioning.ec2.describeSecurityGroups(payload, (error, data) => {
+      if (error) {
+        throw new FailedToRetrieveDefaultSecurityGroupException(error);
+      }
+
+      if (data.SecurityGroups.length <= 0) {
+        throw new FailedToRetrieveDefaultSecurityGroupException('No default security group assigned');
+      }
+
+      cb(data.SecurityGroups[0].GroupId);
+    });
+  }
+
+  /**
    * @param {String} awsAccountId
    * @param {String} appIdentifier
+   * @param {String} securityGroupId
    * @returns {Function}
    * @private
    */
-  _createCluster(awsAccountId, appIdentifier) {
+  _createCluster(awsAccountId, appIdentifier, securityGroupId) {
     let syncStack = new AwsRequestSyncStack();
     let ec = this.provisioning.elasticCache;
 
-    let clusterId = ElasticacheService._buildClusterId(awsAccountId, appIdentifier);
+    let clusterId = this.generateAwsResourceName(
+      'ec',
+      Core.AWS.Service.ELASTIC_CACHE,
+      '',
+      AbstractService.DELIMITER_HYPHEN_LOWER_CASE
+    );
 
     let parameters = {
       CacheClusterId: clusterId,
-
-      //PreferredAvailabilityZone: ec.config.region, // @todo: figure out availability zones...
+      AutoMinorVersionUpgrade: true,
       Engine: ElasticacheService.ENGINE,
       CacheNodeType: ElasticacheService.INSTANCE,
-      NumCacheNodes: 1,
+      NumCacheNodes: ElasticacheService.CACHE_NODES,
+      SecurityGroupIds: [securityGroupId,],
     };
 
     syncStack.push(ec.createCacheCluster(parameters), (error, data) => {
@@ -153,14 +226,14 @@ export class ElasticacheService extends AbstractService {
 
       if (nodes.length > 0) {
         let endpoint = nodes[0].Endpoint;
-        dsn = `redis://${endpoint.Address}:${endpoint.Port}`;
+        dsn = `${endpoint.Address}:${endpoint.Port}`;
         succeed = true;
       }
     });
 
     innerSyncStack.join().ready(() => {
       if (succeed) {
-        callback(dsn);
+        callback(clusterId, dsn);
       } else {
         setTimeout(() => {
           this._acquireEndpoint(clusterId, callback);
@@ -177,6 +250,13 @@ export class ElasticacheService extends AbstractService {
   }
 
   /**
+   * @returns {Number}
+   */
+  static get CACHE_NODES() {
+    return 1;
+  }
+
+  /**
    * @returns {String}
    */
   static get INSTANCE() {
@@ -188,21 +268,5 @@ export class ElasticacheService extends AbstractService {
    */
   static get ENGINE() {
     return 'redis';
-  }
-
-  /**
-   * @param {String} awsAccountId
-   * @param {String} appIdentifier
-   * @private
-   *
-   * @todo: figure out why we are limited to 20 chars
-   */
-  static _buildClusterId(awsAccountId, appIdentifier) {
-    let accountHash = Hash.crc32(awsAccountId.toString());
-    let propertyHash = Hash.crc32(appIdentifier.toString());
-    let propertyParts = appIdentifier.toString().replace(/[^a-zA-Z0-9-]+/, '').split('');
-    let propertySuffix = `${propertyParts.shift()}${propertyParts.pop()}`;
-
-    return `d${accountHash}-${propertyHash}${propertySuffix}`;
   }
 }
