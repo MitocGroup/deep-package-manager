@@ -710,7 +710,7 @@ export class APIGatewayService extends AbstractService {
             });
             break;
           case 'putMethodResponse':
-            this.definedStatusCodes.forEach((statusCode) => {
+            this.methodStatusCodes(resourceMethod).forEach((statusCode) => {
               methodParams.push({
                 statusCode: `${statusCode}`,
                 responseModels: this.jsonEmptyModel,
@@ -727,12 +727,12 @@ export class APIGatewayService extends AbstractService {
             methodParams.push(params);
             break;
           case 'putIntegrationResponse':
-            this.definedStatusCodes.forEach((statusCode) => {
-              methodParams.psuh({
+            this.methodStatusCodes(resourceMethod).forEach((statusCode) => {
+              methodParams.push({
                 statusCode: `${statusCode}`,
                 responseTemplates: this.getJsonResponseTemplate(resourceMethod),
                 responseParameters: this._getMethodResponseParameters(resourceMethod, Object.keys(resourceMethods)),
-                selectionPattern: `.*${this.deepStatusCodeKey}:${statusCode}.*`,
+                selectionPattern: statusCode == 200 ? '-' : `.*\\"${this.deepStatusCodeKey}\\":${statusCode}.*`,
               });
             });
             break;
@@ -1083,17 +1083,18 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
+   * @param {String} resourceMethod
    * @returns {Array}
    */
-  get definedStatusCodes() {
-    return Core.HTTP.Helper.CODES;
+  methodStatusCodes(resourceMethod) {
+    return resourceMethod === 'OPTIONS' ? [200] : Core.HTTP.Helper.CODES;
   }
 
   /**
    * @returns {Array}
    */
   get deepStatusCodeKey() {
-    return Core.Exception.CODE_KEY;
+    return Core.Exception.Exception.CODE_KEY;
   }
 
   /**
