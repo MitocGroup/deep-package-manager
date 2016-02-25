@@ -311,6 +311,12 @@ export class Lambda {
     let archive = Archiver('zip');
 
     output.on('close', () => {
+      let bootstrapFile = Path.join(path, 'bootstrap.js');
+
+      if (FileSystem.existsSync(bootstrapFile)) {
+        Lambda._cleanupBootstrapFile(bootstrapFile);
+      }
+
       ready = true;
     });
 
@@ -440,17 +446,39 @@ export class Lambda {
   static _tryInjectDeepConfigIntoBootstrapFile(bootstrapFile, configFile) {
     if (FileSystem.existsSync(configFile) && FileSystem.existsSync(bootstrapFile)) {
       let cfgPlain = `
-// This code was injected by deepify on ${new Date().toLocaleString()}
+//<DEEP_CFG_START> (${new Date().toLocaleString()})
 global.${DeepConfigDriver.DEEP_CFG_VAR} =
   global.${DeepConfigDriver.DEEP_CFG_VAR} ||
   ${FileSystem.readFileSync(configFile).toString()};
+//<DEEP_CFG_END>
 `;
 
       FileSystem.writeFileSync(
         bootstrapFile,
-        cfgPlain + FileSystem.readFileSync(bootstrapFile).toString()
+        cfgPlain + Lambda._cleanupBootstrapFile(bootstrapFile, true)
       );
     }
+  }
+
+  /**
+   * @param {String} bootstrapFile
+   * @param {Boolean} skipWrite
+   * @returns {String}
+   * @private
+   */
+  static _cleanupBootstrapFile(bootstrapFile, skipWrite = false) {
+    let bootstrapContent = FileSystem.readFileSync(bootstrapFile).toString();
+
+    bootstrapContent = bootstrapContent.replace(/(\/\/<DEEP_CFG_START>(\n|.)+\/\/<DEEP_CFG_END>)/gi, '');
+
+    if (!skipWrite) {
+      FileSystem.writeFileSync(
+        bootstrapFile,
+        bootstrapContent
+      );
+    }
+
+    return bootstrapContent;
   }
 
   /**
@@ -471,7 +499,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
     let s3 = this._property.provisioning.s3;
     let tmpBucket = this._property.config.provisioning.s3.buckets[S3Service.TMP_BUCKET].name;
     let securityGroupId = this._property.config.provisioning.elasticache.securityGroupId;
-    let subnetId = this._property.config.provisioning.elasticache.subnetId;
+    let subnetIds = this._property.config.provisioning.elasticache.subnetIds;
 
     let objectKey = this._zipPath.split(Path.sep).pop();
 
@@ -520,11 +548,14 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
           Runtime: this._runtime,
           MemorySize: this._memorySize,
           Timeout: this._timeout,
-          VpcConfig: {
-            SecurityGroupIds: [securityGroupId,],
-            SubnetIds: [subnetId,],
-          },
         });
+
+        if (securityGroupId && subnetIds && Array.isArray(subnetIds) && subnetIds.length > 0) {
+          request.VpcConfig = {
+            SecurityGroupIds: [securityGroupId,],
+            SubnetIds: subnetIds,
+          };
+        }
       }
 
       syncStack.level(1).push(request, (error, data) => {

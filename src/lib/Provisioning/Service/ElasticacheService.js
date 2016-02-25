@@ -50,22 +50,24 @@ export class ElasticacheService extends AbstractService {
       return this;
     }
 
-    this._getDefaultSecurityGroupId((securityGroupId) => {
-      this._getLambdaSubnetGroup((subnetId) => {
-        this._createCluster(
-          this.awsAccountId,
-          this.appIdentifier,
-          securityGroupId
-        )((clusterId, dsn) => {
-          this._config.clusterId = clusterId;
-          this._config.dsn = dsn;
-          this._config.securityGroupId = securityGroupId;
-          this._config.subnetId = subnetId;
-
-          this._ready = true;
-        });
-      });
-    });
+    // @todo: uncomment when VPC issues fixed
+    this._ready = true;
+    //this._getDefaultSecurityGroupId((securityGroupId) => {
+    //  this._getLambdaSubnetGroups((subnetIds) => {
+    //    this._createCluster(
+    //      this.awsAccountId,
+    //      this.appIdentifier,
+    //      securityGroupId
+    //    )((clusterId, dsn) => {
+    //      this._config.clusterId = clusterId;
+    //      this._config.dsn = dsn;
+    //      this._config.securityGroupId = securityGroupId;
+    //      this._config.subnetIds = subnetIds;
+    //
+    //      this._ready = true;
+    //    });
+    //  });
+    //});
 
     return this;
   }
@@ -106,7 +108,7 @@ export class ElasticacheService extends AbstractService {
    * @param {Function} cb
    * @private
    */
-  _getLambdaSubnetGroup(cb) {
+  _getLambdaSubnetGroups(cb) {
     let payload = {
       CacheSubnetGroupName: 'lambda',
     };
@@ -126,7 +128,13 @@ export class ElasticacheService extends AbstractService {
         throw new FailedToRetrieveLambdaSubnetGroupException('No Lambda subnets available');
       }
 
-      cb(subnets[0].SubnetIdentifier);
+      let identifiers = [];
+
+      subnets.forEach((subnetData) => {
+        identifiers.push(subnetData.SubnetIdentifier);
+      });
+
+      cb(identifiers);
     });
   }
 

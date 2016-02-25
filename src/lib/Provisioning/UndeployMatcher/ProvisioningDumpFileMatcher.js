@@ -180,7 +180,7 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
         }
       }
 
-      if (deployProvisioning.elasticache) {
+      if (deployProvisioning.elasticache && deployProvisioning.elasticache.clusterId) {
         this._deployConfig.ElastiCache.push(deployProvisioning.elasticache.clusterId);
       }
 

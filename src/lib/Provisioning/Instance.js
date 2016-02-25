@@ -41,7 +41,6 @@ export class Instance {
     this._db = null;
 
     this._ec2 = new property.AWS.EC2(); // used for security groups retrieval
-    this._elasticache = new property.AWS.ElastiCache();
     this._sns = new property.AWS.SNS();
     this._cloudFront = new property.AWS.CloudFront();
     this._iam = new property.AWS.IAM();
@@ -68,6 +67,9 @@ export class Instance {
     });
     this._acm = new property.AWS.ACM({
       region: this.getAwsServiceRegion(ACMService, property.config.awsRegion),
+    });
+    this._elasticache = new property.AWS.ElastiCache({
+      region: this._lambda.config.region,
     });
 
     // set region for services that depend on other services region
