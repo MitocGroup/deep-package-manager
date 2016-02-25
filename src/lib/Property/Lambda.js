@@ -445,13 +445,11 @@ export class Lambda {
    */
   static _tryInjectDeepConfigIntoBootstrapFile(bootstrapFile, configFile) {
     if (FileSystem.existsSync(configFile) && FileSystem.existsSync(bootstrapFile)) {
-      let cfgPlain = `
-//<DEEP_CFG_START> (${new Date().toLocaleString()})
+      let cfgPlain = `//<DEEP_CFG_START> (${new Date().toLocaleString()})
 global.${DeepConfigDriver.DEEP_CFG_VAR} =
   global.${DeepConfigDriver.DEEP_CFG_VAR} ||
   ${FileSystem.readFileSync(configFile).toString()};
-//<DEEP_CFG_END>
-`;
+//<DEEP_CFG_END>`;
 
       FileSystem.writeFileSync(
         bootstrapFile,
@@ -469,7 +467,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
   static _cleanupBootstrapFile(bootstrapFile, skipWrite = false) {
     let bootstrapContent = FileSystem.readFileSync(bootstrapFile).toString();
 
-    bootstrapContent = bootstrapContent.replace(/(\/\/<DEEP_CFG_START>(\n|.)+\/\/<DEEP_CFG_END>)/gi, '');
+    bootstrapContent = bootstrapContent.replace(/(\/\/<DEEP_CFG_START>(?:\n|.)+\/\/<DEEP_CFG_END>)/gi, '');
 
     if (!skipWrite) {
       FileSystem.writeFileSync(
