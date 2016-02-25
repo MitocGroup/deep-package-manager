@@ -22,6 +22,7 @@ export class Dependency {
   constructor(dependencyName, dependencyVersion) {
     this._dependencyName = dependencyName;
     this._dependencyVersion = dependencyVersion;
+    this._fallbackToTag = null;
 
     this._repository = Dependency.parseDependencyRepository(dependencyName);
     this._authHeader = null;
@@ -31,6 +32,32 @@ export class Dependency {
     }
 
     Dependency.__cache__ = [];
+
+    // @todo: Remove when GitHub rate issues fixed
+    this.fallbackToMaster();
+  }
+
+  /**
+   * @returns {Dependency}
+   */
+  fallbackToMaster() {
+    this._fallbackToTag = 'master';
+
+    return this;
+  }
+
+  /**
+   * @returns {String}
+   */
+  get fallbackToTag() {
+    return this._fallbackToTag;
+  }
+
+  /**
+   * @param {String} tagName
+   */
+  set fallbackToTag(tagName) {
+    this._fallbackToTag = tagName;
   }
 
   /**
@@ -87,7 +114,11 @@ export class Dependency {
             });
           }).catch(cb);
       } else {
-        request(this._createRequestPayload(Dependency._normalizeSourceUrl(tag.sourceUrl)))
+        let normalizedSourceUrl = Dependency._normalizeSourceUrl(tag.sourceUrl);
+
+        console.log(`Switching between '${tag.sourceUrl}' and '${normalizedSourceUrl}' source urls`);
+
+        request(this._createRequestPayload(normalizedSourceUrl))
           .then((response) => {
             this._extractResponse(response, dumpPath, cb, extractStrategy);
           }).catch(cb);
@@ -203,6 +234,15 @@ export class Dependency {
 
     this.getAvailableTags((error, tags) => {
       if (error) {
+
+        // @todo: tweak this?
+        if (this._fallbackToTag) {
+          console.error(`Fallback to ${this._fallbackToTag} due to the error: ${error}`);
+
+          cb(null, Tag.createFromRawMetadata(this._repository, this._fallbackTagRawMetadata));
+          return;
+        }
+
         cb(error, null);
         return;
       }
@@ -211,6 +251,22 @@ export class Dependency {
 
       cb(...this._findSuitable(tags));
     });
+  }
+
+  /**
+   * @returns {{name: string, zipball_url: *, tarball_url: *, commit: {sha: string, url: *}}}
+   * @private
+   */
+  get _fallbackTagRawMetadata() {
+    return {
+      name: this._fallbackToTag,
+      zipball_url: `https://api.github.com/repos/${this._repository}/zipball/${this._fallbackToTag}`,
+      tarball_url: `https://api.github.com/repos/${this._repository}/tarball/${this._fallbackToTag}`,
+      commit: {
+        sha: 'd41d8cd98f00b204e9800998ecf8427e',
+        url: `https://api.github.com/repos/${this._repository}/commits/d41d8cd98f00b204e9800998ecf8427e`,
+      },
+    };
   }
 
   /**

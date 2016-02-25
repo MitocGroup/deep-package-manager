@@ -170,63 +170,63 @@ export class Instance {
   }
 
   /**
-   * @returns {@returns {AWS.ElastiCache|*}}
+   * @returns {AWS.ElastiCache|*}
    */
   get elasticCache() {
     return this._elasticache;
   }
 
   /**
-   * @returns {@returns {AWS.Kinesis|*}}
+   * @returns {AWS.Kinesis|*}
    */
   get kinesis() {
     return this._kinesis;
   }
 
   /**
-   * @returns {@returns {AWS.SNS|*}}
+   * @returns {AWS.SNS|*}
    */
   get sns() {
     return this._sns;
   }
 
   /**
-   * @returns {@returns {AWS.Lambda|*}}
+   * @returns {AWS.Lambda|*}
    */
   get lambda() {
     return this._lambda;
   }
 
   /**
-   * @returns {@returns {AWS.IAM|*}}
+   * @returns {AWS.IAM|*}
    */
   get iam() {
     return this._iam;
   }
 
   /**
-   * @returns {@returns {AWS.CognitoIdentity|*}}
+   * @returns {AWS.CognitoIdentity|*}
    */
   get cognitoIdentity() {
     return this._cognitoIdentity;
   }
 
   /**
-   * @returns {@returns {AWS.CloudFront|*}}
+   * @returns {AWS.CloudFront|*}
    */
   get cloudFront() {
     return this._cloudFront;
   }
 
   /**
-   * @returns {@returns {AWS.ApiGateway|*}}
+   * @returns {AWS.ApiGateway|*}
    */
   get apiGateway() {
     return this._apiGateway;
   }
 
   /**
-   * @returns {@returns {AWS.SNS|*}}
+   * @returns {AWS.SNS|*}
    */
   get sqs() {
     return this._sqs;
