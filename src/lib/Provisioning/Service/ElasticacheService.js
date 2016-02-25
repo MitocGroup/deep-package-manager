@@ -51,6 +51,7 @@ export class ElasticacheService extends AbstractService {
     }
 
     // @todo: uncomment when VPC issues fixed
+    // issues: accessing resources outside the VPC
     this._ready = true;
     //this._getDefaultSecurityGroupId((securityGroupId) => {
     //  this._getLambdaSubnetGroups((subnetIds) => {
