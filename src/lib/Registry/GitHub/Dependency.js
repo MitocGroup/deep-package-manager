@@ -72,19 +72,26 @@ export class Dependency {
 
       console.log(`Fetching suitable '${this.shortDependencyName}' dependency version from '${tag.sourceUrl}'`);
 
-      request(this._createRequestPayload(tag.sourceUrl))
-        .then((response) => {
-          Dependency._doOnRedirectResponse(response, (redirectUrl) => {
-            console.log(`Following redirection to ${redirectUrl}`);
+      if (this._authHeader) {
+        request(this._createRequestPayload(tag.sourceUrl))
+          .then((response) => {
+            Dependency._doOnRedirectResponse(response, (redirectUrl) => {
+              console.log(`Following redirection to ${redirectUrl}`);
 
-            request(this._createRequestPayload(redirectUrl))
-              .then((response) => {
-                this._extractResponse(response, dumpPath, cb, extractStrategy);
-              }).catch(cb);
-          }, (response) => {
+              request(this._createRequestPayload(redirectUrl))
+                .then((response) => {
+                  this._extractResponse(response, dumpPath, cb, extractStrategy);
+                }).catch(cb);
+            }, (response) => {
+              this._extractResponse(response, dumpPath, cb, extractStrategy);
+            });
+          }).catch(cb);
+      } else {
+        request(this._createRequestPayload(Dependency._normalizeSourceUrl(tag.sourceUrl)))
+          .then((response) => {
             this._extractResponse(response, dumpPath, cb, extractStrategy);
-          });
-        }).catch(cb);
+          }).catch(cb);
+      }
     });
   }
 
@@ -140,6 +147,28 @@ export class Dependency {
     dataStream
       .pipe(gunzip())
       .pipe(unTarStream);
+  }
+
+  /**
+   * @param {String} sourceUrl
+   * @returns {String}
+   * @private
+   *
+   * @example https://codeload.github.com/MitocGroup/deep-microservices-todo-app/legacy.tar.gz/v0.0.1
+   *          ---->
+   *          https://api.github.com/repos/MitocGroup/deep-microservices-todo-app/tarball/v0.0.1
+   */
+  static _normalizeSourceUrl(sourceUrl) {
+    let matches = sourceUrl.match(/https?:\/\/api\.github\.com\/repos\/([^\/]+\/[^\/]+)\/tarball\/([^\/]+)$/i);
+
+    if (!matches || matches.length < 3) {
+      return sourceUrl;
+    }
+
+    let repo = matches[1];
+    let version = matches[2];
+
+    return `https://codeload.github.com/${repo}/legacy.tar.gz/${version}`;
   }
 
   /**
