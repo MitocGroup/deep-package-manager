@@ -5,6 +5,8 @@
 import chai from 'chai';
 import path from 'path';
 import {Registry} from '../../lib/Registry/Registry';
+import {Server} from '../../lib/Registry/Local/Server';
+import {Authorizer} from '../../lib/Registry/Storage/Driver/Helpers/Api/Auth/Authorizer';
 import {Exec} from '../../lib/Helpers/Exec';
 import {Instance as Property} from '../../lib/Property/Instance';
 import fs from 'fs';
@@ -17,8 +19,10 @@ suite('Registry/Registry', function() {
     chai.expect(Registry).to.be.an('function');
   });
 
-  let testMaterialsPath = path.join(__dirname, '..', 'testMaterials');
-  let registryPath = path.join(testMaterialsPath, 'registry');
+  //const REMOTE_REGISTRY = '<remote-registry-url>';
+  const testMaterialsPath = path.join(__dirname, '..', 'testMaterials');
+  const registryPath = path.join(testMaterialsPath, 'registry');
+
   let localRegistry = Registry.createLocalRegistry(registryPath);
 
   // cleanup local test registry
@@ -65,7 +69,7 @@ suite('Registry/Registry', function() {
 
   test('Check Property1_v2 is fetching deps from local registry', (done) => {
     let propertyPath = path.join(testMaterialsPath, 'Property1_v2');
-    let propertyRealPath = path.join(registryPath, '_test_property_');
+    let propertyRealPath = path.join(registryPath, '_test_property_local_');
 
     fse.copySync(propertyPath, propertyRealPath);
     fse.copySync(path.join(propertyRealPath, 'deeploy.test.json'), path.join(propertyRealPath, 'deeploy.json'));
@@ -73,9 +77,6 @@ suite('Registry/Registry', function() {
     let property = new Property(propertyRealPath);
 
     localRegistry.install(property, (error) => {
-
-      done();
-
       chai.expect(error).to.not.exist;
       chai.expect(fs.existsSync(path.join(propertyRealPath, 'Microservice'))).to.be.ok;
       chai.expect(fs.existsSync(path.join(propertyRealPath, 'Microservice', 'deepkg.json'))).to.be.ok;
@@ -85,9 +86,93 @@ suite('Registry/Registry', function() {
       chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2', 'deepkg.json'))).to.be.ok;
       chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2nested'))).to.be.ok;
       chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2nested', 'deepkg.json'))).to.be.ok;
-    });
 
+      done();
+    });
   });
+
+  test('Check Property1_v2 is fetching deps from local api registry server', (done) => {
+    let authToken = `deep-auth-token-${(new Date()).getTime()}`;
+    let authorizer = Authorizer.createHeaderToken(authToken);
+
+    let registryServer = Registry.startApiServerAndCreateRegistry(
+      registryPath,
+      Server.DEFAULT_REGISTRY_HOST,
+      (error, apiRegistry) => {
+        chai.expect(error).to.not.exist;
+
+        apiRegistry.storage.driver.authorizer = authorizer;
+
+        let propertyPath = path.join(testMaterialsPath, 'Property1_v2');
+        let propertyRealPath = path.join(registryPath, '_test_property_api_');
+
+        if (fs.existsSync(propertyRealPath)) {
+          fse.removeSync(propertyRealPath);
+        }
+
+        fse.copySync(propertyPath, propertyRealPath);
+        fse.copySync(path.join(propertyRealPath, 'deeploy.test.json'), path.join(propertyRealPath, 'deeploy.json'));
+
+        let property = new Property(propertyRealPath);
+
+        apiRegistry.install(property, (error) => {
+          chai.expect(error).to.not.exist;
+          chai.expect(fs.existsSync(path.join(propertyRealPath, 'Microservice'))).to.be.ok;
+          chai.expect(fs.existsSync(path.join(propertyRealPath, 'Microservice', 'deepkg.json'))).to.be.ok;
+          chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep'))).to.be.ok;
+          chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep', 'deepkg.json'))).to.be.ok;
+          chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2'))).to.be.ok;
+          chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2', 'deepkg.json'))).to.be.ok;
+          chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2nested'))).to.be.ok;
+          chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2nested', 'deepkg.json'))).to.be.ok;
+
+          done();
+        });
+      }
+    );
+
+    registryServer.authorizer = authorizer;
+  });
+
+  //test('Check Property1_v2 is fetching deps from remote api registry server', (done) => {
+  //  let authToken = `deep-auth-token-${(new Date()).getTime()}`;
+  //  let authorizer = Authorizer.createHeaderToken(authToken);
+  //
+  //  Registry.createApiRegistry(
+  //    REMOTE_REGISTRY,
+  //    (error, apiRegistry) => {
+  //      chai.expect(error).to.not.exist;
+  //
+  //      apiRegistry.storage.driver.authorizer = authorizer;
+  //
+  //      let propertyPath = path.join(testMaterialsPath, 'Property1_v2');
+  //      let propertyRealPath = path.join(registryPath, '_test_property_api_');
+  //
+  //      if (fs.existsSync(propertyRealPath)) {
+  //        fse.removeSync(propertyRealPath);
+  //      }
+  //
+  //      fse.copySync(propertyPath, propertyRealPath);
+  //      fse.copySync(path.join(propertyRealPath, 'deeploy.test.json'), path.join(propertyRealPath, 'deeploy.json'));
+  //
+  //      let property = new Property(propertyRealPath);
+  //
+  //      apiRegistry.install(property, (error) => {
+  //        chai.expect(error).to.not.exist;
+  //        chai.expect(fs.existsSync(path.join(propertyRealPath, 'Microservice'))).to.be.ok;
+  //        chai.expect(fs.existsSync(path.join(propertyRealPath, 'Microservice', 'deepkg.json'))).to.be.ok;
+  //        chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep'))).to.be.ok;
+  //        chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep', 'deepkg.json'))).to.be.ok;
+  //        chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2'))).to.be.ok;
+  //        chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2', 'deepkg.json'))).to.be.ok;
+  //        chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2nested'))).to.be.ok;
+  //        chai.expect(fs.existsSync(path.join(propertyRealPath, 'microservice1dep2nested', 'deepkg.json'))).to.be.ok;
+  //
+  //        done();
+  //      });
+  //    }
+  //  );
+  //});
 
   //test('Test remote S3 registry', (done) => {
   //  let bucket = 'test-deep-registry';
@@ -112,6 +197,10 @@ suite('Registry/Registry', function() {
   //
   //  let propertyPath = path.join(testMaterialsPath, 'Property1_v2');
   //  let propertyRealPath = path.join(registryPath, '_test_property_s3_');
+  //
+  //  if (fs.existsSync(propertyRealPath)) {
+  //    fse.removeSync(propertyRealPath);
+  //  }
   //
   //  fse.copySync(propertyPath, propertyRealPath);
   //  fse.copySync(path.join(propertyRealPath, 'deeploy.test.json'), path.join(propertyRealPath, 'deeploy.json'));

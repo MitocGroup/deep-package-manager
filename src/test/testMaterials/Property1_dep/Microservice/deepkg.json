@@ -17,6 +17,7 @@
     }
   ],
   "dependencies": {
-    "microservice1dep2": ">= 2.x"
+    "microservice1dep2": ">= 2.x",
+    "microservice1": "^0.x.x"
   }
 }
