@@ -173,7 +173,8 @@ export class Dependency {
       wait.ready(cb);
     });
 
-    let dataStream = response._raw;
+    let dataStream = response.body;
+    dataStream.setDefaultEncoding('binary');
 
     dataStream
       .pipe(gunzip())
@@ -380,8 +381,7 @@ export class Dependency {
       retry: 3,
       headers: {
         Host: uriParts.host,
-        'User-Agent': 'User-Agent	Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11) ' +
-                      'AppleWebKit/601.1.56 (KHTML, like Gecko) Version/9.0 Safari/601.1.56',
+        'User-Agent': `deep-rq-${(new Date()).getTime()}`,
         Accept: '*/*',
       },
     };
