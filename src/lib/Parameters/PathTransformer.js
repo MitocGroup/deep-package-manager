@@ -56,20 +56,31 @@ export class PathTransformer {
    */
   _extractKeyVectorAndValue(obj, baseKey = '') {
     let resultVector = [];
+    let keyPrefix = baseKey ? `${baseKey}${this._delimiter}` : '';
 
-    for (let i in obj) {
-      if (!obj.hasOwnProperty(i)) {
+    for (let k in obj) {
+      if (!obj.hasOwnProperty(k)) {
         continue;
       }
 
-      let value = obj[i];
+      let value = obj[k];
 
       if (typeof value === 'object') {
-        resultVector = resultVector.concat(this._extractKeyVectorAndValue(value, i));
-      } else {
-        let prefix = baseKey ? `${baseKey}${this._delimiter}` : '';
+        let nestedResultVector = this._extractKeyVectorAndValue(value, k);
 
-        resultVector.push({key: `${prefix}${i}`, value: value});
+        for (let nk in nestedResultVector) {
+          if (!nestedResultVector.hasOwnProperty(nk)) {
+            continue;
+          }
+
+          let nestedResult = nestedResultVector[nk];
+
+          nestedResult.key = `${keyPrefix}${nestedResult.key}`;
+
+          resultVector.push(nestedResult);
+        }
+      } else {
+        resultVector.push({key: `${keyPrefix}${k}`, value: value});
       }
     }
 
@@ -116,14 +127,21 @@ export class PathTransformer {
    * @private
    */
   static _embedObject(keyVector, value) {
+    if (keyVector.length <= 0) {
+      return value;
+    }
+
     let obj = {};
     let rootKey = keyVector.shift();
 
-    obj[rootKey] = keyVector.length <= 0 ? value : PathTransformer._embedObject(keyVector, value);
+    obj[rootKey] = PathTransformer._embedObject(keyVector, value);
 
     return obj;
   }
 
+  /**
+   * @returns {String}
+   */
   static get DEFAULT_DELIMITER() {
     return '|';
   }
