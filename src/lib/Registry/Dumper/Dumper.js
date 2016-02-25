@@ -6,6 +6,7 @@
 
 import {FSDriver} from './Driver/FSDriver';
 import {WaitFor} from '../../Helpers/WaitFor';
+import {DuplicateModulesException} from './Exception/DuplicateModulesException';
 
 export class Dumper {
   /**
@@ -53,6 +54,14 @@ export class Dumper {
       let cbCalled = false;
       let wait = new WaitFor();
       let depObjectsStack = Dumper._collectDepsObjects(depsTree);
+
+      try {
+        this._checkForDuplicates(depObjectsStack);
+      } catch (error) {
+        cb(error);
+        return;
+      }
+
       let remaining = depObjectsStack.length;
 
       wait.push(() => {
@@ -80,6 +89,35 @@ export class Dumper {
     });
   }
 
+  /**
+   * @param {Object} depObjectsStack
+   * @private
+   */
+  _checkForDuplicates(depObjectsStack) {
+    let depStack = {};
+    let duplicatesStack = {};
+
+    depObjectsStack.forEach((dependencyObj) => {
+      depStack[dependencyObj.name] = depStack[dependencyObj.name] || [];
+      depStack[dependencyObj.name].push(dependencyObj.version);
+    });
+
+    for (let depName in depStack) {
+      if (!depStack.hasOwnProperty(depName)) {
+        continue;
+      }
+
+      let depVersions = depStack[depName];
+
+      if (depVersions.length > 1) {
+        duplicatesStack[depName] = depVersions;
+      }
+    }
+
+    if (Object.keys(duplicatesStack).length > 0) {
+      throw new DuplicateModulesException(duplicatesStack);
+    }
+  }
 
   /**
    * @param {String} moduleName
@@ -88,17 +126,29 @@ export class Dumper {
    * @private
    */
   _dumpSingle(moduleName, moduleVersion, cb) {
-    console.log(`Fetching '${moduleName}@${moduleVersion}' module data`);
-
-    this._storage.readModule(moduleName, moduleVersion, (error, moduleObj) => {
+    this._dumpDriver.hasToDump(moduleName, moduleVersion, (error, hasToDump) => {
       if (error) {
         cb(error);
         return;
+      } else if (!hasToDump) {
+        console.log(`Module '${moduleName}@${moduleVersion}' has been already dumped. Skipping...`);
+
+        cb(null);
+        return;
       }
 
-      console.log(`Dumping '${moduleName}@${moduleVersion}' module`);
+      console.log(`Fetching '${moduleName}@${moduleVersion}' module data`);
 
-      this._dumpDriver.dump(moduleObj, cb);
+      this._storage.readModule(moduleName, moduleVersion, (error, moduleObj) => {
+        if (error) {
+          cb(error);
+          return;
+        }
+
+        console.log(`Dumping '${moduleName}@${moduleVersion}' module`);
+
+        this._dumpDriver.dump(moduleObj, cb);
+      });
     });
   }
 
@@ -109,6 +159,12 @@ export class Dumper {
    */
   static _collectDepsObjects(depsTree) {
     let depsVector = [];
+
+    // @todo: return circular deps?
+    // although these are removed on Dumper._removeDepsVectorDuplicates()
+    if (depsTree._isCircular) {
+      return depsVector;
+    }
 
     depsVector.push({
       name: depsTree.name,
@@ -127,6 +183,27 @@ export class Dumper {
       depsVector = depsVector.concat(Dumper._collectDepsObjects(nestedDepsTree));
     }
 
-    return depsVector;
+    return Dumper._removeDepsVectorDuplicates(depsVector);
+  }
+
+  /**
+   * @param {{name:*,version:*}[]} depsVector
+   * @returns {{name:*,version:*}[]}
+   * @private
+   */
+  static _removeDepsVectorDuplicates(depsVector) {
+    let storageKeys = [];
+    let cleanVector = [];
+
+    depsVector.forEach((depObj) => {
+      let storageKey = `${depObj.name}@${depObj.version}`;
+
+      if (storageKeys.indexOf(storageKey) === -1) {
+        storageKeys.push(storageKey);
+        cleanVector.push(depObj);
+      }
+    });
+
+    return cleanVector;
   }
 }

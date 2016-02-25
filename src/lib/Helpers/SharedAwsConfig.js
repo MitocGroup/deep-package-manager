@@ -228,7 +228,7 @@ export class SharedAwsConfig {
         refresh: function() {
           let cmdPipe = Env.isWin ? '2 > NUL' : '2>/dev/null';
 
-          let accessKeyIdConfigureCmd =`aws configure get aws_access_key_id ${cmdPipe}`;
+          let accessKeyIdConfigureCmd = `aws configure get aws_access_key_id ${cmdPipe}`;
           let secretAccessKeyConfigureCmd = `aws configure get aws_secret_access_key ${cmdPipe}`;
           let regionConfigureCmd = `aws configure get region ${cmdPipe}`;
 

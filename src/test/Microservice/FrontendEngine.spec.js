@@ -51,11 +51,7 @@ suite('Microservice/FrontendEngine', () => {
   test(`Check getRealEngine() static method returns ${angularEngineResult}`, () => {
     chai.expect(FrontendEngine.getRealEngine('angular')).to.be.equal(angularEngineResult);
   });
-
-  test('Check getLatestEngineVersion() static method returns valid version', () => {
-    chai.expect(FrontendEngine.getLatestEngineVersion()).to.be.equal(latestEngineVersion);
-  });
-
+  
   test('Check create() static method returns true', () => {
     enginesExpectedResult = FrontendEngine.create(microserviceInput);
 

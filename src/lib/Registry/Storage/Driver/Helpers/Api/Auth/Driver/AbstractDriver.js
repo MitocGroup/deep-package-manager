@@ -8,6 +8,6 @@ import Core from 'deep-core';
 
 export class AbstractDriver extends Core.OOP.Interface {
   constructor() {
-    super(['dump', 'hasToDump']);
+    super(['injectIntoRequest', 'authorize']);
   }
 }

@@ -4,6 +4,9 @@
 
 'use strict';
 
+import {Dependency as GitHubDependency} from '../Registry/GitHub/Dependency';
+import path from 'path';
+
 export class FrontendEngine {
   /**
    * @param {String[]} engines
@@ -35,17 +38,34 @@ export class FrontendEngine {
   }
 
   /**
+   * @param {Property|Instance|*} property
+   * @param {String} suitableEngine
+   * @param {Function} cb
+   */
+  static fetch(property, suitableEngine, cb) {
+    let repo = FrontendEngine.getEngineGitHub(suitableEngine);
+    let dependency = new GitHubDependency(repo, '*');
+
+    dependency.extract(path.join(property.path, FrontendEngine.getRealEngine(suitableEngine)), cb);
+  }
+
+  /**
    * @param {String} engine
    * @returns {String}
-   *
-   * @todo: get versions dynamically!
    */
-  static getLatestEngineVersion(engine) {
-    let version = '0.0.1';
+  static getEngineGitHub(engine) {
+    let depName = null;
 
-    console.log(`Temporary use ${FrontendEngine.getRealEngine(engine)}@${version} statically...`);
+    switch (engine) {
+      case FrontendEngine.ANGULAR_ENGINE:
+        depName = GitHubDependency.getDepName(
+          FrontendEngine.GITHUB_DEEP_USER,
+          `${FrontendEngine.GITHUB_REPO_PREFIX}angularjs`
+        );
+        break;
+    }
 
-    return version;
+    return depName;
   }
 
   /**
@@ -101,14 +121,6 @@ export class FrontendEngine {
    * @param {String} engine
    * @returns {String}
    */
-  static getEngineRepository(engine) {
-    return FrontendEngine.REPOSITORIES[engine];
-  }
-
-  /**
-   * @param {String} engine
-   * @returns {String}
-   */
   static getRealEngine(engine) {
     switch (engine) {
       case FrontendEngine.ANGULAR_ENGINE:
@@ -134,13 +146,16 @@ export class FrontendEngine {
   }
 
   /**
-   * @returns {Object}
+   * @returns {String}
    */
-  static get REPOSITORIES() {
-    let repos = {};
+  static get GITHUB_DEEP_USER() {
+    return 'MitocGroup';
+  }
 
-    repos[FrontendEngine.ANGULAR_ENGINE] = 'https://github.com/MitocGroup/deep-microservices-root-angularjs.git';
-
-    return repos;
+  /**
+   * @returns {String}
+   */
+  static get GITHUB_REPO_PREFIX() {
+    return 'deep-microservices-root-';
   }
 }

@@ -38,7 +38,13 @@ export class WaitFor {
    */
   static waterfall(executor, cb, ...series) {
     let wait = new WaitFor();
-    let readyCb = executor(series.pop());
+    let args = series.shift();
+
+    if (!Array.isArray(args)) {
+      args = [args,];
+    }
+
+    let readyCb = executor(...args);
 
     wait.push(readyCb);
 
