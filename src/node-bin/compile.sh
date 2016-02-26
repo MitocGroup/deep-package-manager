@@ -1,5 +1,4 @@
 if [ "$TRAVIS" == "true" ]; then
-    `which` uglify
     echo "Skipping code transpiling to ES5 becuase we are in travis"
 elif [ -d 'lib/' ] && [ "$OSTYPE" != "win32" ] && [ "$OSTYPE" != "win64" ]; then
    BABEL_ENV=production babel lib/ --out-dir lib.compiled/;
