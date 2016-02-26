@@ -1062,6 +1062,23 @@ export class Instance {
   }
 
   /**
+   * @returns {Microservice}
+   */
+  get rootMicroservice() {
+    for (let i in this._microservices) {
+      if (!this._microservices.hasOwnProperty(i)) {
+        continue;
+      }
+
+      if (this._microservices[i].isRoot) {
+        return this._microservices[i];
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * @returns {Microservice[]}
    */
   get microservices() {
@@ -1082,7 +1099,10 @@ export class Instance {
         if (FileSystem.statSync(fullPath).isDirectory() &&
           FileSystem.existsSync(Path.join(fullPath, Microservice.CONFIG_FILE))) {
 
-          this._microservices.push(Microservice.create(fullPath));
+          let microservices = Microservice.create(fullPath);
+          microservices.property = this;
+
+          this._microservices.push(microservices);
         }
       }
     }

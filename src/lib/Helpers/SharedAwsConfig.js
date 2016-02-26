@@ -78,7 +78,7 @@ export class SharedAwsConfig {
       prompt.syncMode = true;
 
       prompt.read((answer) => {
-        credentials.accessKeyId = answer;
+        credentials.accessKeyId = answer || SharedAwsConfig.DEFAULT_ACCESS_KEY;
       });
     }
 
@@ -87,7 +87,7 @@ export class SharedAwsConfig {
       prompt.syncMode = true;
 
       prompt.readHidden((answer) => {
-        credentials.secretAccessKey = answer;
+        credentials.secretAccessKey = answer || SharedAwsConfig.DEFAULT_SECRET_ACCESS_KEY;
       });
     }
 
@@ -278,5 +278,19 @@ export class SharedAwsConfig {
     }
 
     return path.join(home, '.aws', 'credentials');
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get DEFAULT_ACCESS_KEY() {
+    return '[YOUR_AWS_ACCESS_KEY]';
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get DEFAULT_SECRET_ACCESS_KEY() {
+    return '[YOUR_AWS_SECRET_ACCESS_KEY]';
   }
 }
