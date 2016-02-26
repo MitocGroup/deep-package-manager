@@ -22,6 +22,7 @@ import {SQSService} from './Service/SQSService';
 import {CloudWatchLogsService} from './Service/CloudWatchLogsService';
 import {Instance as PropertyInstance} from '../Property/Instance';
 import {WaitFor} from '../Helpers/WaitFor';
+import {Tagging} from './ResourceTagging/Tagging';
 
 /**
  * Provisioning instance
@@ -352,7 +353,15 @@ export class Instance {
       });
 
       subWait.ready(() => {
-        callback(this._config);
+        if (isUpdate) {
+          callback(this._config);
+        } else {
+          console.log('Start tagging resources');
+
+          Tagging.create(this._property).tag(() => {
+            callback(this._config);
+          });
+        }
       });
     });
   }
