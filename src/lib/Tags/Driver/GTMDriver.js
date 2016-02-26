@@ -57,12 +57,10 @@ export class GTMDriver extends AbstractDriver {
   }
 
   /**
-   * @returns {*}
-   * @constructor
+   * @returns {String}
    */
   static get SCRIPT_TPL() {
-    return `
-<!-- Google Tag Manager -->
+    return `<!-- Google Tag Manager -->
 <noscript><iframe src="//www.googletagmanager.com/ns.html?id={containerId}"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':

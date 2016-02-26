@@ -7,6 +7,7 @@
 import fs from 'fs';
 import {GTMDriver} from './Driver/GTMDriver';
 import {DeepConfigDriver} from './Driver/DeepConfigDriver';
+import {DeployIdDriver} from './Driver/DeployIdDriver';
 import {RootAssetsDriver} from './Driver/RootAssetsDriver';
 
 export class Injector {
@@ -28,6 +29,7 @@ export class Injector {
 
     if (deepConfig) {
       drivers.push(new DeepConfigDriver(deepConfig));
+      drivers.push(new DeployIdDriver(deepConfig.deployId));
     }
 
     if (gtmContainerId) {
