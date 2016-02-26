@@ -41,6 +41,22 @@ export class Instance {
 
     this._postDeployHook = new PostDeployHook(this);
     this._initHook = new InitHook(this);
+
+    this._property = null;
+  }
+
+  /**
+   * @returns {Property|Instance|null}
+   */
+  get property() {
+    return this._property;
+  }
+
+  /**
+   * @param {Property|Instance|null} property
+   */
+  set property(property) {
+    this._property = property;
   }
 
   /**
