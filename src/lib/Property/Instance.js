@@ -195,6 +195,13 @@ export class Instance {
   /**
    * @returns {String}
    */
+  get env() {
+    return this._config.env;
+  }
+
+  /**
+   * @returns {String}
+   */
   get deployId() {
     return this._config.deployId;
   }
