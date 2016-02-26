@@ -488,7 +488,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
 
   /**
    * @param {Boolean} update
-   * @returns {AwsRequestSyncStack}
+   * @returns {AwsRequestSyncStack|WaitFor|*}
    */
   upload(update = false) {
     console.log(`Start uploading lambda ${this._identifier}`);
