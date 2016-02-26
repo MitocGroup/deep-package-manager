@@ -24,7 +24,6 @@ import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
 import {CloudWatchLogsService} from './CloudWatchLogsService';
-import Utils from 'util';
 import objectMerge from 'object-merge';
 import nodePath from 'path';
 import jsonPointer from 'json-pointer';
@@ -698,44 +697,52 @@ export class APIGatewayService extends AbstractService {
           restApiId: apiId,
           resourceId: apiResource.id,
         };
-        let params = {};
+        let methodParams = [];
 
         switch (method) {
           case 'putMethod':
-            params = {
+            methodParams.push({
               authorizationType: resourceMethod === 'OPTIONS' ? 'NONE' : 'AWS_IAM',
               requestModels: this.jsonEmptyModel,
               requestParameters: this._getMethodRequestParameters(
                 resourceMethod, resourceMethods[resourceMethod]
               ),
-            };
+            });
             break;
           case 'putMethodResponse':
-            params = {
-              statusCode: '200',
-              responseModels: this.jsonEmptyModel,
-              responseParameters: this._getMethodResponseParameters(resourceMethod),
-            };
+            this.methodStatusCodes(resourceMethod).forEach((statusCode) => {
+              methodParams.push({
+                statusCode: `${statusCode}`,
+                responseModels: this.jsonEmptyModel,
+                responseParameters: this._getMethodResponseParameters(resourceMethod),
+              });
+            });
             break;
           case 'putIntegration':
-            params = resourceMethods[resourceMethod];
+            let params = resourceMethods[resourceMethod];
 
             //params.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
             // @todo - find a smarter way to enable "Invoke with caller credentials" option
             params.credentials = resourceMethod === 'OPTIONS' ? null : 'arn:aws:iam::*:user/*';
+            methodParams.push(params);
             break;
           case 'putIntegrationResponse':
-            params = {
-              statusCode: '200',
-              responseTemplates: this.getJsonResponseTemplate(resourceMethod),
-              responseParameters: this._getMethodResponseParameters(resourceMethod, Object.keys(resourceMethods)),
-            };
+            this.methodStatusCodes(resourceMethod).forEach((statusCode) => {
+              methodParams.push({
+                statusCode: `${statusCode}`,
+                responseTemplates: this.getJsonResponseTemplate(resourceMethod),
+                responseParameters: this._getMethodResponseParameters(resourceMethod, Object.keys(resourceMethods)),
+                selectionPattern: statusCode == 200 ? '-' : `.*\\"${this.deepStatusCodeKey}\\":${statusCode}.*`,
+              });
+            });
             break;
           default:
             throw new Exception(`Unknown api method ${method}.`);
         }
 
-        paramsArr.push(Utils._extend(commonParams, params));
+        methodParams.forEach((params) => {
+          paramsArr.push(objectMerge(commonParams, params));
+        });
       }
     }
 
@@ -1073,6 +1080,21 @@ export class APIGatewayService extends AbstractService {
     return {
       'application/json': 'Empty',
     };
+  }
+
+  /**
+   * @param {String} resourceMethod
+   * @returns {Array}
+   */
+  methodStatusCodes(resourceMethod) {
+    return resourceMethod === 'OPTIONS' ? [200] : Core.HTTP.Helper.CODES;
+  }
+
+  /**
+   * @returns {Array}
+   */
+  get deepStatusCodeKey() {
+    return Core.Exception.Exception.CODE_KEY;
   }
 
   /**
