@@ -4,9 +4,10 @@
 
 'use strict';
 
-import {AbstractService} from './AbstractService';
-import {FailedToCreateEsDomainException} from './Exception/FailedToCreateEsDomainException';
 import Core from 'deep-core';
+import {AbstractService} from './AbstractService';
+import {CognitoIdentityService} from './CognitoIdentityService';
+import {FailedToCreateEsDomainException} from './Exception/FailedToCreateEsDomainException';
 
 /**
  * Elasticsearch service
@@ -147,7 +148,7 @@ export class ElasticsearchService extends AbstractService {
         '',
         AbstractService.DELIMITER_HYPHEN_LOWER_CASE
       );
-      // @todo - add AccessPolicies
+      params.AccessPolicies = this._getDomainAccessPolicy(domainName).toString();
 
       syncStack.push(elasticSearch.createElasticsearchDomain(params), (error, data) => {
         if (error) {
@@ -163,6 +164,58 @@ export class ElasticsearchService extends AbstractService {
         callback(domains);
       });
     };
+  }
+
+  /**
+   * @param {String} domainName
+   * @returns {Core.AWS.IAM.Policy}
+   */
+  _getDomainAccessPolicy(domainName) {
+    let policy = new Core.AWS.IAM.Policy();
+    let readOnlyStatement = policy.statement.add();
+
+    // Allow Cognito identities to execute only GET and HEAD methods on an ES domain
+    readOnlyStatement.principal = { AWS: [] };
+
+    CognitoIdentityService.ROLE_TYPES.forEach((roleType) => {
+      let roleName = this.generateAwsResourceName(roleType, Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT);
+
+      let roleResource = Core.AWS.IAM.Factory.create(
+        'resource',
+        Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
+        this.provisioning.iam.config.region,
+        this.awsAccountId,
+        `role/${roleName}`
+      );
+
+      readOnlyStatement.principal.AWS.push(roleResource.extract());
+    });
+
+    ['ESHttpGet', 'ESHttpHead'].forEach((actionName) => {
+      readOnlyStatement.action.add(Core.AWS.Service.ELASTIC_SEARCH, actionName);
+    });
+
+    let esDomainResource = readOnlyStatement.resource.add(
+      Core.AWS.Service.ELASTIC_SEARCH,
+      this.provisioning.elasticSearch.config.region,
+      this.awsAccountId,
+      `domain:${this._getGlobalResourceMask()}`
+    );
+
+    // Allow Lambda service to execute all http methods on an ES domain
+    let readWriteStatement = policy.statement.add();
+
+    readWriteStatement.principal = {
+      Service: Core.AWS.Service.identifier(Core.AWS.Service.LAMBDA),
+    };
+
+    ['ESHttpGet', 'ESHttpHead', 'ESHttpDelete', 'ESHttpPost', 'ESHttpPut'].forEach((actionName) => {
+      readWriteStatement.action.add(Core.AWS.Service.ELASTIC_SEARCH, actionName);
+    });
+
+    readWriteStatement.resource.add(esDomainResource);
+
+    return policy;
   }
 }
 
