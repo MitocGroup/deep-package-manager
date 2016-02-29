@@ -5,6 +5,7 @@
 'use strict';
 
 import Core from 'deep-core';
+import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {AbstractService} from './AbstractService';
 import {CognitoIdentityService} from './CognitoIdentityService';
 import {FailedToCreateEsDomainException} from './Exception/FailedToCreateEsDomainException';
@@ -115,7 +116,7 @@ export class ElasticsearchService extends AbstractService {
         EBSOptions: {
           EBSEnabled: true,
           VolumeType: 'standard',
-          VolumeSize: 5,
+          VolumeSize: 10,
           Iops: 0,
         },
         SnapshotOptions: {
@@ -188,6 +189,7 @@ export class ElasticsearchService extends AbstractService {
         `role/${roleName}`
       );
 
+      // @todo - find out why role based Principal is not acceptable by ES service
       readOnlyStatement.principal.AWS.push(roleResource.extract());
     });
 
@@ -199,7 +201,7 @@ export class ElasticsearchService extends AbstractService {
       Core.AWS.Service.ELASTIC_SEARCH,
       this.provisioning.elasticSearch.config.region,
       this.awsAccountId,
-      `domain:${this._getGlobalResourceMask()}`
+      `domain:${this._getGlobalResourceMask('', AbstractService.DELIMITER_HYPHEN_LOWER_CASE)}`,
     );
 
     // Allow Lambda service to execute all http methods on an ES domain
