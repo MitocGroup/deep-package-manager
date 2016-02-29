@@ -5,6 +5,7 @@
 'use strict';
 
 import {AbstractService} from './AbstractService';
+import {FailedToCreateEsDomainException} from './Exception/FailedToCreateEsDomainException';
 import Core from 'deep-core';
 
 /**
@@ -30,7 +31,16 @@ export class ElasticsearchService extends AbstractService {
    */
   static get AVAILABLE_REGIONS() {
     return [
-      Core.AWS.Region.all(),
+      Core.AWS.Region.ASIA_PACIFIC_TOKYO,
+      Core.AWS.Region.ASIA_PACIFIC_SEOUL,
+      Core.AWS.Region.ASIA_PACIFIC_SYDNEY,
+      Core.AWS.Region.SOUTH_AMERICA_SAO_PAULO,
+      Core.AWS.Region.ASIA_PACIFIC_SINGAPORE,
+      Core.AWS.Region.EU_FRANKFURT,
+      Core.AWS.Region.EU_IRELAND,
+      Core.AWS.Region.US_EAST_N_VIRGINIA,
+      Core.AWS.Region.US_WEST_N_CALIFORNIA,
+      Core.AWS.Region.US_WEST_OREGON,
     ];
   }
 
@@ -45,7 +55,13 @@ export class ElasticsearchService extends AbstractService {
       return this;
     }
 
-    this._ready = true;
+    this._createDomains(
+      this._domainsConfig
+    )((domains) => {
+      this._config.domains = domains;
+
+      this._ready = true;
+    });
 
     return this;
   }
@@ -81,4 +97,72 @@ export class ElasticsearchService extends AbstractService {
 
     return this;
   }
+
+  /**
+   * @returns {Object}
+   * @private
+   */
+  get _domainsConfig() {
+    return {
+      rum: {
+        ElasticsearchClusterConfig: {
+          InstanceType: 't2.micro.elasticsearch',
+          InstanceCount: 1,
+          DedicatedMasterEnabled: false,
+          ZoneAwarenessEnabled: false,
+        },
+        EBSOptions: {
+          EBSEnabled: true,
+          VolumeType: 'standard',
+          VolumeSize: 5,
+          Iops: 0,
+        },
+        SnapshotOptions: {
+          AutomatedSnapshotStartHour: 0,
+        },
+      },
+    };
+  }
+
+  /**
+   * @param {Object} domainsConfig
+   * @returns {Function}
+   * @private
+   */
+  _createDomains(domainsConfig) {
+    let elasticSearch = this.provisioning.elasticSearch;
+    let syncStack = new AwsRequestSyncStack();
+    let domains = {};
+
+    for (let domainName in domainsConfig) {
+      if (!domainsConfig.hasOwnProperty(domainName)) {
+        continue;
+      }
+
+      let params = domainsConfig[domainName];
+
+      params.DomainName = this.generateAwsResourceName(
+        `${domainName}`,
+        this.name(),
+        '',
+        AbstractService.DELIMITER_HYPHEN_LOWER_CASE
+      );
+      // @todo - add AccessPolicies
+
+      syncStack.push(elasticSearch.createElasticsearchDomain(params), (error, data) => {
+        if (error) {
+          throw new FailedToCreateEsDomainException(params.DomainName, error);
+        }
+
+        domains[domainName] = data.DomainStatus;
+      });
+    }
+
+    return (callback) => {
+      return syncStack.join().ready(() => {
+        callback(domains);
+      });
+    };
+  }
 }
+
