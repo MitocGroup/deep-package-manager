@@ -1,0 +1,22 @@
+{
+  "identifier": "microservice1dep2nested",
+  "name": "microservice1dep2nested",
+  "description": "Microservice used for testing purposes",
+  "version": "3.0.0",
+  "propertyRoot": true,
+  "author": {
+    "name": "Mitoc Group",
+    "email": "hello@mitocgroup.com",
+    "website": "http://www.mitocgroup.com"
+  },
+  "contributors": [
+    {
+      "name": "Stefan Hariton",
+      "email": "shariton@mitocgroup.com",
+      "website": "http://www.mitocgroup.com"
+    }
+  ],
+  "dependencies": {
+    "microservice1": "^0.2.x"
+  }
+}

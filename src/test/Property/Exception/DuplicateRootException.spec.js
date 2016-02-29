@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {DuplicateRootException} from '../../../lib/Property/Exception/DuplicateRootException';
 
-suite('Property/Exception/DuplicateRootException', function() {
+suite('Property/Exception/DuplicateRootException', () => {
 
-  test('Class DuplicateRootException', function() {
+  test('Class DuplicateRootException', () => {
     let rootMicroservice = {
       config: {
         identifier: 'Root',

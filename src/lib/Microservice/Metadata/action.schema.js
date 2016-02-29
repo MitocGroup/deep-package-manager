@@ -6,6 +6,7 @@
 
 import {Action} from './Action';
 import Joi from 'joi';
+import path from 'path';
 import {JoiHelper} from '../../Helpers/JoiHelper';
 import {Lambda} from '../../Property/Lambda';
 
@@ -13,9 +14,10 @@ export default Joi.object().keys({
   description: JoiHelper.maybeString(),
   type: JoiHelper.stringEnum([Action.LAMBDA, Action.EXTERNAL]),
   methods: JoiHelper.listEnum(Action.HTTP_VERBS),
-  source: JoiHelper.string(),
+  source: JoiHelper.string().replace(/\//gi, path.sep),
   cacheTtl: Joi.number().optional().integer().min(Action.NO_CACHE).default(Action.NO_CACHE),
   forceUserIdentity: assureTypeLambda(Joi.boolean().optional().default(true)),
+  validationSchema: JoiHelper.maybeString(),
 
   // Lambda config
   engine: assureTypeLambda(Joi.object().optional().keys({

@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {FailedToExecuteApiGatewayMethodException} from '../../../../lib/Provisioning/Service/Exception/FailedToExecuteApiGatewayMethodException';
 
-suite('Provisioning/Service/Exception/FailedToExecuteApiGatewayMethodException', function() {
+suite('Provisioning/Service/Exception/FailedToExecuteApiGatewayMethodException', () => {
 
-  test('Class FailedToExecuteApiGatewayMethodException', function() {
+  test('Class FailedToExecuteApiGatewayMethodException', () => {
     let exception = null;
     try {
       exception = new FailedToExecuteApiGatewayMethodException('Test exception');

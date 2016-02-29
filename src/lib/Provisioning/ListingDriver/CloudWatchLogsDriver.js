@@ -5,6 +5,7 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
+import {AbstractService} from '../Service/AbstractService';
 
 export class CloudWatchLogsDriver extends AbstractDriver {
   /**
@@ -15,21 +16,59 @@ export class CloudWatchLogsDriver extends AbstractDriver {
   }
 
   /**
-   * @param {Function} cb
+   * Overrides base _matchResource by adding support for custom API Gateway CloudWatch log group name
+   * e.g. API-Gateway-Execution-Logs_56fh4n843h/dev
+   *
+   * @param {String} resource
+   * @returns {Boolean}
+   * @private
    */
-  list(cb) {
-    this._listLogGroups(cb);
+  _matchResource(resource) {
+    if (resource.indexOf(CloudWatchLogsDriver.API_GATEWAY_LOG_GROUP_PREFIX) !== -1) {
+      let apiCloudWatchLogGroup = null;
+
+      if (this._deployCfg && this._deployCfg.apigateway.api && this._deployCfg.apigateway.api.logGroupName) {
+        apiCloudWatchLogGroup = this._deployCfg.apigateway.api.logGroupName;
+      }
+
+      return apiCloudWatchLogGroup ? resource === apiCloudWatchLogGroup : false;
+    }
+
+    if (typeof this._baseHash === 'function') {
+      return this._baseHash.bind(this)(resource);
+    } else if (this._baseHash instanceof RegExp) {
+      return this._baseHash.test(resource);
+    }
+
+    return AbstractService.extractBaseHashFromResourceName(resource) === this._baseHash;
   }
 
   /**
    * @param {Function} cb
+   */
+  list(cb) {
+    let responses = 0;
+
+    CloudWatchLogsDriver.LOG_GROUP_PREFIXES.forEach((logGroupPrefix, index) => {
+      this._listLogGroups(logGroupPrefix, (result) => {
+        responses++;
+        if (responses === CloudWatchLogsDriver.LOG_GROUP_PREFIXES.length) {
+          cb(result);
+        }
+      });
+    });
+  }
+
+  /**
+   * @param {String} logGroupPrefix
+   * @param {Function} cb
    * @param {String|null} nextToken
    * @private
    */
-  _listLogGroups(cb, nextToken = null) {
+  _listLogGroups(logGroupPrefix, cb, nextToken = null) {
     let payload = {
       limit: CloudWatchLogsDriver.LIMIT,
-      logGroupNamePrefix: CloudWatchLogsDriver.LAMBDA_LOG_GROUP_PREFIX
+      logGroupNamePrefix: logGroupPrefix,
     };
 
     if (nextToken) {
@@ -56,7 +95,7 @@ export class CloudWatchLogsDriver extends AbstractDriver {
       if (data.logGroups.nextToken) {
         let nextBatchToken = data.logGroups.nextToken;
 
-        this._listDistributions(cb, nextBatchToken);
+        this._listLogGroups(logGroupPrefix, cb, nextBatchToken);
       } else {
         cb(null);
       }
@@ -68,6 +107,23 @@ export class CloudWatchLogsDriver extends AbstractDriver {
    */
   static get LAMBDA_LOG_GROUP_PREFIX() {
     return '/aws/lambda/';
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get API_GATEWAY_LOG_GROUP_PREFIX() {
+    return 'API-Gateway-Execution-Logs_';
+  }
+
+  /**
+   * @returns {Array}
+   */
+  static get LOG_GROUP_PREFIXES() {
+    return [
+      CloudWatchLogsDriver.LAMBDA_LOG_GROUP_PREFIX,
+      CloudWatchLogsDriver.API_GATEWAY_LOG_GROUP_PREFIX,
+    ];
   }
 
   /**

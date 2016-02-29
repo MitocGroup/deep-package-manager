@@ -16,6 +16,8 @@ import {IAMService} from './IAMService';
 import objectMerge from 'object-merge';
 import {_extend as extend} from 'util';
 import {CognitoIdentityService} from './CognitoIdentityService';
+import {CloudWatchLogsService} from './CloudWatchLogsService';
+import {SQSService} from './SQSService';
 
 /**
  * Lambda service
@@ -336,15 +338,8 @@ export class LambdaService extends AbstractService {
   _getAccessPolicy(microserviceIdentifier, buckets) {
     let policy = new Core.AWS.IAM.Policy();
 
-    // @todo - limit access to CloudWatch logs from * to certain actions and log groups
-    let logsStatement = policy.statement.add();
-    logsStatement.action.add(Core.AWS.Service.CLOUD_WATCH_LOGS, Core.AWS.IAM.Policy.ANY);
-    logsStatement.resource.add(
-      Core.AWS.Service.CLOUD_WATCH_LOGS,
-      Core.AWS.IAM.Policy.ANY,
-      this.awsAccountId,
-      Core.AWS.IAM.Policy.ANY
-    );
+    let cloudWatchService = this.provisioning.services.find(CloudWatchLogsService);
+    policy.statement.add(cloudWatchService.generateAllowFullAccessStatement());
 
     let dynamoDbStatement = policy.statement.add();
     dynamoDbStatement.action.add(Core.AWS.Service.DYNAMO_DB, Core.AWS.IAM.Policy.ANY);
@@ -384,6 +379,16 @@ export class LambdaService extends AbstractService {
     policy.statement.add(cognitoService.generateAllowDescribeIdentityStatement(LambdaService));
 
     policy.statement.add(this.generateAllowInvokeFunctionStatement());
+
+    let sqsService = this.provisioning.services.find(SQSService);
+    policy.statement.add(sqsService.generateAllowActionsStatement());
+
+    // @todo: move it to ElastiCacheService?
+    let ec2Statement = policy.statement.add();
+    ec2Statement.action.add(Core.AWS.Service.EC2, 'CreateNetworkInterface');
+    ec2Statement.action.add(Core.AWS.Service.EC2, 'DescribeNetworkInterfaces');
+    ec2Statement.action.add(Core.AWS.Service.EC2, 'DeleteNetworkInterface');
+    ec2Statement.resource.add().any();
 
     return policy;
   }

@@ -7,7 +7,12 @@
 import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
 import {S3Service} from './S3Service';
+import {ACMService} from './ACMService';
 import {FailedToCreateCloudFrontDistributionException} from './Exception/FailedToCreateCloudFrontDistributionException';
+import {FailedToRequestCloudFrontDistributionCertificateException} from './Exception/FailedToRequestCloudFrontDistributionCertificateException';
+import {Hash} from '../../Helpers/Hash';
+import {WaitFor} from '../../Helpers/WaitFor';
+import objectMerge from 'object-merge';
 
 /**
  * CloudFront service
@@ -18,6 +23,25 @@ export class CloudFrontService extends AbstractService {
    */
   constructor(...args) {
     super(...args);
+
+    this._distMetadata = {
+      ViewerProtocolPolicy: 'allow-all',
+      ViewerCertificate: {
+        CloudFrontDefaultCertificate: true,
+        CertificateSource: 'cloudfront',
+      },
+      Aliases: {
+        Quantity: 0,
+        Items: [],
+      },
+    };
+  }
+
+  /**
+   * @returns {{ViewerProtocolPolicy: string, ViewerCertificate: {CloudFrontDefaultCertificate: boolean, MinimumProtocolVersion: string}}|*}
+   */
+  get distMetadata() {
+    return this._distMetadata;
   }
 
   /**
@@ -37,7 +61,7 @@ export class CloudFrontService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {CloudFrontService}
    */
   _setup(services) {
@@ -53,7 +77,7 @@ export class CloudFrontService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {CloudFrontService}
    */
   _postProvision(services) {
@@ -63,18 +87,80 @@ export class CloudFrontService extends AbstractService {
       return this;
     }
 
-    this._createDistribution(services, (cfData) => {
-      this._config.id = cfData.Distribution.Id;
-      this._config.domain = cfData.Distribution.DomainName;
+    let acmService = services.find(ACMService);
+    let wait = new WaitFor();
 
-      this._readyTeardown = true;
+    wait.push(() => {
+      return acmService.allowRunCf;
+    });
+
+    wait.ready(() => {
+      this._createDistribution(services, (cfData) => {
+        this._config.id = cfData.Distribution.Id;
+        this._config.domain = cfData.Distribution.DomainName;
+
+        this._readyTeardown = true;
+      });
     });
 
     return this;
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Object} configChanges
+   * @param {Function} cb
+   */
+  updateDistribution(configChanges, cb) {
+    this.fetchDistributionConfig((error, data) => {
+      if (error) {
+        cb(error, null);
+        return;
+      }
+
+      let cf = this.provisioning.cloudFront;
+
+      let eTag = data.ETag;
+      let config = objectMerge(data.DistributionConfig, configChanges);
+
+      let payload = {
+        DistributionConfig: config,
+        Id: this._config.id, // This is validated in fetchDistributionConfig()
+        IfMatch: eTag,
+      };
+
+      cf.updateDistribution(payload, cb);
+    });
+  }
+
+  /**
+   * @param {Function} cb
+   */
+  fetchDistributionConfig(cb) {
+    let cf = this.provisioning.cloudFront;
+    let cfId = this._config.id;
+
+    if (!cfId) {
+      cb(new Error('No CloudFront distribution provisioned'), null);
+      return;
+    }
+
+    let payload = {
+      Id: cfId,
+    };
+
+    cf.getDistributionConfig(payload, (error, data) => {
+      if (error) {
+        cb(error, null);
+        return;
+      }
+
+      cb(null, data);
+    });
+  }
+
+  /**
+   * @param {Core.Generic.ObjectStorage} services
+   * @param {Function} cb
    * @returns {CloudFrontService}
    */
   _createDistribution(services, cb) {
@@ -108,7 +194,7 @@ export class CloudFrontService extends AbstractService {
             Enabled: false,
             Quantity: 0,
           },
-          ViewerProtocolPolicy: 'allow-all',
+          ViewerProtocolPolicy: this._distMetadata.ViewerProtocolPolicy,
         },
         Enabled: true,
         Origins: {
@@ -127,10 +213,7 @@ export class CloudFrontService extends AbstractService {
           ],
         },
         DefaultRootObject: 'index.html',
-        ViewerCertificate: {
-          CloudFrontDefaultCertificate: true,
-          MinimumProtocolVersion: 'SSLv3',
-        },
+        ViewerCertificate: this._distMetadata.ViewerCertificate,
         CustomErrorResponses: {
           Items: [
             {
@@ -142,6 +225,7 @@ export class CloudFrontService extends AbstractService {
           ],
           Quantity: 1,
         },
+        Aliases: this._distMetadata.Aliases,
       },
     };
 
@@ -157,7 +241,7 @@ export class CloudFrontService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {CloudFrontService}
    */
   _postDeployProvision(services) {

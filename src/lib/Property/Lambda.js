@@ -4,7 +4,6 @@
 
 'use strict';
 
-import StringUtils from 'underscore.string';
 import Archiver from 'archiver';
 import FileSystem from 'fs';
 import {FailedLambdaUploadException} from './Exception/FailedLambdaUploadException';
@@ -21,6 +20,7 @@ import Mime from 'mime';
 import FileSystemExtra from 'fs-extra';
 import {InvalidConfigException} from './Exception/InvalidConfigException';
 import {Exception} from '../Exception/Exception';
+import {DeepConfigDriver} from '../Tags/Driver/DeepConfigDriver';
 
 /**
  * Lambda instance
@@ -40,9 +40,9 @@ export class Lambda {
     this._identifier = identifier;
     this._name = name;
     this._execRole = execRole;
-    this._path = StringUtils.rtrim(path, '/');
-    this._outputPath = StringUtils.rtrim(property.path, '/');
-    this._zipPath = `${this._outputPath}/${microserviceIdentifier}_lambda_${identifier}.zip`;
+    this._path = Path.normalize(path);
+    this._outputPath = Path.normalize(property.path);
+    this._zipPath = Path.join(this._outputPath, `${microserviceIdentifier}_lambda_${identifier}.zip`);
 
     this._memorySize = Lambda.DEFAULT_MEMORY_LIMIT;
     this._timeout = Lambda.DEFAULT_TIMEOUT;
@@ -98,13 +98,13 @@ export class Lambda {
     config.buckets = S3Service.fakeBucketsConfig(propertyConfig.appIdentifier);
     config.tablesNames = [];
 
-    //config.cacheDsn = '';
+    config.cacheDsn = '';
 
     if (propertyConfig.provisioning) {
       config.buckets = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_STORAGE_SERVICE].buckets;
       config.tablesNames = propertyConfig.provisioning[Core.AWS.Service.DYNAMO_DB].tablesNames;
 
-      //config.cacheDsn = propertyConfig.provisioning[Core.AWS.Service.ELASTIC_CACHE].dsn;
+      config.cacheDsn = propertyConfig.provisioning[Core.AWS.Service.ELASTIC_CACHE].dsn;
     }
 
     for (let microserviceIdentifier in propertyConfig.microservices) {
@@ -160,6 +160,15 @@ export class Lambda {
    */
   get arn() {
     return `arn:aws:lambda:${this.region}:${this.awsAccountId}:function:${this.functionName}`;
+  }
+
+  /**
+   * Mainly used for local server
+   *
+   * @returns {String}
+   */
+  get arnGeneralized() {
+    return `arn:aws:lambda:::function:${this.functionName}`;
   }
 
   /**
@@ -240,6 +249,29 @@ export class Lambda {
   }
 
   /**
+   * @param {Object[]} validationSchemas
+   * @param {Boolean} useSymlink
+   */
+  injectValidationSchemas(validationSchemas, useSymlink = false) {
+    let schemasPath = Path.join(this.path, Core.AWS.Lambda.Runtime.VALIDATION_SCHEMAS_DIR);
+
+    if (FileSystem.existsSync(schemasPath)) {
+      FileSystemExtra.removeSync(schemasPath);
+    }
+
+    validationSchemas.forEach((schema) => {
+      let schemaPath = schema.schemaPath;
+      let destinationSchemaPath = Path.join(schemasPath, `${schema.name}.js`);
+
+      if (useSymlink) {
+        FileSystemExtra.ensureSymlinkSync(schemaPath, destinationSchemaPath);
+      } else {
+        FileSystemExtra.copySync(schemaPath, destinationSchemaPath);
+      }
+    });
+  }
+
+  /**
    * @param {Function} callback
    * @returns {Lambda}
    */
@@ -279,6 +311,12 @@ export class Lambda {
     let archive = Archiver('zip');
 
     output.on('close', () => {
+      let bootstrapFile = Path.join(path, 'bootstrap.js');
+
+      if (FileSystem.existsSync(bootstrapFile)) {
+        Lambda._cleanupBootstrapFile(bootstrapFile);
+      }
+
       ready = true;
     });
 
@@ -298,9 +336,10 @@ export class Lambda {
   /**
    * @param {String} lambdaPath
    * @param {String} packageFile
+   * @param {String|null} runtime
    * @returns {WaitFor}
    */
-  static injectPackageConfig(lambdaPath, packageFile) {
+  static injectPackageConfig(lambdaPath, packageFile, runtime = null) {
     let wait = new WaitFor();
     let ready = false;
 
@@ -314,10 +353,43 @@ export class Lambda {
       throw new InvalidConfigException(`Config file not found in ${configFile}!`);
     }
 
+    let cmd = `zip -r ${packageFile} ${Lambda.CONFIG_FILE}`;
+
+    let bootstrapFile = Path.join(lambdaPath, 'bootstrap.js');
+    let bootstrapBckFile = `${bootstrapFile}.${new Date().getTime()}.bck`;
+    let bootstrapBck = false;
+
+    // read bootstrap file from the archive (fail silently)
+    if (runtime === 'nodejs') {
+      if (FileSystem.existsSync(bootstrapFile)) {
+        bootstrapBck = true;
+        FileSystemExtra.copySync(bootstrapFile, bootstrapBckFile);
+      }
+
+      // @todo: remove this temporary hook by rewriting it in a native way
+      let result = new Exec(`unzip -p ${packageFile} bootstrap.js > ${bootstrapFile}`)
+        .runSync();
+
+      if (result.succeed) {
+        Lambda._tryInjectDeepConfigIntoBootstrapFile(bootstrapFile, configFile);
+
+        cmd += ` && zip -r ${packageFile} bootstrap.js`;
+      } else if(result.error) {
+        console.error(result); //@todo: remove?
+      }
+    }
+
     // @todo: remove this temporary hook by rewriting it in a native way
-    new Exec(`cd ${Path.dirname(configFile)} && zip -r ${packageFile} ${Lambda.CONFIG_FILE}`)
+    new Exec(`cd ${Path.dirname(configFile)} && ${cmd}`)
       .avoidBufferOverflow()
       .run((result) => {
+
+        // restore original bootstrap.js
+        if (runtime === 'nodejs' && bootstrapBck) {
+          FileSystemExtra.copySync(bootstrapBckFile, bootstrapFile);
+          FileSystemExtra.removeSync(bootstrapBckFile);
+        }
+
         if (result.failed) {
           throw new Exception(`Error while adding ${Lambda.CONFIG_FILE} to lambda build: ${result.error}`);
         }
@@ -339,6 +411,7 @@ export class Lambda {
     console.log(`Start packing lambda ${this._identifier}`);
 
     this.persistConfig();
+    this._injectDeepConfigIntoBootstrap();
 
     let buildFile = `${this._path}.zip`;
 
@@ -347,10 +420,63 @@ export class Lambda {
 
       FileSystemExtra.copySync(buildFile, this._zipPath);
 
-      return Lambda.injectPackageConfig(this._path, this._zipPath);
+      return Lambda.injectPackageConfig(this._path, this._zipPath, this._runtime);
     } else {
       return Lambda.createPackage(this._path, this._zipPath);
     }
+  }
+
+  /**
+   * @private
+   */
+  _injectDeepConfigIntoBootstrap(runtime) {
+    if (this._runtime === 'nodejs') { // the only supported runtime
+      let bootstrapFile = Path.join(this.path, 'bootstrap.js');
+      let configFile = Path.join(this.path, Lambda.CONFIG_FILE);
+
+      Lambda._tryInjectDeepConfigIntoBootstrapFile(bootstrapFile, configFile);
+    }
+  }
+
+  /**
+   * @param {String} bootstrapFile
+   * @param {String} configFile
+   * @private
+   */
+  static _tryInjectDeepConfigIntoBootstrapFile(bootstrapFile, configFile) {
+    if (FileSystem.existsSync(configFile) && FileSystem.existsSync(bootstrapFile)) {
+      let cfgPlain = `/*<DEEP_CFG_START> (${new Date().toLocaleString()})*/
+global.${DeepConfigDriver.DEEP_CFG_VAR} =
+  global.${DeepConfigDriver.DEEP_CFG_VAR} ||
+  ${FileSystem.readFileSync(configFile).toString()};
+/*<DEEP_CFG_END>*/`;
+
+      FileSystem.writeFileSync(
+        bootstrapFile,
+        cfgPlain + Lambda._cleanupBootstrapFile(bootstrapFile, true)
+      );
+    }
+  }
+
+  /**
+   * @param {String} bootstrapFile
+   * @param {Boolean} skipWrite
+   * @returns {String}
+   * @private
+   */
+  static _cleanupBootstrapFile(bootstrapFile, skipWrite = false) {
+    let bootstrapContent = FileSystem.readFileSync(bootstrapFile).toString();
+
+    bootstrapContent = bootstrapContent.replace(/(\/\*<DEEP_CFG_START>(?:\n|.)+\/\*<DEEP_CFG_END>\*\/)/gi, '');
+
+    if (!skipWrite) {
+      FileSystem.writeFileSync(
+        bootstrapFile,
+        bootstrapContent
+      );
+    }
+
+    return bootstrapContent;
   }
 
   /**
@@ -362,7 +488,7 @@ export class Lambda {
 
   /**
    * @param {Boolean} update
-   * @returns {AwsRequestSyncStack}
+   * @returns {AwsRequestSyncStack|WaitFor|*}
    */
   upload(update = false) {
     console.log(`Start uploading lambda ${this._identifier}`);
@@ -370,8 +496,10 @@ export class Lambda {
     let lambda = this._property.provisioning.lambda;
     let s3 = this._property.provisioning.s3;
     let tmpBucket = this._property.config.provisioning.s3.buckets[S3Service.TMP_BUCKET].name;
+    let securityGroupId = this._property.config.provisioning.elasticache.securityGroupId;
+    let subnetIds = this._property.config.provisioning.elasticache.subnetIds;
 
-    let objectKey = this._zipPath.split('/').pop();
+    let objectKey = this._zipPath.split(Path.sep).pop();
 
     let s3Params = {
       Bucket: tmpBucket,
@@ -381,6 +509,9 @@ export class Lambda {
     };
 
     let syncStack = new AwsRequestSyncStack();
+
+    // @todo: Remove when exec role assign fixed
+    syncStack.level(1).joinTimeout = 5000;
 
     syncStack.push(s3.putObject(s3Params), (error, data) => {
       if (error) {
@@ -395,17 +526,15 @@ export class Lambda {
         FunctionName: this.functionName,
       };
 
-      if (this._wasPreviouslyDeployed) {
-        let params = {
+      if (update && this._wasPreviouslyDeployed) {
+        request = lambda.updateFunctionCode({
           S3Bucket: tmpBucket,
           S3Key: objectKey,
           S3ObjectVersion: data.VersionId,
           FunctionName: this.functionName,
-        };
-
-        request = lambda.updateFunctionCode(params);
+        });
       } else {
-        let params = {
+        request = lambda.createFunction({
           Code: {
             S3Bucket: tmpBucket,
             S3Key: objectKey,
@@ -417,9 +546,14 @@ export class Lambda {
           Runtime: this._runtime,
           MemorySize: this._memorySize,
           Timeout: this._timeout,
-        };
+        });
 
-        request = lambda.createFunction(params);
+        if (securityGroupId && subnetIds && Array.isArray(subnetIds) && subnetIds.length > 0) {
+          request.VpcConfig = {
+            SecurityGroupIds: [securityGroupId,],
+            SubnetIds: subnetIds,
+          };
+        }
       }
 
       syncStack.level(1).push(request, (error, data) => {
@@ -480,7 +614,7 @@ export class Lambda {
     FileSystemExtra.ensureDirSync(this.path);
 
     JsonFile.writeFileSync(
-      `${this.path}/_config.json`,
+      Path.join(this.path, Lambda.CONFIG_FILE),
       this.createConfig(this._property.config)
     );
 
@@ -514,7 +648,7 @@ export class Lambda {
    * @returns {String}
    */
   static get CONFIG_FILE() {
-    return '_config.json';
+    return Frontend.CONFIG_FILE;
   }
 
   /**

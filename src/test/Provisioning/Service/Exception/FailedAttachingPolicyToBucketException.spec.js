@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {FailedAttachingPolicyToBucketException} from '../../../../lib/Provisioning/Service/Exception/FailedAttachingPolicyToBucketException';
 
-suite('Provisioning/Service/Exception/FailedAttachingPolicyToBucketException', function() {
+suite('Provisioning/Service/Exception/FailedAttachingPolicyToBucketException', () => {
 
-  test('Class FailedAttachingPolicyToBucketException', function() {
+  test('Class FailedAttachingPolicyToBucketException', () => {
     let e = new FailedAttachingPolicyToBucketException('Test exception');
     chai.expect(e).to.be.an.instanceof(FailedAttachingPolicyToBucketException);
   });

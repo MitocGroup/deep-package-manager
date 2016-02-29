@@ -5,8 +5,6 @@
 'use strict';
 
 import {AbstractService} from './Service/AbstractService';
-import Core from 'deep-core';
-import AWS from 'aws-sdk';
 import {WaitFor} from '../Helpers/WaitFor';
 
 export class Listing {
@@ -45,7 +43,7 @@ export class Listing {
       let service = this._createAwsService(serviceName);
       let ServiceListerProto = require(`./ListingDriver/${serviceName}Driver`)[`${serviceName}Driver`];
 
-      let serviceLister = new ServiceListerProto(service, this._hash);
+      let serviceLister = new ServiceListerProto(service, this._hash, this.deployCfg);
 
       serviceLister.list((error) => {
         servicesRemaining--;
@@ -74,14 +72,21 @@ export class Listing {
   }
 
   /**
-   * @returns {String|RegExp}
+   * @returns {Object|null}
+   */
+  get deployCfg() {
+    return this._property.config.provisioning || null;
+  }
+
+  /**
+   * @returns {String|RegExp|Function}
    */
   get hash() {
     return this._hash;
   }
 
   /**
-   * @param {String|RegExp} hash
+   * @param {String|RegExp|Function} hash
    */
   set hash(hash) {
     this._hash = hash;
@@ -99,20 +104,10 @@ export class Listing {
 
   /**
    * @param {String} name
-   * @returns {AbstractService}
+   * @returns {AbstractService|*}
    */
   _createAwsService(name) {
-    let serviceName = `${name}Service`;
-    let ServiceProto = require(`./Service/${serviceName}`)[serviceName];
-
-    let appropriateRegion = Core.AWS.Region.getAppropriateAwsRegion(
-      this._property.config.aws.region,
-      ServiceProto.AVAILABLE_REGIONS
-    );
-
-    return new AWS[name]({
-      region: appropriateRegion,
-    });
+    return this._property.provisioning.getAwsServiceByName(name);
   }
 
   /**
@@ -122,7 +117,7 @@ export class Listing {
     return [
       'APIGateway', 'IAM', 'CognitoIdentity',
       'Lambda', 'CloudFront', 'DynamoDB', 'S3',
-      'CloudWatchLogs',
+      'CloudWatchLogs', 'SQS', 'ElastiCache',
     ];
   }
 }

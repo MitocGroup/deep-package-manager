@@ -6,6 +6,7 @@
 
 import AWS from 'aws-sdk';
 import {Exec} from './Exec';
+import {Env} from './Env';
 import path from 'path';
 import {_extend as extend} from 'util';
 import {Prompt} from './Terminal/Prompt';
@@ -32,6 +33,61 @@ export class SharedAwsConfig {
     this._providers.push(provider);
 
     return this;
+  }
+
+  /**
+   * @returns {*[]}
+   */
+  static get ACCOUNT_ID_FROM_USER_ARN_EXTRACTOR_REGEX() {
+    return [/^.*:(\d+):(root|(user\/.*))$/i, '$1'];
+  }
+
+  /**
+   * @param {Object} config
+   * @param {Function} cb
+   */
+  refillPropertyConfigIfNeeded(config, cb) {
+    if (config.aws.accessKeyId === SharedAwsConfig.DEFAULT_ACCESS_KEY
+      || config.aws.secretAccessKey === SharedAwsConfig.DEFAULT_SECRET_ACCESS_KEY) {
+
+      console.log(`You should set real AWS keys in order to use it in production`);
+
+      config.aws = this.choose();
+
+      this.guessAccountId(config.aws, (error, accountId) => {
+        config.awsAccountId = accountId || config.awsAccountId;
+
+        cb(true);
+      });
+    } else {
+      cb(false);
+    }
+  }
+
+  /**
+   * @param {Object} awsCredentials
+   * @param {Function} cb
+   */
+  guessAccountId(awsCredentials, cb) {
+    try {
+      let iam = new AWS.IAM(awsCredentials);
+
+      iam.getUser({}, (error, data) => {
+        if (error) {
+          cb(error, null);
+          return;
+        }
+
+        if (!data.User || !data.User.Arn) {
+          cb(null, null);
+          return;
+        }
+
+        cb(null, data.User.Arn.replace(...SharedAwsConfig.ACCOUNT_ID_FROM_USER_ARN_EXTRACTOR_REGEX));
+      });
+    } catch (error) {
+      cb(error, null);
+    }
   }
 
   /**
@@ -77,7 +133,7 @@ export class SharedAwsConfig {
       prompt.syncMode = true;
 
       prompt.read((answer) => {
-        credentials.accessKeyId = answer;
+        credentials.accessKeyId = answer || SharedAwsConfig.DEFAULT_ACCESS_KEY;
       });
     }
 
@@ -86,7 +142,7 @@ export class SharedAwsConfig {
       prompt.syncMode = true;
 
       prompt.readHidden((answer) => {
-        credentials.secretAccessKey = answer;
+        credentials.secretAccessKey = answer || SharedAwsConfig.DEFAULT_SECRET_ACCESS_KEY;
       });
     }
 
@@ -225,9 +281,16 @@ export class SharedAwsConfig {
         secretAccessKey: null,
         region: null,
         refresh: function() {
-          let accessKeyIdResult = new Exec('aws configure get aws_access_key_id 2>/dev/null').runSync();
-          let secretAccessKeyResult = new Exec('aws configure get aws_secret_access_key 2>/dev/null').runSync();
-          let regionResult = new Exec('aws configure get region 2>/dev/null').runSync();
+          let cmdPipe = Env.isWin ? '2 > NUL' : '2>/dev/null';
+
+          let accessKeyIdConfigureCmd = `aws configure get aws_access_key_id ${cmdPipe}`;
+          let secretAccessKeyConfigureCmd = `aws configure get aws_secret_access_key ${cmdPipe}`;
+          let regionConfigureCmd = `aws configure get region ${cmdPipe}`;
+
+
+          let accessKeyIdResult = new Exec(accessKeyIdConfigureCmd).runSync();
+          let secretAccessKeyResult = new Exec(secretAccessKeyConfigureCmd).runSync();
+          let regionResult = new Exec(regionConfigureCmd).runSync();
 
           this.accessKeyId = accessKeyIdResult.succeed ? accessKeyIdResult.result : null;
           this.secretAccessKey = secretAccessKeyResult.succeed ? secretAccessKeyResult.result : null;
@@ -270,5 +333,19 @@ export class SharedAwsConfig {
     }
 
     return path.join(home, '.aws', 'credentials');
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get DEFAULT_ACCESS_KEY() {
+    return '[YOUR_AWS_ACCESS_KEY]';
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get DEFAULT_SECRET_ACCESS_KEY() {
+    return '[YOUR_AWS_SECRET_ACCESS_KEY]';
   }
 }

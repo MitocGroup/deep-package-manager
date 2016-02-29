@@ -78,4 +78,25 @@ export class CloudWatchLogsService extends AbstractService {
 
     return this;
   }
+
+  /**
+   * // @todo - limit access to CloudWatch logs from * to certain actions and log groups
+   * Allow full access to CloudWatch logs
+   *
+   * @returns {Core.AWS.IAM.Statement}
+   */
+  generateAllowFullAccessStatement() {
+    let policy = new Core.AWS.IAM.Policy();
+    let statement = policy.statement.add();
+
+    statement.action.add(Core.AWS.Service.CLOUD_WATCH_LOGS, Core.AWS.IAM.Policy.ANY);
+    statement.resource.add(
+      Core.AWS.Service.CLOUD_WATCH_LOGS,
+      Core.AWS.IAM.Policy.ANY,
+      this.awsAccountId,
+      Core.AWS.IAM.Policy.ANY
+    );
+
+    return statement;
+  }
 }

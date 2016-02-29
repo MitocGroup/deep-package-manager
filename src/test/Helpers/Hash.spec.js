@@ -5,19 +5,19 @@ import {Hash} from '../../lib/Helpers/Hash';
 import Crc from 'crc';
 import Crypto from 'crypto';
 
-suite('Helpers/Hash', function() {
+suite('Helpers/Hash', () => {
   let inputDataString = 'string_value';
   let actualResult = null;
 
-  test('Class Hash exists in Helpers/Hash', function() {
-    chai.expect(typeof Hash).to.equal('function');
+  test('Class Hash exists in Helpers/Hash', () => {
+    chai.expect(Hash).to.be.an('function');
   });
 
-  test('Check crc32() static method returns crc32 value', function() {
+  test('Check crc32() static method returns crc32 value', () => {
     chai.expect(Hash.crc32(inputDataString)).to.be.equal(Crc.crc32(inputDataString).toString(16));
   });
 
-  test('Check sha1() static method returns crc32 value', function() {
+  test('Check sha1() static method returns crc32 value', () => {
     actualResult = Crypto
       .createHash('sha1')
       .update(inputDataString)
@@ -25,7 +25,7 @@ suite('Helpers/Hash', function() {
     chai.expect(Hash.sha1(inputDataString)).to.be.equal(actualResult);
   });
 
-  test('Check md5() static method returns crc32 value', function() {
+  test('Check md5() static method returns crc32 value', () => {
     actualResult = Crypto
       .createHash('md5')
       .update(inputDataString)
@@ -33,11 +33,11 @@ suite('Helpers/Hash', function() {
     chai.expect(Hash.md5(inputDataString)).to.be.equal(actualResult);
   });
 
-  test('Check pseudoRandomId() static method returns md5 random value', function() {
+  test('Check pseudoRandomId() static method returns md5 random value', () => {
     chai.expect(Hash.pseudoRandomId(inputDataString)).to.be.not.equal(null);
   });
 
-  test('Check loseLoseMod() returns "0"', function() {
+  test('Check loseLoseMod() returns "0"', () => {
     chai.expect(Hash.loseLoseMod('')).to.equal('0');
   });
 });

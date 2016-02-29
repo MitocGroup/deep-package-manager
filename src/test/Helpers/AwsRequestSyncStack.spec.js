@@ -3,21 +3,21 @@
 import chai from 'chai';
 import {AwsRequestSyncStack} from '../../lib/Helpers/AwsRequestSyncStack';
 
-suite('Helpers/AwsRequestSyncStack', function () {
+suite('Helpers/AwsRequestSyncStack', () => {
   let awsRequestSyncStack = new AwsRequestSyncStack();
 
-  test('Class AwsRequestSyncStack exists in Helpers/AwsRequestSyncStack', function () {
-    chai.expect(typeof AwsRequestSyncStack).to.equal('function');
+  test('Class AwsRequestSyncStack exists in Helpers/AwsRequestSyncStack', () => {
+    chai.expect(AwsRequestSyncStack).to.be.an('function');
   });
 
-  test('Check constructor sets valid values', function () {
+  test('Check constructor sets valid values', () => {
     chai.expect(awsRequestSyncStack._stack).to.be.eql([]);
     chai.expect(awsRequestSyncStack.count).to.be.equal(0);
     chai.expect(awsRequestSyncStack._levels).to.be.eql([]);
     chai.expect(awsRequestSyncStack.completed).to.be.equal(0);
   });
 
-  test('Check addLevel()', function () {
+  test('Check addLevel()', () => {
     chai.expect(awsRequestSyncStack.levelsDepth).to.be.equal(0);
 
     let actualResult = awsRequestSyncStack.addLevel();
@@ -29,24 +29,12 @@ suite('Helpers/AwsRequestSyncStack', function () {
     chai.expect(awsRequestSyncStack.levelsDepth).to.be.equal(2);
   });
 
-  test('Check level() throws exception when level > 1', function () {
-    let error = null;
-
-    try {
-      awsRequestSyncStack.level(2, true);
-    } catch (e) {
-      error = e;
-    }
-
-    chai.assert.instanceOf(error, Error, 'e is an instance of Exception');
-    chai.expect(error.message).to.be.contains('Avoid using level > 1 until late call is implemented!');
-  });
-
-  test('Check level() for level 1 with levelsDepth=2 and strict mode', function () {
+  test('Check level() for level 1 with levelsDepth=2 and strict mode', () => {
     let error = null;
     let actualResult = null;
     let expectedResult = {
       _completed: 0,
+      _joinTimeout: 0,
       _levels: [],
       _stack: [],
     };
@@ -60,7 +48,7 @@ suite('Helpers/AwsRequestSyncStack', function () {
     chai.expect(actualResult).to.be.eql(expectedResult);
   });
 
-  test('Check level() throws exception when levelsDepth < level in strict mode', function () {
+  test('Check level() throws exception when levelsDepth < level in strict mode', () => {
     let awsRequestSyncStackNegative = new AwsRequestSyncStack();
     let error = null;
 
@@ -74,10 +62,11 @@ suite('Helpers/AwsRequestSyncStack', function () {
     chai.expect(error.message).to.be.contains(`Current levels depth is ${awsRequestSyncStackNegative.levelsDepth}`);
   });
 
-  test('Check level() for levelsDepth < level in !strict mode', function () {
+  test('Check level() for levelsDepth < level in !strict mode', () => {
     let awsRequestSyncStackNegative = new AwsRequestSyncStack();
     let expectedResult = {
       _completed: 0,
+      _joinTimeout: 0,
       _levels: [],
       _stack: [],
     };
@@ -87,13 +76,13 @@ suite('Helpers/AwsRequestSyncStack', function () {
     chai.expect(actualResult).to.be.eql(expectedResult);
   });
 
-  test('Check wrapRequest() static method', function () {
+  test('Check wrapRequest() static method', () => {
     let error = null;
     let actualResult = null;
     let response = {response: 'Body'};
     let request = {
       method: 'GET',
-      send: function() {
+      send: () => {
         return response;
       },
     };

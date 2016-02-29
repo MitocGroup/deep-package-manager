@@ -2,13 +2,29 @@
 
 import chai from 'chai';
 import {Frontend} from '../../lib/Property/Frontend';
+import path from 'path';
 
-suite('Property/Frontend', function() {
+suite('Property/Frontend', () => {
   let basePath = './Property/';
-  let basePathTrimmed = './Property';
+  let basePathTrimmed = 'Property/';
   let microservicesConfig = {};
   let moduleIdentifier = 'identifierTest';
-  let frontend = new Frontend(microservicesConfig, basePath);
+  let propertyInstance = {
+    path: 'propertyPath',
+    identifier: 'appIdentifier',
+    config: {
+      awsAccountId: 123456789012,
+    },
+    provisioning: {
+      s3: {
+        config: {
+          region: 'us-west-2',
+        },
+      },
+    },
+  };
+
+  let frontend = new Frontend(propertyInstance, microservicesConfig, basePath);
 
   let defaultConfig = {
     error: [null],
@@ -22,6 +38,8 @@ suite('Property/Frontend', function() {
       env: 'dev',
       appIdentifier: '59e6913c9ed3afe744b5434817ce6345',
     },
+    validationSchemas: [],
+
   };
   let configExpectedResult = {
     env: defaultConfig.env,
@@ -32,30 +50,32 @@ suite('Property/Frontend', function() {
     identityProviders: '',
     microservices: {},
     globals: defaultConfig.globals,
+    validationSchemas: [],
   };
 
-  test('Class Frontend exists in Property/Frontend', function() {
-    chai.expect(typeof Frontend).to.equal('function');
+  test('Class Frontend exists in Property/Frontend', () => {
+    chai.expect(Frontend).to.be.an('function');
   });
 
-  test('Check constructor sets valid values', function() {
+  test('Check constructor sets valid values', () => {
     chai.expect(frontend.basePath).to.be.equal(basePathTrimmed);
     chai.expect(frontend._microservicesConfig).to.be.eql(microservicesConfig);
   });
 
-  test('Check path getter returns valid path', function() {
-    chai.expect(frontend.path).to.be.equal(`${frontend.basePath}/_public`);
+  test('Check path getter returns valid path', () => {
+    chai.expect(frontend.path).to.be.equal(path.join(frontend.basePath, Frontend.PUBLIC_FOLDER));
   });
 
-  test('Check modulePath() method returns valid path', function() {
-    chai.expect(frontend.modulePath(moduleIdentifier)).to.be.equal(`${frontend.path}/${moduleIdentifier}`);
+  test('Check modulePath() method returns valid path', () => {
+    chai.expect(frontend.modulePath(moduleIdentifier)).to.be.equal(path.join(frontend.path, moduleIdentifier));
   });
 
-  test('Check configPath getter returns valid path', function() {
-    chai.expect(frontend.configPath).to.be.equal(`${frontend.path}/_config.json`);
+  test('Check configPath getter returns valid path', () => {
+    chai.expect(frontend.configPath).to.be.equal(path.join(frontend.path, Frontend.CONFIG_FILE));
   });
 
-  test('Check createConfig() method returns valid path', function() {
+  //@todo - need to add if validationSchemas exists
+  test('Check createConfig() method returns valid path', () => {
     chai.expect(Frontend.createConfig(defaultConfig)).to.be.eql(configExpectedResult);
   });
 });

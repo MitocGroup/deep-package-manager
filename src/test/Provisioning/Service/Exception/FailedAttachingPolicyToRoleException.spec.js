@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {FailedAttachingPolicyToRoleException} from '../../../../lib/Provisioning/Service/Exception/FailedAttachingPolicyToRoleException';
 
-suite('Provisioning/Service/Exception/FailedAttachingPolicyToRoleException', function() {
+suite('Provisioning/Service/Exception/FailedAttachingPolicyToRoleException', () => {
 
-  test('Class FailedAttachingPolicyToRoleException', function() {
+  test('Class FailedAttachingPolicyToRoleException', () => {
     let e = new FailedAttachingPolicyToRoleException('Test exception');
     chai.expect(e).to.be.an.instanceof(FailedAttachingPolicyToRoleException);
   });

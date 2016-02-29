@@ -59,8 +59,13 @@ export class CloudFrontDriver extends AbstractDriver {
           + distId + ' is already disabled' + addMsg);
 
         if (!isDeployed) {
-          this._waitForDistDisabled(distId, data.ETag, (distId, eTag) => {
-            this._nativeDeleteDistribution(distId, eTag, cb);
+          this._waitForDistDisabled(distId, data.ETag, (error) => {
+            if (error) {
+              cb(error);
+              return;
+            }
+
+            this._nativeDeleteDistribution(distId, data.ETag, cb);
           });
         } else {
           this._nativeDeleteDistribution(distId, data.ETag, cb);
@@ -81,8 +86,13 @@ export class CloudFrontDriver extends AbstractDriver {
           return;
         }
 
-        this._waitForDistDisabled(distId, data.ETag, (distId, eTag) => {
-          this._nativeDeleteDistribution(distId, eTag, cb);
+        this._waitForDistDisabled(distId, data.ETag, (error) => {
+          if (error) {
+            cb(error);
+            return;
+          }
+
+          this._nativeDeleteDistribution(distId, data.ETag, cb);
         });
       });
     });
@@ -99,12 +109,7 @@ export class CloudFrontDriver extends AbstractDriver {
       Id: distId,
       IfMatch: eTag,
     }, (error) => {
-      if (error) {
-        cb(error);
-        return;
-      }
-
-      cb(null);
+      cb(error);
     });
   }
 
@@ -116,7 +121,7 @@ export class CloudFrontDriver extends AbstractDriver {
    * @private
    */
   _waitForDistDisabled(distId, eTag, cb, estTime = null) {
-    estTime = estTime || 15 * 60;
+    estTime = null === estTime ? 20 * 60 : estTime;
 
     this._awsService.getDistribution({
       Id: distId,
@@ -131,14 +136,17 @@ export class CloudFrontDriver extends AbstractDriver {
       if (status !== 'Deployed') {
         let estTimeMinutes = (estTime / 60);
 
-        if (estTimeMinutes < 0) {
-          estTimeMinutes = '...';
+        if (estTimeMinutes <= 0) {
+          this._log(
+            `Waiting for CloudFront distribution ${distId} to be disabled`,
+            `(currently ${status}, ETC ...)`
+          );
+        } else {
+          this._log(
+            `Waiting for CloudFront distribution ${distId} to be disabled`,
+            `(currently ${status}, ETC ${estTimeMinutes} min.)`
+          );
         }
-
-        this._log(
-          `Waiting for CloudFront distribution ${distId} to be disabled`,
-          `(currently ${status}, ETC ${estTimeMinutes} min.)`
-        );
 
         setTimeout(() => {
           this._waitForDistDisabled(distId, eTag, cb, estTime - 30);
@@ -147,7 +155,7 @@ export class CloudFrontDriver extends AbstractDriver {
         return;
       }
 
-      cb(distId, eTag);
+      cb(null);
     });
   }
 }

@@ -6,25 +6,30 @@
 
 import Core from 'deep-core';
 import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
+import {AbstractService} from './Service/AbstractService';
 import {S3Service} from './Service/S3Service';
 import {CognitoIdentityService} from './Service/CognitoIdentityService';
 import {IAMService} from './Service/IAMService';
 import {CloudFrontService} from './Service/CloudFrontService';
+import {ACMService} from './Service/ACMService.js';
 import {SNSService} from './Service/SNSService';
 import {LambdaService} from './Service/LambdaService';
 import {KinesisService} from './Service/KinesisService';
 import {DynamoDBService} from './Service/DynamoDBService';
 import {ElasticacheService} from './Service/ElasticacheService';
 import {APIGatewayService} from './Service/APIGatewayService';
+import {SQSService} from './Service/SQSService';
+import {CloudWatchLogsService} from './Service/CloudWatchLogsService';
 import {Instance as PropertyInstance} from '../Property/Instance';
 import {WaitFor} from '../Helpers/WaitFor';
+import {Tagging} from './ResourceTagging/Tagging';
 
 /**
  * Provisioning instance
  */
 export class Instance {
   /**
-   * @param {PropertyInstance} property
+   * @param {PropertyInstance|*} property
    */
   constructor(property) {
     if (!(property instanceof PropertyInstance)) {
@@ -36,8 +41,7 @@ export class Instance {
     // deep-db instance
     this._db = null;
 
-    this._s3 = new property.AWS.S3();
-    this._elasticache = new property.AWS.ElastiCache();
+    this._ec2 = new property.AWS.EC2(); // used for security groups retrieval
     this._sns = new property.AWS.SNS();
     this._cloudFront = new property.AWS.CloudFront();
     this._iam = new property.AWS.IAM();
@@ -58,6 +62,22 @@ export class Instance {
     });
     this._apiGateway = new property.AWS.APIGateway({
       region: this.getAwsServiceRegion(APIGatewayService, property.config.awsRegion),
+    });
+    this._sqs = new property.AWS.SQS({
+      region: this.getAwsServiceRegion(SQSService, property.config.awsRegion),
+    });
+    this._acm = new property.AWS.ACM({
+      region: this.getAwsServiceRegion(ACMService, property.config.awsRegion),
+    });
+    this._elasticache = new property.AWS.ElastiCache({
+      region: this._lambda.config.region,
+    });
+
+    // set region for services that depend on other services region
+    this._s3 = new property.AWS.S3({
+
+      // This bucket must reside in the same AWS region where you are creating the Lambda function
+      region: this._lambda.config.region,
     });
 
     this._config = {};
@@ -116,80 +136,126 @@ export class Instance {
   }
 
   /**
-   * @returns {Object}
+   * @returns {AWS.EC2|*}
+   */
+  get ec2() {
+    return this._ec2;
+  }
+
+  /**
+   * @returns {AWS.ACM|*}
+   */
+  get acm() {
+    return this._acm;
+  }
+
+  /**
+   * @returns {AWS.CloudWatchLogs|*}
    */
   get cloudWatchLogs() {
     return this._cloudWatchLogs;
   }
 
   /**
-   * @returns {Object}
+   * @returns {AWS.S3|*}
    */
   get s3() {
     return this._s3;
   }
 
   /**
-   * @returns {Object}
+   * @returns {AWS.DynamoDB|*}
    */
   get dynamoDB() {
     return this._dynamoDb;
   }
 
   /**
-   * @returns {Object}
+   * @returns {AWS.ElastiCache|*}
    */
   get elasticCache() {
     return this._elasticache;
   }
 
   /**
-   * @returns {Object}
+   * @returns {AWS.Kinesis|*}
    */
   get kinesis() {
     return this._kinesis;
   }
 
   /**
-   * @returns {Object}
+   * @returns {AWS.SNS|*}
    */
   get sns() {
     return this._sns;
   }
 
   /**
-   * @returns {Object}
+   * @returns {AWS.Lambda|*}
    */
   get lambda() {
     return this._lambda;
   }
 
   /**
-   * @returns {Object}
+   * @returns {AWS.IAM|*}
    */
   get iam() {
     return this._iam;
   }
 
   /**
-   * @returns {Object}
+   * @returns {AWS.CognitoIdentity|*}
    */
   get cognitoIdentity() {
     return this._cognitoIdentity;
   }
 
   /**
-   * @returns {Object}
+   * @returns {AWS.CloudFront|*}
    */
   get cloudFront() {
     return this._cloudFront;
   }
 
   /**
-   * @returns {Object}
+   * @returns {AWS.ApiGateway|*}
    */
   get apiGateway() {
     return this._apiGateway;
+  }
+
+  /**
+   * @returns {AWS.SNS|*}
+   */
+  get sqs() {
+    return this._sqs;
+  }
+
+  /**
+   * @param {String} name
+   * @returns {Object}
+   */
+  getAwsServiceByName(name) {
+    switch (name) {
+      case 'IAM':
+      case 'SNS':
+      case 'SQS':
+      case 'ACM':
+        name = name.toLowerCase();
+        break;
+      case 'APIGateway':
+        name = 'apiGateway';
+        break;
+      case 'ElastiCache':
+        name = 'elasticCache';
+        break;
+      default:
+        name = AbstractService.lowerCaseFirst(name);
+    }
+
+    return this[name];
   }
 
   /**
@@ -199,16 +265,19 @@ export class Instance {
     if (this._services === null) {
       // @todo - add only required services that are configured in appConfig file
       this._services = new Core.Generic.ObjectStorage([
-        new S3Service(this),
         new ElasticacheService(this),
+        new S3Service(this),
         new DynamoDBService(this),
         new KinesisService(this),
         new SNSService(this),
         new IAMService(this),
         new CognitoIdentityService(this),
+        new ACMService(this),
         new CloudFrontService(this),
         new LambdaService(this),
         new APIGatewayService(this),
+        new SQSService(this),
+        new CloudWatchLogsService(this),
       ]);
     }
 
@@ -284,7 +353,15 @@ export class Instance {
       });
 
       subWait.ready(() => {
-        callback(this._config);
+        if (isUpdate) {
+          callback(this._config);
+        } else {
+          console.log('Start tagging resources');
+
+          Tagging.create(this._property).tag(() => {
+            callback(this._config);
+          });
+        }
       });
     });
   }

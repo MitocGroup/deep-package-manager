@@ -103,3 +103,7 @@ node_modules
 
 # Debug log from npm
 npm-debug.log
+
+.parameters.json
+
+test/testMaterials/registry

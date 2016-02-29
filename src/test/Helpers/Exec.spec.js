@@ -3,44 +3,44 @@
 import chai from 'chai';
 import {Exec} from '../../lib/Helpers/Exec';
 
-suite('Helpers/Exec', function() {
+suite('Helpers/Exec', () => {
   let cmd = 'test command';
   let args = 'arg1';
   let exec = new Exec(cmd, args);
 
-  test('Class Exec exists in Helpers/Exec', function() {
-    chai.expect(typeof Exec).to.equal('function');
+  test('Class Exec exists in Helpers/Exec', () => {
+    chai.expect(Exec).to.be.an('function');
   });
 
-  test('Check constructor sets value for _cmd', function() {
+  test('Check constructor sets value for _cmd', () => {
     chai.expect(exec.cmd).to.equal(cmd);
   });
 
-  test('Check constructor sets value for _args', function() {
+  test('Check constructor sets value for _args', () => {
     chai.expect(exec.args).to.eql([args]);
   });
 
-  test('Check constructor sets value for _error=null', function() {
+  test('Check constructor sets value for _error=null', () => {
     chai.expect(exec._error).to.equal(null);
   });
 
-  test('Check constructor sets value for _isExec=false', function() {
+  test('Check constructor sets value for _isExec=false', () => {
     chai.expect(exec._isExec).to.equal(false);
   });
 
-  test('Check constructor sets value for _devNull=false', function() {
+  test('Check constructor sets value for _devNull=false', () => {
     chai.expect(exec._devNull).to.equal(false);
   });
 
-  test('Check constructor sets value for _result=null', function() {
+  test('Check constructor sets value for _result=null', () => {
     chai.expect(exec._result).to.equal(null);
   });
 
-  test('Check cwd getter', function() {
+  test('Check cwd getter', () => {
     chai.expect(exec.cwd).to.contains('deep-package-manager/src');
   });
 
-  test('Check cwd setter', function() {
+  test('Check cwd setter', () => {
     let dirName = __dirname;
     let cwd = exec.cwd;
 
@@ -51,7 +51,7 @@ suite('Helpers/Exec', function() {
     chai.expect(exec.cwd).to.equal(cwd);
   });
 
-  test('Check _assureCmdExecuted throws error', function() {
+  test('Check _assureCmdExecuted throws error', () => {
     let error = null;
 
     try {
@@ -65,19 +65,19 @@ suite('Helpers/Exec', function() {
   });
 
 
-  test('Check succeed getter returns true', function() {
+  test('Check succeed getter returns true', () => {
     exec._isExec = true;
 
     chai.expect(exec.succeed).to.equal(true);
   });
 
-  test('Check failed getter returns false', function() {
+  test('Check failed getter returns false', () => {
     exec._isExec = true;
 
     chai.expect(exec.failed).to.equal(false);
   });
 
-  test('Check addArg() method', function() {
+  test('Check addArg() method', () => {
     let arg = 'arg2';
 
     let actualResult = exec.addArg(arg);

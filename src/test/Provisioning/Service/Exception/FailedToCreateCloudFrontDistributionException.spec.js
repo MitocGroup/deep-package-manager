@@ -7,9 +7,9 @@
 import chai from 'chai';
 import {FailedToCreateCloudFrontDistributionException} from '../../../../lib/Provisioning/Service/Exception/FailedToCreateCloudFrontDistributionException';
 
-suite('Provisioning/Service/Exception/FailedToCreateCloudFrontDistributionException', function() {
+suite('Provisioning/Service/Exception/FailedToCreateCloudFrontDistributionException', () => {
 
-  test('Class FailedToCreateCloudFrontDistributionException', function() {
+  test('Class FailedToCreateCloudFrontDistributionException', () => {
     let e = new FailedToCreateCloudFrontDistributionException('Test exception');
     chai.expect(e).to.be.an.instanceof(FailedToCreateCloudFrontDistributionException);
   });
