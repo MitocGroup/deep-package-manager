@@ -78,7 +78,7 @@ export class LambdaProxyHandler extends Core.AWS.Lambda.Runtime {
    * @private
    */
   get _rulesCacheKey() {
-    return `deep-registry-${this._principalDbFieldName}-${this._principalId}`;
+    return `deep-registry-${this._principalRuleDbModelName}-${this._principalDbFieldName}-${this._principalId}`;
   }
 
   /**
