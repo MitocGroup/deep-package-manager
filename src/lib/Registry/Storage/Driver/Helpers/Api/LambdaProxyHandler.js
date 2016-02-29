@@ -121,7 +121,6 @@ export class LambdaProxyHandler extends Core.AWS.Lambda.Runtime {
       ['hasObj', 'readObj'].indexOf(op) !== -1 && rule.operation === LambdaProxyHandler.OP_R ||
       ['putObj', 'deleteObj'].indexOf(op) !== -1 && rule.operation === LambdaProxyHandler.OP_W;
 
-
     return modMatched && opMatched;
   }
 
