@@ -36,6 +36,61 @@ export class SharedAwsConfig {
   }
 
   /**
+   * @returns {*[]}
+   */
+  static get ACCOUNT_ID_FROM_USER_ARN_EXTRACTOR_REGEX() {
+    return [/^.*:(\d+):(root|(user\/.*))$/i, '$1'];
+  }
+
+  /**
+   * @param {Object} config
+   * @param {Function} cb
+   */
+  refillPropertyConfigIfNeeded(config, cb) {
+    if (config.aws.accessKeyId === SharedAwsConfig.DEFAULT_ACCESS_KEY
+      || config.aws.secretAccessKey === SharedAwsConfig.DEFAULT_SECRET_ACCESS_KEY) {
+
+      console.log(`You should set real AWS keys in order to use it in production`);
+
+      config.aws = this.choose();
+
+      this.guessAccountId(config.aws, (error, accountId) => {
+        config.awsAccountId = accountId || config.awsAccountId;
+
+        cb(true);
+      });
+    } else {
+      cb(false);
+    }
+  }
+
+  /**
+   * @param {Object} awsCredentials
+   * @param {Function} cb
+   */
+  guessAccountId(awsCredentials, cb) {
+    try {
+      let iam = new AWS.IAM(awsCredentials);
+
+      iam.getUser({}, (error, data) => {
+        if (error) {
+          cb(error, null);
+          return;
+        }
+
+        if (!data.User || !data.User.Arn) {
+          cb(null, null);
+          return;
+        }
+
+        cb(null, data.User.Arn.replace(...SharedAwsConfig.ACCOUNT_ID_FROM_USER_ARN_EXTRACTOR_REGEX));
+      });
+    } catch (error) {
+      cb(error, null);
+    }
+  }
+
+  /**
    * @param {Boolean} requestOnMissing
    * @returns {Object}
    */
