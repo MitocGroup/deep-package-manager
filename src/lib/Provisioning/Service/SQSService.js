@@ -8,6 +8,7 @@ import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {FailedToCreateSqsQueueException} from './Exception/FailedToCreateSqsQueueException';
+import objectMerge from 'object-merge';
 
 /**
  * SQS service
@@ -72,7 +73,7 @@ export class SQSService extends AbstractService {
     this._createQueues(
       queuesConfig
     )((queues) => {
-      this._config.queues = queues;
+      this._config.queues = objectMerge(oldQueues, queues);
 
       this._ready = true;
     });

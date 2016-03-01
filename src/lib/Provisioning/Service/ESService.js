@@ -9,6 +9,7 @@ import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {AbstractService} from './AbstractService';
 import {SQSService} from './SQSService';
 import {FailedToCreateEsDomainException} from './Exception/FailedToCreateEsDomainException';
+import objectMerge from 'object-merge';
 
 /**
  * Elasticsearch service
@@ -58,23 +59,22 @@ export class ESService extends AbstractService {
    * @returns {ESService}
    */
   _setup(services) {
-    // @todo: implement!
-    if (this._isUpdate) {
-      this._ready = true;
-      return this;
-    }
-
+    let oldDomains = {};
     let domainsConfig = {};
     let rum = services.find(SQSService).getRumConfig();
 
-    if (rum.enabled) {
+    if (this._isUpdate) {
+      oldDomains = this._config.domains;
+    }
+
+    if (rum.enabled && !oldDomains.hasOwnProperty(ESService.RUM_DOMAIN_NAME)) {
       domainsConfig[ESService.RUM_DOMAIN_NAME] = ESService.DOMAINS_CONFIG[ESService.RUM_DOMAIN_NAME];
     }
 
     this._createDomains(
       domainsConfig
     )((domains) => {
-      this._config.domains = domains;
+      this._config.domains = objectMerge(oldDomains, domains);
 
       this._ready = true;
     });
@@ -189,7 +189,7 @@ export class ESService extends AbstractService {
    */
   _getDomainAccessPolicy(domainName) {
     let policy = new Core.AWS.IAM.Policy();
-    let readOnlyStatement = this.generateAllowActionsStatement(['ESHttpGet', 'ESHttpHead']);
+    let readOnlyStatement = this.generateAllowActionsStatement(['ESHttpGet', 'ESHttpHead',]);
 
     readOnlyStatement.principal = { AWS: ['*'] };
 
@@ -202,7 +202,7 @@ export class ESService extends AbstractService {
    * @params {Array} actions
    * @returns {Core.AWS.IAM.Statement}
    */
-  generateAllowActionsStatement(actions = ['ESHttpGet', 'ESHttpHead']) {
+  generateAllowActionsStatement(actions = ['ESHttpGet', 'ESHttpHead',]) {
     let policy = new Core.AWS.IAM.Policy();
     let statement = policy.statement.add();
 
@@ -220,4 +220,3 @@ export class ESService extends AbstractService {
     return statement;
   }
 }
-
