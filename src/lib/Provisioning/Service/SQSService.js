@@ -57,17 +57,15 @@ export class SQSService extends AbstractService {
    * @returns {SQSService}
    */
   _setup(services) {
-    // @todo: implement!
-    if (this._isUpdate) {
-      this._ready = true;
-      return this;
-    }
-
+    let oldQueues = {};
     let queuesConfig = {};
-
     let rum = this.getRumConfig();
 
-    if (rum.enabled) {
+    if (this._isUpdate) {
+      oldQueues = this._config.queues;
+    }
+
+    if (rum.enabled && !oldQueues.hasOwnProperty(SQSService.RUM_QUEUE)) {
       queuesConfig[SQSService.RUM_QUEUE] = {}; // @note - here you can add some sqs queue config options
     }
 
@@ -123,7 +121,7 @@ export class SQSService extends AbstractService {
     };
 
     if (globalsConfig.logDrivers && globalsConfig.logDrivers.rum) {
-      rum = globalsConfig.logDrivers.rum
+      rum = globalsConfig.logDrivers.rum;
     }
 
     return rum;
