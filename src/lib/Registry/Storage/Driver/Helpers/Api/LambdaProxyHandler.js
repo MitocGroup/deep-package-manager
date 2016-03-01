@@ -58,6 +58,30 @@ export class LambdaProxyHandler extends Core.AWS.Lambda.Runtime {
   }
 
   /**
+   * @returns {Object}
+   * @private
+   */
+  get _dbModel() {
+    return this.kernel.get('db').get(this._principalRuleDbModelName);
+  }
+
+  /**
+   * @returns {Cache|*}
+   * @private
+   */
+  get _cache() {
+    return this.kernel.get('cache');
+  }
+
+  /**
+   * @returns {String}
+   * @private
+   */
+  get _rulesCacheKey() {
+    return `deep-registry-${this._principalRuleDbModelName}-${this._principalDbFieldName}-${this._principalId}`;
+  }
+
+  /**
    * @param {String} moduleName
    * @param {Function} cb
    * @private
@@ -70,42 +94,78 @@ export class LambdaProxyHandler extends Core.AWS.Lambda.Runtime {
       return;
     }
 
-    let model = this.kernel.get('db').get(this._principalRuleDbModelName);
+    let cacheKey = this._rulesCacheKey;
 
-    model.findAllBy(this._principalDbFieldName, this._principalId, (error, data) => {
+    this._cache.has(cacheKey, (error, entryExists) => {
       if (error) {
         cb(error, null);
         return;
       }
 
-      let principalEntries = (data.Items || []);
+      if (entryExists) {
+        this._cache.get(cacheKey, (error, rawData) => {
+          try {
+            cb(null, this._matchModuleOperation(moduleName, JSON.parse(rawData)));
+          } catch (error) {
 
-      for (let i in principalEntries) {
-        if (!principalEntries.hasOwnProperty(i)) {
+            // invalidate it async
+            this._cache.invalidate(cacheKey);
+
+            cb(error, null);
+          }
+        });
+      } else {
+        this._dbModel.findAllBy(this._principalDbFieldName, this._principalId, (error, data) => {
+          if (error) {
+            cb(error, null);
+            return;
+          }
+
+          let principalEntries = (data.Items || []);
+
+          try {
+            // persist it async
+            this._cache.set(cacheKey, JSON.stringify(principalEntries), LambdaProxyHandler.CACHE_TTL);
+          } catch (error) {
+          }
+
+          cb(null, this._matchModuleOperation(moduleName, principalEntries));
+        });
+      }
+    });
+  }
+
+  /**
+   * @param {String} moduleName
+   * @param {Object[]} principalEntries
+   * @returns {Boolean}
+   * @private
+   */
+  _matchModuleOperation(moduleName, principalEntries) {
+    for (let i in principalEntries) {
+      if (!principalEntries.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let principalEntry = principalEntries[i];
+      let allowedModules = principalEntry.hasOwnProperty(this._moduleDbFieldName) ?
+        (principalEntry[principalEntry] || []) :
+        [];
+
+      for (let j in allowedModules) {
+        if (!allowedModules.hasOwnProperty(j)) {
           continue;
         }
 
-        let principalEntry = principalEntries[i];
-        let allowedModules = principalEntry.hasOwnProperty(this._moduleDbFieldName) ?
-          (principalEntry[principalEntry] || []) :
-          [];
+        let rule = LambdaProxyHandler._parseModuleRule(allowedModules[j]);
 
-        for (let j in allowedModules) {
-          if (!allowedModules.hasOwnProperty(j)) {
-            continue;
-          }
-
-          let rule = LambdaProxyHandler._parseModuleRule(allowedModules[j]);
-
-          if (LambdaProxyHandler._isOpModAllowed(moduleName, this._storageMethod, rule)) {
-            cb(null, true);
-            return;
-          }
+        if (LambdaProxyHandler._isOpModAllowed(moduleName, this._storageMethod, rule)) {
+          return true;
         }
       }
+    }
 
-      cb(null, false);
-    });
+    return false;
   }
 
   /**
@@ -120,7 +180,6 @@ export class LambdaProxyHandler extends Core.AWS.Lambda.Runtime {
     let opMatched = rule.operation === '*' || rule.operation === LambdaProxyHandler.OP_RW ||
       ['hasObj', 'readObj'].indexOf(op) !== -1 && rule.operation === LambdaProxyHandler.OP_R ||
       ['putObj', 'deleteObj'].indexOf(op) !== -1 && rule.operation === LambdaProxyHandler.OP_W;
-
 
     return modMatched && opMatched;
   }
@@ -157,6 +216,7 @@ export class LambdaProxyHandler extends Core.AWS.Lambda.Runtime {
    */
   handle(requestData) {
     this._principalId = requestData.principalId;
+
     let proxyData = requestData.payload;
 
     new Core.Runtime.Sandbox(() => {
@@ -283,5 +343,12 @@ export class LambdaProxyHandler extends Core.AWS.Lambda.Runtime {
    */
   static get OP_RW() {
     return 'read/write';
+  }
+
+  /**
+   * @returns {Number}
+   */
+  static get CACHE_TTL() {
+    return 60;
   }
 }
