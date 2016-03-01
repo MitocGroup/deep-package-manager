@@ -65,7 +65,7 @@ export class SQSService extends AbstractService {
 
     let queuesConfig = {};
 
-    let rum = this._getRumConfig();
+    let rum = this.getRumConfig();
 
     if (rum.enabled) {
       queuesConfig[SQSService.RUM_QUEUE] = {}; // @note - here you can add some sqs queue config options
@@ -116,7 +116,7 @@ export class SQSService extends AbstractService {
    * Gets RUM config from global
    * @private
    */
-  _getRumConfig() {
+  getRumConfig() {
     let globalsConfig = this.property.config.globals;
     let rum = {
       enabled: false,

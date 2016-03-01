@@ -8,6 +8,7 @@ import Core from 'deep-core';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {AbstractService} from './AbstractService';
 import {CognitoIdentityService} from './CognitoIdentityService';
+import {SQSService} from './SQSService';
 import {FailedToCreateEsDomainException} from './Exception/FailedToCreateEsDomainException';
 
 /**
@@ -26,6 +27,13 @@ export class ElasticsearchService extends AbstractService {
    */
   name() {
     return Core.AWS.Service.ELASTIC_SEARCH;
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get RUM_DOMAIN_NAME() {
+    return 'rum';
   }
 
   /**
@@ -57,8 +65,16 @@ export class ElasticsearchService extends AbstractService {
       return this;
     }
 
+    let domainsConfig = {};
+    let rum = services.find(SQSService).getRumConfig();
+
+    if (rum.enabled) {
+      domainsConfig[ElasticsearchService.RUM_DOMAIN_NAME] = ElasticsearchService
+        .DOMAINS_CONFIG[ElasticsearchService.RUM_DOMAIN_NAME];
+    }
+
     this._createDomains(
-      this._domainsConfig
+      domainsConfig
     )((domains) => {
       this._config.domains = domains;
 
@@ -104,26 +120,28 @@ export class ElasticsearchService extends AbstractService {
    * @returns {Object}
    * @private
    */
-  get _domainsConfig() {
-    return {
-      rum: {
-        ElasticsearchClusterConfig: {
-          InstanceType: 't2.micro.elasticsearch',
-          InstanceCount: 1,
-          DedicatedMasterEnabled: false,
-          ZoneAwarenessEnabled: false,
-        },
-        EBSOptions: {
-          EBSEnabled: true,
-          VolumeType: 'standard',
-          VolumeSize: 10,
-          Iops: 0,
-        },
-        SnapshotOptions: {
-          AutomatedSnapshotStartHour: 0,
-        },
+  static get DOMAINS_CONFIG() {
+    let config = {};
+
+    config[ElasticsearchService.RUM_DOMAIN_NAME] = {
+      ElasticsearchClusterConfig: {
+        InstanceType: 't2.micro.elasticsearch',
+        InstanceCount: 1,
+        DedicatedMasterEnabled: false,
+        ZoneAwarenessEnabled: false,
+      },
+      EBSOptions: {
+        EBSEnabled: true,
+        VolumeType: 'standard',
+        VolumeSize: 10,
+        Iops: 0,
+      },
+      SnapshotOptions: {
+        AutomatedSnapshotStartHour: 0,
       },
     };
+
+    return config;
   }
 
   /**
