@@ -14,7 +14,7 @@ import {FailedToCreateEsDomainException} from './Exception/FailedToCreateEsDomai
 /**
  * Elasticsearch service
  */
-export class ElasticsearchService extends AbstractService {
+export class ESService extends AbstractService {
   /**
    * @param {Array} args
    */
@@ -56,7 +56,7 @@ export class ElasticsearchService extends AbstractService {
 
   /**
    * @parameter {Core.Generic.ObjectStorage} services
-   * @returns {ElasticsearchService}
+   * @returns {ESService}
    */
   _setup(services) {
     // @todo: implement!
@@ -69,8 +69,7 @@ export class ElasticsearchService extends AbstractService {
     let rum = services.find(SQSService).getRumConfig();
 
     if (rum.enabled) {
-      domainsConfig[ElasticsearchService.RUM_DOMAIN_NAME] = ElasticsearchService
-        .DOMAINS_CONFIG[ElasticsearchService.RUM_DOMAIN_NAME];
+      domainsConfig[ESService.RUM_DOMAIN_NAME] = ESService.DOMAINS_CONFIG[ESService.RUM_DOMAIN_NAME];
     }
 
     this._createDomains(
@@ -86,7 +85,7 @@ export class ElasticsearchService extends AbstractService {
 
   /**
    * @parameter {Core.Generic.ObjectStorage} services
-   * @returns {ElasticsearchService}
+   * @returns {ESService}
    */
   _postProvision(services) {
     // @todo: implement!
@@ -102,7 +101,7 @@ export class ElasticsearchService extends AbstractService {
 
   /**
    * @parameter {Core.Generic.ObjectStorage} services
-   * @returns {ElasticsearchService}
+   * @returns {ESService}
    */
   _postDeployProvision(services) {
     // @todo: implement!
@@ -123,7 +122,7 @@ export class ElasticsearchService extends AbstractService {
   static get DOMAINS_CONFIG() {
     let config = {};
 
-    config[ElasticsearchService.RUM_DOMAIN_NAME] = {
+    config[ESService.RUM_DOMAIN_NAME] = {
       ElasticsearchClusterConfig: {
         InstanceType: 't2.micro.elasticsearch',
         InstanceCount: 1,

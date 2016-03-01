@@ -6,7 +6,7 @@
 
 import {AbstractDriver} from './AbstractDriver';
 
-export class ElasticsearchDriver extends AbstractDriver {
+export class ESDriver extends AbstractDriver {
   /**
    * @param {*} args
    */

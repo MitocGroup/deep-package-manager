@@ -20,7 +20,7 @@ import {ElasticacheService} from './Service/ElasticacheService';
 import {APIGatewayService} from './Service/APIGatewayService';
 import {SQSService} from './Service/SQSService';
 import {CloudWatchLogsService} from './Service/CloudWatchLogsService';
-import {ElasticsearchService} from './Service/ElasticsearchService';
+import {ESService} from './Service/ESService';
 import {Instance as PropertyInstance} from '../Property/Instance';
 import {WaitFor} from '../Helpers/WaitFor';
 import {Tagging} from './ResourceTagging/Tagging';
@@ -71,7 +71,7 @@ export class Instance {
       region: this.getAwsServiceRegion(ACMService, property.config.awsRegion),
     });
     this._elasticsearch = new property.AWS.ES({
-      region: this.getAwsServiceRegion(ElasticsearchService, property.config.awsRegion),
+      region: this.getAwsServiceRegion(ESService, property.config.awsRegion),
     });
 
     // set region for services that depend on other services region
@@ -291,7 +291,7 @@ export class Instance {
         new APIGatewayService(this),
         new SQSService(this),
         new CloudWatchLogsService(this),
-        new ElasticsearchService(this),
+        new ESService(this),
       ]);
     }
 
