@@ -386,7 +386,7 @@ export class LambdaService extends AbstractService {
 
     let esService = this.provisioning.services.find(ESService);
     policy.statement.add(esService.generateAllowActionsStatement([
-      'ESHttpGet', 'ESHttpHead', 'ESHttpDelete', 'ESHttpPost', 'es:ESHttpPut',
+      'ESHttpGet', 'ESHttpHead', 'ESHttpDelete', 'ESHttpPost', 'ESHttpPut',
     ]));
 
     // @todo: move it to ElastiCacheService?
