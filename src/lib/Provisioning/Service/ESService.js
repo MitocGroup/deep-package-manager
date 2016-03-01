@@ -7,7 +7,6 @@
 import Core from 'deep-core';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {AbstractService} from './AbstractService';
-import {CognitoIdentityService} from './CognitoIdentityService';
 import {SQSService} from './SQSService';
 import {FailedToCreateEsDomainException} from './Exception/FailedToCreateEsDomainException';
 
@@ -190,54 +189,35 @@ export class ESService extends AbstractService {
    */
   _getDomainAccessPolicy(domainName) {
     let policy = new Core.AWS.IAM.Policy();
-    let readOnlyStatement = policy.statement.add();
+    let readOnlyStatement = this.generateAllowAccessStatement(['ESHttpGet', 'ESHttpHead']);
 
-    // Allow Cognito identities to execute only GET and HEAD methods on an ES domain
-    //readOnlyStatement.principal = { AWS: [] };
-    readOnlyStatement.principal = {
-      Service: Core.AWS.Service.identifier(Core.AWS.Service.LAMBDA),
-    };
+    readOnlyStatement.principal = { AWS: ['*'] };
 
-    CognitoIdentityService.ROLE_TYPES.forEach((roleType) => {
-      let roleName = this.generateAwsResourceName(roleType, Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT);
+    policy.statement.add(readOnlyStatement);
 
-      let roleResource = Core.AWS.IAM.Factory.create(
-        'resource',
-        Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
-        this.provisioning.iam.config.region,
-        this.awsAccountId,
-        `role/${roleName}`
-      );
+    return policy;
+  }
 
-      // @todo - find out why role based Principal is not acceptable by ES service
-      //readOnlyStatement.principal.AWS.push(roleResource.extract());
+  /**
+   * @params {Array} actions
+   * @returns {Core.AWS.IAM.Statement}
+   */
+  generateAllowActionsStatement(actions = ['ESHttpGet', 'ESHttpHead']) {
+    let policy = new Core.AWS.IAM.Policy();
+    let statement = policy.statement.add();
+
+    actions.forEach((actionName) => {
+      statement.action.add(Core.AWS.Service.ELASTIC_SEARCH, actionName);
     });
 
-    ['ESHttpGet', 'ESHttpHead'].forEach((actionName) => {
-      readOnlyStatement.action.add(Core.AWS.Service.ELASTIC_SEARCH, actionName);
-    });
-
-    let esDomainResource = readOnlyStatement.resource.add(
+    statement.resource.add(
       Core.AWS.Service.ELASTIC_SEARCH,
       this.provisioning.elasticSearch.config.region,
       this.awsAccountId,
       `domain:${this._getGlobalResourceMask('', AbstractService.DELIMITER_HYPHEN_LOWER_CASE)}`
     );
 
-    // Allow Lambda service to execute all http methods on an ES domain
-    let readWriteStatement = policy.statement.add();
-
-    readWriteStatement.principal = {
-      Service: Core.AWS.Service.identifier(Core.AWS.Service.LAMBDA),
-    };
-
-    ['ESHttpGet', 'ESHttpHead', 'ESHttpDelete', 'ESHttpPost', 'ESHttpPut'].forEach((actionName) => {
-      readWriteStatement.action.add(Core.AWS.Service.ELASTIC_SEARCH, actionName);
-    });
-
-    readWriteStatement.resource.add(esDomainResource);
-
-    return policy;
+    return statement;
   }
 }
 
