@@ -487,6 +487,31 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
   }
 
   /**
+   * @returns {String}
+   * @private
+   */
+  get _uploadBucket() {
+    let buckets = this._property.config.provisioning.s3.buckets;
+
+    if (buckets.hasOwnProperty(S3Service.TMP_BUCKET)) {
+      return buckets[S3Service.TMP_BUCKET].name;
+    }
+
+    return buckets[S3Service.SYSTEM_BUCKET].name;
+  }
+
+  /**
+   * @param {String} uploadBucket
+   * @returns {String|null}
+   * @private
+   */
+  _getUploadKeyPrefix(uploadBucket) {
+    return S3Service.isBucketTmp(uploadBucket) ?
+      null :
+      `${this._property.rootMicroservice.identifier}/${S3Service.TMP_BUCKET}`;
+  }
+
+  /**
    * @param {Boolean} update
    * @returns {AwsRequestSyncStack|WaitFor|*}
    */
@@ -495,11 +520,16 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
 
     let lambda = this._property.provisioning.lambda;
     let s3 = this._property.provisioning.s3;
-    let tmpBucket = this._property.config.provisioning.s3.buckets[S3Service.TMP_BUCKET].name;
     let securityGroupId = this._property.config.provisioning.elasticache.securityGroupId;
     let subnetIds = this._property.config.provisioning.elasticache.subnetIds;
 
+    let tmpBucket = this._uploadBucket;
+    let objectPrefix = this._getUploadKeyPrefix(tmpBucket);
     let objectKey = this._zipPath.split(Path.sep).pop();
+
+    if (objectPrefix) {
+      objectKey = `${objectPrefix}/${objectKey}`;
+    }
 
     let s3Params = {
       Bucket: tmpBucket,
