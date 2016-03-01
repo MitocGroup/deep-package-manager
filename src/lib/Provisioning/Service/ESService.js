@@ -189,7 +189,7 @@ export class ESService extends AbstractService {
    */
   _getDomainAccessPolicy(domainName) {
     let policy = new Core.AWS.IAM.Policy();
-    let readOnlyStatement = this.generateAllowAccessStatement(['ESHttpGet', 'ESHttpHead']);
+    let readOnlyStatement = this.generateAllowActionsStatement(['ESHttpGet', 'ESHttpHead']);
 
     readOnlyStatement.principal = { AWS: ['*'] };
 
