@@ -425,6 +425,7 @@ export class AbstractService extends Core.OOP.Interface {
         break;
 
       case Core.AWS.Service.CLOUD_SEARCH:
+      case Core.AWS.Service.ELASTIC_SEARCH:
         awsServiceLimit = 28;
         break;
 
