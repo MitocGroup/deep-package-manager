@@ -61,20 +61,6 @@ export class Action {
   }
 
   /**
-   * @returns {Boolean}
-   */
-  get isScopeDirect() {
-    return ActionFlags.isDirect(this.scope);
-  }
-
-  /**
-   * @returns {Boolean}
-   */
-  get isScopeApi() {
-    return ActionFlags.isApi(this.scope);
-  }
-
-  /**
    * @returns {Number}
    */
   get scope() {
@@ -99,6 +85,13 @@ export class Action {
    * @returns {Boolean}
    */
   get forceUserIdentity() {
+
+    // @todo: remove this after figuring out the invoke roles
+    // for both auth and non auth policies assigned to the cognito
+    if (!ActionFlags.isDirect(this.scope)) {
+      return false;
+    }
+
     return this._forceUserIdentity;
   }
 

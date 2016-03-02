@@ -443,6 +443,37 @@ export class LambdaService extends AbstractService {
   }
 
   /**
+   * @param {Function} filter
+   * @returns {String[]}
+   */
+  extractFunctionIdentifiers(filter = () => true) {
+    let lambdaIdentifiers = [];
+
+    let privateLambdasObj = this._generateLambdasNames(
+      this._provisioning.property.microservices,
+      filter
+    );
+
+    for (let k in privateLambdasObj) {
+      if (!privateLambdasObj.hasOwnProperty(k)) {
+        continue;
+      }
+
+      let privateLambdasObjNested = privateLambdasObj[k];
+
+      for (let nk in privateLambdasObjNested) {
+        if (!privateLambdasObjNested.hasOwnProperty(nk)) {
+          continue;
+        }
+
+        lambdaIdentifiers.push(privateLambdasObjNested[nk]);
+      }
+    }
+
+    return lambdaIdentifiers;
+  }
+
+  /**
    * Deny Cognito and ApiGateway users to invoke these lambdas
    *
    * @returns {Core.AWS.IAM.Statement}
@@ -455,10 +486,7 @@ export class LambdaService extends AbstractService {
     statement.action.add(Core.AWS.Service.LAMBDA, 'InvokeFunction');
 
     this
-      ._generateLambdasNames(
-        this._provisioning.property.microservices,
-        ActionFlags.NON_DIRECT_ACTION_FILTER
-      )
+      .extractFunctionIdentifiers(ActionFlags.NON_DIRECT_ACTION_FILTER)
       .forEach((lambdaArn) => {
         statement.resource.add().updateFromArn(
           this._generateLambdaArn(lambdaArn)

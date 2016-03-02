@@ -25,6 +25,7 @@ import {SQSService} from '../Provisioning/Service/SQSService';
 import {DeployIdInjector} from '../Assets/DeployIdInjector';
 import {Optimizer} from '../Assets/Optimizer';
 import {Injector as TagsInjector} from '../Tags/Injector';
+import {ActionFlags} from '../Microservice/Metadata/Helpers/ActionFlags';
 
 /**
  * Frontend
@@ -118,7 +119,7 @@ export class Frontend {
 
           let apiEndpoint = null;
 
-          if (action.isScopeApi) {
+          if (ActionFlags.isApi(action.scope)) {
             apiEndpoint = apiGatewayBaseUrl + APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName);
           }
 
@@ -134,7 +135,7 @@ export class Frontend {
             region: propertyConfig.awsRegion, // @todo: set it from lambda provision
             source: {
               api: apiEndpoint,
-              original: action.isScopeDirect ? originalSource : null,
+              original: ActionFlags.isDirect(action.scope) ? originalSource : null,
             },
           };
 

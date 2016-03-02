@@ -19,7 +19,7 @@ export default Joi.object().keys({
   cacheTtl: Joi.number().optional().integer().min(Action.NO_CACHE).default(Action.NO_CACHE),
   forceUserIdentity: assureTypeLambda(Joi.boolean().optional().default(true)),
   validationSchema: JoiHelper.maybeString(),
-  scope: JoiHelper.stringEnum(ActionFlags.STATES_STR_VECTOR),
+  scope: JoiHelper.stringEnum(ActionFlags.STATES_STR_VECTOR).optional().default(ActionFlags.PUBLIC_STR),
 
   // Lambda config
   engine: assureTypeLambda(Joi.object().optional().keys({

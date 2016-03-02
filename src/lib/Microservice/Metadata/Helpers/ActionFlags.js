@@ -125,7 +125,7 @@ export class ActionFlags {
    * @returns {Function}
    */
   static get API_ACTION_FILTER() {
-    return (action) => ActionFlags.isApi(action.state);
+    return (action) => ActionFlags.isApi(action.scope);
   }
 
   /**
@@ -139,6 +139,6 @@ export class ActionFlags {
    * @returns {Function}
    */
   static get DIRECT_ACTION_FILTER() {
-    return (action) => ActionFlags.isDirect(action.state);
+    return (action) => ActionFlags.isDirect(action.scope);
   }
 }
