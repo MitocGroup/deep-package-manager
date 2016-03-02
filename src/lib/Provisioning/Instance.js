@@ -20,6 +20,7 @@ import {ElasticacheService} from './Service/ElasticacheService';
 import {APIGatewayService} from './Service/APIGatewayService';
 import {SQSService} from './Service/SQSService';
 import {CloudWatchLogsService} from './Service/CloudWatchLogsService';
+import {ESService} from './Service/ESService';
 import {Instance as PropertyInstance} from '../Property/Instance';
 import {WaitFor} from '../Helpers/WaitFor';
 import {Tagging} from './ResourceTagging/Tagging';
@@ -69,13 +70,15 @@ export class Instance {
     this._acm = new property.AWS.ACM({
       region: this.getAwsServiceRegion(ACMService, property.config.awsRegion),
     });
-    this._elasticache = new property.AWS.ElastiCache({
-      region: this._lambda.config.region,
+    this._elasticsearch = new property.AWS.ES({
+      region: this.getAwsServiceRegion(ESService, property.config.awsRegion),
     });
 
     // set region for services that depend on other services region
+    this._elasticache = new property.AWS.ElastiCache({
+      region: this._lambda.config.region,
+    });
     this._s3 = new property.AWS.S3({
-
       // This bucket must reside in the same AWS region where you are creating the Lambda function
       region: this._lambda.config.region,
     });
@@ -234,6 +237,13 @@ export class Instance {
   }
 
   /**
+   * @returns {AWS.ES|*}
+   */
+  get elasticSearch() {
+    return this._elasticsearch;
+  }
+
+  /**
    * @param {String} name
    * @returns {Object}
    */
@@ -250,6 +260,9 @@ export class Instance {
         break;
       case 'ElastiCache':
         name = 'elasticCache';
+        break;
+      case 'ES':
+        name = 'elasticSearch';
         break;
       default:
         name = AbstractService.lowerCaseFirst(name);
@@ -278,6 +291,7 @@ export class Instance {
         new APIGatewayService(this),
         new SQSService(this),
         new CloudWatchLogsService(this),
+        new ESService(this),
       ]);
     }
 

@@ -8,6 +8,7 @@ import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {FailedToCreateSqsQueueException} from './Exception/FailedToCreateSqsQueueException';
+import objectMerge from 'object-merge';
 
 /**
  * SQS service
@@ -57,24 +58,22 @@ export class SQSService extends AbstractService {
    * @returns {SQSService}
    */
   _setup(services) {
-    // @todo: implement!
+    let oldQueues = {};
+    let queuesConfig = {};
+    let rum = this.getRumConfig();
+
     if (this._isUpdate) {
-      this._ready = true;
-      return this;
+      oldQueues = this._config.queues;
     }
 
-    let queuesConfig = {};
-
-    let rum = this._getRumConfig();
-
-    if (rum.enabled) {
+    if (rum.enabled && !oldQueues.hasOwnProperty(SQSService.RUM_QUEUE)) {
       queuesConfig[SQSService.RUM_QUEUE] = {}; // @note - here you can add some sqs queue config options
     }
 
     this._createQueues(
       queuesConfig
     )((queues) => {
-      this._config.queues = queues;
+      this._config.queues = objectMerge(oldQueues, queues);
 
       this._ready = true;
     });
@@ -116,14 +115,14 @@ export class SQSService extends AbstractService {
    * Gets RUM config from global
    * @private
    */
-  _getRumConfig() {
+  getRumConfig() {
     let globalsConfig = this.property.config.globals;
     let rum = {
       enabled: false,
     };
 
     if (globalsConfig.logDrivers && globalsConfig.logDrivers.rum) {
-      rum = globalsConfig.logDrivers.rum
+      rum = globalsConfig.logDrivers.rum;
     }
 
     return rum;
