@@ -27,6 +27,7 @@ import {CloudWatchLogsService} from './CloudWatchLogsService';
 import objectMerge from 'object-merge';
 import nodePath from 'path';
 import jsonPointer from 'json-pointer';
+import {ActionFlags} from '../../Microservice/Metadata/Helpers/ActionFlags';
 
 /**
  * APIGateway service
@@ -812,12 +813,14 @@ export class APIGatewayService extends AbstractService {
         resourcePaths.push(APIGatewayService.pathify(microservice.identifier));
       }
 
-      for (let actionKey in microservice.resources.actions) {
-        if (!microservice.resources.actions.hasOwnProperty(actionKey)) {
+      let actions = microservice.resources.actions.filter(ActionFlags.API_ACTION_FILTER);
+
+      for (let actionKey in actions) {
+        if (!actions.hasOwnProperty(actionKey)) {
           continue;
         }
 
-        let action = microservice.resources.actions[actionKey];
+        let action = actions[actionKey];
         let resourcePath = APIGatewayService.pathify(microservice.identifier, action.resourceName);
 
         // push actions parent resource only once

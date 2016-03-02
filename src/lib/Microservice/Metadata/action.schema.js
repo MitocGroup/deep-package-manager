@@ -9,6 +9,7 @@ import Joi from 'joi';
 import path from 'path';
 import {JoiHelper} from '../../Helpers/JoiHelper';
 import {Lambda} from '../../Property/Lambda';
+import {ActionFlags} from './Helpers/ActionFlags';
 
 export default Joi.object().keys({
   description: JoiHelper.maybeString(),
@@ -18,6 +19,7 @@ export default Joi.object().keys({
   cacheTtl: Joi.number().optional().integer().min(Action.NO_CACHE).default(Action.NO_CACHE),
   forceUserIdentity: assureTypeLambda(Joi.boolean().optional().default(true)),
   validationSchema: JoiHelper.maybeString(),
+  scope: JoiHelper.stringEnum(ActionFlags.STATES_STR_VECTOR),
 
   // Lambda config
   engine: assureTypeLambda(Joi.object().optional().keys({

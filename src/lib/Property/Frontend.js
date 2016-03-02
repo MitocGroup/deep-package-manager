@@ -116,6 +116,12 @@ export class Frontend {
             microservice.lambdas[action.identifier].arn :
             action.source;
 
+          let apiEndpoint = null;
+
+          if (action.isScopeApi) {
+            apiEndpoint = apiGatewayBaseUrl + APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName);
+          }
+
           microserviceConfig.resources[resourceName][action.name] = {
             type: action.type,
             methods: action.methods,
@@ -127,8 +133,8 @@ export class Frontend {
             },
             region: propertyConfig.awsRegion, // @todo: set it from lambda provision
             source: {
-              api: apiGatewayBaseUrl + APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName),
-              original: originalSource,
+              api: apiEndpoint,
+              original: action.isScopeDirect ? originalSource : null,
             },
           };
 

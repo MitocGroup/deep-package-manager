@@ -4,6 +4,8 @@
 
 'use strict';
 
+import {ActionFlags} from './Helpers/ActionFlags';
+
 /**
  * Single action instance
  */
@@ -24,6 +26,7 @@ export class Action {
     this._cacheTtl = config.cacheTtl;
     this._forceUserIdentity = config.forceUserIdentity;
     this._validationSchema = config.validationSchema;
+    this._scope = ActionFlags.unstringify(config.scope);
   }
 
   /**
@@ -58,7 +61,28 @@ export class Action {
   }
 
   /**
-   * @returns {String|null}
+   * @returns {Boolean}
+   */
+  get isScopeDirect() {
+    return ActionFlags.isDirect(this.scope);
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  get isScopeApi() {
+    return ActionFlags.isApi(this.scope);
+  }
+
+  /**
+   * @returns {Number}
+   */
+  get scope() {
+    return this._scope;
+  }
+
+  /**
+   * @returns {String|Object|Function|null}
    */
   get validationSchema() {
     return this._validationSchema;
@@ -174,6 +198,7 @@ export class Action {
       cacheTtl: this.cacheTtl,
       forceUserIdentity: this.forceUserIdentity,
       validationSchema: this.validationSchema,
+      scope: this.scope,
     };
   }
 }
