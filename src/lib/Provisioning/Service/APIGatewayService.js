@@ -20,6 +20,7 @@ import {InvalidCacheClusterSizeException} from './Exception/InvalidCacheClusterS
 import {InvalidApiLogLevelException} from './Exception/InvalidApiLogLevelException';
 import {FailedToUpdateApiGatewayStageException} from './Exception/FailedToUpdateApiGatewayStageException';
 import {FailedToUpdateApiGatewayAccountException} from './Exception/FailedToUpdateApiGatewayAccountException';
+import {FailedToDeleteApiException} from './Exception/FailedToDeleteApiException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
@@ -175,6 +176,22 @@ export class APIGatewayService extends AbstractService {
   _setup(services) {
     let resourcePaths = this._getResourcePaths(this.property.microservices);
 
+    // do not create an API instance if there are no resources
+    if (resourcePaths.length === 0) {
+      if (this.isUpdate && this._config.api && this._config.api.id) {
+        this._deleteApi(this._config.api.id, () => {
+          this._config.api = {};
+          this._ready = true;
+        });
+
+      } else {
+        this._config.api = {};
+        this._ready = true;
+      }
+
+      return this;
+    }
+
     this._provisionApiResources(
       this.apiMetadata,
       resourcePaths
@@ -215,6 +232,11 @@ export class APIGatewayService extends AbstractService {
    * @returns {APIGatewayService}
    */
   _postDeployProvision(services) {
+    if (!this._config.api.hasOwnProperty('id')) {
+      this._ready = true;
+      return this;
+    }
+
     this._nonDirectLambdaIdentifiers = this.provisioning.services.find(LambdaService)
       .extractFunctionIdentifiers(ActionFlags.NON_DIRECT_ACTION_FILTER);
 
@@ -476,6 +498,21 @@ export class APIGatewayService extends AbstractService {
     this.apiGatewayClient.createDeployment(params, (error, data) => {
       if (error) {
         throw new FailedToDeployApiGatewayException(apiId, error);
+      }
+
+      callback(data);
+    });
+  }
+
+  /**
+   * @param {String} apiId
+   * @param {Function} callback
+   * @private
+   */
+  _deleteApi(apiId, callback) {
+    this.apiGatewayClient.deleteRestApi({restApiId: apiId}, (error, data) => {
+      if (error) {
+        throw new FailedToDeleteApiException(apiId, error);
       }
 
       callback(data);

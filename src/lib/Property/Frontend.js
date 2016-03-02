@@ -22,6 +22,7 @@ import OS from 'os';
 import ZLib from 'zlib';
 import {APIGatewayService} from '../Provisioning/Service/APIGatewayService';
 import {SQSService} from '../Provisioning/Service/SQSService';
+import {ESService} from '../Provisioning/Service/ESService';
 import {DeployIdInjector} from '../Assets/DeployIdInjector';
 import {Optimizer} from '../Assets/Optimizer';
 import {Injector as TagsInjector} from '../Tags/Injector';
@@ -82,7 +83,24 @@ export class Frontend {
       apiGatewayBaseUrl = propertyConfig.provisioning[Core.AWS.Service.API_GATEWAY].api.baseUrl;
 
       let sqsQueues = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_QUEUE_SERVICE].queues;
-      config.rumQueue = sqsQueues[SQSService.RUM_QUEUE] || '';
+      config.rumQueue = sqsQueues[SQSService.RUM_QUEUE] || {};
+
+      let esDomains = propertyConfig.provisioning[Core.AWS.Service.ELASTIC_SEARCH].domains;
+      let domains = {};
+
+      for (let domainKey in esDomains) {
+        if (!esDomains.hasOwnProperty(domainKey)) {
+          continue;
+        }
+
+        let domain = esDomains[domainKey];
+
+        domains[domainKey] = {
+          name: domain.DomainName,
+        };
+      }
+
+      config.esDomains = domains;
     }
 
     for (let microserviceIdentifier in propertyConfig.microservices) {

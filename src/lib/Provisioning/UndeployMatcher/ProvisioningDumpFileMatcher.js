@@ -192,6 +192,20 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
         deployProvisioning.apigateway.api.logGroupName) {
         this._deployConfig.CloudWatchLogs.push(deployProvisioning.apigateway.api.logGroupName);
       }
+
+      if (deployProvisioning.es && deployProvisioning.es.domains) {
+        let domains = deployProvisioning.es.domains;
+
+        for (let key in domains) {
+          if (!domains.hasOwnProperty(key)) {
+            continue;
+          }
+
+          let domain = domains[key];
+
+          this._deployConfig.ES.push(domain.DomainName);
+        }
+      }
     } else {
       throw new MissingProvisioningConfig(this.fileName, 'provisioning');
     }

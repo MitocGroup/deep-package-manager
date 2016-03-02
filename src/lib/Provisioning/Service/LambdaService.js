@@ -19,6 +19,7 @@ import {CognitoIdentityService} from './CognitoIdentityService';
 import {CloudWatchLogsService} from './CloudWatchLogsService';
 import {SQSService} from './SQSService';
 import {ActionFlags} from '../../Microservice/Metadata/Helpers/ActionFlags';
+import {ESService} from './ESService';
 
 /**
  * Lambda service
@@ -386,6 +387,11 @@ export class LambdaService extends AbstractService {
 
     let sqsService = this.provisioning.services.find(SQSService);
     policy.statement.add(sqsService.generateAllowActionsStatement());
+
+    let esService = this.provisioning.services.find(ESService);
+    policy.statement.add(esService.generateAllowActionsStatement([
+      'ESHttpGet', 'ESHttpHead', 'ESHttpDelete', 'ESHttpPost', 'ESHttpPut',
+    ]));
 
     // @todo: move it to ElastiCacheService?
     let ec2Statement = policy.statement.add();
