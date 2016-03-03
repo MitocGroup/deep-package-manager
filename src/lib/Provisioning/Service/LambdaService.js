@@ -147,8 +147,6 @@ export class LambdaService extends AbstractService {
    * @returns {LambdaService}
    */
   _postDeployProvision(services) {
-    this._invocationRoleArn = this.provisioning.services.find(APIGatewayService).config().api.role.Arn;
-
     this._attachScheduledEvents((crons) => {
       this._config.crons = crons;
 
@@ -191,6 +189,7 @@ export class LambdaService extends AbstractService {
 
           crons[lambdaName] = {
             cron: action.cron,
+            payload: action.cronPayload,
             lambdaArn: this._generateLambdaArn(lambdaName),
             eventArn: null,
           };
@@ -211,6 +210,7 @@ export class LambdaService extends AbstractService {
   _createScheduledEvents(crons) {
     let syncStack = new AwsRequestSyncStack();
     let cwe = this.provisioning.cloudWatchEvents;
+    let lambda = this.provisioning.lambda;
 
     for (let lambdaName in crons) {
       if (!crons.hasOwnProperty(lambdaName)) {
@@ -225,7 +225,6 @@ export class LambdaService extends AbstractService {
         Name: lambdaName,
         Description: `Schedule ${lambdaArn} (${cronString})`,
         ScheduleExpression: `cron(${cronString})`,
-        RoleArn: this._invocationRoleArn,
         State: 'ENABLED',
       };
 
@@ -235,6 +234,19 @@ export class LambdaService extends AbstractService {
         }
 
         crons[lambdaName].eventArn = data.RuleArn;
+      });
+
+      let permissionsPayload = {
+        Action: `${Core.AWS.Service.LAMBDA}:InvokeFunction`,
+        Principal: Core.AWS.Service.identifier(Core.AWS.Service.CLOUD_WATCH_EVENTS),
+        FunctionName: lambdaArn,
+        StatementId: lambdaName,
+      };
+
+      syncStack.level(1).push(lambda.addPermission(permissionsPayload), (error) => {
+        if (error && error.code !== 'ResourceConflictException') {
+          throw new FailedToAttachScheduledEventException(lambdaName, error);
+        }
       });
 
       let targetPayload = {
@@ -247,6 +259,10 @@ export class LambdaService extends AbstractService {
         ],
       };
 
+      if (cronData.payload) {
+        targetPayload.Targets[0].Input = JSON.stringify(cronData.payload);
+      }
+
       syncStack.level(1).push(cwe.putTargets(targetPayload), (error) => {
         if (error) {
           throw new FailedToAttachScheduledEventException(lambdaName, error);
@@ -255,6 +271,24 @@ export class LambdaService extends AbstractService {
     }
 
     return syncStack.join();
+  }
+
+  /**
+   * @returns {Core.AWS.IAM.Policy}
+   */
+  static getAssumeRolePolicy() {
+    let rolePolicy = new Core.AWS.IAM.Policy();
+
+    let statement = rolePolicy.statement.add();
+    statement.principal = {
+      Service: Core.AWS.Service.identifier(Core.AWS.Service.CLOUD_WATCH_EVENTS),
+    };
+
+    let action = statement.action.add();
+    action.service = Core.AWS.Service.LAMBDA;
+    action.action = 'InvokeFunction';
+
+    return rolePolicy;
   }
 
   /**

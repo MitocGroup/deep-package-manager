@@ -417,10 +417,7 @@ export class APIGatewayService extends AbstractService {
     );
 
     let params = {
-      AssumeRolePolicyDocument: IAMService.getAssumeRolePolicy(
-        Core.AWS.Service.API_GATEWAY,
-        Core.AWS.Service.CLOUD_WATCH_EVENTS // @todo: move it to cloudWatchEvents service?
-      ).toString(),
+      AssumeRolePolicyDocument: IAMService.getAssumeRolePolicy(Core.AWS.Service.API_GATEWAY).toString(),
       RoleName: roleName,
     };
 

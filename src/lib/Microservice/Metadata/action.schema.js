@@ -23,6 +23,7 @@ export default Joi.object().keys({
       .regex(/^\s*[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s*$/)
       .optional()
   ),
+  cronPayload: Joi.object().unknown().optional(),
   validationSchema: JoiHelper.maybeString(),
   scope: JoiHelper.stringEnum(ActionFlags.STATES_STR_VECTOR).optional().default(ActionFlags.PUBLIC_STR),
 

@@ -5,7 +5,6 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
-import {AbstractService} from '../Service/AbstractService';
 
 export class CloudWatchEventsDriver extends AbstractDriver {
   /**
@@ -28,9 +27,7 @@ export class CloudWatchEventsDriver extends AbstractDriver {
    * @private
    */
   _listRules(cb, nextToken = null) {
-    let payload = {
-      NamePrefix: `${AbstractService.capitalizeFirst(AbstractService.AWS_RESOURCES_PREFIX)}*`,
-    };
+    let payload = {};
 
     if (nextToken) {
       payload.NextToken = nextToken;

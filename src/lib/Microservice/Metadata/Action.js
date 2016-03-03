@@ -28,6 +28,7 @@ export class Action {
     this._validationSchema = config.validationSchema;
     this._scope = ActionFlags.unstringify(config.scope);
     this._cron = config.cron || null;
+    this._cronPayload = config.cronPayload || null;
   }
 
   /**
@@ -65,6 +66,13 @@ export class Action {
    * @returns {Number}
    */
   get scope() {
+
+    // It doesn't make sense to expose scheduled backend
+    // through both api and direct call due to missing user context
+    if (this.cron) {
+      return ActionFlags.PRIVATE;
+    }
+
     return this._scope;
   }
 
@@ -90,6 +98,11 @@ export class Action {
     // @todo: remove this after figuring out the invoke roles
     // for both auth and non auth policies assigned to the cognito
     if (!ActionFlags.isDirect(this.scope)) {
+      return false;
+    }
+
+    // There's no user context shared in scheduled backend
+    if (this.cron) {
       return false;
     }
 
@@ -122,6 +135,13 @@ export class Action {
    */
   get cron() {
     return this._cron;
+  }
+
+  /**
+   * @returns {Object|null}
+   */
+  get cronPayload() {
+    return this._cronPayload;
   }
 
   /**
@@ -201,6 +221,7 @@ export class Action {
       validationSchema: this.validationSchema,
       scope: this.scope,
       cron: this.cron,
+      cronPayload: this.cronPayload,
     };
   }
 }

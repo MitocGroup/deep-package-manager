@@ -28,7 +28,14 @@ export class CloudWatchEventsDriver extends AbstractDriver {
    * @private
    */
   _removeResource(resourceId, resourceData, cb) {
-    this._deleteRule(resourceId, cb);
+    this._removeTargets(resourceId, (error) => {
+      if (error) {
+        cb(error);
+        return;
+      }
+
+      this._deleteRule(resourceId, cb);
+    });
   }
 
   /**
@@ -58,6 +65,44 @@ export class CloudWatchEventsDriver extends AbstractDriver {
       }
 
       cb(null);
+    });
+  }
+
+  /**
+   * @param {String} ruleName
+   * @param {Function} cb
+   * @private
+   */
+  _removeTargets(ruleName, cb) {
+    this._awsService.listTargetsByRule({
+      Rule: ruleName,
+    }, (error, data) => {
+      if (error) {
+        cb(error);
+        return;
+      }
+
+      let targets = data.Targets;
+
+      if (targets.length <= 0) {
+        cb();
+        return;
+      }
+
+      let ids = [];
+
+      targets.forEach((targetData) => {
+        ids.push(targetData.Id);
+      });
+
+      let payload = {
+        Rule: ruleName,
+        Ids: ids,
+      };
+
+      this._awsService.removeTargets(payload, (error) => {
+        cb(error);
+      });
     });
   }
 
