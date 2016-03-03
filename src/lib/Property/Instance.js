@@ -265,6 +265,13 @@ export class Instance {
   }
 
   /**
+   * @returns {String}
+   */
+  get name() {
+    return this._config.appName;
+  }
+
+  /**
    * @returns {AWS}
    */
   get AWS() {

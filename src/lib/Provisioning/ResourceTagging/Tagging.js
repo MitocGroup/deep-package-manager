@@ -20,6 +20,8 @@ export class Tagging {
    * @param {String|null} applicationName
    */
   static create(property, applicationName = null) {
+    applicationName = applicationName || property.name;
+
     return new Tagging(new S3Driver(property, applicationName));
   }
 
@@ -39,7 +41,7 @@ export class Tagging {
     let remaining = this._drivers.length;
 
     wait.push(() => {
-      return remaining;
+      return remaining <= 0;
     });
 
     this._drivers.forEach((driver) => {
