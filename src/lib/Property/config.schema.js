@@ -16,6 +16,7 @@ import {DeployConfig} from './DeployConfig';
 export default {
   validation: () => {
     return Joi.object().keys({
+      appName: JoiHelper.string().required(),
       appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).required(),
       env: JoiHelper.stringEnum(DeployConfig.AVAILABLE_ENV).optional()
         .lowercase().default(DeployConfig.AVAILABLE_ENV[0]),
@@ -33,9 +34,11 @@ export default {
   },
   generation: () => {
     let guessedAwsCredentials = guessAwsSdkConfig();
+    let appId = buildAppId();
 
     return Joi.object().keys({
-      appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).optional().default(buildAppId()),
+      appName: JoiHelper.string().required().default(buildAppNameFromId(appId)),
+      appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).optional().default(appId),
       env: JoiHelper.stringEnum(DeployConfig.AVAILABLE_ENV).optional().default(DeployConfig.AVAILABLE_ENV[0]),
       awsAccountId: Joi.number().optional().default(guessAwsAccountId(guessedAwsCredentials)),
       aws: Joi.object().keys({
@@ -47,6 +50,10 @@ export default {
     })
   }
 };
+
+function buildAppNameFromId(appId) {
+  return `My Custom Web App #${appId}`;
+}
 
 function buildAppId() {
   let result = new Exec(
