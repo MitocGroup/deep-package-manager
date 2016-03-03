@@ -177,6 +177,9 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
           );
 
           this._deployConfig.Lambda = this._deployConfig.Lambda.concat(lambdaNamesChunk);
+
+          // @todo: separate this?
+          this._deployConfig.CloudWatchEvents = [].concat(this._deployConfig.Lambda);
         }
       }
 

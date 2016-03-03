@@ -6,8 +6,10 @@
 
 import {AbstractService} from './AbstractService';
 import {S3Service} from './S3Service';
+import {APIGatewayService} from './APIGatewayService';
 import Core from 'deep-core';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
+import {WaitFor} from '../../Helpers/WaitFor';
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
 import {Action} from '../../Microservice/Metadata/Action';
@@ -145,6 +147,8 @@ export class LambdaService extends AbstractService {
    * @returns {LambdaService}
    */
   _postDeployProvision(services) {
+    this._invocationRoleArn = this.provisioning.services.find(APIGatewayService).config().api.role.Arn;
+
     this._attachScheduledEvents((crons) => {
       this._config.crons = crons;
 
@@ -195,45 +199,8 @@ export class LambdaService extends AbstractService {
     }
 
     this._createScheduledEvents(crons).ready(() => {
-      this._attachScheduledEventsCall(crons).ready(() => {
-        cb(crons);
-      });
+      cb(crons);
     });
-  }
-
-  /**
-   * @param {Object} crons
-   * @returns {WaitFor}
-   * @private
-   */
-  _attachScheduledEventsCall(crons) {
-    let syncStack = new AwsRequestSyncStack();
-    let lambda = this.provisioning.lambda;
-
-    for (let lambdaName in crons) {
-      if (!crons.hasOwnProperty(lambdaName)) {
-        continue;
-      }
-
-      let cronData = crons[lambdaName];
-      let lambdaArn = cronData.lambdaArn;
-      let eventArn = cronData.eventArn;
-
-      let payload = {
-        EventSourceArn: eventArn,
-        FunctionName: lambdaArn,
-        StartingPosition: 'TRIM_HORIZON',
-        Enabled: true,
-      };
-
-      syncStack.push(lambda.createEventSourceMapping(payload), (error) => {
-        if (error) {
-          throw new FailedToAttachScheduledEventException(lambdaName, error);
-        }
-      });
-    }
-
-    return syncStack.join();
   }
 
   /**
@@ -258,6 +225,7 @@ export class LambdaService extends AbstractService {
         Name: lambdaName,
         Description: `Schedule ${lambdaArn} (${cronString})`,
         ScheduleExpression: `cron(${cronString})`,
+        RoleArn: this._invocationRoleArn,
         State: 'ENABLED',
       };
 
@@ -267,6 +235,22 @@ export class LambdaService extends AbstractService {
         }
 
         crons[lambdaName].eventArn = data.RuleArn;
+      });
+
+      let targetPayload = {
+        Rule: lambdaName,
+        Targets: [
+          {
+            Arn: lambdaArn,
+            Id: lambdaName,
+          },
+        ],
+      };
+
+      syncStack.level(1).push(cwe.putTargets(targetPayload), (error) => {
+        if (error) {
+          throw new FailedToAttachScheduledEventException(lambdaName, error);
+        }
       });
     }
 
@@ -601,7 +585,7 @@ export class LambdaService extends AbstractService {
   /**
    * Deny Cognito and ApiGateway users to invoke these lambdas
    *
-   * @returns {Core.AWS.IAM.Statement}
+   * @returns {Core.AWS.IAM.Statement|null}
    */
   generateDenyInvokeFunctionStatement() {
     let policy = new Core.AWS.IAM.Policy();
@@ -610,13 +594,17 @@ export class LambdaService extends AbstractService {
     statement.effect = statement.constructor.DENY;
     statement.action.add(Core.AWS.Service.LAMBDA, 'InvokeFunction');
 
-    this
-      .extractFunctionIdentifiers(ActionFlags.NON_DIRECT_ACTION_FILTER)
-      .forEach((lambdaArn) => {
-        statement.resource.add().updateFromArn(
-          this._generateLambdaArn(lambdaArn)
-        );
-      });
+    let lambdaArns = this.extractFunctionIdentifiers(ActionFlags.NON_DIRECT_ACTION_FILTER);
+
+    if (lambdaArns.length <= 0) {
+      return null;
+    }
+
+    lambdaArns.forEach((lambdaArn) => {
+      statement.resource.add().updateFromArn(
+        this._generateLambdaArn(lambdaArn)
+      );
+    });
 
     return statement;
   }

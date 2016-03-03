@@ -117,7 +117,8 @@ export class Listing {
     return [
       'APIGateway', 'IAM', 'CognitoIdentity',
       'Lambda', 'CloudFront', 'DynamoDB', 'S3',
-      'CloudWatchLogs', 'SQS', 'ElastiCache', 'ES',
+      'CloudWatchLogs', 'SQS', 'ElastiCache',
+      'ES', 'CloudWatchEvents',
     ];
   }
 }
