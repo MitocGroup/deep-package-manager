@@ -27,6 +27,7 @@ export class Action {
     this._forceUserIdentity = config.forceUserIdentity;
     this._validationSchema = config.validationSchema;
     this._scope = ActionFlags.unstringify(config.scope);
+    this._cron = config.cron || null;
   }
 
   /**
@@ -117,6 +118,13 @@ export class Action {
   }
 
   /**
+   * @returns {String|null}
+   */
+  get cron() {
+    return this._cron;
+  }
+
+  /**
    * @returns {String}
    */
   get name() {
@@ -192,6 +200,7 @@ export class Action {
       forceUserIdentity: this.forceUserIdentity,
       validationSchema: this.validationSchema,
       scope: this.scope,
+      cron: this.cron,
     };
   }
 }

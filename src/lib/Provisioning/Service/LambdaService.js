@@ -20,6 +20,8 @@ import {CloudWatchLogsService} from './CloudWatchLogsService';
 import {SQSService} from './SQSService';
 import {ActionFlags} from '../../Microservice/Metadata/Helpers/ActionFlags';
 import {ESService} from './ESService';
+import {FailedToCreateScheduledEventException} from './Exception/FailedToCreateScheduledEventException';
+import {FailedToAttachScheduledEventException} from './Exception/FailedToAttachScheduledEventException';
 
 /**
  * Lambda service
@@ -143,15 +145,132 @@ export class LambdaService extends AbstractService {
    * @returns {LambdaService}
    */
   _postDeployProvision(services) {
-    // @todo: implement!
-    if (this._isUpdate) {
-      this._ready = true;
-      return this;
-    }
+    this._attachScheduledEvents((crons) => {
+      this._config.crons = crons;
 
-    this._ready = true;
+      this._ready = true;
+    });
 
     return this;
+  }
+
+  /**
+   * @param {Function} cb
+   * @private
+   */
+  _attachScheduledEvents(cb) {
+    let microservices = this._provisioning.property.microservices;
+    let crons = {};
+
+    for (let microserviceKey in microservices) {
+      if (!microservices.hasOwnProperty(microserviceKey)) {
+        continue;
+      }
+
+      let microservice = microservices[microserviceKey];
+
+      let actions = microservice.resources.actions;
+
+      for (let actionKey in actions) {
+        if (!actions.hasOwnProperty(actionKey)) {
+          continue;
+        }
+
+        let action = actions[actionKey];
+
+        if (action.type === Action.LAMBDA && action.cron) {
+          let lambdaName = this.generateAwsResourceName(
+            this._actionIdentifierToPascalCase(action.identifier),
+            Core.AWS.Service.LAMBDA,
+            microservice.identifier
+          );
+
+          crons[lambdaName] = {
+            cron: action.cron,
+            lambdaArn: this._generateLambdaArn(lambdaName),
+            eventArn: null,
+          };
+        }
+      }
+    }
+
+    this._createScheduledEvents(crons).ready(() => {
+      this._attachScheduledEventsCall(crons).ready(() => {
+        cb(crons);
+      });
+    });
+  }
+
+  /**
+   * @param {Object} crons
+   * @returns {WaitFor}
+   * @private
+   */
+  _attachScheduledEventsCall(crons) {
+    let syncStack = new AwsRequestSyncStack();
+    let lambda = this.provisioning.lambda;
+
+    for (let lambdaName in crons) {
+      if (!crons.hasOwnProperty(lambdaName)) {
+        continue;
+      }
+
+      let cronData = crons[lambdaName];
+      let lambdaArn = cronData.lambdaArn;
+      let eventArn = cronData.eventArn;
+
+      let payload = {
+        EventSourceArn: eventArn,
+        FunctionName: lambdaArn,
+        StartingPosition: 'TRIM_HORIZON',
+        Enabled: true,
+      };
+
+      syncStack.push(lambda.createEventSourceMapping(payload), (error) => {
+        if (error) {
+          throw new FailedToAttachScheduledEventException(lambdaName, error);
+        }
+      });
+    }
+
+    return syncStack.join();
+  }
+
+  /**
+   * @param {Object} crons
+   * @returns {WaitFor}
+   * @private
+   */
+  _createScheduledEvents(crons) {
+    let syncStack = new AwsRequestSyncStack();
+    let cwe = this.provisioning.cloudWatchEvents;
+
+    for (let lambdaName in crons) {
+      if (!crons.hasOwnProperty(lambdaName)) {
+        continue;
+      }
+
+      let cronData = crons[lambdaName];
+      let cronString = cronData.cron;
+      let lambdaArn = cronData.lambdaArn;
+
+      let payload = {
+        Name: lambdaName,
+        Description: `Schedule ${lambdaArn} (${cronString})`,
+        ScheduleExpression: `cron(${cronString})`,
+        State: 'ENABLED',
+      };
+
+      syncStack.push(cwe.putRule(payload), (error, data) => {
+        if (error) {
+          throw new FailedToCreateScheduledEventException(lambdaName, error);
+        }
+
+        crons[lambdaName].eventArn = data.RuleArn;
+      });
+    }
+
+    return syncStack.join();
   }
 
   /**
