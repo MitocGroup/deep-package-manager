@@ -37,7 +37,7 @@ export default {
     let appId = buildAppId();
 
     return Joi.object().keys({
-      appName: JoiHelper.string().required().default(buildAppNameFromId(appId)),
+      appName: JoiHelper.string().optional().default(buildAppNameFromId(appId)),
       appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).optional().default(appId),
       env: JoiHelper.stringEnum(DeployConfig.AVAILABLE_ENV).optional().default(DeployConfig.AVAILABLE_ENV[0]),
       awsAccountId: Joi.number().optional().default(guessAwsAccountId(guessedAwsCredentials)),
