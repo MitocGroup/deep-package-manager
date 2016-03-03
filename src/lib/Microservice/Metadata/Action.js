@@ -4,6 +4,8 @@
 
 'use strict';
 
+import {ActionFlags} from './Helpers/ActionFlags';
+
 /**
  * Single action instance
  */
@@ -24,6 +26,7 @@ export class Action {
     this._cacheTtl = config.cacheTtl;
     this._forceUserIdentity = config.forceUserIdentity;
     this._validationSchema = config.validationSchema;
+    this._scope = ActionFlags.unstringify(config.scope);
   }
 
   /**
@@ -58,7 +61,14 @@ export class Action {
   }
 
   /**
-   * @returns {String|null}
+   * @returns {Number}
+   */
+  get scope() {
+    return this._scope;
+  }
+
+  /**
+   * @returns {String|Object|Function|null}
    */
   get validationSchema() {
     return this._validationSchema;
@@ -75,6 +85,13 @@ export class Action {
    * @returns {Boolean}
    */
   get forceUserIdentity() {
+
+    // @todo: remove this after figuring out the invoke roles
+    // for both auth and non auth policies assigned to the cognito
+    if (!ActionFlags.isDirect(this.scope)) {
+      return false;
+    }
+
     return this._forceUserIdentity;
   }
 
@@ -174,6 +191,7 @@ export class Action {
       cacheTtl: this.cacheTtl,
       forceUserIdentity: this.forceUserIdentity,
       validationSchema: this.validationSchema,
+      scope: this.scope,
     };
   }
 }

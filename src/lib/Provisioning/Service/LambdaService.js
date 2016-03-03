@@ -18,6 +18,7 @@ import {_extend as extend} from 'util';
 import {CognitoIdentityService} from './CognitoIdentityService';
 import {CloudWatchLogsService} from './CloudWatchLogsService';
 import {SQSService} from './SQSService';
+import {ActionFlags} from '../../Microservice/Metadata/Helpers/ActionFlags';
 import {ESService} from './ESService';
 
 /**
@@ -233,10 +234,11 @@ export class LambdaService extends AbstractService {
 
   /**
    * @param {Object<Instance>} microservices
+   * @param {Function} filter
    * @returns {Object}
    * @private
    */
-  _generateLambdasNames(microservices) {
+  _generateLambdasNames(microservices, filter = () => true) {
     let names = {};
 
     for (let microserviceKey in microservices) {
@@ -248,12 +250,14 @@ export class LambdaService extends AbstractService {
 
       names[microservice.identifier] = {};
 
-      for (let actionKey in microservice.resources.actions) {
-        if (!microservice.resources.actions.hasOwnProperty(actionKey)) {
+      let actions = microservice.resources.actions.filter(filter);
+
+      for (let actionKey in actions) {
+        if (!actions.hasOwnProperty(actionKey)) {
           continue;
         }
 
-        let action = microservice.resources.actions[actionKey];
+        let action = actions[actionKey];
 
         if (action.type === Action.LAMBDA) {
           names[microservice.identifier][action.identifier] = this.generateAwsResourceName(
@@ -428,6 +432,7 @@ export class LambdaService extends AbstractService {
 
   /**
    * Allow Cognito and ApiGateway users to invoke these lambdas
+   *
    * @returns {Core.AWS.IAM.Statement}
    */
   generateAllowInvokeFunctionStatement() {
@@ -439,6 +444,60 @@ export class LambdaService extends AbstractService {
     statement.resource.add().updateFromArn(
       this._generateLambdaArn(this._getGlobalResourceMask())
     );
+
+    return statement;
+  }
+
+  /**
+   * @param {Function} filter
+   * @returns {String[]}
+   */
+  extractFunctionIdentifiers(filter = () => true) {
+    let lambdaIdentifiers = [];
+
+    let privateLambdasObj = this._generateLambdasNames(
+      this._provisioning.property.microservices,
+      filter
+    );
+
+    for (let k in privateLambdasObj) {
+      if (!privateLambdasObj.hasOwnProperty(k)) {
+        continue;
+      }
+
+      let privateLambdasObjNested = privateLambdasObj[k];
+
+      for (let nk in privateLambdasObjNested) {
+        if (!privateLambdasObjNested.hasOwnProperty(nk)) {
+          continue;
+        }
+
+        lambdaIdentifiers.push(privateLambdasObjNested[nk]);
+      }
+    }
+
+    return lambdaIdentifiers;
+  }
+
+  /**
+   * Deny Cognito and ApiGateway users to invoke these lambdas
+   *
+   * @returns {Core.AWS.IAM.Statement}
+   */
+  generateDenyInvokeFunctionStatement() {
+    let policy = new Core.AWS.IAM.Policy();
+
+    let statement = policy.statement.add();
+    statement.effect = statement.constructor.DENY;
+    statement.action.add(Core.AWS.Service.LAMBDA, 'InvokeFunction');
+
+    this
+      .extractFunctionIdentifiers(ActionFlags.NON_DIRECT_ACTION_FILTER)
+      .forEach((lambdaArn) => {
+        statement.resource.add().updateFromArn(
+          this._generateLambdaArn(lambdaArn)
+        );
+      });
 
     return statement;
   }

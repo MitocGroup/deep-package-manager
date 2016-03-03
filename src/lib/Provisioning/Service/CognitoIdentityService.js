@@ -126,12 +126,6 @@ export class CognitoIdentityService extends AbstractService {
    * @returns {CognitoIdentityService}
    */
   _postDeployProvision(services) {
-    // @todo: implement!
-    if (this._isUpdate) {
-      this._ready = true;
-      return this;
-    }
-
     let apiGatewayInstance = services.find(APIGatewayService);
 
     this._updateCognitoRolesPolicy(
@@ -141,6 +135,7 @@ export class CognitoIdentityService extends AbstractService {
       this._config.postDeploy = {
         inlinePolicies: policies,
       };
+
       this._ready = true;
     });
 
@@ -299,6 +294,7 @@ export class CognitoIdentityService extends AbstractService {
 
       let policy = new Core.AWS.IAM.Policy();
       policy.statement.add(lambdaService.generateAllowInvokeFunctionStatement());
+      policy.statement.add(lambdaService.generateDenyInvokeFunctionStatement());
       policy.statement.add(APIGatewayService.generateAllowInvokeMethodStatement(endpointsARNs));
       policy.statement.add(this.generateAllowCognitoSyncStatement(['ListRecords', 'UpdateRecords', 'ListDatasets']));
       policy.statement.add(sqsService.generateAllowActionsStatement());

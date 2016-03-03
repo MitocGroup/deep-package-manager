@@ -28,6 +28,7 @@ import {CloudWatchLogsService} from './CloudWatchLogsService';
 import objectMerge from 'object-merge';
 import nodePath from 'path';
 import jsonPointer from 'json-pointer';
+import {ActionFlags} from '../../Microservice/Metadata/Helpers/ActionFlags';
 
 /**
  * APIGateway service
@@ -40,6 +41,7 @@ export class APIGatewayService extends AbstractService {
     super(...args);
 
     this._apiResources = {};
+    this._nonDirectLambdaIdentifiers = [];
   }
 
   /**
@@ -234,6 +236,9 @@ export class APIGatewayService extends AbstractService {
       this._ready = true;
       return this;
     }
+
+    this._nonDirectLambdaIdentifiers = this.provisioning.services.find(LambdaService)
+      .extractFunctionIdentifiers(ActionFlags.NON_DIRECT_ACTION_FILTER);
 
     let integrationParams = this.getResourcesIntegrationParams(this.property.config.microservices);
 
@@ -760,7 +765,10 @@ export class APIGatewayService extends AbstractService {
 
             //params.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
             // @todo - find a smarter way to enable "Invoke with caller credentials" option
-            params.credentials = resourceMethod === 'OPTIONS' ? null : 'arn:aws:iam::*:user/*';
+            params.credentials = resourceMethod === 'OPTIONS' ?
+              null :
+              this._decideMethodIntegrationCredentials(params);
+
             methodParams.push(params);
             break;
           case 'putIntegrationResponse':
@@ -784,6 +792,38 @@ export class APIGatewayService extends AbstractService {
     }
 
     return paramsArr;
+  }
+
+  /**
+   * This method disables invocation with caller credentials
+   * for "non direct call" lambdas
+   *
+   * @param {Object} params
+   * @returns {String}
+   * @private
+   */
+  _decideMethodIntegrationCredentials(params) {
+    let credentials = 'arn:aws:iam::*:user/*';
+
+    if (params.type === 'AWS' && params.uri) {
+      let invocationArn = params.uri;
+      let lambdaNameMatches = invocationArn.match(APIGatewayService.INVOCATION_SOURCE_ARN_REGEX);
+
+      if (lambdaNameMatches && lambdaNameMatches.length === 2) {
+        if (this._nonDirectLambdaIdentifiers.indexOf(lambdaNameMatches[1]) !== -1) {
+          credentials = this._config.api.role.Arn;
+        }
+      }
+    }
+
+    return credentials;
+  }
+
+  /**
+   * @returns {RegExp}
+   */
+  static get INVOCATION_SOURCE_ARN_REGEX() {
+    return /^arn:aws:apigateway:[^:]+:lambda:path\/[^\/]+\/functions\/arn:aws:lambda:[^:]+:[^:]+:function:([^:\/]+)\/invocations/i;
   }
 
   /**
@@ -849,12 +889,14 @@ export class APIGatewayService extends AbstractService {
         resourcePaths.push(APIGatewayService.pathify(microservice.identifier));
       }
 
-      for (let actionKey in microservice.resources.actions) {
-        if (!microservice.resources.actions.hasOwnProperty(actionKey)) {
+      let actions = microservice.resources.actions.filter(ActionFlags.API_ACTION_FILTER);
+
+      for (let actionKey in actions) {
+        if (!actions.hasOwnProperty(actionKey)) {
           continue;
         }
 
-        let action = microservice.resources.actions[actionKey];
+        let action = actions[actionKey];
         let resourcePath = APIGatewayService.pathify(microservice.identifier, action.resourceName);
 
         // push actions parent resource only once

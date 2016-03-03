@@ -26,6 +26,7 @@ import {ESService} from '../Provisioning/Service/ESService';
 import {DeployIdInjector} from '../Assets/DeployIdInjector';
 import {Optimizer} from '../Assets/Optimizer';
 import {Injector as TagsInjector} from '../Tags/Injector';
+import {ActionFlags} from '../Microservice/Metadata/Helpers/ActionFlags';
 
 /**
  * Frontend
@@ -134,6 +135,12 @@ export class Frontend {
             microservice.lambdas[action.identifier].arn :
             action.source;
 
+          let apiEndpoint = null;
+
+          if (ActionFlags.isApi(action.scope)) {
+            apiEndpoint = apiGatewayBaseUrl + APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName);
+          }
+
           microserviceConfig.resources[resourceName][action.name] = {
             type: action.type,
             methods: action.methods,
@@ -145,8 +152,8 @@ export class Frontend {
             },
             region: propertyConfig.awsRegion, // @todo: set it from lambda provision
             source: {
-              api: apiGatewayBaseUrl + APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName),
-              original: originalSource,
+              api: apiEndpoint,
+              original: ActionFlags.isDirect(action.scope) ? originalSource : null,
             },
           };
 
