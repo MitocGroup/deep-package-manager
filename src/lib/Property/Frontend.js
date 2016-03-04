@@ -97,10 +97,12 @@ export class Frontend {
 
         domains[domainKey] = {
           name: domain.DomainName,
+          url: '', // @todo - find a way to retrieve provisioned domain url (it's available with a delay of ~15min)
         };
       }
 
-      config.esDomains = domains;
+      // @note - here will be added CloudSearch domains also
+      config.searchDomains = domains;
     }
 
     for (let microserviceIdentifier in propertyConfig.microservices) {
