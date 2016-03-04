@@ -25,8 +25,8 @@ export default {
         .regex(/^([a-zA-Z0-9-_]+\.)+[a-zA-Z]+?$/i)
         .replace(/^www\./i, ''),
       aws: Joi.object().keys({
-        accessKeyId: JoiHelper.string().required(),
-        secretAccessKey: JoiHelper.string().required(),
+        accessKeyId: JoiHelper.string().required().empty(''),
+        secretAccessKey: JoiHelper.string().required().empty(''),
         region: JoiHelper.string().required(),
         httpOptions: Joi.object().optional(),
       }).required(),

@@ -47,8 +47,9 @@ export class SharedAwsConfig {
    * @param {Function} cb
    */
   refillPropertyConfigIfNeeded(config, cb) {
-    if (config.aws.accessKeyId === SharedAwsConfig.DEFAULT_ACCESS_KEY
-      || config.aws.secretAccessKey === SharedAwsConfig.DEFAULT_SECRET_ACCESS_KEY) {
+    if (!config.aws.accessKeyId || !config.aws.secretAccessKey ||
+      config.aws.accessKeyId === SharedAwsConfig.DEFAULT_ACCESS_KEY ||
+      config.aws.secretAccessKey === SharedAwsConfig.DEFAULT_SECRET_ACCESS_KEY) {
 
       console.log(`You should set real AWS keys in order to use it in production`);
 
