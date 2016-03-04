@@ -79,7 +79,9 @@ export class Instance {
       region: this._lambda.config.region,
     });
     this._s3 = new property.AWS.S3({
-      // This bucket must reside in the same AWS region where you are creating the Lambda function
+      region: this._lambda.config.region,
+    });
+    this._cloudWatchEvents = new property.AWS.CloudWatchEvents({
       region: this._lambda.config.region,
     });
 
@@ -136,6 +138,13 @@ export class Instance {
    */
   get property() {
     return this._property;
+  }
+
+  /**
+   * @returns {AWS.CloudWatchEvents|*}
+   */
+  get cloudWatchEvents() {
+    return this._cloudWatchEvents;
   }
 
   /**

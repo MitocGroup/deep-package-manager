@@ -6,8 +6,10 @@
 
 import {AbstractService} from './AbstractService';
 import {S3Service} from './S3Service';
+import {APIGatewayService} from './APIGatewayService';
 import Core from 'deep-core';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
+import {WaitFor} from '../../Helpers/WaitFor';
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
 import {Action} from '../../Microservice/Metadata/Action';
@@ -20,6 +22,8 @@ import {CloudWatchLogsService} from './CloudWatchLogsService';
 import {SQSService} from './SQSService';
 import {ActionFlags} from '../../Microservice/Metadata/Helpers/ActionFlags';
 import {ESService} from './ESService';
+import {FailedToCreateScheduledEventException} from './Exception/FailedToCreateScheduledEventException';
+import {FailedToAttachScheduledEventException} from './Exception/FailedToAttachScheduledEventException';
 
 /**
  * Lambda service
@@ -143,15 +147,148 @@ export class LambdaService extends AbstractService {
    * @returns {LambdaService}
    */
   _postDeployProvision(services) {
-    // @todo: implement!
-    if (this._isUpdate) {
-      this._ready = true;
-      return this;
-    }
+    this._attachScheduledEvents((crons) => {
+      this._config.crons = crons;
 
-    this._ready = true;
+      this._ready = true;
+    });
 
     return this;
+  }
+
+  /**
+   * @param {Function} cb
+   * @private
+   */
+  _attachScheduledEvents(cb) {
+    let microservices = this._provisioning.property.microservices;
+    let crons = {};
+
+    for (let microserviceKey in microservices) {
+      if (!microservices.hasOwnProperty(microserviceKey)) {
+        continue;
+      }
+
+      let microservice = microservices[microserviceKey];
+
+      let actions = microservice.resources.actions;
+
+      for (let actionKey in actions) {
+        if (!actions.hasOwnProperty(actionKey)) {
+          continue;
+        }
+
+        let action = actions[actionKey];
+
+        if (action.type === Action.LAMBDA && action.cron) {
+          let lambdaName = this.generateAwsResourceName(
+            this._actionIdentifierToPascalCase(action.identifier),
+            Core.AWS.Service.LAMBDA,
+            microservice.identifier
+          );
+
+          crons[lambdaName] = {
+            cron: action.cron,
+            payload: action.cronPayload,
+            lambdaArn: this._generateLambdaArn(lambdaName),
+            eventArn: null,
+          };
+        }
+      }
+    }
+
+    this._createScheduledEvents(crons).ready(() => {
+      cb(crons);
+    });
+  }
+
+  /**
+   * @param {Object} crons
+   * @returns {WaitFor}
+   * @private
+   */
+  _createScheduledEvents(crons) {
+    let syncStack = new AwsRequestSyncStack();
+    let cwe = this.provisioning.cloudWatchEvents;
+    let lambda = this.provisioning.lambda;
+
+    for (let lambdaName in crons) {
+      if (!crons.hasOwnProperty(lambdaName)) {
+        continue;
+      }
+
+      let cronData = crons[lambdaName];
+      let cronString = cronData.cron;
+      let lambdaArn = cronData.lambdaArn;
+
+      let payload = {
+        Name: lambdaName,
+        Description: `Schedule ${lambdaArn} (${cronString})`,
+        ScheduleExpression: `cron(${cronString})`,
+        State: 'ENABLED',
+      };
+
+      syncStack.push(cwe.putRule(payload), (error, data) => {
+        if (error) {
+          throw new FailedToCreateScheduledEventException(lambdaName, error);
+        }
+
+        crons[lambdaName].eventArn = data.RuleArn;
+      });
+
+      let permissionsPayload = {
+        Action: `${Core.AWS.Service.LAMBDA}:InvokeFunction`,
+        Principal: Core.AWS.Service.identifier(Core.AWS.Service.CLOUD_WATCH_EVENTS),
+        FunctionName: lambdaArn,
+        StatementId: lambdaName,
+      };
+
+      syncStack.level(1).push(lambda.addPermission(permissionsPayload), (error) => {
+        if (error && error.code !== 'ResourceConflictException') {
+          throw new FailedToAttachScheduledEventException(lambdaName, error);
+        }
+      });
+
+      let targetPayload = {
+        Rule: lambdaName,
+        Targets: [
+          {
+            Arn: lambdaArn,
+            Id: lambdaName,
+          },
+        ],
+      };
+
+      if (cronData.payload) {
+        targetPayload.Targets[0].Input = JSON.stringify(cronData.payload);
+      }
+
+      syncStack.level(1).push(cwe.putTargets(targetPayload), (error) => {
+        if (error) {
+          throw new FailedToAttachScheduledEventException(lambdaName, error);
+        }
+      });
+    }
+
+    return syncStack.join();
+  }
+
+  /**
+   * @returns {Core.AWS.IAM.Policy}
+   */
+  static getAssumeRolePolicy() {
+    let rolePolicy = new Core.AWS.IAM.Policy();
+
+    let statement = rolePolicy.statement.add();
+    statement.principal = {
+      Service: Core.AWS.Service.identifier(Core.AWS.Service.CLOUD_WATCH_EVENTS),
+    };
+
+    let action = statement.action.add();
+    action.service = Core.AWS.Service.LAMBDA;
+    action.action = 'InvokeFunction';
+
+    return rolePolicy;
   }
 
   /**
@@ -482,7 +619,7 @@ export class LambdaService extends AbstractService {
   /**
    * Deny Cognito and ApiGateway users to invoke these lambdas
    *
-   * @returns {Core.AWS.IAM.Statement}
+   * @returns {Core.AWS.IAM.Statement|null}
    */
   generateDenyInvokeFunctionStatement() {
     let policy = new Core.AWS.IAM.Policy();
@@ -491,13 +628,17 @@ export class LambdaService extends AbstractService {
     statement.effect = statement.constructor.DENY;
     statement.action.add(Core.AWS.Service.LAMBDA, 'InvokeFunction');
 
-    this
-      .extractFunctionIdentifiers(ActionFlags.NON_DIRECT_ACTION_FILTER)
-      .forEach((lambdaArn) => {
-        statement.resource.add().updateFromArn(
-          this._generateLambdaArn(lambdaArn)
-        );
-      });
+    let lambdaArns = this.extractFunctionIdentifiers(ActionFlags.NON_DIRECT_ACTION_FILTER);
+
+    if (lambdaArns.length <= 0) {
+      return null;
+    }
+
+    lambdaArns.forEach((lambdaArn) => {
+      statement.resource.add().updateFromArn(
+        this._generateLambdaArn(lambdaArn)
+      );
+    });
 
     return statement;
   }

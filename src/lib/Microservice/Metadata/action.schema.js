@@ -18,6 +18,12 @@ export default Joi.object().keys({
   source: JoiHelper.string().replace(/\//gi, path.sep),
   cacheTtl: Joi.number().optional().integer().min(Action.NO_CACHE).default(Action.NO_CACHE),
   forceUserIdentity: assureTypeLambda(Joi.boolean().optional().default(true)),
+  cron: assureTypeLambda(
+    Joi.string()
+      .regex(/^\s*[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s*$/)
+      .optional()
+  ),
+  cronPayload: Joi.object().unknown().optional(),
   validationSchema: JoiHelper.maybeString(),
   scope: JoiHelper.stringEnum(ActionFlags.STATES_STR_VECTOR).optional().default(ActionFlags.PUBLIC_STR),
 

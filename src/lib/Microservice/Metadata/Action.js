@@ -27,6 +27,8 @@ export class Action {
     this._forceUserIdentity = config.forceUserIdentity;
     this._validationSchema = config.validationSchema;
     this._scope = ActionFlags.unstringify(config.scope);
+    this._cron = config.cron || null;
+    this._cronPayload = config.cronPayload || null;
   }
 
   /**
@@ -64,6 +66,13 @@ export class Action {
    * @returns {Number}
    */
   get scope() {
+
+    // It doesn't make sense to expose scheduled backend
+    // through both api and direct call due to missing user context
+    if (this.cron) {
+      return ActionFlags.PRIVATE;
+    }
+
     return this._scope;
   }
 
@@ -92,6 +101,11 @@ export class Action {
       return false;
     }
 
+    // There's no user context shared in scheduled backend
+    if (this.cron) {
+      return false;
+    }
+
     return this._forceUserIdentity;
   }
 
@@ -114,6 +128,20 @@ export class Action {
    */
   get resourceName() {
     return this._resourceName;
+  }
+
+  /**
+   * @returns {String|null}
+   */
+  get cron() {
+    return this._cron;
+  }
+
+  /**
+   * @returns {Object|null}
+   */
+  get cronPayload() {
+    return this._cronPayload;
   }
 
   /**
@@ -192,6 +220,8 @@ export class Action {
       forceUserIdentity: this.forceUserIdentity,
       validationSchema: this.validationSchema,
       scope: this.scope,
+      cron: this.cron,
+      cronPayload: this.cronPayload,
     };
   }
 }

@@ -16,7 +16,7 @@ import {DeployConfig} from './DeployConfig';
 export default {
   validation: () => {
     return Joi.object().keys({
-      appName: JoiHelper.string().required(),
+      appName: JoiHelper.string().regex(/^[a-z\s0-9+\-=\._:\/]{1,256}$/i).required(),
       appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).required(),
       env: JoiHelper.stringEnum(DeployConfig.AVAILABLE_ENV).optional()
         .lowercase().default(DeployConfig.AVAILABLE_ENV[0]),
@@ -52,7 +52,7 @@ export default {
 };
 
 function buildAppNameFromId(appId) {
-  return `My Custom Web App #${appId}`;
+  return `My Custom Web App ${appId}`;
 }
 
 function buildAppId() {

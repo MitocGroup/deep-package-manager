@@ -921,11 +921,7 @@ export class Instance {
         console.log(`Start installing application #${this.identifier}/${this._config.env}`);
 
         this.build(() => {
-          console.log(`Build is done`);
-
           this.deploy(() => {
-            console.log(`Deploy is done`);
-
             this.postDeploy(callback);
           });
         }, skipProvision);
@@ -937,11 +933,7 @@ export class Instance {
     console.log(`Start updating application #${this.identifier}/${this._config.env}`);
 
     return this.build(() => {
-      console.log(`Build is done`);
-
       this.deploy(() => {
-        console.log(`Deploy is done`);
-
         this.postDeploy(callback);
       });
     }, skipProvision);

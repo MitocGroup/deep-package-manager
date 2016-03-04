@@ -294,10 +294,15 @@ export class CognitoIdentityService extends AbstractService {
 
       let policy = new Core.AWS.IAM.Policy();
       policy.statement.add(lambdaService.generateAllowInvokeFunctionStatement());
-      policy.statement.add(lambdaService.generateDenyInvokeFunctionStatement());
       policy.statement.add(APIGatewayService.generateAllowInvokeMethodStatement(endpointsARNs));
       policy.statement.add(this.generateAllowCognitoSyncStatement(['ListRecords', 'UpdateRecords', 'ListDatasets']));
       policy.statement.add(sqsService.generateAllowActionsStatement());
+
+      let denyLambdaStatement = lambdaService.generateDenyInvokeFunctionStatement();
+
+      if (denyLambdaStatement) {
+        policy.statement.add(denyLambdaStatement);
+      }
 
       let params = {
         PolicyDocument: policy.toString(),
