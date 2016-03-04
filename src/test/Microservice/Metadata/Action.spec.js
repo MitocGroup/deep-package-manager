@@ -96,8 +96,6 @@ suite('Microservice/Metadata/Action', () => {
       cron: null,
       cronPayload: null,
       scope: 3,
-      cron: null,
-      cronPayload: null,
       engine: {
         memory: 120,
         timeout: 60,
