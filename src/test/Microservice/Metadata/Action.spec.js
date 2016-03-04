@@ -93,6 +93,8 @@ suite('Microservice/Metadata/Action', () => {
       type: 'lambda',
       source: 'src/Property/RetrieveCounts',
       validationSchema: 'Sample',
+      cron: null,
+      cronPayload: null,
       scope: 3,
       cron: null,
       cronPayload: null,
