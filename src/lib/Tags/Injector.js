@@ -9,6 +9,7 @@ import {GTMDriver} from './Driver/GTMDriver';
 import {DeepConfigDriver} from './Driver/DeepConfigDriver';
 import {DeployIdDriver} from './Driver/DeployIdDriver';
 import {RootAssetsDriver} from './Driver/RootAssetsDriver';
+import {PageLoaderDriver} from './Driver/PageLoaderDriver';
 
 export class Injector {
   /**
@@ -23,8 +24,9 @@ export class Injector {
    * @param {Object|null} deepConfig
    * @param {String|null} gtmContainerId
    * @param {Object} microservices
+   * @param {String|null} pageLoader
    */
-  static fileInjectAll(htmlFile, deepConfig = null, gtmContainerId = null, microservices = {}) {
+  static fileInjectAll(htmlFile, deepConfig = null, gtmContainerId = null, microservices = {}, pageLoader) {
     let drivers = [];
 
     if (deepConfig) {
@@ -42,6 +44,10 @@ export class Injector {
 
     if (drivers.length <= 0) {
       return;
+    }
+
+    if (pageLoader && microservices) {
+      drivers.push(new PageLoaderDriver(pageLoader, microservices));
     }
 
     Injector.fileInject(htmlFile, ...drivers);
