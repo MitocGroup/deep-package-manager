@@ -35,6 +35,7 @@ import {ProvisioningCollisionsDetectedException} from './Exception/ProvisioningC
 import {DeployID} from '../Helpers/DeployID';
 import {MigrationsRegistry} from './MigrationsRegistry';
 import {DeployConfig} from './DeployConfig';
+import {InvalidConfigException} from './Exception/InvalidConfigException';
 
 /**
  * Property instance
@@ -45,7 +46,20 @@ export class Instance {
    * @param {String|Object} config
    */
   constructor(path, config = Config.DEFAULT_FILENAME) {
-    this._config = Instance._createConfigObject(config, path).extract();
+    try {
+      this._config = Instance._createConfigObject(config, path).extract();
+    } catch (error) {
+
+      // @todo: get rid of this?
+      if (error instanceof InvalidConfigException) {
+        console.error(error.message);
+        console.log(`The configuration structure may be have changed.` +
+        ` Try to delete '${Config.DEFAULT_FILENAME}' and rerun the command in order to get it regenerated.`);
+        process.exit(1);
+      }
+
+      throw error;
+    }
 
     this._aws = AWS;
 
