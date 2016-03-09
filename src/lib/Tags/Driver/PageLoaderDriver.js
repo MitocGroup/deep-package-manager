@@ -12,13 +12,13 @@ import {InvalidDeepIdentifierException} from './Exception/InvalidDeepIdentifierE
  */
 export class PageLoaderDriver extends AbstractDriver {
   /**
-   * @param {Object} loader
+   * @param {Object} loaderConfig
    * @param {Object} microservices
    */
-  constructor(loader, microservices) {
+  constructor(loaderConfig, microservices) {
     super();
 
-    this._loader = loader;
+    this._loader = loaderConfig;
     this._microservices = microservices;
   }
 
@@ -79,7 +79,7 @@ export class PageLoaderDriver extends AbstractDriver {
    * @returns {String}
    */
   _buildImgTag(src, alt) {
-    return `<img src="${src}" alt="${alt}">`
+    return `<img src="${src}" alt="${alt}">`;
   }
 
   /**
@@ -108,13 +108,13 @@ export class PageLoaderDriver extends AbstractDriver {
 
     if (typeof identifier === 'string' && regExp.test(identifier)) {
       return identifier.match(regExp);
-    } else {
-      throw new InvalidDeepIdentifierException(identifier);
     }
+
+    throw new InvalidDeepIdentifierException(identifier);
   }
 
   /**
-   * @returns {string}
+   * @returns {String}
    */
   static get TAG_SUFFIX() {
     return 'loader';
