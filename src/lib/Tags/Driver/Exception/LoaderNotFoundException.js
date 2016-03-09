@@ -3,7 +3,7 @@
 import {TagsDriverException} from './TagsDriverException';
 
 /**
- * File Not Found Exception
+ * Loader Not Found Exception
  */
 export class LoaderNotFoundException extends TagsDriverException {
   /**

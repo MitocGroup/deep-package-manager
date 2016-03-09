@@ -18,8 +18,7 @@ export class PageLoaderDriver extends AbstractDriver {
   constructor(loader, microservices) {
     super();
 
-    this._loaderIdentifier = loader.src;
-    this._alt = loader.alt;
+    this._loader = loader;
     this._microservices = microservices;
   }
 
@@ -66,7 +65,7 @@ export class PageLoaderDriver extends AbstractDriver {
           );
         }
 
-        return this._buildImgTag(src, this._alt);
+        return this._buildImgTag(src, this._loader.alt);
       }
     }
 
@@ -88,7 +87,7 @@ export class PageLoaderDriver extends AbstractDriver {
    * @returns {String}
    */
   get microserviceIdentifier() {
-    return this.separateIdentifier(this._loaderIdentifier)[1];
+    return this.separateIdentifier(this._loader.src)[1];
   }
 
   /**
@@ -96,7 +95,7 @@ export class PageLoaderDriver extends AbstractDriver {
    * @returns {String}
    */
   get resourcePath() {
-    return this.separateIdentifier(this._loaderIdentifier)[2];
+    return this.separateIdentifier(this._loader.src)[2];
   }
 
   /**

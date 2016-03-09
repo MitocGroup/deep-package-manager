@@ -46,7 +46,7 @@ export class Injector {
       return;
     }
 
-    if (pageLoader && microservices) {
+    if (pageLoader && pageLoader.src && microservices) {
       drivers.push(new PageLoaderDriver(pageLoader, microservices));
     }
 
