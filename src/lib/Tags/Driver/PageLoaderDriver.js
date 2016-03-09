@@ -3,8 +3,8 @@
 import path from 'path';
 import FileSystem from 'graceful-fs';
 import {AbstractDriver} from './AbstractDriver';
-import {FileNotFound} from './Exception/FileNotFound';
-import {InvalidMsIdentifier} from './Exception/InvalidMsIdentifier';
+import {LoaderNotFoundException} from './Exception/LoaderNotFoundException';
+import {InvalidMsIdentifierException} from './Exception/InvalidMsIdentifierException';
 import {InvalidDeepIdentifierException} from './Exception/InvalidDeepIdentifierException';
 
 /**
@@ -12,35 +12,34 @@ import {InvalidDeepIdentifierException} from './Exception/InvalidDeepIdentifierE
  */
 export class PageLoaderDriver extends AbstractDriver {
   /**
-   * @param {String} loaderIdentifier
+   * @param {Object} loader
    * @param {Object} microservices
    */
-  constructor(loaderIdentifier, microservices) {
+  constructor(loader, microservices) {
     super();
 
-    this._loaderIdentifier = loaderIdentifier;
+    this._loaderIdentifier = loader.src;
+    this._alt = loader.alt;
     this._microservices = microservices;
   }
 
   /**
    * @param {String} htmlContent
-   * @returns {*}
+   * @returns {String}
    */
   inject(htmlContent) {
-    let scriptContent = this.getFileContent();
-
     return this.replaceTags(
       htmlContent,
       PageLoaderDriver.TAG_SUFFIX,
-      scriptContent
+      this._getImgTag()
     );
   }
 
   /**
    *
-   * @returns {*}
+   * @returns {String}
    */
-  getFileContent() {
+  _getImgTag() {
     for (let msIdentifier in this._microservices) {
       if (!this._microservices.hasOwnProperty(msIdentifier)) {
         continue;
@@ -53,15 +52,35 @@ export class PageLoaderDriver extends AbstractDriver {
           this.resourcePath
         );
 
-        if (FileSystem.existsSync(filePath)) {
-          return FileSystem.readFileSync(filePath);
-        } else {
-          throw new FileNotFound(filePath);
+        if (!FileSystem.existsSync(filePath)) {
+          throw new LoaderNotFoundException(filePath);
         }
+
+        let src = '';
+        if (msConfig.isRoot) {
+          src = this.resourcePath;
+        } else {
+          src = path.join(
+            msConfig.identifier,
+            this.resourcePath
+          );
+        }
+
+        return this._buildImgTag(src, this._alt);
       }
     }
 
-    throw new InvalidMsIdentifier(this.microserviceIdentifier);
+    throw new InvalidMsIdentifierException(this.microserviceIdentifier);
+  }
+
+  /**
+   *
+   * @param {String} src
+   * @param {String} alt
+   * @returns {String}
+   */
+  _buildImgTag(src, alt) {
+    return `<img src="${src}" alt="${alt}">`
   }
 
   /**

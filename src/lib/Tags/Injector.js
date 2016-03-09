@@ -26,7 +26,7 @@ export class Injector {
    * @param {Object} microservices
    * @param {String|null} pageLoader
    */
-  static fileInjectAll(htmlFile, deepConfig = null, gtmContainerId = null, microservices = {}, pageLoader) {
+  static fileInjectAll(htmlFile, deepConfig = null, gtmContainerId = null, microservices = {}, pageLoader = null) {
     let drivers = [];
 
     if (deepConfig) {
