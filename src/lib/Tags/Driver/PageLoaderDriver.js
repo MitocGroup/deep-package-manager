@@ -12,13 +12,13 @@ import {InvalidDeepIdentifierException} from './Exception/InvalidDeepIdentifierE
  */
 export class PageLoaderDriver extends AbstractDriver {
   /**
-   * @param {Object} loaderPath
+   * @param {String} loaderIdentifier
    * @param {Object} microservices
    */
-  constructor(loaderPath, microservices) {
+  constructor(loaderIdentifier, microservices) {
     super();
 
-    this._loaderPath = loaderPath;
+    this._loaderIdentifier = loaderIdentifier;
     this._microservices = microservices;
   }
 
@@ -69,7 +69,7 @@ export class PageLoaderDriver extends AbstractDriver {
    * @returns {String}
    */
   get microserviceIdentifier() {
-    return this.separateIdentifier(this._loaderPath)[1];
+    return this.separateIdentifier(this._loaderIdentifier)[1];
   }
 
   /**
@@ -77,7 +77,7 @@ export class PageLoaderDriver extends AbstractDriver {
    * @returns {String}
    */
   get resourcePath() {
-    return this.separateIdentifier(this._loaderPath)[2];
+    return this.separateIdentifier(this._loaderIdentifier)[2];
   }
 
   /**
