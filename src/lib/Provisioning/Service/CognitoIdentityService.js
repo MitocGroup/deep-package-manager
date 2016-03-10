@@ -72,6 +72,7 @@ export class CognitoIdentityService extends AbstractService {
     return [
       Core.AWS.Region.US_EAST_N_VIRGINIA,
       Core.AWS.Region.EU_IRELAND,
+      Core.AWS.Region.ASIA_PACIFIC_TOKYO,
     ];
   }
 

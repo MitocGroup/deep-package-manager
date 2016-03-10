@@ -40,10 +40,11 @@ suite('Provisioning/Service/LambdaService', () => {
 
   test('Check AVAILABLE_REGIONS() static method returns array of available regions', () => {
     chai.expect(LambdaService.AVAILABLE_REGIONS).to.be.an('array');
-    chai.expect(LambdaService.AVAILABLE_REGIONS.length).to.be.equal(3);
+    chai.expect(LambdaService.AVAILABLE_REGIONS.length).to.be.equal(4);
     chai.expect(LambdaService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.US_EAST_N_VIRGINIA);
     chai.expect(LambdaService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.US_WEST_OREGON);
     chai.expect(LambdaService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.EU_IRELAND);
+    chai.expect(LambdaService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.ASIA_PACIFIC_TOKYO);
   });
 
   test('Check _postDeployProvision() method returns this._ready="true" for isUpdate', () => {

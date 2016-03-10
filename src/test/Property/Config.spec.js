@@ -66,7 +66,7 @@ suite('Property/Config', () => {
     chai.expect(config.extract()).to.be.not.equal(null);
   });
 
-  //@todo - commented becuase need to be discussed with AlexanderC
+  //@todo - commented because need to be discussed with AlexanderC
   //test('Check generate() method returns valid value', () => {
   //  let generatedConfig = {
   //    aws: {
