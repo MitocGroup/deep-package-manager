@@ -27,11 +27,16 @@ suite('Provisioning/Service/S3Service', () => {
     chai.expect(S3Service.SYSTEM_BUCKET).to.be.equal('system');
   });
 
+  test('Check SHARED_BUCKET static getter returns \'shared\'', () => {
+    chai.expect(S3Service.SHARED_BUCKET).to.be.equal('shared');
+  });
+
   test('Check FS_BUCKETS_SUFFIX static getter returns array of suffix', () => {
-    chai.expect(S3Service.FS_BUCKETS_SUFFIX.length).to.be.equal(3);
+    chai.expect(S3Service.FS_BUCKETS_SUFFIX.length).to.be.equal(4);
     chai.expect(S3Service.FS_BUCKETS_SUFFIX).to.be.include(S3Service.TMP_BUCKET);
     chai.expect(S3Service.FS_BUCKETS_SUFFIX).to.be.include(S3Service.PUBLIC_BUCKET);
     chai.expect(S3Service.FS_BUCKETS_SUFFIX).to.be.include(S3Service.SYSTEM_BUCKET);
+    chai.expect(S3Service.FS_BUCKETS_SUFFIX).to.be.include(S3Service.SHARED_BUCKET);
   });
 
   test('Check AVAILABLE_REGIONS static getter returns \'*\'', () => {

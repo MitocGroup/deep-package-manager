@@ -508,7 +508,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
   _getUploadKeyPrefix(uploadBucket) {
     return S3Service.isBucketTmp(uploadBucket) ?
       null :
-      `${this._property.rootMicroservice.identifier}/${S3Service.TMP_BUCKET}`;
+      `${S3Service.TMP_BUCKET}/${this._property.rootMicroservice.identifier}`;
   }
 
   /**
