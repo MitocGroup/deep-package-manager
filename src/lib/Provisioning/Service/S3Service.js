@@ -28,6 +28,13 @@ export class S3Service extends AbstractService {
   /**
    * @returns {String}
    */
+  static get SHARED_BUCKET() {
+    return 'shared'; // @note - do not change this prefix, it is also used in deep-fs component
+  }
+
+  /**
+   * @returns {String}
+   */
   static get TMP_BUCKET() {
     return 'temp'; // @note - do not change this prefix, it is also used in deep-fs component
   }
@@ -54,13 +61,14 @@ export class S3Service extends AbstractService {
       S3Service.TMP_BUCKET,
       S3Service.PUBLIC_BUCKET,
       S3Service.SYSTEM_BUCKET,
+      S3Service.SHARED_BUCKET,
     ];
   }
 
   /**
    * @returns {String[]}
    */
-  static get FS_BUCKETS_SUFFIX_NO_TMP() {
+  static get FS_BUCKETS_SUFFIX_NO_TMP_AND_SHARED() {
     return [
       S3Service.PUBLIC_BUCKET,
       S3Service.SYSTEM_BUCKET,
@@ -85,6 +93,10 @@ export class S3Service extends AbstractService {
 
     config[S3Service.SYSTEM_BUCKET] = {
       name: `${propertyHash}-${S3Service.SYSTEM_BUCKET}`,
+    };
+
+    config[S3Service.SHARED_BUCKET] = {
+      name: `${propertyHash}-${S3Service.SHARED_BUCKET}`,
     };
 
     return config;
@@ -126,7 +138,7 @@ export class S3Service extends AbstractService {
     }
 
     this._createFsBuckets(
-      S3Service.FS_BUCKETS_SUFFIX_NO_TMP // change it to FS_BUCKETS_SUFFIX in order to have tmp bucket created
+      S3Service.FS_BUCKETS_SUFFIX_NO_TMP_AND_SHARED // change it to FS_BUCKETS_SUFFIX in order to have tmp bucket created
     )((buckets) => {
       this._config.buckets = buckets;
 
@@ -460,5 +472,13 @@ export class S3Service extends AbstractService {
    */
   static isBucketPublic(bucketName) {
     return bucketName.indexOf(S3Service.PUBLIC_BUCKET) !== -1;
+  }
+
+  /**
+   * @param {String} bucketName
+   * @returns {Boolean}
+   */
+  static isBucketShared(bucketName) {
+    return bucketName.indexOf(S3Service.SHARED_BUCKET) !== -1;
   }
 }
