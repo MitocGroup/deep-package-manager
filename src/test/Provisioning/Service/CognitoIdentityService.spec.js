@@ -42,9 +42,10 @@ suite('Provisioning/Service/CognitoIdentityService', () => {
 
   test('Check AVAILABLE_REGIONS() static method returns array of available regions', () => {
     chai.expect(CognitoIdentityService.AVAILABLE_REGIONS).to.be.an('array');
-    chai.expect(CognitoIdentityService.AVAILABLE_REGIONS.length).to.be.equal(2);
+    chai.expect(CognitoIdentityService.AVAILABLE_REGIONS.length).to.be.equal(3);
     chai.expect(CognitoIdentityService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.US_EAST_N_VIRGINIA);
     chai.expect(CognitoIdentityService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.EU_IRELAND);
+    chai.expect(CognitoIdentityService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.ASIA_PACIFIC_TOKYO);
   });
 
   test('Check DEVELOPER_PROVIDER_NAME static getter returns \'deep.mg\'', () => {
