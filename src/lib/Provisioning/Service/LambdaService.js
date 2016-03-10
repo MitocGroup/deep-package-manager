@@ -500,6 +500,7 @@ export class LambdaService extends AbstractService {
     s3Statement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, Core.AWS.IAM.Policy.ANY);
     s3ListBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'ListBucket');
     s3ReadBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'GetObject');
+    s3ReadBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'HeadObject');
 
     for (let bucketSuffix in buckets) {
       if (!buckets.hasOwnProperty(bucketSuffix)) {
@@ -519,13 +520,16 @@ export class LambdaService extends AbstractService {
         let s3ResourceShared = s3Statement.resource.add();
 
         s3ResourceSystem.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
-        s3ResourceTmp.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
-        s3ResourceShared.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
+        s3ResourceSystem.descriptor = `${bucket.name}/${S3Service.SYSTEM_BUCKET}/` +
+          `${microserviceIdentifier}/${Core.AWS.IAM.Policy.ANY}`;
 
-        [S3Service.SHARED_BUCKET, S3Service.TMP_BUCKET, S3Service.SYSTEM_BUCKET].forEach((bucketName) => {
-          s3ResourceSystem.descriptor = `${bucket.name}/${bucketName}/` +
-            `${microserviceIdentifier}/${Core.AWS.IAM.Policy.ANY}`;
-        });
+        s3ResourceTmp.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
+        s3ResourceTmp.descriptor = `${bucket.name}/${S3Service.TMP_BUCKET}/` +
+          `${microserviceIdentifier}/${Core.AWS.IAM.Policy.ANY}`;
+
+        s3ResourceShared.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
+        s3ResourceShared.descriptor = `${bucket.name}/${S3Service.SHARED_BUCKET}/` +
+          `${microserviceIdentifier}/${Core.AWS.IAM.Policy.ANY}`;
 
         let s3ReadBucketResource = s3ReadBucketStatement.resource.add();
 

@@ -279,38 +279,24 @@ export class S3Service extends AbstractService {
 
   /**
    * @param {String} tmpBucket
-   * @returns {{Bucket: *, LifecycleConfiguration: {Rules: Array}}}
+   * @returns {{Bucket: *, LifecycleConfiguration: {Rules: *[]}}}
    * @private
    */
   _lifecyclePayload(tmpBucket) {
-    let prefixes = [];
-
-    if (S3Service.isBucketSystem(tmpBucket)) {
-      this._provisioning._property.microservices.forEach((microservice) => {
-        prefixes.push(`${microservice.identifier}/${S3Service.TMP_BUCKET}`);
-      });
-    } else {
-      prefixes.push('');
-    }
-
-    let payload = {
+    return {
       Bucket: tmpBucket,
       LifecycleConfiguration: {
-        Rules: [],
+        Rules: [
+          {
+            Prefix: S3Service.TMP_BUCKET,
+            Status: 'Enabled',
+            Expiration: {
+              Days: S3Service.TMP_DAYS_LIFECYCLE,
+            },
+          },
+        ],
       },
     };
-
-    prefixes.forEach((prefix) => {
-      payload.LifecycleConfiguration.Rules.push({
-        Prefix: prefix,
-        Status: 'Enabled',
-        Expiration: {
-          Days: S3Service.TMP_DAYS_LIFECYCLE,
-        },
-      });
-    });
-
-    return payload;
   }
 
   /**
