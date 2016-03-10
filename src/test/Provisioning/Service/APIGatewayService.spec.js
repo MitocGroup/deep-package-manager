@@ -44,10 +44,12 @@ suite('Provisioning/Service/APIGatewayService', () => {
   });
 
   test('Check AVAILABLE_REGIONS() static method returns array of available regions', () => {
-    chai.expect(APIGatewayService.AVAILABLE_REGIONS.length).to.be.equal(3);
+    chai.expect(APIGatewayService.AVAILABLE_REGIONS.length).to.be.equal(5);
     chai.expect(APIGatewayService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.US_EAST_N_VIRGINIA);
     chai.expect(APIGatewayService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.US_WEST_OREGON);
     chai.expect(APIGatewayService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.EU_IRELAND);
+    chai.expect(APIGatewayService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.ASIA_PACIFIC_TOKYO);
+    chai.expect(APIGatewayService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.ASIA_PACIFIC_SINGAPORE);
   });
 
   test('Check _postProvision() method returns this._readyTeardown=\'true\'', () => {
