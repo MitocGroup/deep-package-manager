@@ -10,9 +10,11 @@ import {WaitFor} from '../Helpers/WaitFor';
 export class Describer {
   /**
    * @param {Property|Object} property
+   * @param {Object} appConfig
    */
-  constructor(property) {
+  constructor(property, appConfig) {
     this._property = property;
+    this._appConfig = appConfig;
   }
 
   /**
@@ -41,7 +43,7 @@ export class Describer {
       let service = this._createAwsService(serviceName);
       let ServiceDescriberProto = require(`./DescribeDriver/${serviceName}Driver`)[`${serviceName}Driver`];
 
-      let serviceDescriber = new ServiceDescriberProto(service, this.deployCfg);
+      let serviceDescriber = new ServiceDescriberProto(service, this._appConfig);
 
       serviceDescriber.describe((error) => {
         servicesRemaining--;
@@ -66,14 +68,6 @@ export class Describer {
    */
   get property() {
     return this._property;
-  }
-
-  /**
-   * @returns {Object|null}
-   */
-  get deployCfg() {
-    // @todo - throw an Exception for empty provisioning config?
-    return this._property.config.provisioning || null;
   }
 
   /**

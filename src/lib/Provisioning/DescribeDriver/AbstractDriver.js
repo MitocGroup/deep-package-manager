@@ -10,13 +10,13 @@ import {AbstractService} from '../Service/AbstractService';
 export class AbstractDriver extends Core.OOP.Interface {
   /**
    * @param {Object} awsService
-   * @param {Object|null} deployCfg
+   * @param {Object} appConfig
    */
-  constructor(awsService, deployCfg = null) {
+  constructor(awsService, appConfig) {
     super(['describe']);
 
     this._awsService = awsService;
-    this._deployCfg = deployCfg;
+    this._appConfig = appConfig;
     this._stack = {};
   }
 

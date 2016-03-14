@@ -4,6 +4,7 @@
 
 'use strict';
 
+import Core from 'deep-core';
 import {AbstractDriver} from './AbstractDriver';
 
 export class ESDriver extends AbstractDriver {
@@ -59,15 +60,19 @@ export class ESDriver extends AbstractDriver {
   _getProvisionedDomains() {
     let domainNames = [];
 
-    if (this._deployCfg && this._deployCfg.es && this._deployCfg.es.domains) {
-      let domains = this._deployCfg.es.domains;
+    if (this._appConfig && this._appConfig.searchDomains) {
+      let domains = this._appConfig.searchDomains;
 
       for (let i in domains) {
         if (!domains.hasOwnProperty(i)) {
           continue;
         }
 
-        domainNames.push(domains[i].DomainName);
+        let domain = domains[i];
+
+        if (domain.type === Core.AWS.Service.ELASTIC_SEARCH) {
+          domainNames.push(domains[i].DomainName);
+        }
       }
     }
 

@@ -96,6 +96,7 @@ export class Frontend {
         let domain = esDomains[domainKey];
 
         domains[domainKey] = {
+          type: Core.AWS.Service.ELASTIC_SEARCH,
           name: domain.DomainName,
           url: '', // @todo - find a way to retrieve provisioned domain url (it's available with a delay of ~15min)
         };
