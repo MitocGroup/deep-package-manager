@@ -37,4 +37,13 @@ export class AbstractDriver extends Core.OOP.Interface {
   get awsService() {
     return this._awsService;
   }
+
+  /**
+   * @param {String} resourceId
+   * @param {Object} rawData
+   * @private
+   */
+  _pushInStack(resourceId, rawData = {}) {
+    this._stack[resourceId] = rawData;
+  }
 }
