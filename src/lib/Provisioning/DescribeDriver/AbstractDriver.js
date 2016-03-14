@@ -5,7 +5,6 @@
 'use strict';
 
 import Core from 'deep-core';
-import {AbstractService} from '../Service/AbstractService';
 
 export class AbstractDriver extends Core.OOP.Interface {
   /**
