@@ -71,7 +71,7 @@ export class ESDriver extends AbstractDriver {
         let domain = domains[i];
 
         if (domain.type === Core.AWS.Service.ELASTIC_SEARCH) {
-          domainNames.push(domains[i].DomainName);
+          domainNames.push(domain.name);
         }
       }
     }
