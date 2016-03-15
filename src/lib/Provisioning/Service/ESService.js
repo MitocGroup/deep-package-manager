@@ -214,7 +214,7 @@ export class ESService extends AbstractService {
       Core.AWS.Service.ELASTIC_SEARCH,
       this.provisioning.elasticSearch.config.region,
       this.awsAccountId,
-      `domain:${this._getGlobalResourceMask('', AbstractService.DELIMITER_HYPHEN_LOWER_CASE)}`
+      `domain/${this._getGlobalResourceMask('', AbstractService.DELIMITER_HYPHEN_LOWER_CASE)}`
     );
 
     return statement;

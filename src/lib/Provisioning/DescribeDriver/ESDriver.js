@@ -47,6 +47,8 @@ export class ESDriver extends AbstractDriver {
       domains.forEach((domain) => {
         this._pushInStack(domain.DomainName, domain || null);
       });
+
+      callback(null);
     });
   }
 
