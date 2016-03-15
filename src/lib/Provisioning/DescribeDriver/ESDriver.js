@@ -19,37 +19,34 @@ export class ESDriver extends AbstractDriver {
    * @param {Function} cb
    */
   describe(cb) {
-    let responses = 0;
-    let domains = this._getProvisionedDomains();
-
-    if (domains.length === 0) {
-      cb(null);
-      return;
-    }
-
-    domains.forEach((domainName) => {
-      this._describeEsDomain(domainName, (result) => {
-        responses++;
-        if (responses === domains.length) {
-          cb(result);
-        }
-      });
-    });
+    this._describeEsDomains(
+      this._getProvisionedDomains(),
+      cb
+    );
   }
 
   /**
-   * @param {String} domainName
+   * @param {Array} domainNames
    * @param {Function} callback
    * @private
    */
-  _describeEsDomain(domainName, callback) {
-    this.awsService.describeElasticsearchDomain({DomainName: domainName}, (error, data) => {
+  _describeEsDomains(domainNames, callback) {
+    if (domainNames.length === 0) {
+      callback(null);
+      return;
+    }
+
+    this.awsService.describeElasticsearchDomains({DomainNames: domainNames}, (error, data) => {
       if (error) {
         callback(error);
         return;
       }
 
-      this._pushInStack(domainName, data.DomainStatus || null);
+      let domains = data.DomainStatusList || [];
+
+      domains.forEach((domain) => {
+        this._pushInStack(domain.DomainName, domain || null);
+      });
     });
   }
 
