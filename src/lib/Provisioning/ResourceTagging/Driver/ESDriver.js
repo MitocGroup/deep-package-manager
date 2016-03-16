@@ -11,12 +11,18 @@ import {AwsRequestSyncStack} from '../../../Helpers/AwsRequestSyncStack';
  * Elasticsearch Tag Driver
  */
 export class ESDriver extends AbstractDriver {
+  /**
+   * @param {*} args
+   */
   constructor(...args) {
     super(...args);
 
     this._elasticSearch = this.provisioning.elasticSearch;
   }
 
+  /**
+   * @param {Function} callback
+   */
   tag(callback) {
     let stack = new AwsRequestSyncStack();
     let tagsPayload = this.tagsPayload;
@@ -39,7 +45,7 @@ export class ESDriver extends AbstractDriver {
   }
 
   /**
-   * @returns {Array}
+   * @returns {Object[]}
    */
   get domainList() {
     let domainList = [];
