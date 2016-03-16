@@ -20,9 +20,8 @@ export class ESDriver extends AbstractDriver {
   tag(callback) {
     let stack = new AwsRequestSyncStack();
     let tagsPayload = this.tagsPayload;
-    let domainList = this.provisioning.config.es.domains;
 
-    domainList.forEach((domain) => {
+    this.domainList.forEach((domain) => {
       let payload = {
         ARN: domain.ARN,
         TagList: tagsPayload
@@ -37,5 +36,23 @@ export class ESDriver extends AbstractDriver {
     });
 
     stack.join().ready(callback);
+  }
+
+  /**
+   * @returns {Array}
+   */
+  get domainList() {
+    let domainList = [];
+    let provision = this.provisioning.config.es.domains;
+
+    for (let name in provision) {
+      if (!provision.hasOwnProperty(name)) {
+        continue;
+      }
+
+      domainList.push(provision[name]);
+    }
+
+    return domainList;
   }
 }
