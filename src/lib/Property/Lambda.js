@@ -687,6 +687,19 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
   }
 
   /**
+   * @returns {Number[]}
+   */
+  static get AVAILABLE_MEMORY_VALUES() {
+    return [
+      128, 192, 256, 320, 384, 448,
+      512, 576, 640, 704, 768, 832,
+      896, 960, 1024, 1088, 1152,
+      1216, 1280, 1344, 1408,
+      1472, 1536
+    ];
+  }
+
+  /**
    * @returns {Number}
    */
   static get DEFAULT_MEMORY_LIMIT() {
