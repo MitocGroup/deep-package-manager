@@ -388,7 +388,8 @@ export class Frontend {
       // @todo: separate GTM functionality?
       propertyConfig.globals.gtmContainerId, // it may be empty/undefined
       this._microservicesConfig,
-      propertyConfig.globals.pageLoader
+      propertyConfig.globals.pageLoader,
+      propertyConfig.globals.applicationId
     );
 
     if (Frontend._skipInjectDeployNumber) {
