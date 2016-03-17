@@ -27,6 +27,7 @@ export default {
       aws: Joi.object().keys({
         accessKeyId: JoiHelper.string().required().empty(''),
         secretAccessKey: JoiHelper.string().required().empty(''),
+        sessionToken: JoiHelper.string().optional().empty(''),
         region: JoiHelper.string().required(),
         httpOptions: Joi.object().optional(),
       }).required(),
@@ -44,6 +45,7 @@ export default {
       aws: Joi.object().keys({
         accessKeyId: JoiHelper.string().required(),
         secretAccessKey: JoiHelper.string().required(),
+        sessionToken: JoiHelper.string().optional(),
         region: JoiHelper.string().required(),
         httpOptions: Joi.object().optional(),
       }).optional().default(guessedAwsCredentials),

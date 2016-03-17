@@ -506,9 +506,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    * @private
    */
   _getUploadKeyPrefix(uploadBucket) {
-    return S3Service.isBucketTmp(uploadBucket) ?
-      null :
-      `${this._property.rootMicroservice.identifier}/${S3Service.TMP_BUCKET}`;
+    return S3Service.isBucketTmp(uploadBucket) ? null : S3Service.TMP_BUCKET;
   }
 
   /**
@@ -686,6 +684,19 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    */
   static get DEFAULT_TIMEOUT() {
     return Lambda.MAX_TIMEOUT;
+  }
+
+  /**
+   * @returns {Number[]}
+   */
+  static get AVAILABLE_MEMORY_VALUES() {
+    return [
+      128, 192, 256, 320, 384, 448,
+      512, 576, 640, 704, 768, 832,
+      896, 960, 1024, 1088, 1152,
+      1216, 1280, 1344, 1408,
+      1472, 1536
+    ];
   }
 
   /**

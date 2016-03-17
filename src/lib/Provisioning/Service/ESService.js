@@ -37,6 +37,13 @@ export class ESService extends AbstractService {
   }
 
   /**
+   * @returns {String}
+   */
+  static get CLIENT_DOMAIN_NAME() {
+    return 'client';
+  }
+
+  /**
    * @returns {String[]}
    */
   static get AVAILABLE_REGIONS() {
@@ -62,6 +69,7 @@ export class ESService extends AbstractService {
     let oldDomains = {};
     let domainsConfig = {};
     let rum = services.find(SQSService).getRumConfig();
+    let search = this.searchConfig;
 
     if (this._isUpdate) {
       oldDomains = this._config.domains;
@@ -69,6 +77,10 @@ export class ESService extends AbstractService {
 
     if (rum.enabled && !oldDomains.hasOwnProperty(ESService.RUM_DOMAIN_NAME)) {
       domainsConfig[ESService.RUM_DOMAIN_NAME] = ESService.DOMAINS_CONFIG[ESService.RUM_DOMAIN_NAME];
+    }
+
+    if (search.enabled && !oldDomains.hasOwnProperty(ESService.CLIENT_DOMAIN_NAME)) {
+      domainsConfig[ESService.CLIENT_DOMAIN_NAME] = ESService.STD_CLUSTER_CONFIG;
     }
 
     this._createDomains(
@@ -115,13 +127,38 @@ export class ESService extends AbstractService {
   }
 
   /**
+   * @private
+   */
+  get searchConfig() {
+    let globalsConfig = this.property.config.globals;
+    let search = {
+      enabled: false,
+    };
+
+    if (globalsConfig.search) {
+      search = globalsConfig.search;
+    }
+
+    return search;
+  }
+
+  /**
    * @returns {Object}
    * @private
    */
   static get DOMAINS_CONFIG() {
     let config = {};
 
-    config[ESService.RUM_DOMAIN_NAME] = {
+    config[ESService.RUM_DOMAIN_NAME] = ESService.STD_CLUSTER_CONFIG;
+
+    return config;
+  }
+
+  /**
+   * @returns {{ElasticsearchClusterConfig: {InstanceType: string, InstanceCount: number, DedicatedMasterEnabled: boolean, ZoneAwarenessEnabled: boolean}, EBSOptions: {EBSEnabled: boolean, VolumeType: string, VolumeSize: number, Iops: number}, SnapshotOptions: {AutomatedSnapshotStartHour: number}}}
+   */
+  static get STD_CLUSTER_CONFIG() {
+    return {
       ElasticsearchClusterConfig: {
         InstanceType: 't2.micro.elasticsearch',
         InstanceCount: 1,
@@ -138,8 +175,6 @@ export class ESService extends AbstractService {
         AutomatedSnapshotStartHour: 0,
       },
     };
-
-    return config;
   }
 
   /**
@@ -214,7 +249,7 @@ export class ESService extends AbstractService {
       Core.AWS.Service.ELASTIC_SEARCH,
       this.provisioning.elasticSearch.config.region,
       this.awsAccountId,
-      `domain:${this._getGlobalResourceMask('', AbstractService.DELIMITER_HYPHEN_LOWER_CASE)}`
+      `domain/${this._getGlobalResourceMask('', AbstractService.DELIMITER_HYPHEN_LOWER_CASE)}`
     );
 
     return statement;

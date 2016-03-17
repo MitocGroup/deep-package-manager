@@ -92,6 +92,8 @@ export class LambdaService extends AbstractService {
       Core.AWS.Region.US_EAST_N_VIRGINIA,
       Core.AWS.Region.US_WEST_OREGON,
       Core.AWS.Region.EU_IRELAND,
+      Core.AWS.Region.EU_FRANKFURT,
+      Core.AWS.Region.ASIA_PACIFIC_TOKYO,
     ];
   }
 
@@ -494,9 +496,12 @@ export class LambdaService extends AbstractService {
 
     let s3Statement = policy.statement.add();
     let s3ListBucketStatement = policy.statement.add();
+    let s3ReadBucketStatement = policy.statement.add();
 
     s3Statement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, Core.AWS.IAM.Policy.ANY);
     s3ListBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'ListBucket');
+    s3ReadBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'GetObject');
+    s3ReadBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'HeadObject');
 
     for (let bucketSuffix in buckets) {
       if (!buckets.hasOwnProperty(bucketSuffix)) {
@@ -505,11 +510,36 @@ export class LambdaService extends AbstractService {
 
       let bucket = buckets[bucketSuffix];
 
-      let s3Resource = s3Statement.resource.add();
+      if (bucketSuffix === S3Service.PUBLIC_BUCKET) {
+        let s3Resource = s3Statement.resource.add();
+
+        s3Resource.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
+        s3Resource.descriptor = `${bucket.name}/${microserviceIdentifier}/${Core.AWS.IAM.Policy.ANY}`;
+      } else {
+        let s3ResourceSystem = s3Statement.resource.add();
+        let s3ResourceTmp = s3Statement.resource.add();
+        let s3ResourceShared = s3Statement.resource.add();
+
+        s3ResourceSystem.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
+        s3ResourceSystem.descriptor = `${bucket.name}/${S3Service.SYSTEM_BUCKET}/` +
+          `${microserviceIdentifier}/${Core.AWS.IAM.Policy.ANY}`;
+
+        s3ResourceTmp.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
+        s3ResourceTmp.descriptor = `${bucket.name}/${S3Service.TMP_BUCKET}/` +
+          `${microserviceIdentifier}/${Core.AWS.IAM.Policy.ANY}`;
+
+        s3ResourceShared.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
+        s3ResourceShared.descriptor = `${bucket.name}/${S3Service.SHARED_BUCKET}/` +
+          `${microserviceIdentifier}/${Core.AWS.IAM.Policy.ANY}`;
+
+        let s3ReadBucketResource = s3ReadBucketStatement.resource.add();
+
+        s3ReadBucketResource.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
+        s3ReadBucketResource.descriptor = `${bucket.name}/${S3Service.SHARED_BUCKET}/${Core.AWS.IAM.Policy.ANY}`;
+      }
+
       let s3ListBucketResource = s3ListBucketStatement.resource.add();
 
-      s3Resource.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
-      s3Resource.descriptor = `${bucket.name}/${microserviceIdentifier}/${Core.AWS.IAM.Policy.ANY}`;
       s3ListBucketResource.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
       s3ListBucketResource.descriptor = bucket.name;
     }
@@ -528,6 +558,7 @@ export class LambdaService extends AbstractService {
     let esService = this.provisioning.services.find(ESService);
     policy.statement.add(esService.generateAllowActionsStatement([
       'ESHttpGet', 'ESHttpHead', 'ESHttpDelete', 'ESHttpPost', 'ESHttpPut',
+      'DescribeElasticsearchDomain', 'DescribeElasticsearchDomains', 'ListDomainNames'
     ]));
 
     // @todo: move it to ElastiCacheService?

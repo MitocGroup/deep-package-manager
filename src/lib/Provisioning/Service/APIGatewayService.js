@@ -164,6 +164,9 @@ export class APIGatewayService extends AbstractService {
       Core.AWS.Region.US_EAST_N_VIRGINIA,
       Core.AWS.Region.US_WEST_OREGON,
       Core.AWS.Region.EU_IRELAND,
+      Core.AWS.Region.EU_FRANKFURT,
+      Core.AWS.Region.ASIA_PACIFIC_TOKYO,
+      Core.AWS.Region.ASIA_PACIFIC_SINGAPORE,
     ];
   }
 
@@ -884,12 +887,11 @@ export class APIGatewayService extends AbstractService {
       }
 
       let microservice = microservices[microserviceKey];
+      let actions = microservice.resources.actions.filter(ActionFlags.API_ACTION_FILTER);
 
-      if (microservice.resources.actions.length > 0) {
+      if (actions.length > 0) {
         resourcePaths.push(APIGatewayService.pathify(microservice.identifier));
       }
-
-      let actions = microservice.resources.actions.filter(ActionFlags.API_ACTION_FILTER);
 
       for (let actionKey in actions) {
         if (!actions.hasOwnProperty(actionKey)) {
