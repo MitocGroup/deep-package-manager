@@ -442,43 +442,40 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _executeProvisionMethod(method, apiId, apiResources, integrationParams, callback) {
-    let wait = new WaitFor();
-
     let methodsParams = this._methodParamsGenerator(method, apiId, apiResources, integrationParams);
-    let stackSize = methodsParams.length;
     let dataStack = {};
-    let delay = 0;
 
-    for (let key in methodsParams) {
-      if (!methodsParams.hasOwnProperty(key)) {
-        continue;
+    /**
+     * @param {Number} methodIndex
+     * @param {Function} onMissingCallback
+     */
+    function executeSingleMethod(methodIndex, onMissingCallback) {
+      if (!methodsParams.hasOwnProperty(methodIndex)) {
+        onMissingCallback();
+
+        return;
       }
 
-      let params = methodsParams[key];
+      let params = methodsParams[methodIndex];
       let resourcePath = params.resourcePath;
       delete params.resourcePath;
 
-      setTimeout(() => {
+      let start = new Date();
+
+      this.apiGatewayClient[method](params, (error, data) => {
+        console.log(`${resourcePath}(${method}): ${new Date().getTime() - start.getTime()}`);
+        if (error) {
+          throw new FailedToExecuteApiGatewayMethodException(method, resourcePath, params.httpMethod, error);
+        }
+
         dataStack[resourcePath] = {};
+        dataStack[resourcePath][params.httpMethod] = data;
 
-        this.apiGatewayClient[method](params, (error, data) => {
-          if (error) {
-            throw new FailedToExecuteApiGatewayMethodException(method, resourcePath, params.httpMethod, error);
-          }
-
-          dataStack[resourcePath][params.httpMethod] = data;
-          stackSize--;
-        });
-      }, delay);
-
-      delay += 300; // ApiGateway api returns an 500 Internal server error when calls to the same endpoint are 'simultaneously'
+        executeSingleMethod.bind(this)(++methodIndex, onMissingCallback);
+      });
     }
 
-    wait.push(() => {
-      return stackSize === 0;
-    });
-
-    wait.ready(() => {
+    executeSingleMethod.bind(this)(0, () => {
       callback(dataStack);
     });
   }
