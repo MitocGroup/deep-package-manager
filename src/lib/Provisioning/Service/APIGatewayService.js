@@ -460,10 +460,7 @@ export class APIGatewayService extends AbstractService {
       let resourcePath = params.resourcePath;
       delete params.resourcePath;
 
-      let start = new Date();
-
       this.apiGatewayClient[method](params, (error, data) => {
-        console.log(`${resourcePath}(${method}): ${new Date().getTime() - start.getTime()}`);
         if (error) {
           throw new FailedToExecuteApiGatewayMethodException(method, resourcePath, params.httpMethod, error);
         }
