@@ -447,11 +447,11 @@ export class APIGatewayService extends AbstractService {
 
     /**
      * @param {Number} methodIndex
-     * @param {Function} onMissingCallback
+     * @param {Function} onCompleteCallback
      */
-    function executeSingleMethod(methodIndex, onMissingCallback) {
+    function executeSingleMethod(methodIndex, onCompleteCallback) {
       if (!methodsParams.hasOwnProperty(methodIndex)) {
-        onMissingCallback();
+        onCompleteCallback();
 
         return;
       }
@@ -468,7 +468,7 @@ export class APIGatewayService extends AbstractService {
         dataStack[resourcePath] = {};
         dataStack[resourcePath][params.httpMethod] = data;
 
-        executeSingleMethod.bind(this)(++methodIndex, onMissingCallback);
+        executeSingleMethod.bind(this)(++methodIndex, onCompleteCallback);
       });
     }
 
