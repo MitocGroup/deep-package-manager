@@ -550,7 +550,7 @@ export class LambdaService extends AbstractService {
     );
     policy.statement.add(cognitoService.generateAllowDescribeIdentityStatement(LambdaService));
 
-    policy.statement.add(this.generateAllowInvokeFunctionStatement());
+    policy.statement.add(this.generateAllowActionsStatement(['getFunctionConfiguration', 'InvokeFunction']));
 
     let sqsService = this.provisioning.services.find(SQSService);
     policy.statement.add(sqsService.generateAllowActionsStatement());
@@ -599,15 +599,16 @@ export class LambdaService extends AbstractService {
   }
 
   /**
-   * Allow Cognito and ApiGateway users to invoke these lambdas
-   *
+   * @param {Object[]} actions
    * @returns {Core.AWS.IAM.Statement}
    */
-  generateAllowInvokeFunctionStatement() {
+  generateAllowActionsStatement(actions = ['InvokeFunction']) {
     let policy = new Core.AWS.IAM.Policy();
-
     let statement = policy.statement.add();
-    statement.action.add(Core.AWS.Service.LAMBDA, 'InvokeFunction');
+
+    actions.forEach((actionName) => {
+      statement.action.add(Core.AWS.Service.LAMBDA, actionName);
+    });
 
     statement.resource.add().updateFromArn(
       this._generateLambdaArn(this._getGlobalResourceMask())
