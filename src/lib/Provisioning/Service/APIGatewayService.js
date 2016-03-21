@@ -68,6 +68,13 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
+   * @returns {Number}
+   */
+  static get REQUEST_INTERVAL() {
+    return 200;
+  }
+
+  /**
    * Retry interval (ms)
    *
    * @returns {Number}
@@ -468,7 +475,12 @@ export class APIGatewayService extends AbstractService {
         dataStack[resourcePath] = {};
         dataStack[resourcePath][params.httpMethod] = data;
 
-        executeSingleMethod.bind(this)(++methodIndex, onCompleteCallback);
+        setTimeout(
+          executeSingleMethod.bind(this),
+          APIGatewayService.REQUEST_INTERVAL,
+          ++methodIndex,
+          onCompleteCallback
+        );
       });
     }
 
