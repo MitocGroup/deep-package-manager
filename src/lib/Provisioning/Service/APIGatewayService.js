@@ -68,13 +68,6 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
-   * @returns {Number}
-   */
-  static get REQUEST_INTERVAL() {
-    return 200;
-  }
-
-  /**
    * Retry interval (ms)
    *
    * @returns {Number}
@@ -450,6 +443,7 @@ export class APIGatewayService extends AbstractService {
    */
   _executeProvisionMethod(method, apiId, apiResources, integrationParams, callback) {
     let methodsParams = this._methodParamsGenerator(method, apiId, apiResources, integrationParams);
+    let retriesMap = [];
     let dataStack = {};
 
     /**
@@ -464,23 +458,32 @@ export class APIGatewayService extends AbstractService {
       }
 
       let params = methodsParams[methodIndex];
+      let retries = retriesMap[methodIndex] || (retriesMap[methodIndex] = 0);
       let resourcePath = params.resourcePath;
       delete params.resourcePath;
 
       this.apiGatewayClient[method](params, (error, data) => {
         if (error) {
+          if (retries < APIGatewayService.MAX_RETRIES) {
+            setTimeout(
+              executeSingleMethod.bind(this),
+              APIGatewayService.RETRY_INTERVAL,
+              methodIndex,
+              onCompleteCallback
+            );
+
+            retriesMap[methodIndex]++;
+
+            return;
+          }
+
           throw new FailedToExecuteApiGatewayMethodException(method, resourcePath, params.httpMethod, error);
         }
 
         dataStack[resourcePath] = {};
         dataStack[resourcePath][params.httpMethod] = data;
 
-        setTimeout(
-          executeSingleMethod.bind(this),
-          APIGatewayService.REQUEST_INTERVAL,
-          ++methodIndex,
-          onCompleteCallback
-        );
+        executeSingleMethod.bind(this)(++methodIndex, onCompleteCallback);
       });
     }
 
