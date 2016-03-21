@@ -685,7 +685,7 @@ export class APIGatewayService extends AbstractService {
 
     let iam = this.provisioning.iam;
     let policy = new Core.AWS.IAM.Policy();
-    policy.statement.add(lambdaService.generateAllowInvokeFunctionStatement());
+    policy.statement.add(lambdaService.generateAllowActionsStatement());
     policy.statement.add(cloudWatchService.generateAllowFullAccessStatement());
 
     let params = {

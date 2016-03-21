@@ -294,7 +294,7 @@ export class CognitoIdentityService extends AbstractService {
       let sqsService = this.provisioning.services.find(SQSService);
 
       let policy = new Core.AWS.IAM.Policy();
-      policy.statement.add(lambdaService.generateAllowInvokeFunctionStatement());
+      policy.statement.add(lambdaService.generateAllowActionsStatement());
       policy.statement.add(APIGatewayService.generateAllowInvokeMethodStatement(endpointsARNs));
       policy.statement.add(this.generateAllowCognitoSyncStatement(['ListRecords', 'UpdateRecords', 'ListDatasets']));
       policy.statement.add(sqsService.generateAllowActionsStatement());
