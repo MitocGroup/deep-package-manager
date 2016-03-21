@@ -465,14 +465,14 @@ export class APIGatewayService extends AbstractService {
       this.apiGatewayClient[method](params, (error, data) => {
         if (error) {
           if (retries < APIGatewayService.MAX_RETRIES) {
+            retriesMap[methodIndex]++;
+
             setTimeout(
               executeSingleMethod.bind(this),
-              APIGatewayService.RETRY_INTERVAL,
+              APIGatewayService.RETRY_INTERVAL * retriesMap[methodIndex],
               methodIndex,
               onCompleteCallback
             );
-
-            retriesMap[methodIndex]++;
 
             return;
           }
