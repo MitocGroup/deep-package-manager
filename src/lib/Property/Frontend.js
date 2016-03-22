@@ -392,7 +392,7 @@ export class Frontend {
       propertyConfig.globals.gtmContainerId, // it may be empty/undefined
       this._microservicesConfig,
       propertyConfig.globals.pageLoader,
-      propertyConfig.globals.applicationId
+      propertyConfig.globals.version
     );
 
     if (Frontend._skipInjectDeployNumber) {
