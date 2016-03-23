@@ -16,6 +16,7 @@ import {DeployConfig} from './DeployConfig';
 export default {
   validation: () => {
     return Joi.object().keys({
+      appName: JoiHelper.string().regex(/^[a-z\s0-9+\-=\._:\/]{1,256}$/i).optional().default('').empty(''),
       appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).required(),
       env: JoiHelper.stringEnum(DeployConfig.AVAILABLE_ENV).optional()
         .lowercase().default(DeployConfig.AVAILABLE_ENV[0]),
@@ -24,8 +25,9 @@ export default {
         .regex(/^([a-zA-Z0-9-_]+\.)+[a-zA-Z]+?$/i)
         .replace(/^www\./i, ''),
       aws: Joi.object().keys({
-        accessKeyId: JoiHelper.string().required(),
-        secretAccessKey: JoiHelper.string().required(),
+        accessKeyId: JoiHelper.string().required().empty(''),
+        secretAccessKey: JoiHelper.string().required().empty(''),
+        sessionToken: JoiHelper.string().optional().empty(''),
         region: JoiHelper.string().required(),
         httpOptions: Joi.object().optional(),
       }).required(),
@@ -33,20 +35,27 @@ export default {
   },
   generation: () => {
     let guessedAwsCredentials = guessAwsSdkConfig();
+    let appId = buildAppId();
 
     return Joi.object().keys({
-      appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).optional().default(buildAppId()),
+      appName: JoiHelper.string().optional().default(buildAppNameFromId(appId)),
+      appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).optional().default(appId),
       env: JoiHelper.stringEnum(DeployConfig.AVAILABLE_ENV).optional().default(DeployConfig.AVAILABLE_ENV[0]),
       awsAccountId: Joi.number().optional().default(guessAwsAccountId(guessedAwsCredentials)),
       aws: Joi.object().keys({
         accessKeyId: JoiHelper.string().required(),
         secretAccessKey: JoiHelper.string().required(),
+        sessionToken: JoiHelper.string().optional(),
         region: JoiHelper.string().required(),
         httpOptions: Joi.object().optional(),
       }).optional().default(guessedAwsCredentials),
     })
   }
 };
+
+function buildAppNameFromId(appId) {
+  return `My Custom Web App ${appId}`;
+}
 
 function buildAppId() {
   let result = new Exec(

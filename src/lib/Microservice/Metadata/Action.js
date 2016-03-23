@@ -4,6 +4,8 @@
 
 'use strict';
 
+import {ActionFlags} from './Helpers/ActionFlags';
+
 /**
  * Single action instance
  */
@@ -24,6 +26,9 @@ export class Action {
     this._cacheTtl = config.cacheTtl;
     this._forceUserIdentity = config.forceUserIdentity;
     this._validationSchema = config.validationSchema;
+    this._scope = ActionFlags.unstringify(config.scope);
+    this._cron = config.cron || null;
+    this._cronPayload = config.cronPayload || null;
   }
 
   /**
@@ -58,7 +63,21 @@ export class Action {
   }
 
   /**
-   * @returns {String|null}
+   * @returns {Number}
+   */
+  get scope() {
+
+    // It doesn't make sense to expose scheduled backend
+    // through both api and direct call due to missing user context
+    if (this.cron) {
+      return ActionFlags.PRIVATE;
+    }
+
+    return this._scope;
+  }
+
+  /**
+   * @returns {String|Object|Function|null}
    */
   get validationSchema() {
     return this._validationSchema;
@@ -75,6 +94,18 @@ export class Action {
    * @returns {Boolean}
    */
   get forceUserIdentity() {
+
+    // @todo: remove this after figuring out the invoke roles
+    // for both auth and non auth policies assigned to the cognito
+    if (!ActionFlags.isDirect(this.scope)) {
+      return false;
+    }
+
+    // There's no user context shared in scheduled backend
+    if (this.cron) {
+      return false;
+    }
+
     return this._forceUserIdentity;
   }
 
@@ -97,6 +128,20 @@ export class Action {
    */
   get resourceName() {
     return this._resourceName;
+  }
+
+  /**
+   * @returns {String|null}
+   */
+  get cron() {
+    return this._cron;
+  }
+
+  /**
+   * @returns {Object|null}
+   */
+  get cronPayload() {
+    return this._cronPayload;
   }
 
   /**
@@ -174,6 +219,9 @@ export class Action {
       cacheTtl: this.cacheTtl,
       forceUserIdentity: this.forceUserIdentity,
       validationSchema: this.validationSchema,
+      scope: this.scope,
+      cron: this.cron,
+      cronPayload: this.cronPayload,
     };
   }
 }

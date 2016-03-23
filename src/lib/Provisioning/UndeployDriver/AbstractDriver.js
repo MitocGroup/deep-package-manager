@@ -186,7 +186,7 @@ export class AbstractDriver extends Core.OOP.Interface {
   }
 
   /**
-   * @param {String} service
+   * @param {Object} service
    * @param {String} credentials
    */
   static injectServiceCredentials(service, credentials) {

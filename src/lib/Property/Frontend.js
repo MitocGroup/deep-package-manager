@@ -22,9 +22,11 @@ import OS from 'os';
 import ZLib from 'zlib';
 import {APIGatewayService} from '../Provisioning/Service/APIGatewayService';
 import {SQSService} from '../Provisioning/Service/SQSService';
+import {ESService} from '../Provisioning/Service/ESService';
 import {DeployIdInjector} from '../Assets/DeployIdInjector';
 import {Optimizer} from '../Assets/Optimizer';
 import {Injector as TagsInjector} from '../Tags/Injector';
+import {ActionFlags} from '../Microservice/Metadata/Helpers/ActionFlags';
 
 /**
  * Frontend
@@ -81,7 +83,27 @@ export class Frontend {
       apiGatewayBaseUrl = propertyConfig.provisioning[Core.AWS.Service.API_GATEWAY].api.baseUrl;
 
       let sqsQueues = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_QUEUE_SERVICE].queues;
-      config.rumQueue = sqsQueues[SQSService.RUM_QUEUE] || '';
+      config.rumQueue = sqsQueues[SQSService.RUM_QUEUE] || {};
+
+      let esDomains = propertyConfig.provisioning[Core.AWS.Service.ELASTIC_SEARCH].domains;
+      let domains = {};
+
+      for (let domainKey in esDomains) {
+        if (!esDomains.hasOwnProperty(domainKey)) {
+          continue;
+        }
+
+        let domain = esDomains[domainKey];
+
+        domains[domainKey] = {
+          type: Core.AWS.Service.ELASTIC_SEARCH,
+          name: domain.DomainName,
+          url: '', // @todo - find a way to retrieve provisioned domain url (it's available with a delay of ~15min)
+        };
+      }
+
+      // @note - here will be added CloudSearch domains also
+      config.searchDomains = domains;
     }
 
     for (let microserviceIdentifier in propertyConfig.microservices) {
@@ -116,6 +138,12 @@ export class Frontend {
             microservice.lambdas[action.identifier].arn :
             action.source;
 
+          let apiEndpoint = null;
+
+          if (ActionFlags.isApi(action.scope)) {
+            apiEndpoint = apiGatewayBaseUrl + APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName);
+          }
+
           microserviceConfig.resources[resourceName][action.name] = {
             type: action.type,
             methods: action.methods,
@@ -127,8 +155,8 @@ export class Frontend {
             },
             region: propertyConfig.awsRegion, // @todo: set it from lambda provision
             source: {
-              api: apiGatewayBaseUrl + APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName),
-              original: originalSource,
+              api: apiEndpoint,
+              original: ActionFlags.isDirect(action.scope) ? originalSource : null,
             },
           };
 
@@ -362,7 +390,9 @@ export class Frontend {
 
       // @todo: separate GTM functionality?
       propertyConfig.globals.gtmContainerId, // it may be empty/undefined
-      this._microservicesConfig
+      this._microservicesConfig,
+      propertyConfig.globals.pageLoader,
+      propertyConfig.globals.version
     );
 
     if (Frontend._skipInjectDeployNumber) {

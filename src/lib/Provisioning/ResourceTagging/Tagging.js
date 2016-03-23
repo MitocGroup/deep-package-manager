@@ -6,6 +6,7 @@
 
 import {WaitFor} from '../../Helpers/WaitFor';
 import {S3Driver} from './Driver/S3Driver';
+import {ESDriver} from './Driver/ESDriver';
 
 export class Tagging {
   /**
@@ -20,7 +21,12 @@ export class Tagging {
    * @param {String|null} applicationName
    */
   static create(property, applicationName = null) {
-    return new Tagging(new S3Driver(property, applicationName));
+    applicationName = applicationName || property.name;
+
+    let s3Driver = new S3Driver(property, applicationName);
+    let esDriver = new ESDriver(property, applicationName);
+
+    return new Tagging(s3Driver, esDriver);
   }
 
   /**
@@ -39,7 +45,7 @@ export class Tagging {
     let remaining = this._drivers.length;
 
     wait.push(() => {
-      return remaining;
+      return remaining <= 0;
     });
 
     this._drivers.forEach((driver) => {

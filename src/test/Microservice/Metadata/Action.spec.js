@@ -14,6 +14,7 @@ suite('Microservice/Metadata/Action', () => {
     type: 'lambda',
     source: 'src/Property/RetrieveCounts',
     validationSchema: 'Sample',
+    scope: 'public',
     engine: {
       memory: 120,
       timeout: 60,
@@ -92,6 +93,9 @@ suite('Microservice/Metadata/Action', () => {
       type: 'lambda',
       source: 'src/Property/RetrieveCounts',
       validationSchema: 'Sample',
+      cron: null,
+      cronPayload: null,
+      scope: 3,
       engine: {
         memory: 120,
         timeout: 60,

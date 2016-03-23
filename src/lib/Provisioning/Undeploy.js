@@ -113,7 +113,7 @@ export class Undeploy {
 
   /**
    * @param {String} name
-   * @returns {AbstractService}
+   * @returns {AbstractDriver|*}
    */
   _createAwsService(name) {
     let service = this._property.provisioning.getAwsServiceByName(name);

@@ -177,6 +177,9 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
           );
 
           this._deployConfig.Lambda = this._deployConfig.Lambda.concat(lambdaNamesChunk);
+
+          // @todo: separate this?
+          this._deployConfig.CloudWatchEvents = [].concat(this._deployConfig.Lambda);
         }
       }
 
@@ -191,6 +194,20 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
       if (deployProvisioning.apigateway && deployProvisioning.apigateway.api &&
         deployProvisioning.apigateway.api.logGroupName) {
         this._deployConfig.CloudWatchLogs.push(deployProvisioning.apigateway.api.logGroupName);
+      }
+
+      if (deployProvisioning.es && deployProvisioning.es.domains) {
+        let domains = deployProvisioning.es.domains;
+
+        for (let key in domains) {
+          if (!domains.hasOwnProperty(key)) {
+            continue;
+          }
+
+          let domain = domains[key];
+
+          this._deployConfig.ES.push(domain.DomainName);
+        }
       }
     } else {
       throw new MissingProvisioningConfig(this.fileName, 'provisioning');

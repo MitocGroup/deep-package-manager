@@ -6,5 +6,6 @@
   },
   "env": "test",
   "awsAccountId": 123456789012,
-  "appIdentifier": "generated"
+  "appIdentifier": "generated",
+  "appName": "sample app"
 }

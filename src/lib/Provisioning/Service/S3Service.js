@@ -28,6 +28,13 @@ export class S3Service extends AbstractService {
   /**
    * @returns {String}
    */
+  static get SHARED_BUCKET() {
+    return 'shared'; // @note - do not change this prefix, it is also used in deep-fs component
+  }
+
+  /**
+   * @returns {String}
+   */
   static get TMP_BUCKET() {
     return 'temp'; // @note - do not change this prefix, it is also used in deep-fs component
   }
@@ -54,6 +61,17 @@ export class S3Service extends AbstractService {
       S3Service.TMP_BUCKET,
       S3Service.PUBLIC_BUCKET,
       S3Service.SYSTEM_BUCKET,
+      S3Service.SHARED_BUCKET,
+    ];
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get FS_BUCKETS_SUFFIX_NO_TMP_AND_SHARED() {
+    return [
+      S3Service.PUBLIC_BUCKET,
+      S3Service.SYSTEM_BUCKET,
     ];
   }
 
@@ -75,6 +93,10 @@ export class S3Service extends AbstractService {
 
     config[S3Service.SYSTEM_BUCKET] = {
       name: `${propertyHash}-${S3Service.SYSTEM_BUCKET}`,
+    };
+
+    config[S3Service.SHARED_BUCKET] = {
+      name: `${propertyHash}-${S3Service.SHARED_BUCKET}`,
     };
 
     return config;
@@ -103,12 +125,20 @@ export class S3Service extends AbstractService {
   _setup(services) {
     // @todo: implement!
     if (this._isUpdate) {
-      this._ready = true;
+      let buckets = this._config.buckets;
+      let tmpBucket = buckets.hasOwnProperty(S3Service.TMP_BUCKET) ?
+        buckets[S3Service.TMP_BUCKET].name :
+        buckets[S3Service.SYSTEM_BUCKET].name;
+
+      this._enableTmpBucketLifecycle(tmpBucket, () => {
+        this._ready = true;
+      });
+
       return this;
     }
 
     this._createFsBuckets(
-      S3Service.FS_BUCKETS_SUFFIX
+      S3Service.FS_BUCKETS_SUFFIX_NO_TMP_AND_SHARED // change it to FS_BUCKETS_SUFFIX in order to have tmp bucket created
     )((buckets) => {
       this._config.buckets = buckets;
 
@@ -198,7 +228,7 @@ export class S3Service extends AbstractService {
 
         // setup public bucket as static website hosting
         if (S3Service.isBucketPublic(bucketName)) {
-          let websiteConfig = S3Service.getStaticWebsiteConfig(bucketName);
+          let websiteConfig = S3Service.getStaticWebsiteConfig(bucketName, this.property.config.globals.engine);
 
           syncStack.level(1).push(s3.putBucketWebsite(websiteConfig), (error, data) => {
             if (error) {
@@ -215,7 +245,9 @@ export class S3Service extends AbstractService {
               throw new FailedSettingCORSException(bucketName, error);
             }
           });
-        } else if (S3Service.isBucketTmp(bucketName)) {
+        } else if (S3Service.isBucketTmp(bucketName) ||
+          (S3Service.isBucketSystem(bucketName) && bucketsSuffix.indexOf(S3Service.TMP_BUCKET) === -1)) {
+
           tmpBucket = bucketName;
         }
       });
@@ -223,29 +255,47 @@ export class S3Service extends AbstractService {
 
     return (callback) => {
       return syncStack.join().ready(() => {
-        let lifecyclePayload = {
-          Bucket: tmpBucket,
-          LifecycleConfiguration: {
-            Rules: [
-              {
-                Prefix: '',
-                Status: 'Enabled',
-                Expiration: {
-                  Days: S3Service.TMP_DAYS_LIFECYCLE,
-                },
-              },
-            ],
-          },
-        };
-
-        s3.putBucketLifecycle(lifecyclePayload, (error, data) => {
-          if (error) {
-            throw new FailedAddingLifecycleException(tmpBucket, error);
-          }
-
+        this._enableTmpBucketLifecycle(tmpBucket, () => {
           callback(buckets);
         });
       });
+    };
+  }
+
+  /**
+   * @param {String} tmpBucket
+   * @param {Function} callback
+   * @private
+   */
+  _enableTmpBucketLifecycle(tmpBucket, callback) {
+    this.provisioning.s3.putBucketLifecycle(this._lifecyclePayload(tmpBucket), (error) => {
+      if (error) {
+        throw new FailedAddingLifecycleException(tmpBucket, error);
+      }
+
+      callback();
+    });
+  }
+
+  /**
+   * @param {String} tmpBucket
+   * @returns {{Bucket: *, LifecycleConfiguration: {Rules: *[]}}}
+   * @private
+   */
+  _lifecyclePayload(tmpBucket) {
+    return {
+      Bucket: tmpBucket,
+      LifecycleConfiguration: {
+        Rules: [
+          {
+            Prefix: S3Service.TMP_BUCKET,
+            Status: 'Enabled',
+            Expiration: {
+              Days: S3Service.TMP_DAYS_LIFECYCLE,
+            },
+          },
+        ],
+      },
     };
   }
 
@@ -363,10 +413,11 @@ export class S3Service extends AbstractService {
    * @todo - revise Error / Index docs
    *
    * @param {String} bucketName
+   * @param {Object} engine
    * @returns {Object}
    */
-  static getStaticWebsiteConfig(bucketName) {
-    return {
+  static getStaticWebsiteConfig(bucketName, engine) {
+    let config = {
       Bucket: bucketName,
       WebsiteConfiguration: {
         ErrorDocument: {
@@ -377,6 +428,21 @@ export class S3Service extends AbstractService {
         },
       },
     };
+
+    if (engine && engine.ngRewrite && engine.ngRewrite === '/') {
+      config.WebsiteConfiguration.RoutingRules = [
+        {
+          Redirect: {
+            ReplaceKeyPrefixWith: '#/',
+          },
+          Condition: {
+            HttpErrorCodeReturnedEquals: '404',
+          },
+        },
+      ];
+    }
+
+    return config;
   }
 
   /**
@@ -398,7 +464,23 @@ export class S3Service extends AbstractService {
    * @param {String} bucketName
    * @returns {Boolean}
    */
+  static isBucketSystem(bucketName) {
+    return bucketName.indexOf(S3Service.SYSTEM_BUCKET) !== -1;
+  }
+
+  /**
+   * @param {String} bucketName
+   * @returns {Boolean}
+   */
   static isBucketPublic(bucketName) {
     return bucketName.indexOf(S3Service.PUBLIC_BUCKET) !== -1;
+  }
+
+  /**
+   * @param {String} bucketName
+   * @returns {Boolean}
+   */
+  static isBucketShared(bucketName) {
+    return bucketName.indexOf(S3Service.SHARED_BUCKET) !== -1;
   }
 }

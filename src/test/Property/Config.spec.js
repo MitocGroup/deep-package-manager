@@ -13,6 +13,7 @@ suite('Property/Config', () => {
     env: 'test',
     awsAccountId: 123456789012,
     appIdentifier: 'test_appId-432423-generated',
+    appName: 'appName'
   };
   let config = new Config(rawConfig);
   let configName = './test/testMaterials/Property1/deeploy.test.json';
@@ -51,6 +52,7 @@ suite('Property/Config', () => {
       env: 'test',
       awsAccountId: 123456789012,
       appIdentifier: 'generated',
+      appName: 'sample app'
     };
 
     chai.expect(Config.createFromJsonFile(configName).rawConfig).to.be.eql(extpectedResult);
@@ -64,7 +66,7 @@ suite('Property/Config', () => {
     chai.expect(config.extract()).to.be.not.equal(null);
   });
 
-  //@todo - commented becuase need to be discussed with AlexanderC
+  //@todo - commented because need to be discussed with AlexanderC
   //test('Check generate() method returns valid value', () => {
   //  let generatedConfig = {
   //    aws: {

@@ -9,6 +9,7 @@ import Joi from 'joi';
 import path from 'path';
 import {JoiHelper} from '../../Helpers/JoiHelper';
 import {Lambda} from '../../Property/Lambda';
+import {ActionFlags} from './Helpers/ActionFlags';
 
 export default Joi.object().keys({
   description: JoiHelper.maybeString(),
@@ -17,11 +18,21 @@ export default Joi.object().keys({
   source: JoiHelper.string().replace(/\//gi, path.sep),
   cacheTtl: Joi.number().optional().integer().min(Action.NO_CACHE).default(Action.NO_CACHE),
   forceUserIdentity: assureTypeLambda(Joi.boolean().optional().default(true)),
+  cron: assureTypeLambda(
+    Joi.string()
+      .regex(/^\s*[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s*$/)
+      .optional()
+  ),
+  cronPayload: Joi.object().unknown().optional(),
   validationSchema: JoiHelper.maybeString(),
+  scope: JoiHelper.stringEnum(ActionFlags.STATES_STR_VECTOR).optional().default(ActionFlags.PUBLIC_STR),
 
   // Lambda config
   engine: assureTypeLambda(Joi.object().optional().keys({
-    memory: Joi.number().optional().integer().min(Lambda.DEFAULT_MEMORY_LIMIT).max(Lambda.MAX_MEMORY_LIMIT)
+    memory: Joi.number().optional().integer()
+      .allow(Lambda.AVAILABLE_MEMORY_VALUES)
+      .min(Lambda.DEFAULT_MEMORY_LIMIT)
+      .max(Lambda.MAX_MEMORY_LIMIT)
       .default(Lambda.DEFAULT_MEMORY_LIMIT),
     timeout: Joi.number().optional().integer().min(1).max(Lambda.MAX_TIMEOUT).default(Lambda.DEFAULT_TIMEOUT),
     runtime: Joi.string().optional().allow(Lambda.RUNTIMES).default(Lambda.DEFAULT_RUNTIME),

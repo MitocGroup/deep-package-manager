@@ -20,6 +20,7 @@ import {InvalidCacheClusterSizeException} from './Exception/InvalidCacheClusterS
 import {InvalidApiLogLevelException} from './Exception/InvalidApiLogLevelException';
 import {FailedToUpdateApiGatewayStageException} from './Exception/FailedToUpdateApiGatewayStageException';
 import {FailedToUpdateApiGatewayAccountException} from './Exception/FailedToUpdateApiGatewayAccountException';
+import {FailedToDeleteApiException} from './Exception/FailedToDeleteApiException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
@@ -27,6 +28,7 @@ import {CloudWatchLogsService} from './CloudWatchLogsService';
 import objectMerge from 'object-merge';
 import nodePath from 'path';
 import jsonPointer from 'json-pointer';
+import {ActionFlags} from '../../Microservice/Metadata/Helpers/ActionFlags';
 
 /**
  * APIGateway service
@@ -39,6 +41,7 @@ export class APIGatewayService extends AbstractService {
     super(...args);
 
     this._apiResources = {};
+    this._nonDirectLambdaIdentifiers = [];
   }
 
   /**
@@ -161,6 +164,9 @@ export class APIGatewayService extends AbstractService {
       Core.AWS.Region.US_EAST_N_VIRGINIA,
       Core.AWS.Region.US_WEST_OREGON,
       Core.AWS.Region.EU_IRELAND,
+      Core.AWS.Region.EU_FRANKFURT,
+      Core.AWS.Region.ASIA_PACIFIC_TOKYO,
+      Core.AWS.Region.ASIA_PACIFIC_SINGAPORE,
     ];
   }
 
@@ -172,6 +178,22 @@ export class APIGatewayService extends AbstractService {
    */
   _setup(services) {
     let resourcePaths = this._getResourcePaths(this.property.microservices);
+
+    // do not create an API instance if there are no resources
+    if (resourcePaths.length === 0) {
+      if (this.isUpdate && this._config.api && this._config.api.id) {
+        this._deleteApi(this._config.api.id, () => {
+          this._config.api = {};
+          this._ready = true;
+        });
+
+      } else {
+        this._config.api = {};
+        this._ready = true;
+      }
+
+      return this;
+    }
 
     this._provisionApiResources(
       this.apiMetadata,
@@ -213,6 +235,14 @@ export class APIGatewayService extends AbstractService {
    * @returns {APIGatewayService}
    */
   _postDeployProvision(services) {
+    if (!this._config.api.hasOwnProperty('id')) {
+      this._ready = true;
+      return this;
+    }
+
+    this._nonDirectLambdaIdentifiers = this.provisioning.services.find(LambdaService)
+      .extractFunctionIdentifiers(ActionFlags.NON_DIRECT_ACTION_FILTER);
+
     let integrationParams = this.getResourcesIntegrationParams(this.property.config.microservices);
 
     this._putApiIntegrations(
@@ -412,43 +442,52 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _executeProvisionMethod(method, apiId, apiResources, integrationParams, callback) {
-    let wait = new WaitFor();
-
     let methodsParams = this._methodParamsGenerator(method, apiId, apiResources, integrationParams);
-    let stackSize = methodsParams.length;
+    let retriesMap = [];
     let dataStack = {};
-    let delay = 0;
 
-    for (let key in methodsParams) {
-      if (!methodsParams.hasOwnProperty(key)) {
-        continue;
+    /**
+     * @param {Number} methodIndex
+     * @param {Function} onCompleteCallback
+     */
+    function executeSingleMethod(methodIndex, onCompleteCallback) {
+      if (!methodsParams.hasOwnProperty(methodIndex)) {
+        onCompleteCallback();
+
+        return;
       }
 
-      let params = methodsParams[key];
+      let params = methodsParams[methodIndex];
+      let retries = retriesMap[methodIndex] || (retriesMap[methodIndex] = 0);
       let resourcePath = params.resourcePath;
       delete params.resourcePath;
 
-      setTimeout(() => {
-        dataStack[resourcePath] = {};
+      this.apiGatewayClient[method](params, (error, data) => {
+        if (error) {
+          if (retries <= APIGatewayService.MAX_RETRIES) {
+            retriesMap[methodIndex]++;
 
-        this.apiGatewayClient[method](params, (error, data) => {
-          if (error) {
-            throw new FailedToExecuteApiGatewayMethodException(method, resourcePath, params.httpMethod, error);
+            setTimeout(
+              executeSingleMethod.bind(this),
+              APIGatewayService.RETRY_INTERVAL * retriesMap[methodIndex],
+              methodIndex,
+              onCompleteCallback
+            );
+
+            return;
           }
 
-          dataStack[resourcePath][params.httpMethod] = data;
-          stackSize--;
-        });
-      }, delay);
+          throw new FailedToExecuteApiGatewayMethodException(method, resourcePath, params.httpMethod, error);
+        }
 
-      delay += 300; // ApiGateway api returns an 500 Internal server error when calls to the same endpoint are 'simultaneously'
+        dataStack[resourcePath] = {};
+        dataStack[resourcePath][params.httpMethod] = data;
+
+        executeSingleMethod.bind(this)(++methodIndex, onCompleteCallback);
+      });
     }
 
-    wait.push(() => {
-      return stackSize === 0;
-    });
-
-    wait.ready(() => {
+    executeSingleMethod.bind(this)(0, () => {
       callback(dataStack);
     });
   }
@@ -471,6 +510,21 @@ export class APIGatewayService extends AbstractService {
     this.apiGatewayClient.createDeployment(params, (error, data) => {
       if (error) {
         throw new FailedToDeployApiGatewayException(apiId, error);
+      }
+
+      callback(data);
+    });
+  }
+
+  /**
+   * @param {String} apiId
+   * @param {Function} callback
+   * @private
+   */
+  _deleteApi(apiId, callback) {
+    this.apiGatewayClient.deleteRestApi({restApiId: apiId}, (error, data) => {
+      if (error) {
+        throw new FailedToDeleteApiException(apiId, error);
       }
 
       callback(data);
@@ -646,7 +700,7 @@ export class APIGatewayService extends AbstractService {
 
     let iam = this.provisioning.iam;
     let policy = new Core.AWS.IAM.Policy();
-    policy.statement.add(lambdaService.generateAllowInvokeFunctionStatement());
+    policy.statement.add(lambdaService.generateAllowActionsStatement());
     policy.statement.add(cloudWatchService.generateAllowFullAccessStatement());
 
     let params = {
@@ -723,7 +777,10 @@ export class APIGatewayService extends AbstractService {
 
             //params.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
             // @todo - find a smarter way to enable "Invoke with caller credentials" option
-            params.credentials = resourceMethod === 'OPTIONS' ? null : 'arn:aws:iam::*:user/*';
+            params.credentials = resourceMethod === 'OPTIONS' ?
+              null :
+              this._decideMethodIntegrationCredentials(params);
+
             methodParams.push(params);
             break;
           case 'putIntegrationResponse':
@@ -747,6 +804,38 @@ export class APIGatewayService extends AbstractService {
     }
 
     return paramsArr;
+  }
+
+  /**
+   * This method disables invocation with caller credentials
+   * for "non direct call" lambdas
+   *
+   * @param {Object} params
+   * @returns {String}
+   * @private
+   */
+  _decideMethodIntegrationCredentials(params) {
+    let credentials = 'arn:aws:iam::*:user/*';
+
+    if (params.type === 'AWS' && params.uri) {
+      let invocationArn = params.uri;
+      let lambdaNameMatches = invocationArn.match(APIGatewayService.INVOCATION_SOURCE_ARN_REGEX);
+
+      if (lambdaNameMatches && lambdaNameMatches.length === 2) {
+        if (this._nonDirectLambdaIdentifiers.indexOf(lambdaNameMatches[1]) !== -1) {
+          credentials = this._config.api.role.Arn;
+        }
+      }
+    }
+
+    return credentials;
+  }
+
+  /**
+   * @returns {RegExp}
+   */
+  static get INVOCATION_SOURCE_ARN_REGEX() {
+    return /^arn:aws:apigateway:[^:]+:lambda:path\/[^\/]+\/functions\/arn:aws:lambda:[^:]+:[^:]+:function:([^:\/]+)\/invocations/i;
   }
 
   /**
@@ -807,17 +896,18 @@ export class APIGatewayService extends AbstractService {
       }
 
       let microservice = microservices[microserviceKey];
+      let actions = microservice.resources.actions.filter(ActionFlags.API_ACTION_FILTER);
 
-      if (microservice.resources.actions.length > 0) {
+      if (actions.length > 0) {
         resourcePaths.push(APIGatewayService.pathify(microservice.identifier));
       }
 
-      for (let actionKey in microservice.resources.actions) {
-        if (!microservice.resources.actions.hasOwnProperty(actionKey)) {
+      for (let actionKey in actions) {
+        if (!actions.hasOwnProperty(actionKey)) {
           continue;
         }
 
-        let action = microservice.resources.actions[actionKey];
+        let action = actions[actionKey];
         let resourcePath = APIGatewayService.pathify(microservice.identifier, action.resourceName);
 
         // push actions parent resource only once

@@ -98,7 +98,7 @@ export class FileWalker {
    * @param {Function} filter
    * @returns {Array}
    */
-  walk(dir, filter = () => true) {
+  walk(dir, filter = () => true, _readDirsCache = []) {
     let results = [];
     let list = FileSystem.readdirSync(dir);
     let ignoreFilter = this._ignoreFile
@@ -117,10 +117,32 @@ export class FileWalker {
       let file = list[i];
 
       if (this._type === FileWalker.RECURSIVE) {
-        let stat = FileSystem.statSync(file);
+        let stat = null;
 
-        if (stat && stat.isDirectory()) {
-          results = results.concat(this.walk(file, filter));
+        try {
+          stat = FileSystem.statSync(file);
+        } catch (error) {
+
+          // error codes:
+          //    ELOOP - too many symbolic links encountered
+          //    ENOENT - missing file
+          //    EACCES - permission denied
+          if (['ELOOP', 'ENOENT', 'EACCES'].indexOf(error.code) !== -1) {
+            continue;
+          }
+
+          throw error;
+        }
+
+        if (stat.isDirectory()) {
+          let realDir = FileSystem.realpathSync(file);
+
+          // avoid cyclic inheritance
+          if (_readDirsCache.indexOf(realDir) === -1) {
+            _readDirsCache.push(realDir);
+
+            results = results.concat(this.walk(file, filter, _readDirsCache));
+          }
         } else if (filter(file)) {
           results.push(file);
         }
