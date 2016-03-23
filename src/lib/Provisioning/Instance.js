@@ -20,6 +20,7 @@ import {ElasticacheService} from './Service/ElasticacheService';
 import {APIGatewayService} from './Service/APIGatewayService';
 import {SQSService} from './Service/SQSService';
 import {CloudWatchLogsService} from './Service/CloudWatchLogsService';
+import {CloudWatchEventsService} from './Service/CloudWatchEventsService';
 import {ESService} from './Service/ESService';
 import {Instance as PropertyInstance} from '../Property/Instance';
 import {WaitFor} from '../Helpers/WaitFor';
@@ -300,6 +301,7 @@ export class Instance {
         new APIGatewayService(this),
         new SQSService(this),
         new CloudWatchLogsService(this),
+        new CloudWatchEventsService(this),
         new ESService(this),
       ]);
     }
