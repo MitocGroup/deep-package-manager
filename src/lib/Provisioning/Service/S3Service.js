@@ -413,7 +413,7 @@ export class S3Service extends AbstractService {
    * @todo - revise Error / Index docs
    *
    * @param {String} bucketName
-   * @param {String} engine
+   * @param {Object} engine
    * @returns {Object}
    */
   static getStaticWebsiteConfig(bucketName, engine) {
