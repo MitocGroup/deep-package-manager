@@ -228,7 +228,7 @@ export class S3Service extends AbstractService {
 
         // setup public bucket as static website hosting
         if (S3Service.isBucketPublic(bucketName)) {
-          let websiteConfig = S3Service.getStaticWebsiteConfig(bucketName);
+          let websiteConfig = S3Service.getStaticWebsiteConfig(bucketName, this.property.config.globals.engine);
 
           syncStack.level(1).push(s3.putBucketWebsite(websiteConfig), (error, data) => {
             if (error) {
@@ -413,10 +413,11 @@ export class S3Service extends AbstractService {
    * @todo - revise Error / Index docs
    *
    * @param {String} bucketName
+   * @param {String} engine
    * @returns {Object}
    */
-  static getStaticWebsiteConfig(bucketName) {
-    return {
+  static getStaticWebsiteConfig(bucketName, engine) {
+    let config = {
       Bucket: bucketName,
       WebsiteConfiguration: {
         ErrorDocument: {
@@ -427,6 +428,21 @@ export class S3Service extends AbstractService {
         },
       },
     };
+
+    if (engine && engine.ngRewrite && engine.ngRewrite === '/') {
+      config.WebsiteConfiguration.RoutingRules = [
+        {
+          Redirect: {
+            ReplaceKeyPrefixWith: '#/',
+          },
+          Condition: {
+            HttpErrorCodeReturnedEquals: '404',
+          },
+        },
+      ];
+    }
+
+    return config;
   }
 
   /**
