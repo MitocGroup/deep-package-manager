@@ -55,10 +55,10 @@ export class Frontend {
   /**
    * @param {Object} propertyConfig
    * @param {Boolean} localRuntime
-   * @param {Boolean} assureResourcesOriginal
+   * @param {Boolean} backendTarget
    * @return {Object}
    */
-  static createConfig(propertyConfig, localRuntime = false, assureResourcesOriginal = false) {
+  static createConfig(propertyConfig, localRuntime = false, backendTarget = false) {
     let config = {
       env: propertyConfig.env,
       deployId: propertyConfig.deployId,
@@ -157,7 +157,7 @@ export class Frontend {
             region: propertyConfig.awsRegion, // @todo: set it from lambda provision
             source: {
               api: apiEndpoint,
-              original: (assureResourcesOriginal || ActionFlags.isDirect(action.scope)) ? originalSource : null,
+              original: (backendTarget || ActionFlags.isDirect(action.scope)) ? originalSource : null,
             },
           };
 
