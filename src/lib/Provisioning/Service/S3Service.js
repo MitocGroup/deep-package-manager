@@ -237,19 +237,19 @@ export class S3Service extends AbstractService {
 
             buckets[bucketSuffix].website = this.getWebsiteAddress(bucketName);
           });
-
-          let corsConfig = S3Service.getCORSConfig(bucketName);
-
-          syncStack.level(2).push(s3.putBucketCors(corsConfig), (error) => {
-            if (error) {
-              throw new FailedSettingCORSException(bucketName, error);
-            }
-          });
         } else if (S3Service.isBucketTmp(bucketName) ||
           (S3Service.isBucketSystem(bucketName) && bucketsSuffix.indexOf(S3Service.TMP_BUCKET) === -1)) {
 
           tmpBucket = bucketName;
         }
+
+        let corsConfig = S3Service.getCORSConfig(bucketName);
+
+        syncStack.level(2).push(s3.putBucketCors(corsConfig), (error) => {
+          if (error) {
+            throw new FailedSettingCORSException(bucketName, error);
+          }
+        });
       });
     }
 
@@ -389,14 +389,14 @@ export class S3Service extends AbstractService {
    * @returns {Object}
    */
   static getCORSConfig(bucketName) {
+    let allowedMethods = S3Service.isBucketSystem(bucketName) ? ['PUT'] : ['HEAD'];
+
     return {
       Bucket: bucketName,
       CORSConfiguration: {
         CORSRules: [
           {
-            AllowedMethods: [
-              'HEAD',
-            ],
+            AllowedMethods: allowedMethods,
             AllowedOrigins: [
               '*',
             ],
