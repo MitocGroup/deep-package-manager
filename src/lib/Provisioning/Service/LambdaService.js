@@ -487,7 +487,7 @@ export class LambdaService extends AbstractService {
     policy.statement.add(cloudWatchLogsService.generateAllowFullAccessStatement());
 
     let cloudWatchEventsService = this.provisioning.services.find(CloudWatchEventsService);
-    policy.statement.add(cloudWatchEventsService.generateAllowAffectEventsRulesStatement());
+    policy.statement.add(cloudWatchEventsService.generateAllowEffectEventsRulesStatement());
 
     let dynamoDbStatement = policy.statement.add();
     dynamoDbStatement.action.add(Core.AWS.Service.DYNAMO_DB, Core.AWS.IAM.Policy.ANY);

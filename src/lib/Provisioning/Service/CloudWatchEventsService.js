@@ -87,7 +87,7 @@ export class CloudWatchEventsService extends AbstractService {
    * @allowed: ['enable', 'disable', 'delete', 'describe']
    * @returns {Core.AWS.IAM.Statement}
    */
-  generateAllowAffectEventsRulesStatement(effects = ['enable', 'disable']) {
+  generateAllowEffectEventsRulesStatement(effects = ['enable', 'disable']) {
     let policy = new Core.AWS.IAM.Policy();
     let statement = policy.statement.add();
 
@@ -95,20 +95,13 @@ export class CloudWatchEventsService extends AbstractService {
       statement.action.add(Core.AWS.Service.CLOUD_WATCH_EVENTS, `${effect}Rule`);
     });
 
-    statement.resource.add().updateFromArn(
-      this._generateCloudWatchEventRuleArn(this._getGlobalResourceMask())
+    statement.resource.add(
+      Core.AWS.Service.CLOUD_WATCH_EVENTS,
+      this.provisioning.cloudWatchEvents.config.region,
+      this.awsAccountId,
+      `rule/${this._getGlobalResourceMask()}`
     );
 
     return statement;
-  }
-
-  /**
-   * @param {String} ruleIdentifier
-   * @returns {*}
-   */
-  _generateCloudWatchEventRuleArn(ruleIdentifier) {
-    let region = this.provisioning.cloudWatchEvents.config.region;
-
-    return `arn:aws:events:${region}:${this.awsAccountId}:rule/${ruleIdentifier}`;
   }
 }
