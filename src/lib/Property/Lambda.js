@@ -21,6 +21,7 @@ import FileSystemExtra from 'fs-extra';
 import {InvalidConfigException} from './Exception/InvalidConfigException';
 import {Exception} from '../Exception/Exception';
 import {DeepConfigDriver} from '../Tags/Driver/DeepConfigDriver';
+import {Action} from '../Microservice/Metadata/Action';
 
 /**
  * Lambda instance
@@ -88,7 +89,7 @@ export class Lambda {
    * @return {Object}
    */
   createConfig(propertyConfig, localRuntime = false) {
-    let config = Frontend.createConfig(propertyConfig, localRuntime);
+    let config = Frontend.createConfig(propertyConfig, localRuntime, true);
 
     config.forceUserIdentity = this._forceUserIdentity;
     config.microserviceIdentifier = this.microserviceIdentifier;
