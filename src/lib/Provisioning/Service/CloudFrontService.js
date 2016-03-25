@@ -35,8 +35,13 @@ export class CloudFrontService extends AbstractService {
         Items: [],
       },
     };
+
+    this._isDistributionCreated = false;
   }
 
+  get isDistributionCreated() {
+    return this._isDistributionCreated;
+  }
   /**
    * @returns {{ViewerProtocolPolicy: string, ViewerCertificate: {CloudFrontDefaultCertificate: boolean, MinimumProtocolVersion: string}}|*}
    */
@@ -98,6 +103,7 @@ export class CloudFrontService extends AbstractService {
       this._createDistribution(services, (cfData) => {
         this._config.id = cfData.Distribution.Id;
         this._config.domain = cfData.Distribution.DomainName;
+        this._isDistributionCreated = true;
 
         this._readyTeardown = true;
       });

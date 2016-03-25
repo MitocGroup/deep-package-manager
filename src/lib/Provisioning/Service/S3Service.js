@@ -13,6 +13,8 @@ import {FailedAddingLifecycleException} from './Exception/FailedAddingLifecycleE
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {Hash} from '../../Helpers/Hash';
 import {FailedSettingCORSException} from './Exception/FailedSettingCORSException';
+import {CloudFrontService} from './CloudFrontService';
+import {WaitFor} from '../../Helpers/WaitFor';
 
 /**
  * S3 service
@@ -159,7 +161,20 @@ export class S3Service extends AbstractService {
       return this;
     }
 
-    this._readyTeardown = true;
+    let cfService = services.find(CloudFrontService);
+    let wait = new WaitFor();
+
+    wait.push(() => {
+      return cfService.isDistributionCreated;
+    });
+
+    wait.ready(() => {
+      let domain = this.property.config.domain || cfService.config().domain;
+
+      this.updateWebsiteConfiguration(domain, () => {
+        this._readyTeardown = true;
+      });
+    });
 
     return this;
   }
@@ -410,14 +425,58 @@ export class S3Service extends AbstractService {
   }
 
   /**
+   *
+   * @param {String} hostname
+   * @param {Function} callback
+   */
+  updateWebsiteConfiguration(hostname, callback) {
+    let engine = this.property.config.globals.engine;
+
+    if (engine && engine.ngRewrite && engine.ngRewrite === '/') {
+      let publicBucket = this._config.buckets[S3Service.PUBLIC_BUCKET].name;
+      let websiteConfig = S3Service.getStaticWebsiteConfig(publicBucket);
+      websiteConfig.WebsiteConfiguration.RoutingRules = S3Service.getRoutingRules(hostname);
+
+      let s3 = this.provisioning.s3;
+      s3.putBucketWebsite(websiteConfig, (error) => {
+        if (error) {
+          throw new FailedSettingBucketAsWebsiteException(publicBucket, error);
+        }
+
+        callback();
+      });
+    } else {
+      callback();
+    }
+  }
+
+  /**
+   *
+   * @param {String} hostname
+   * @returns {*}
+   */
+  static getRoutingRules(hostname) {
+      return  [
+        {
+          Redirect: {
+            HostName: hostname,
+            ReplaceKeyPrefixWith: '#/',
+          },
+          Condition: {
+            HttpErrorCodeReturnedEquals: '404',
+          },
+        },
+      ];
+  }
+
+  /**
    * @todo - revise Error / Index docs
    *
    * @param {String} bucketName
-   * @param {Object} engine
    * @returns {Object}
    */
-  static getStaticWebsiteConfig(bucketName, engine) {
-    let config = {
+  static getStaticWebsiteConfig(bucketName) {
+    return {
       Bucket: bucketName,
       WebsiteConfiguration: {
         ErrorDocument: {
@@ -428,21 +487,6 @@ export class S3Service extends AbstractService {
         },
       },
     };
-
-    if (engine && engine.ngRewrite && engine.ngRewrite === '/') {
-      config.WebsiteConfiguration.RoutingRules = [
-        {
-          Redirect: {
-            ReplaceKeyPrefixWith: '#/',
-          },
-          Condition: {
-            HttpErrorCodeReturnedEquals: '404',
-          },
-        },
-      ];
-    }
-
-    return config;
   }
 
   /**
