@@ -39,6 +39,10 @@ export class CloudFrontService extends AbstractService {
     this._isDistributionCreated = false;
   }
 
+  /**
+   *
+   * @returns {Boolean}
+   */
   get isDistributionCreated() {
     return this._isDistributionCreated;
   }
