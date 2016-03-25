@@ -7,6 +7,7 @@
 import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
 import {Exception} from '../../Exception/Exception';
+import {FailedToCreateOIDCException} from './Exception/FailedToCreateOIDCException';
 
 /**
  * IAM service
@@ -81,6 +82,33 @@ export class IAMService extends AbstractService {
     this._ready = true;
 
     return this;
+  }
+
+  /**
+   * @param {Object} IdPConfig
+   * @param {Function} callback
+   * @private
+   */
+  _createOpenIDConnectProvider(IdPConfig, callback) {
+    let iam = this.provisioning.iam;
+
+    let params = {
+      ThumbprintList: [
+        IdPConfig.ThumbPrint,
+      ],
+      Url: IdPConfig.domain,
+      ClientIDList: [
+        IdPConfig.clientID,
+      ],
+    };
+
+    iam.createOpenIDConnectProvider(params, (error, data) => {
+      if (error) {
+        throw new FailedToCreateOIDCException(params, error);
+      } else {
+        callback(data);
+      }
+    });
   }
 
   /**
