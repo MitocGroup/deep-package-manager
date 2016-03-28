@@ -47,7 +47,10 @@ export class IAMService extends AbstractService {
       return this;
     }
 
-    this._ready = true;
+    this._createOpenIDConnectProvider(this.getAuth0Config(), (response) => {
+      this._config.identityProvider = response;
+      this._ready = true;
+    });
 
     return this;
   }
@@ -85,6 +88,18 @@ export class IAMService extends AbstractService {
   }
 
   /**
+   * @returns {{domain: string, clientID: string}}
+   */
+  getAuth0Config() {
+    // @todo - replace temp Auth0 config with one from global property config
+    return {
+      domain: 'mitocgroup.auth0.com',
+      clientID: 'WeGy170NNFbA1EeLIf1dyar6r4tbMhrE',
+      thumbprint: '02FAF3E291435468607857694DF5E45B68851868',
+    };
+  }
+
+  /**
    * @param {Object} IdPConfig
    * @param {Function} callback
    * @private
@@ -94,7 +109,7 @@ export class IAMService extends AbstractService {
 
     let params = {
       ThumbprintList: [
-        IdPConfig.ThumbPrint,
+        IdPConfig.thumbprint,
       ],
       Url: IdPConfig.domain,
       ClientIDList: [
