@@ -8,6 +8,7 @@ import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
 import {Exception} from '../../Exception/Exception';
 import {FailedToCreateOIDCException} from './Exception/FailedToCreateOIDCException';
+import {FailedToDeleteOIDCException} from './Exception/FailedToDeleteOIDCException';
 
 /**
  * IAM service
@@ -41,9 +42,20 @@ export class IAMService extends AbstractService {
    * @returns {IAMService}
    */
   _setup(services) {
-    // @todo: implement!
+    let auth0Config = this.getAuth0Config();
+
     if (this._isUpdate) {
-      this._ready = true;
+      let oldIdentityProvider = this._config.identityProvider;
+
+      if (oldIdentityProvider && !auth0Config) {
+        this._deleteOpenIDConnectProvider(oldIdentityProvider.OpenIDConnectProviderArn, (response) => {
+          this._config.identityProvider = null;
+          this._ready = true;
+        });
+      } else {
+        this._ready = true;
+      }
+
       return this;
     }
 
@@ -120,6 +132,27 @@ export class IAMService extends AbstractService {
     iam.createOpenIDConnectProvider(params, (error, data) => {
       if (error) {
         throw new FailedToCreateOIDCException(params, error);
+      } else {
+        callback(data);
+      }
+    });
+  }
+
+  /**
+   * @param {String} identityProviderARN
+   * @param {Function} callback
+   * @private
+   */
+  _deleteOpenIDConnectProvider(identityProviderARN, callback) {
+    let iam = this.provisioning.iam;
+
+    let params = {
+      OpenIDConnectProviderArn: identityProviderARN,
+    };
+
+    iam.deleteOpenIDConnectProvider(params, (error, data) => {
+      if (error) {
+        throw new FailedToDeleteOIDCException(identityProviderARN, error);
       } else {
         callback(data);
       }
