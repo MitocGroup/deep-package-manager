@@ -32,7 +32,7 @@ export class IAMDriver extends AbstractDriver {
    */
   _removeResource(resourceId, resourceData, cb) {
     if (IAMListingDriver.isOIDCProvider(resourceId)) {
-      this._deleteOIDCProvider(resourceId);
+      this._deleteOIDCProvider(resourceId, cb);
     } else {
       this._removeRoleChain(resourceId, cb);
     }
