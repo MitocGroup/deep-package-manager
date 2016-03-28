@@ -93,7 +93,7 @@ export class IAMService extends AbstractService {
   getAuth0Config() {
     // @todo - replace temp Auth0 config with one from global property config
     return {
-      domain: 'mitocgroup.auth0.com',
+      domain: 'https://mitocgroup.auth0.com',
       clientID: 'WeGy170NNFbA1EeLIf1dyar6r4tbMhrE',
       thumbprint: '02FAF3E291435468607857694DF5E45B68851868',
     };
