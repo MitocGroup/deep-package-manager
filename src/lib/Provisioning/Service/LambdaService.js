@@ -557,7 +557,10 @@ export class LambdaService extends AbstractService {
     policy.statement.add(this.generateAllowActionsStatement(['getFunctionConfiguration', 'InvokeFunction']));
 
     let sqsService = this.provisioning.services.find(SQSService);
-    policy.statement.add(sqsService.generateAllowActionsStatement());
+    policy.statement.add(sqsService.generateAllowActionsStatement([
+      'SendMessage', 'SendMessageBatch',
+      'ReceiveMessage', 'DeleteMessageBatch'
+    ]));
 
     let esService = this.provisioning.services.find(ESService);
     policy.statement.add(esService.generateAllowActionsStatement([
