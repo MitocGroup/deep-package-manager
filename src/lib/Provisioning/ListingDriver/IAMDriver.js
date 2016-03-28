@@ -15,6 +15,34 @@ export class IAMDriver extends AbstractDriver {
   }
 
   /**
+   * Overrides base _matchResource by adding support for oidc provider IAM resources
+   * e.g. arn:aws:iam::545786123497:oidc-provider/example.auth0.com
+   *
+   * @param {String} resource
+   * @returns {Boolean}
+   * @private
+   */
+  _matchResource(resource) {
+    if (this._isOIDCProvider(resource)) {
+      let oidcProviderARN = null;
+
+      if (this._deployCfg && this._deployCfg.iam.identityProvider) {
+        oidcProviderARN = this._deployCfg.iam.identityProvider.OpenIDConnectProviderArn;
+      }
+
+      return oidcProviderARN ? resource === oidcProviderARN : false;
+    }
+
+    if (typeof this._baseHash === 'function') {
+      return this._baseHash.bind(this)(resource);
+    } else if (this._baseHash instanceof RegExp) {
+      return this._baseHash.test(resource);
+    }
+
+    return AbstractService.extractBaseHashFromResourceName(resource) === this._baseHash;
+  }
+
+  /**
    * @param {Function} cb
    */
   list(cb) {
@@ -84,6 +112,15 @@ export class IAMDriver extends AbstractDriver {
 
       cb(null);
     });
+  }
+
+  /**
+   * @param {String} resource
+   * @returns {Boolean}
+   * @private
+   */
+  _isOIDCProvider(resource) {
+    return /^arn:aws:iam:.*:.*:oidc-provider\/.+$/.test(resource);
   }
 
   /**
