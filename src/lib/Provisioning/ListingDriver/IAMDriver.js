@@ -23,7 +23,7 @@ export class IAMDriver extends AbstractDriver {
    * @private
    */
   _matchResource(resource) {
-    if (this._isOIDCProvider(resource)) {
+    if (IAMDriver.isOIDCProvider(resource)) {
       let oidcProviderARN = null;
 
       if (this._deployCfg && this._deployCfg.iam.identityProvider) {
@@ -119,7 +119,7 @@ export class IAMDriver extends AbstractDriver {
    * @returns {Boolean}
    * @private
    */
-  _isOIDCProvider(resource) {
+  static isOIDCProvider(resource) {
     return /^arn:aws:iam:.*:.*:oidc-provider\/.+$/.test(resource);
   }
 
