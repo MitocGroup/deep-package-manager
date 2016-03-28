@@ -64,6 +64,8 @@ export class IAMService extends AbstractService {
         this._config.identityProvider = response;
         this._ready = true;
       });
+    } else {
+      this._ready = true;
     }
 
     return this;
