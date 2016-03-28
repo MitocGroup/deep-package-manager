@@ -30,13 +30,6 @@ export class CognitoIdentityService extends AbstractService {
   /**
    * @returns {string}
    */
-  static get DEVELOPER_PROVIDER_NAME() {
-    return 'deep.mg';
-  }
-
-  /**
-   * @returns {string}
-   */
   static get ROLE_AUTH() {
     return 'authenticated';
   }
@@ -154,7 +147,6 @@ export class CognitoIdentityService extends AbstractService {
     let params = {
       AllowUnauthenticatedIdentities: true,
       IdentityPoolName: identityPoolName,
-      DeveloperProviderName: CognitoIdentityService.DEVELOPER_PROVIDER_NAME,
       SupportedLoginProviders: identityProviders,
     };
 
