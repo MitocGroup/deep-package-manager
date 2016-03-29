@@ -5,6 +5,7 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
+import {AbstractService} from '../Service/AbstractService';
 
 export class IAMDriver extends AbstractDriver {
   /**
