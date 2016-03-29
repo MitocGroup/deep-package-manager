@@ -48,10 +48,6 @@ suite('Provisioning/Service/CognitoIdentityService', () => {
     chai.expect(CognitoIdentityService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.ASIA_PACIFIC_TOKYO);
   });
 
-  test('Check DEVELOPER_PROVIDER_NAME static getter returns \'deep.mg\'', () => {
-    chai.expect(CognitoIdentityService.DEVELOPER_PROVIDER_NAME).to.be.equal('deep.mg');
-  });
-
   test('Check ROLE_AUTH static getter returns \'authenticated\'', () => {
     chai.expect(CognitoIdentityService.ROLE_AUTH).to.be.equal('authenticated');
   });

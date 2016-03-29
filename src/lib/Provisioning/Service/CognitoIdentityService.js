@@ -11,10 +11,12 @@ import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
 import {FailedSettingIdentityPoolRolesException} from './Exception/FailedSettingIdentityPoolRolesException';
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
+import {FailedToUpdateIdentityPoolException} from './Exception/FailedToUpdateIdentityPoolException';
 import {Exception} from '../../Exception/Exception';
 import {LambdaService} from './LambdaService';
 import {APIGatewayService} from './APIGatewayService';
 import {SQSService} from './SQSService';
+import {IAMService} from './IAMService';
 
 /**
  * Cognito service
@@ -25,13 +27,6 @@ export class CognitoIdentityService extends AbstractService {
    */
   constructor(...args) {
     super(...args);
-  }
-
-  /**
-   * @returns {string}
-   */
-  static get DEVELOPER_PROVIDER_NAME() {
-    return 'deep.mg';
   }
 
   /**
@@ -112,11 +107,20 @@ export class CognitoIdentityService extends AbstractService {
       return this;
     }
 
-    this._setIdentityPoolRoles(
-      this._config.identityPool
-    )((roles) => {
-      this._readyTeardown = true;
-      this._config.roles = roles;
+    let iamInstance = services.find(IAMService);
+    let oidcProviderARNs = iamInstance.config().identityProvider ?
+      [iamInstance.config.identityProvider.OpenIDConnectProviderArn] :
+      [];
+
+    this._updateIdentityPool(this._config.identityPool, oidcProviderARNs, (data) => {
+      if (data) {
+        this._config.identityPool = data;
+      }
+
+      this._setIdentityPoolRoles(this._config.identityPool)((roles) => {
+        this._readyTeardown = true;
+        this._config.roles = roles;
+      });
     });
 
     return this;
@@ -154,7 +158,6 @@ export class CognitoIdentityService extends AbstractService {
     let params = {
       AllowUnauthenticatedIdentities: true,
       IdentityPoolName: identityPoolName,
-      DeveloperProviderName: CognitoIdentityService.DEVELOPER_PROVIDER_NAME,
       SupportedLoginProviders: identityProviders,
     };
 
@@ -175,6 +178,37 @@ export class CognitoIdentityService extends AbstractService {
         callback(identityPool);
       });
     };
+  }
+
+  /**
+   * @param {Object} identityPool
+   * @param {Array} oidcProviderARNs
+   * @param {Function} callback
+   * @returns {Function}
+   * @private
+   */
+  _updateIdentityPool(identityPool, oidcProviderARNs, callback) {
+    if (oidcProviderARNs.length === 0) {
+      callback(null);
+      return;
+    }
+
+    let cognitoIdentity = this.provisioning.cognitoIdentity;
+    let params = {
+      AllowUnauthenticatedIdentities: identityPool.AllowUnauthenticatedIdentities,
+      IdentityPoolId: identityPool.IdentityPoolId,
+      IdentityPoolName: identityPool.IdentityPoolName,
+      SupportedLoginProviders: identityPool.SupportedLoginProviders,
+      OpenIdConnectProviderARNs: oidcProviderARNs,
+    };
+
+    cognitoIdentity.updateIdentityPool(params, (error, data) => {
+      if (error) {
+        throw new FailedToUpdateIdentityPoolException(params.IdentityPoolName, error);
+      }
+
+      callback(data);
+    });
   }
 
   /**

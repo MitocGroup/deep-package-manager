@@ -321,9 +321,6 @@ export class Instance {
           throw new DuplicateRootException(rootMicroservice, microservice);
         }
 
-        // @todo: set it from other place?
-        this._config.globals = microservice.parameters.globals || {};
-
         rootMicroservice = microservice;
       }
     }
@@ -362,6 +359,11 @@ export class Instance {
 
       modelsDirs.push(microservice.autoload.models);
       validationSchemasDirs.push(microservice.autoload.validation);
+
+      // merge all microservices global parameters
+      if (microservice.parameters.globals) {
+        this._config.globals = objectMerge(this._config.globals, microservice.parameters.globals);
+      }
     }
 
     this._config.microservices = microservicesConfig;
@@ -477,14 +479,11 @@ export class Instance {
         }
 
         rootMicroservice = microservice;
-
-        // @todo: set it from other place?
-        this._config.globals = microservice.parameters.globals || {};
       }
     }
 
     if (!rootMicroservice) {
-        throw new MissingRootException();
+      throw new MissingRootException();
     }
 
     let modelsDirs = [];
@@ -521,6 +520,11 @@ export class Instance {
 
       modelsDirs.push(microservice.autoload.models);
       validationSchemasDirs.push(microservice.autoload.validation);
+
+      // merge all microservices global parameters
+      if (microservice.parameters.globals) {
+        this._config.globals = objectMerge(this._config.globals, microservice.parameters.globals);
+      }
     }
 
     this._config.microservices = microservicesConfig;
