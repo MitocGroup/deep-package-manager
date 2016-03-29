@@ -108,8 +108,8 @@ export class CognitoIdentityService extends AbstractService {
     }
 
     let iamInstance = services.find(IAMService);
-    let oidcProviderARNs = iamInstance.config.identityProvider ?
-      iamInstance.config.identityProvider.OpenIDConnectProviderArn :
+    let oidcProviderARNs = iamInstance.config().identityProvider ?
+      [iamInstance.config.identityProvider.OpenIDConnectProviderArn] :
       [];
 
     this._updateIdentityPool(this._config.identityPool, oidcProviderARNs, (data) => {
@@ -196,6 +196,7 @@ export class CognitoIdentityService extends AbstractService {
     let cognitoIdentity = this.provisioning.cognitoIdentity;
     let params = {
       AllowUnauthenticatedIdentities: identityPool.AllowUnauthenticatedIdentities,
+      IdentityPoolId: identityPool.IdentityPoolId,
       IdentityPoolName: identityPool.IdentityPoolName,
       SupportedLoginProviders: identityPool.SupportedLoginProviders,
       OpenIdConnectProviderARNs: oidcProviderARNs,
