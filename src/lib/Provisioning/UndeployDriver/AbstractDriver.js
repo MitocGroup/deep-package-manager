@@ -51,7 +51,7 @@ export class AbstractDriver extends Core.OOP.Interface {
 
       if (removedResources && removedResources.length > 0) {
         this._log(`There are ${removedResources.length} resources removed from ${this.service()}`);
-      } else if(!error) {
+      } else if (!error) {
         this._log(`No resources to remove for ${this.service()}`);
       } else {
         this._logError(`An error occurred when working with ${this.service()}: ${error}`);

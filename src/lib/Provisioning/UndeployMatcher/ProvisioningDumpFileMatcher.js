@@ -209,6 +209,12 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
           this._deployConfig.ES.push(domain.DomainName);
         }
       }
+
+      if (deployProvisioning.iam && deployProvisioning.iam.identityProvider) {
+        let identityProvider = deployProvisioning.iam.identityProvider;
+
+        this._deployConfig.IAM.push(identityProvider.OpenIDConnectProviderArn);
+      }
     } else {
       throw new MissingProvisioningConfig(this.fileName, 'provisioning');
     }

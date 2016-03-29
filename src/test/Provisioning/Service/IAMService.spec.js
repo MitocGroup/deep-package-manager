@@ -22,12 +22,6 @@ suite('Provisioning/Service/IAMService', () => {
     chai.expect(IAMService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.ANY);
   });
 
-  test('Check _setup() method returns this._ready=\'true\'', () => {
-    chai.expect(iamService._ready).to.be.equal(false);
-    let actualResult = iamService._setup('service');
-    chai.expect(actualResult._ready).to.be.equal(true);
-  });
-
   test('Check _postProvision() method returns this._readyTeardown=\'true\'', () => {
     chai.expect(iamService._readyTeardown).to.be.equal(false);
     let actualResult = iamService._postProvision('service');

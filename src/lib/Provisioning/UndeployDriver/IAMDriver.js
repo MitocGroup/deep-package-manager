@@ -6,6 +6,7 @@
 
 import {AbstractDriver} from './AbstractDriver';
 import {WaitFor} from '../../Helpers/WaitFor';
+import {IAMDriver as IAMListingDriver} from '../ListingDriver/IAMDriver';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 
 export class IAMDriver extends AbstractDriver {
@@ -30,7 +31,11 @@ export class IAMDriver extends AbstractDriver {
    * @private
    */
   _removeResource(resourceId, resourceData, cb) {
-    this._removeRoleChain(resourceId, cb);
+    if (IAMListingDriver.isOIDCProvider(resourceId)) {
+      this._deleteOIDCProvider(resourceId, cb);
+    } else {
+      this._removeRoleChain(resourceId, cb);
+    }
   }
 
   /**
@@ -141,6 +146,19 @@ export class IAMDriver extends AbstractDriver {
       }
 
       cb(null);
+    });
+  }
+
+  /**
+   * @param {String} providerArn
+   * @param {Function} cb
+   * @private
+   */
+  _deleteOIDCProvider(providerArn, cb) {
+    this._awsService.deleteOpenIDConnectProvider({
+      OpenIDConnectProviderArn: providerArn,
+    }, (error) => {
+      cb(error || null);
     });
   }
 

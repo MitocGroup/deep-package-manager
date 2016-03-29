@@ -19,6 +19,7 @@ import objectMerge from 'object-merge';
 import {_extend as extend} from 'util';
 import {CognitoIdentityService} from './CognitoIdentityService';
 import {CloudWatchLogsService} from './CloudWatchLogsService';
+import {CloudWatchEventsService} from './CloudWatchEventsService';
 import {SQSService} from './SQSService';
 import {ActionFlags} from '../../Microservice/Metadata/Helpers/ActionFlags';
 import {ESService} from './ESService';
@@ -482,8 +483,11 @@ export class LambdaService extends AbstractService {
   _getAccessPolicy(microserviceIdentifier, buckets) {
     let policy = new Core.AWS.IAM.Policy();
 
-    let cloudWatchService = this.provisioning.services.find(CloudWatchLogsService);
-    policy.statement.add(cloudWatchService.generateAllowFullAccessStatement());
+    let cloudWatchLogsService = this.provisioning.services.find(CloudWatchLogsService);
+    policy.statement.add(cloudWatchLogsService.generateAllowFullAccessStatement());
+
+    let cloudWatchEventsService = this.provisioning.services.find(CloudWatchEventsService);
+    policy.statement.add(cloudWatchEventsService.generateAllowEffectEventsRulesStatement());
 
     let dynamoDbStatement = policy.statement.add();
     dynamoDbStatement.action.add(Core.AWS.Service.DYNAMO_DB, Core.AWS.IAM.Policy.ANY);
@@ -553,7 +557,10 @@ export class LambdaService extends AbstractService {
     policy.statement.add(this.generateAllowActionsStatement(['getFunctionConfiguration', 'InvokeFunction']));
 
     let sqsService = this.provisioning.services.find(SQSService);
-    policy.statement.add(sqsService.generateAllowActionsStatement());
+    policy.statement.add(sqsService.generateAllowActionsStatement([
+      'SendMessage', 'SendMessageBatch',
+      'ReceiveMessage', 'DeleteMessageBatch'
+    ]));
 
     let esService = this.provisioning.services.find(ESService);
     policy.statement.add(esService.generateAllowActionsStatement([

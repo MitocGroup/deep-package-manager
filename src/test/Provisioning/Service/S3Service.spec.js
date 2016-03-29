@@ -76,6 +76,7 @@ suite('Provisioning/Service/S3Service', () => {
 
   test('Check _postProvision() method returns this._readyTeardown=\'true\'', () => {
     chai.expect(s3Service._readyTeardown).to.be.equal(false);
+    s3Service._isUpdate = true;
     let actualResult = s3Service._postProvision('service');
     chai.expect(actualResult._readyTeardown).to.be.equal(true);
   });
