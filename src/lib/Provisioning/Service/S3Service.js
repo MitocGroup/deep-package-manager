@@ -320,12 +320,9 @@ export class S3Service extends AbstractService {
    */
   getWebsiteAddress(bucketName) {
     let region = this.provisioning.s3.config.region;
+    let prefix = region === 'eu-central-1' || region === 'ap-northeast-2' ? '.' : '-';
 
-    if (region === 'eu-central-1' || region === 'ap-northeast-2') {
-      return `${bucketName}.s3-website.${region}.amazonaws.com`;
-    }
-
-    return `${bucketName}.s3-website-${region}.amazonaws.com`;
+    return `${bucketName}.s3-website${prefix}${region}.amazonaws.com`;
   }
 
   /**
