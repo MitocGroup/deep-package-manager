@@ -320,8 +320,9 @@ export class S3Service extends AbstractService {
    */
   getWebsiteAddress(bucketName) {
     let region = this.provisioning.s3.config.region;
+    let prefix = Core.AWS.Region.getRegionPrefix(region);
 
-    return `${bucketName}.s3-website-${region}.amazonaws.com`;
+    return `${bucketName}.s3-website${prefix}${region}.amazonaws.com`;
   }
 
   /**
