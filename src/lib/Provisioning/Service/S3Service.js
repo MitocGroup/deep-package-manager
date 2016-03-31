@@ -399,13 +399,11 @@ export class S3Service extends AbstractService {
   }
 
   /**
-   * @todo: Allow other methods out there?
-   *
    * @param {String} bucketName
    * @returns {Object}
    */
   static getCORSConfig(bucketName) {
-    let allowedMethods = S3Service.isBucketSystem(bucketName) ? ['PUT'] : ['HEAD'];
+    let allowedMethods = ['HEAD', 'GET', 'PUT', 'POST', 'DELETE',];
 
     return {
       Bucket: bucketName,
