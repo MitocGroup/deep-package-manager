@@ -9,6 +9,7 @@ import Core from 'deep-core';
 import {Exception} from '../../Exception/Exception';
 import {FailedToCreateOIDCException} from './Exception/FailedToCreateOIDCException';
 import {FailedToDeleteOIDCException} from './Exception/FailedToDeleteOIDCException';
+import url from 'url';
 
 /**
  * IAM service
@@ -112,11 +113,17 @@ export class IAMService extends AbstractService {
   _createOpenIDConnectProvider(IdPConfig, callback) {
     let iam = this.provisioning.iam;
 
+    // make sure provider protocol is https
+    // @see http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/IAM.html#createOpenIDConnectProvider-property
+    let urlParts = url.parse(IdPConfig.domain);
+    urlParts.protocol = 'https';
+    let oidcProvderUrl = url.format(urlParts);
+
     let params = {
       ThumbprintList: [
         IdPConfig.thumbprint,
       ],
-      Url: IdPConfig.domain,
+      Url: oidcProvderUrl,
       ClientIDList: [
         IdPConfig.clientID,
       ],

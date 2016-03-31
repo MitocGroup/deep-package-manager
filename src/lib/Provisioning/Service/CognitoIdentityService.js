@@ -108,9 +108,8 @@ export class CognitoIdentityService extends AbstractService {
     }
 
     let iamInstance = services.find(IAMService);
-    let oidcProviderARNs = iamInstance.config().identityProvider ?
-      [iamInstance.config.identityProvider.OpenIDConnectProviderArn] :
-      [];
+    let oidcProvider = iamInstance.config().identityProvider;
+    let oidcProviderARNs = oidcProvider ? [oidcProvider.OpenIDConnectProviderArn] : [];
 
     this._updateIdentityPool(this._config.identityPool, oidcProviderARNs, (data) => {
       if (data) {
