@@ -141,6 +141,10 @@ export class Frontend {
 
           let action = resourceActions[actionName];
 
+          if (!backendTarget && action.scope === ActionFlags.PRIVATE) {
+            continue;
+          }
+
           let originalSource = (action.type === Action.LAMBDA) ?
             microservice.lambdas[action.identifier].arn :
             action.source;
