@@ -9,6 +9,9 @@ suite('Microservice/FrontendEngine', () => {
   let frontendEngine = new FrontendEngine(engines);
   let enginesExpectedResult = `deep-root-${engines}`;
   let angularEngineResult = `deep-root-angular`;
+  let aureliaEngineResult = `deep-root-aurelia`;
+  let reactEngineResult = `deep-root-react`;
+  let vanillaEngineResult = `deep-root-vanilla`;
   let microserviceInput = {
     config: {
       frontendEngine: 'test',
@@ -32,7 +35,7 @@ suite('Microservice/FrontendEngine', () => {
 
   test('Check findSuitable() method for default engine returns \'angular\'', () => {
     let frontendEmptyEngine = new FrontendEngine();
-    chai.expect(frontendEmptyEngine.engines).to.be.eql(['deep-root-angular']);
+    chai.expect(frontendEmptyEngine.engines).to.be.eql(['deep-root-angular', 'deep-root-vanilla']);
     chai.expect(frontendEmptyEngine.findSuitable()).to.be.equal('angular');
   });
 
@@ -50,6 +53,30 @@ suite('Microservice/FrontendEngine', () => {
 
   test(`Check getRealEngine() static method returns ${angularEngineResult}`, () => {
     chai.expect(FrontendEngine.getRealEngine('angular')).to.be.equal(angularEngineResult);
+  });
+  
+    test('Check AURELIA_ENGINE static getter method returns \'aurelia\'', () => {
+    chai.expect(FrontendEngine.AURELIA_ENGINE).to.be.equal('aurelia');
+  });
+
+  test(`Check getRealEngine() static method returns ${aureliaEngineResult}`, () => {
+    chai.expect(FrontendEngine.getRealEngine('aurelia')).to.be.equal(aureliaEngineResult);
+  });
+  
+  test('Check REACT_ENGINE static getter method returns \'react\'', () => {
+    chai.expect(FrontendEngine.REACT_ENGINE).to.be.equal('react');
+  });
+
+  test(`Check getRealEngine() static method returns ${reactEngineResult}`, () => {
+    chai.expect(FrontendEngine.getRealEngine('react')).to.be.equal(reactEngineResult);
+  });
+  
+  test('Check VANILLA_ENGINE static getter method returns \'vanilla\'', () => {
+    chai.expect(FrontendEngine.VANILLA_ENGINE).to.be.equal('vanilla');
+  });
+
+  test(`Check getRealEngine() static method returns ${vanillaEngineResult}`, () => {
+    chai.expect(FrontendEngine.getRealEngine('vanilla')).to.be.equal(vanillaEngineResult);
   });
   
   test('Check create() static method returns true', () => {
