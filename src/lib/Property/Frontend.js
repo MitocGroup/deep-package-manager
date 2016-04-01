@@ -77,7 +77,7 @@ export class Frontend {
 
     if (propertyConfig.provisioning) {
       let cognitoConfig = propertyConfig.provisioning[Core.AWS.Service.COGNITO_IDENTITY];
-      let iamConfig = propertyConfig.provisioning[Core.AWS.Service.IAM];
+      let iamConfig = propertyConfig.provisioning[Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT];
 
       config.identityPoolId = cognitoConfig.identityPool.IdentityPoolId;
       config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders || {};
