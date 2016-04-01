@@ -77,9 +77,15 @@ export class Frontend {
 
     if (propertyConfig.provisioning) {
       let cognitoConfig = propertyConfig.provisioning[Core.AWS.Service.COGNITO_IDENTITY];
+      let iamConfig = propertyConfig.provisioning[Core.AWS.Service.IAM];
 
       config.identityPoolId = cognitoConfig.identityPool.IdentityPoolId;
-      config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders;
+      config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders || {};
+
+      // add Auth0 OIDC provider
+      if (iamConfig.identityProvider && iamConfig.identityProvider.domain) {
+        config.identityProviders[iamConfig.identityProvider.domain] = iamConfig.identityProvider.clientID;
+      }
 
       apiGatewayBaseUrl = propertyConfig.provisioning[Core.AWS.Service.API_GATEWAY].api.baseUrl;
 

@@ -133,6 +133,11 @@ export class IAMService extends AbstractService {
       if (error) {
         throw new FailedToCreateOIDCException(params, error);
       } else {
+        if (data) {
+          data.domain = IdPConfig.domain;
+          data.clientID = IdPConfig.clientID;
+        }
+
         callback(data);
       }
     });
