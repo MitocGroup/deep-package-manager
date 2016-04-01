@@ -9,6 +9,7 @@ import Core from 'deep-core';
 import {Exception} from '../../Exception/Exception';
 import {FailedToCreateOIDCException} from './Exception/FailedToCreateOIDCException';
 import {FailedToDeleteOIDCException} from './Exception/FailedToDeleteOIDCException';
+import url from 'url';
 
 /**
  * IAM service
@@ -42,12 +43,13 @@ export class IAMService extends AbstractService {
    * @returns {IAMService}
    */
   _setup(services) {
-    let auth0Config = this.getAuth0Config();
+    let auth0Config = this.property.config.globals.auth0 || {};
+    let auth0Thumbprint = auth0Config.init && auth0Config.init.thumbprint ? auth0Config.init.thumbprint : null;
 
     if (this._isUpdate) {
       let oldIdentityProvider = this._config.identityProvider;
 
-      if (oldIdentityProvider && !auth0Config) {
+      if (oldIdentityProvider && !auth0Thumbprint) {
         this._deleteOpenIDConnectProvider(oldIdentityProvider.OpenIDConnectProviderArn, (response) => {
           this._config.identityProvider = null;
           this._ready = true;
@@ -59,8 +61,8 @@ export class IAMService extends AbstractService {
       return this;
     }
 
-    if (auth0Config) {
-      this._createOpenIDConnectProvider(auth0Config, (response) => {
+    if (auth0Thumbprint) {
+      this._createOpenIDConnectProvider(auth0Config.init, (response) => {
         this._config.identityProvider = response;
         this._ready = true;
       });
@@ -104,14 +106,6 @@ export class IAMService extends AbstractService {
   }
 
   /**
-   * @returns {{domain: string, clientID: string}}
-   */
-  getAuth0Config() {
-    // @todo - replace temp Auth0 config with one from global property config
-    return null;
-  }
-
-  /**
    * @param {Object} IdPConfig
    * @param {Function} callback
    * @private
@@ -119,11 +113,17 @@ export class IAMService extends AbstractService {
   _createOpenIDConnectProvider(IdPConfig, callback) {
     let iam = this.provisioning.iam;
 
+    // make sure provider protocol is https
+    // @see http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/IAM.html#createOpenIDConnectProvider-property
+    let urlParts = url.parse(IdPConfig.domain);
+    urlParts.protocol = 'https';
+    let oidcProvderUrl = url.format(urlParts);
+
     let params = {
       ThumbprintList: [
         IdPConfig.thumbprint,
       ],
-      Url: IdPConfig.domain,
+      Url: oidcProvderUrl,
       ClientIDList: [
         IdPConfig.clientID,
       ],
@@ -133,6 +133,11 @@ export class IAMService extends AbstractService {
       if (error) {
         throw new FailedToCreateOIDCException(params, error);
       } else {
+        if (data) {
+          data.domain = IdPConfig.domain;
+          data.clientID = IdPConfig.clientID;
+        }
+
         callback(data);
       }
     });
