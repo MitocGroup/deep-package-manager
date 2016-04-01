@@ -54,18 +54,10 @@ export class FrontendEngine {
    * @returns {String}
    */
   static getEngineGitHub(engine) {
-    let depName = null;
-
-    switch (engine) {
-      case FrontendEngine.ANGULAR_ENGINE:
-        depName = GitHubDependency.getDepName(
-          FrontendEngine.GITHUB_DEEP_USER,
-          `${FrontendEngine.GITHUB_REPO_PREFIX}angularjs`
-        );
-        break;
-    }
-
-    return depName;
+    return GitHubDependency.getDepName(
+      FrontendEngine.GITHUB_DEEP_USER,
+      `${FrontendEngine.GITHUB_REPO_PREFIX}${engine}`
+    );
   }
 
   /**
@@ -124,18 +116,29 @@ export class FrontendEngine {
   static getRealEngine(engine) {
     switch (engine) {
       case FrontendEngine.ANGULAR_ENGINE:
-        engine = 'ng';
+        engine = FrontendEngine.ANGULAR_ENGINE;
         break;
+      case FrontendEngine.AURELIA_ENGINE:
+        engine = FrontendEngine.AURELIA_ENGINE;
+        break;
+      case FrontendEngine.REACT_ENGINE:
+        engine = FrontendEngine.REACT_ENGINE;
+        break;
+      default:
+        engine = FrontendEngine.VANILLA_ENGINE;
     }
 
-    return `deep.${engine}.root`;
+    return `deep-root-${engine}`;
   }
 
   /**
    * @returns {String[]}
    */
   static get engines() {
-    return [FrontendEngine.ANGULAR_ENGINE];
+    return [
+      FrontendEngine.ANGULAR_ENGINE,
+      FrontendEngine.VANILLA_ENGINE,
+    ];
   }
 
   /**
@@ -143,6 +146,27 @@ export class FrontendEngine {
    */
   static get ANGULAR_ENGINE() {
     return 'angular';
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get AURELIA_ENGINE() {
+    return 'aurelia';
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get REACT_ENGINE() {
+    return 'react';
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get VANILLA_ENGINE() {
+    return 'vanilla';
   }
 
   /**

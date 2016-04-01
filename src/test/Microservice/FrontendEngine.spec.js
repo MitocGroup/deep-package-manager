@@ -7,8 +7,8 @@ suite('Microservice/FrontendEngine', () => {
   let engines = ['engine1'];
   let enginesNew = ['engine2', 'engine3'];
   let frontendEngine = new FrontendEngine(engines);
-  let enginesExpectedResult = `deep.${engines}.root`;
-  let angularEngineResult = `deep.ng.root`;
+  let enginesExpectedResult = `deep-root-${engines}`;
+  let angularEngineResult = `deep-root-angular`;
   let microserviceInput = {
     config: {
       frontendEngine: 'test',
@@ -32,7 +32,7 @@ suite('Microservice/FrontendEngine', () => {
 
   test('Check findSuitable() method for default engine returns \'angular\'', () => {
     let frontendEmptyEngine = new FrontendEngine();
-    chai.expect(frontendEmptyEngine.engines).to.be.eql(['deep.ng.root']);
+    chai.expect(frontendEmptyEngine.engines).to.be.eql(['deep-root-angular']);
     chai.expect(frontendEmptyEngine.findSuitable()).to.be.equal('angular');
   });
 
