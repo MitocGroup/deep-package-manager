@@ -38,13 +38,13 @@ suite('Microservice/FrontendEngine', () => {
     chai.expect(frontendEmptyEngine.findSuitable()).to.be.equal('angular');
   });
 
-  test('Check match() method returns false', () => {
-    chai.expect(frontendEngine.match()).to.be.equal(false);
-  });
-
-  //test('Check match() method returns true', () => {
-  //  chai.expect(frontendEngine.match(engines)).to.be.equal(true);
+  //test('Check match() method returns false', () => {
+  //  chai.expect(frontendEngine.match()).to.be.equal(false);
   //});
+
+  test('Check match() method returns true', () => {
+    chai.expect(frontendEngine.match(engines)).to.be.equal(true);
+  });
 
   test('Check ANGULAR_ENGINE static getter method returns \'angular\'', () => {
     chai.expect(FrontendEngine.ANGULAR_ENGINE).to.be.equal('angular');
@@ -79,9 +79,7 @@ suite('Microservice/FrontendEngine', () => {
   });
   
   test('Check create() static method returns true', () => {
-    enginesExpectedResult = FrontendEngine.create(microserviceInput);
-
     //todo - bug here?
-    chai.expect(enginesExpectedResult).to.be.not.equal({});
+    chai.expect(FrontendEngine.create(microserviceInput)).to.be.not.equal({});
   });
 });
