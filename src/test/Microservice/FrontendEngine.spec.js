@@ -7,7 +7,6 @@ suite('Microservice/FrontendEngine', () => {
   let engines = ['engine1'];
   let enginesNew = ['engine2', 'engine3'];
   let frontendEngine = new FrontendEngine(engines);
-  let enginesExpectedResult = `deep-root-${engines}`;
   let angularEngineResult = `deep-root-angular`;
   let aureliaEngineResult = `deep-root-aurelia`;
   let reactEngineResult = `deep-root-react`;
@@ -24,7 +23,7 @@ suite('Microservice/FrontendEngine', () => {
   });
 
   test('Check constructor sets valid default value for rawEngines', () => {
-    chai.expect(frontendEngine.engines).to.be.eql([enginesExpectedResult]);
+    chai.expect(frontendEngine.engines).to.be.eql([vanillaEngineResult]);
   });
 
   test('Check constructor sets valid default value for rawEngines', () => {
@@ -39,9 +38,9 @@ suite('Microservice/FrontendEngine', () => {
     chai.expect(frontendEmptyEngine.findSuitable()).to.be.equal('angular');
   });
 
-  //test('Check match() method returns false', () => {
-  //  chai.expect(frontendEngine.match()).to.be.equal(false);
-  //});
+  test('Check match() method returns false', () => {
+    chai.expect(frontendEngine.match()).to.be.equal(false);
+  });
 
   //test('Check match() method returns true', () => {
   //  chai.expect(frontendEngine.match(engines)).to.be.equal(true);
