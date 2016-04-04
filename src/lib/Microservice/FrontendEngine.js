@@ -114,20 +114,6 @@ export class FrontendEngine {
    * @returns {String}
    */
   static getRealEngine(engine) {
-    switch (engine) {
-      case FrontendEngine.ANGULAR_ENGINE:
-        engine = FrontendEngine.ANGULAR_ENGINE;
-        break;
-      case FrontendEngine.AURELIA_ENGINE:
-        engine = FrontendEngine.AURELIA_ENGINE;
-        break;
-      case FrontendEngine.REACT_ENGINE:
-        engine = FrontendEngine.REACT_ENGINE;
-        break;
-      default:
-        engine = FrontendEngine.VANILLA_ENGINE;
-    }
-
     return `deep-root-${engine}`;
   }
 
