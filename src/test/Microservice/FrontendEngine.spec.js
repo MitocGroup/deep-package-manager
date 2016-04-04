@@ -4,7 +4,7 @@ import chai from 'chai';
 import {FrontendEngine} from '../../lib/Microservice/FrontendEngine';
 
 suite('Microservice/FrontendEngine', () => {
-  let engines = ['engine1'];
+  let engines = ['vanilla'];
   let enginesNew = ['engine2', 'engine3'];
   let frontendEngine = new FrontendEngine(engines);
   let angularEngineResult = `deep-root-angular`;
