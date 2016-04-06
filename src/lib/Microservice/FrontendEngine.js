@@ -68,13 +68,9 @@ export class FrontendEngine {
     let engines = microservices.map((microservice) => microservice.frontendEngine);
     let plainEnginesBatch = [];
 
-    for (let i in engines) {
-      if (!engines.hasOwnProperty(i)) {
-        continue;
-      }
-
-      plainEnginesBatch.concat(engines[i].engines);
-    }
+    engines.forEach((engineObj) => {
+      plainEnginesBatch = plainEnginesBatch.concat(engineObj.engines);
+    });
 
     plainEngineLoop: for (let i in this._rawEngines) {
       if (!this._rawEngines.hasOwnProperty(i)) {
