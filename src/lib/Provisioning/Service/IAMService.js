@@ -9,6 +9,8 @@ import Core from 'deep-core';
 import {Exception} from '../../Exception/Exception';
 import {FailedToCreateOIDCException} from './Exception/FailedToCreateOIDCException';
 import {FailedToDeleteOIDCException} from './Exception/FailedToDeleteOIDCException';
+import {FailedToGetOIDCProviderException} from './Exception/FailedToGetOIDCProviderException';
+import {FailedToAddClientIdToOIDCProviderException} from './Exception/FailedToAddClientIdToOIDCProviderException';
 import url from 'url';
 
 /**
@@ -61,10 +63,36 @@ export class IAMService extends AbstractService {
       return this;
     }
 
+    var provisionDoneCb = (response) => {
+      if (response) {
+        response.domain = auth0Config.init.domain;
+        response.clientID = auth0Config.init.clientID;
+      }
+
+      this._config.identityProvider = response;
+      this._ready = true;
+    };
+
     if (auth0Thumbprint) {
-      this._createOpenIDConnectProvider(auth0Config.init, (response) => {
-        this._config.identityProvider = response;
-        this._ready = true;
+      let oidcProviderArn = this._generateOIDCProviderArn(auth0Config.init.domain);
+
+      this._checkOpenIDConnectProviderExists(oidcProviderArn, (response) => {
+
+        if (response && response.ClientIDList) {
+
+          if (response.ClientIDList.indexOf(auth0Config.init.clientID) === -1) {
+
+            this._addClientIDToOpenIDConnectProvider(auth0Config.init.clientID, oidcProviderArn, () => {
+
+              response.ClientIDList.push(auth0Config.init.clientID);
+              provisionDoneCb(response);
+            });
+          } else {
+            provisionDoneCb(response);
+          }
+        } else {
+          this._createOpenIDConnectProvider(auth0Config.init, provisionDoneCb);
+        }
       });
     } else {
       this._ready = true;
@@ -106,6 +134,52 @@ export class IAMService extends AbstractService {
   }
 
   /**
+   * @param {Object} oidcProviderArn
+   * @param {Function} callback
+   * @private
+   */
+  _checkOpenIDConnectProviderExists(oidcProviderArn, callback) {
+    let iam = this.provisioning.iam;
+
+    let params = {
+      OpenIDConnectProviderArn: oidcProviderArn,
+    };
+
+    iam.getOpenIDConnectProvider(params, (error, data) => {
+      if (error) {
+        throw new FailedToGetOIDCProviderException(oidcProviderArn, error);
+      } else {
+        callback(data);
+      }
+    });
+  }
+
+  /**
+   * @param {String} clientId
+   * @param {String} oidcProviderArn
+   * @param {Function} callback
+   * @private
+   */
+  _addClientIDToOpenIDConnectProvider(clientId, oidcProviderArn, callback) {
+    let iam = this.provisioning.iam;
+
+    let params = {
+      ClientID: clientId,
+      OpenIDConnectProviderArn: oidcProviderArn,
+    };
+
+    iam.addClientIDToOpenIDConnectProvider(params, (error, data) => {
+      if (error) {
+        throw new FailedToAddClientIdToOIDCProviderException(
+          params.ClientID, params.OpenIDConnectProviderArn, error
+        );
+      } else {
+        callback(data);
+      }
+    });
+  }
+
+  /**
    * @param {Object} IdPConfig
    * @param {Function} callback
    * @private
@@ -133,11 +207,6 @@ export class IAMService extends AbstractService {
       if (error) {
         throw new FailedToCreateOIDCException(params, error);
       } else {
-        if (data) {
-          data.domain = IdPConfig.domain;
-          data.clientID = IdPConfig.clientID;
-        }
-
         callback(data);
       }
     });
@@ -162,6 +231,14 @@ export class IAMService extends AbstractService {
         callback(data);
       }
     });
+  }
+
+  /**
+   * @param {String} providerDomain
+   * @returns {String}
+   */
+  _generateOIDCProviderArn(providerDomain) {
+    return `arn:aws:iam::${this.awsAccountId}:oidc-provider/${providerDomain}`;
   }
 
   /**
