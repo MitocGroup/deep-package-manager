@@ -79,6 +79,7 @@ export class IAMService extends AbstractService {
       this._checkOpenIDConnectProviderExists(oidcProviderArn, (response) => {
 
         if (response && response.ClientIDList) {
+          response.OpenIDConnectProviderArn = oidcProviderArn;
 
           if (response.ClientIDList.indexOf(auth0Config.init.clientID) === -1) {
 
