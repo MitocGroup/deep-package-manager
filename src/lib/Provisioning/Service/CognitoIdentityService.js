@@ -418,17 +418,19 @@ export class CognitoIdentityService extends AbstractService {
       'identitypool/'
     );
 
-    let condition = {
-      "StringEquals": {
-        "cognito-identity.amazonaws.com:aud": this._config.identityPool.IdentityPoolId,
-      },
-    };
+    let condition = {};
+    condition.StringEquals = {};
+
+    // @todo - find out why we cannot setup this condition for DescribeIdentity
+    //condition.StringEquals["cognito-identity.amazonaws.com:aud"] = this._config.identityPool.IdentityPoolId;
 
     if (targetService === CognitoIdentityService) {
       condition.StringEquals["cognito-identity.amazonaws.com:sub"] = ["${cognito-identity.amazonaws.com:sub}"];
     }
 
-    statement.condition = condition;
+    if (Object.keys(condition.StringEquals).length > 0) {
+      statement.condition = condition;
+    }
 
     return statement;
   }
