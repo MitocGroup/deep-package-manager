@@ -164,7 +164,11 @@ export class IAMService extends AbstractService {
 
     iam.getOpenIDConnectProvider(params, (error, data) => {
       if (error) {
-        throw new FailedToGetOIDCProviderException(oidcProviderArn, error);
+        if (error.name === 'NoSuchEntity') {
+          callback(null);
+        } else {
+          throw new FailedToGetOIDCProviderException(oidcProviderArn, error);
+        }
       } else {
         callback(data);
       }
