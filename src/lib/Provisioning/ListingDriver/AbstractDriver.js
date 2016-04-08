@@ -31,7 +31,7 @@ export class AbstractDriver extends Core.OOP.Interface {
    * @private
    */
   _checkPushStack(resourceToMatch, resourceId, rawData = {}) {
-    if (this._matchResource(resourceToMatch)) {
+    if (this._matchResource(resourceToMatch, rawData)) {
       this._stack[resourceId] = rawData;
     }
   }
@@ -63,10 +63,11 @@ export class AbstractDriver extends Core.OOP.Interface {
 
   /**
    * @param {String} resource
+   * @param {Object} rawData
    * @returns {Boolean}
    * @private
    */
-  _matchResource(resource) {
+  _matchResource(resource, rawData = {}) {
     if (typeof this.baseHash === 'function') {
       return this.baseHash.bind(this)(resource);
     } else if (this.baseHash instanceof RegExp) {

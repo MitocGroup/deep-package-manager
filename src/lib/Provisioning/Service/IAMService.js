@@ -39,12 +39,29 @@ export class IAMService extends AbstractService {
   }
 
   /**
+   * @returns {String}
+   */
+  static getDeepAppOIDCAudience(baseHash) {
+    return `${IAMService.OIDC_PROVIDER_APP_PREFIX}${baseHash}`;
+  }
+
+  /**
    * @returns {String[]}
    */
   static get AVAILABLE_REGIONS() {
     return [
       Core.AWS.Region.ANY,
     ];
+  }
+
+  /**
+   * @param {String} clientId
+   * @returns {boolean}
+   */
+  static isFakeOIDCProviderAudience(clientId) {
+    let regExp = new RegExp(`^${IAMService.OIDC_PROVIDER_APP_PREFIX}.+$`);
+
+    return regExp.test(clientId);
   }
 
   /**
@@ -79,7 +96,7 @@ export class IAMService extends AbstractService {
           response.OpenIDConnectProviderArn = oidcProviderArn;
 
           // adding a 'fake' audience used to manage OIDC provider undeploy
-          let newClients = [this._getDeepAppAudience()];
+          let newClients = [IAMService.getDeepAppOIDCAudience(this.property.configObj.baseHash)];
 
           if (response.ClientIDList.indexOf(auth0Config.init.clientID) === -1) {
             newClients.push(auth0Config.init.clientID);
@@ -207,7 +224,8 @@ export class IAMService extends AbstractService {
       Url: oidcProvderUrl,
       ClientIDList: [
         IdPConfig.clientID,
-        this._getDeepAppAudience(), // adding a 'fake' audience used to manage OIDC provider undeploy
+        // adding a 'fake' audience used to manage OIDC provider undeploy
+        IAMService.getDeepAppOIDCAudience(this.property.configObj.baseHash),
       ],
     };
 
@@ -251,14 +269,6 @@ export class IAMService extends AbstractService {
    */
   _generateOIDCProviderArn(providerDomain) {
     return `arn:aws:iam::${this.awsAccountId}:oidc-provider/${providerDomain}`;
-  }
-
-  /**
-   * @returns {String}
-   * @private
-   */
-  _getDeepAppAudience() {
-    return `${IAMService.OIDC_PROVIDER_APP_PREFIX}${this.property.configObj.baseHash}`;
   }
 
   /**

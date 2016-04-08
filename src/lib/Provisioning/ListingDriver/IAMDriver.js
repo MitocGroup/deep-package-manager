@@ -20,10 +20,11 @@ export class IAMDriver extends AbstractDriver {
    * e.g. arn:aws:iam::545786123497:oidc-provider/example.auth0.com
    *
    * @param {String} resource
+   * @param {Object} rawData
    * @returns {Boolean}
    * @private
    */
-  _matchResource(resource) {
+  _matchResource(resource, rawData) {
     if (IAMDriver.isOIDCProvider(resource)) {
       let oidcProviderARN = null;
 
@@ -105,13 +106,30 @@ export class IAMDriver extends AbstractDriver {
         return;
       }
 
+      let responses = 0;
+      let errors = [];
+
       data.OpenIDConnectProviderList.forEach((provider) => {
         let providerARN = provider.Arn;
 
-        this._checkPushStack(providerARN, providerARN, providerARN);
-      });
+        let params = {
+          OpenIDConnectProviderArn: oidcProviderArn,
+        };
 
-      cb(null);
+        this._awsService.getOpenIDConnectProvider(params, (error, data) => {
+          responses++;
+
+          if (error) {
+            errors.push(error);
+          } else {
+            this._checkPushStack(providerARN, providerARN, data);
+          }
+
+          if (responses === data.OpenIDConnectProviderList.length) {
+            cb(errors.length > 0 ? errors.join(', ') : null);
+          }
+        });
+      });
     });
   }
 
