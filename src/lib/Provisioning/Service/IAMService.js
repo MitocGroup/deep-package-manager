@@ -32,6 +32,13 @@ export class IAMService extends AbstractService {
   }
 
   /**
+   * @returns {String}
+   */
+  static get OIDC_PROVIDER_APP_PREFIX() {
+    return 'deep_app_';
+  }
+
+  /**
    * @returns {String[]}
    */
   static get AVAILABLE_REGIONS() {
@@ -49,17 +56,7 @@ export class IAMService extends AbstractService {
     let auth0Thumbprint = auth0Config.init && auth0Config.init.thumbprint ? auth0Config.init.thumbprint : null;
 
     if (this._isUpdate) {
-      let oldIdentityProvider = this._config.identityProvider;
-
-      if (oldIdentityProvider && !auth0Thumbprint) {
-        this._deleteOpenIDConnectProvider(oldIdentityProvider.OpenIDConnectProviderArn, (response) => {
-          this._config.identityProvider = null;
-          this._ready = true;
-        });
-      } else {
-        this._ready = true;
-      }
-
+      this._ready = true;
       return this;
     }
 
@@ -81,16 +78,18 @@ export class IAMService extends AbstractService {
         if (response && response.ClientIDList) {
           response.OpenIDConnectProviderArn = oidcProviderArn;
 
+          // adding a 'fake' audience used to manage OIDC provider undeploy
+          let newClients = [this._getDeepAppAudience()];
+
           if (response.ClientIDList.indexOf(auth0Config.init.clientID) === -1) {
-
-            this._addClientIDToOpenIDConnectProvider(auth0Config.init.clientID, oidcProviderArn, () => {
-
-              response.ClientIDList.push(auth0Config.init.clientID);
-              provisionDoneCb(response);
-            });
-          } else {
-            provisionDoneCb(response);
+            newClients.push(auth0Config.init.clientID);
           }
+
+          this._addClientIDsToOpenIDConnectProvider(newClients, oidcProviderArn, () => {
+
+            response.ClientIDList.concat(newClients);
+            provisionDoneCb(response);
+          });
         } else {
           this._createOpenIDConnectProvider(auth0Config.init, provisionDoneCb);
         }
@@ -156,27 +155,34 @@ export class IAMService extends AbstractService {
   }
 
   /**
-   * @param {String} clientId
+   * @param {Array} clientIds
    * @param {String} oidcProviderArn
    * @param {Function} callback
    * @private
    */
-  _addClientIDToOpenIDConnectProvider(clientId, oidcProviderArn, callback) {
+  _addClientIDsToOpenIDConnectProvider(clientIds, oidcProviderArn, callback) {
     let iam = this.provisioning.iam;
-
+    let responses = 0;
     let params = {
-      ClientID: clientId,
       OpenIDConnectProviderArn: oidcProviderArn,
     };
 
-    iam.addClientIDToOpenIDConnectProvider(params, (error, data) => {
-      if (error) {
-        throw new FailedToAddClientIdToOIDCProviderException(
-          params.ClientID, params.OpenIDConnectProviderArn, error
-        );
-      } else {
-        callback(data);
-      }
+    clientIds.forEach((clientId) => {
+      params.ClientID = clientId;
+
+      iam.addClientIDToOpenIDConnectProvider(params, (error, data) => {
+        responses++;
+
+        if (error) {
+          throw new FailedToAddClientIdToOIDCProviderException(
+            params.ClientID, params.OpenIDConnectProviderArn, error
+          );
+        }
+
+        if (responses === clientIds.length) {
+          callback();
+        }
+      });
     });
   }
 
@@ -201,6 +207,7 @@ export class IAMService extends AbstractService {
       Url: oidcProvderUrl,
       ClientIDList: [
         IdPConfig.clientID,
+        this._getDeepAppAudience(), // adding a 'fake' audience used to manage OIDC provider undeploy
       ],
     };
 
@@ -208,6 +215,10 @@ export class IAMService extends AbstractService {
       if (error) {
         throw new FailedToCreateOIDCException(params, error);
       } else {
+        if (data) {
+          data.ClientIDList = params.ClientIDList;
+        }
+
         callback(data);
       }
     });
@@ -240,6 +251,14 @@ export class IAMService extends AbstractService {
    */
   _generateOIDCProviderArn(providerDomain) {
     return `arn:aws:iam::${this.awsAccountId}:oidc-provider/${providerDomain}`;
+  }
+
+  /**
+   * @returns {String}
+   * @private
+   */
+  _getDeepAppAudience() {
+    return `${IAMService.OIDC_PROVIDER_APP_PREFIX}${this.property.configObj.baseHash}`;
   }
 
   /**
