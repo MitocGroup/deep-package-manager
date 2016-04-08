@@ -110,6 +110,11 @@ export class IAMDriver extends AbstractDriver {
       let errors = [];
       let providers = data.OpenIDConnectProviderList;
 
+      if (providers.length === 0) {
+        cb(null);
+        return;
+      }
+
       providers.forEach((provider) => {
         let oidcProviderArn = provider.Arn;
 
@@ -127,7 +132,7 @@ export class IAMDriver extends AbstractDriver {
           }
 
           if (responses === providers.length) {
-            cb(errors.length > 0 ? errors.join(', ') : null);
+            cb(errors.length > 0 ? errors.join('; ') : null);
           }
         });
       });
