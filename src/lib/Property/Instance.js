@@ -127,13 +127,14 @@ export class Instance {
    * @returns {Instance}
    */
   getProvisioningCollisions(callback, matcher = null) {
+    let _this = this;
     let resourcesLister = new Listing(this);
     resourcesLister.hash = function (resourceName) {
       if (matcher) {
         return matcher.match(this.constructor.name.replace(/Driver$/i, ''), resourceName);
       }
 
-      return AbstractService.extractBaseHashFromResourceName(resourceName) === this._configObj.baseHash;
+      return AbstractService.extractBaseHashFromResourceName(resourceName) === _this._configObj.baseHash;
     };
 
     resourcesLister.list((result) => {

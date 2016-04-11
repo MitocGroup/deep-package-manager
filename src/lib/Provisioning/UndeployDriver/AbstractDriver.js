@@ -13,10 +13,11 @@ export class AbstractDriver extends Core.OOP.Interface {
    * @param {Object} awsService
    * @param {Boolean} debug
    */
-  constructor(awsService, debug = false) {
+  constructor(awsService, baseHash, debug = false) {
     super(['_removeResource', 'service']);
 
     this._awsService = awsService;
+    this._baseHash = baseHash;
     this._debug = debug;
     this._stack = [];
     this._retries = AbstractDriver.DEFAULT_RETRIES;
@@ -34,6 +35,13 @@ export class AbstractDriver extends Core.OOP.Interface {
    */
   get retries() {
     return this._retries;
+  }
+
+  /**
+   * @returns {String}
+   */
+  get baseHash() {
+    return this._baseHash;
   }
 
   /**
