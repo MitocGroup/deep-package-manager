@@ -361,7 +361,7 @@ export class Lambda {
     let bootstrapBck = false;
 
     // read bootstrap file from the archive (fail silently)
-    if (runtime === 'nodejs') {
+    if (Lambda.isNodeRuntime(runtime)) {
       if (FileSystem.existsSync(bootstrapFile)) {
         bootstrapBck = true;
         FileSystemExtra.copySync(bootstrapFile, bootstrapBckFile);
@@ -386,7 +386,7 @@ export class Lambda {
       .run((result) => {
 
         // restore original bootstrap.js
-        if (runtime === 'nodejs' && bootstrapBck) {
+        if (Lambda.isNodeRuntime(runtime) && bootstrapBck) {
           FileSystemExtra.copySync(bootstrapBckFile, bootstrapFile);
           FileSystemExtra.removeSync(bootstrapBckFile);
         }
@@ -431,7 +431,7 @@ export class Lambda {
    * @private
    */
   _injectDeepConfigIntoBootstrap(runtime) {
-    if (this._runtime === 'nodejs') { // the only supported runtime
+    if (Lambda.isNodeRuntime(runtime)) { // the only supported runtime
       let bootstrapFile = Path.join(this.path, 'bootstrap.js');
       let configFile = Path.join(this.path, Lambda.CONFIG_FILE);
 
@@ -658,6 +658,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
 
     switch(this._runtime) {
       case 'nodejs':
+      case 'nodejs4.3':
         handler = 'bootstrap.handler';
         break;
       case 'java8':
@@ -725,7 +726,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    * @returns {String[]}
    */
   static get RUNTIMES() {
-    return ['nodejs', 'java8', 'python2.7'];
+    return ['nodejs4.3', 'nodejs', 'java8', 'python2.7'];
   }
 
   /**
@@ -733,5 +734,12 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    */
   static get DEFAULT_RUNTIME() {
     return Lambda.RUNTIMES[0];
+  }
+
+  /**
+   * @param {String} runtime
+   */
+  static isNodeRuntime(runtime) {
+    return ['nodejs4.3', 'nodejs'].indexOf(runtime) !== -1;
   }
 }
