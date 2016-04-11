@@ -3,14 +3,14 @@
 import {TagsDriverException} from './TagsDriverException';
 
 /**
- * Loader Not Found Exception
+ * File Not Found Exception
  */
-export class LoaderNotFoundException extends TagsDriverException {
+export class FileNotFoundException extends TagsDriverException {
   /**
    *
    * @param {String} file
    */
   constructor(file) {
-    super(`Missing loader source file '${file}'`);
+    super(`File not found: '${file}'`);
   }
 }
