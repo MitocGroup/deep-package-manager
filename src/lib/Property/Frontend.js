@@ -403,7 +403,8 @@ export class Frontend {
       propertyConfig.globals.gtmContainerId, // it may be empty/undefined
       this._microservicesConfig,
       propertyConfig.globals.pageLoader,
-      propertyConfig.globals.version
+      propertyConfig.globals.version,
+      propertyConfig.globals.favicon
     );
 
     if (Frontend._skipInjectDeployNumber) {

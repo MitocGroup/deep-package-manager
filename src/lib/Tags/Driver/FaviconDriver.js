@@ -6,15 +6,15 @@ import {PathIdentifier} from './Helpers/PathIdentifier.js';
 /**
  * Custom Content Driver
  */
-export class PageLoaderDriver extends AbstractDriver {
+export class FaviconDriver extends AbstractDriver {
   /**
-   * @param {Object} loaderConfig
+   * @param {String} faviconIdentifier
    * @param {Object} microservices
    */
-  constructor(loaderConfig, microservices) {
+  constructor(faviconIdentifier, microservices) {
     super();
 
-    this._loader = loaderConfig;
+    this._faviconIdentifier = faviconIdentifier;
     this._microservices = microservices;
   }
 
@@ -23,28 +23,27 @@ export class PageLoaderDriver extends AbstractDriver {
    * @returns {String}
    */
   inject(htmlContent) {
-    let path = new PathIdentifier(this._microservices, this._loader.src).getPath();
+    let path = new PathIdentifier(this._microservices, this._faviconIdentifier).getPath();
     return this.replaceTags(
       htmlContent,
-      PageLoaderDriver.TAG_SUFFIX,
-      this._buildImgTag(path, this._loader.alt)
+      FaviconDriver.TAG_SUFFIX,
+      this._buildFaviconTag(path)
     );
   }
 
   /**
    *
-   * @param {String} src
-   * @param {String} alt
+   * @param {String} path
    * @returns {String}
    */
-  _buildImgTag(src, alt) {
-    return `<img src="${src}" alt="${alt}">`;
+  _buildFaviconTag(path) {
+    return `<link rel="icon" href="${path}" type="image/x-icon"/>`;
   }
 
   /**
    * @returns {String}
    */
   static get TAG_SUFFIX() {
-    return 'loader';
+    return 'favicon';
   }
 }
