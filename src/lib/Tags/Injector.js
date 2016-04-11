@@ -26,7 +26,7 @@ export class Injector {
    * @param {Object|null} deepConfig
    * @param {String|null} gtmContainerId
    * @param {Object} microservices
-   * @param {String|null} pageLoader
+   * @param {Object|null} pageLoader
    * @param {String|null} version
    * @param {String|null} favicon
    */

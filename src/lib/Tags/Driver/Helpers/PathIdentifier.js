@@ -7,6 +7,11 @@ import FileSystem from 'graceful-fs';
 import Path from 'path';
 
 export class PathIdentifier {
+  /**
+   *
+   * @param {Object} microservices
+   * @param {String} identifier
+   */
   constructor(microservices, identifier) {
     this._microservices = microservices;
     this._identifier = identifier;

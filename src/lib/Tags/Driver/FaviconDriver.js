@@ -8,7 +8,7 @@ import {PathIdentifier} from './Helpers/PathIdentifier.js';
  */
 export class FaviconDriver extends AbstractDriver {
   /**
-   * @param {Object} faviconIdentifier
+   * @param {String} faviconIdentifier
    * @param {Object} microservices
    */
   constructor(faviconIdentifier, microservices) {
