@@ -451,10 +451,12 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
   global.${DeepConfigDriver.DEEP_CFG_VAR} ||
   ${FileSystem.readFileSync(configFile).toString()};
 /*<DEEP_CFG_END>*/`;
+      let bootstrapContent = Lambda._cleanupBootstrapFile(bootstrapFile, true);
 
+      // inject config after the 'use strict';
       FileSystem.writeFileSync(
         bootstrapFile,
-        cfgPlain + Lambda._cleanupBootstrapFile(bootstrapFile, true)
+        bootstrapContent.replace(/^(['"]\s*use\s+strict\s*['"]\s*;)?/gi, `$1${cfgPlain}`)
       );
     }
   }
