@@ -19,6 +19,7 @@ export class Undeploy {
    */
   constructor(property, debug = false, matcher = Undeploy.DEFAULT_MATCHER) {
     this._property = property;
+    this._hash = property.configObj.baseHash;
     this._matcher = matcher;
     this._debug = debug;
   }
@@ -89,7 +90,7 @@ export class Undeploy {
           let service = this._createAwsService(serviceName);
           let ServiceUndeployProto = require(`./UndeployDriver/${serviceName}Driver`)[`${serviceName}Driver`];
 
-          let serviceUndeploy = new ServiceUndeployProto(service, this._debug);
+          let serviceUndeploy = new ServiceUndeployProto(service, this._hash, this._debug);
 
           serviceUndeploy.execute((error) => {
             servicesRemaining--;

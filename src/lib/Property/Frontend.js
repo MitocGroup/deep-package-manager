@@ -165,6 +165,7 @@ export class Frontend {
               ttl: action.cacheTtl,
             },
             region: propertyConfig.awsRegion, // @todo: set it from lambda provision
+            scope: action.scope,
             source: {
               api: apiEndpoint,
               original: (backendTarget || ActionFlags.isDirect(action.scope)) ? originalSource : null,
@@ -403,7 +404,8 @@ export class Frontend {
       propertyConfig.globals.gtmContainerId, // it may be empty/undefined
       this._microservicesConfig,
       propertyConfig.globals.pageLoader,
-      propertyConfig.globals.version
+      propertyConfig.globals.version,
+      propertyConfig.globals.favicon
     );
 
     if (Frontend._skipInjectDeployNumber) {

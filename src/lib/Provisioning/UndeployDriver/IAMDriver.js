@@ -8,6 +8,7 @@ import {AbstractDriver} from './AbstractDriver';
 import {WaitFor} from '../../Helpers/WaitFor';
 import {IAMDriver as IAMListingDriver} from '../ListingDriver/IAMDriver';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
+import {IAMService} from '../Service/IAMService';
 
 export class IAMDriver extends AbstractDriver {
   /**
@@ -32,7 +33,7 @@ export class IAMDriver extends AbstractDriver {
    */
   _removeResource(resourceId, resourceData, cb) {
     if (IAMListingDriver.isOIDCProvider(resourceId)) {
-      this._deleteOIDCProvider(resourceId, cb);
+      this._deleteOIDCProvider(resourceId, resourceData, cb);
     } else {
       this._removeRoleChain(resourceId, cb);
     }
@@ -151,15 +152,40 @@ export class IAMDriver extends AbstractDriver {
 
   /**
    * @param {String} providerArn
+   * @param {Object} providerData
    * @param {Function} cb
    * @private
    */
-  _deleteOIDCProvider(providerArn, cb) {
-    this._awsService.deleteOpenIDConnectProvider({
-      OpenIDConnectProviderArn: providerArn,
-    }, (error) => {
-      cb(error || null);
+  _deleteOIDCProvider(providerArn, providerData, cb) {
+    let deepFakeAudiences = [];
+    let thisAppFakeAudience = IAMService.getDeepAppOIDCAudience(this.baseHash);
+
+    providerData.ClientIDList.forEach((clientId) => {
+      if (IAMService.isFakeOIDCProviderAudience(clientId)) {
+        deepFakeAudiences.push(clientId);
+      }
     });
+
+    if (deepFakeAudiences.indexOf(thisAppFakeAudience) !== -1) {
+      let params = {
+        OpenIDConnectProviderArn: providerArn,
+      };
+
+      if (deepFakeAudiences.length === 1) {
+        // delete OIDC provider if it contains only this app fake audience
+        this._awsService.deleteOpenIDConnectProvider(params, (error) => {
+          cb(error || null);
+        });
+      } else {
+        params.ClientID = thisAppFakeAudience;
+        // remove only this app audience because this OIDC provider is used by other apps
+        this._awsService.removeClientIDFromOpenIDConnectProvider(params, (error) => {
+          cb(error || null);
+        });
+      }
+    } else {
+      cb(null);
+    }
   }
 
   /**
