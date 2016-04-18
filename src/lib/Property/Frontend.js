@@ -165,6 +165,7 @@ export class Frontend {
               ttl: action.cacheTtl,
             },
             region: propertyConfig.awsRegion, // @todo: set it from lambda provision
+            scope: action.scope,
             source: {
               api: apiEndpoint,
               original: (backendTarget || ActionFlags.isDirect(action.scope)) ? originalSource : null,
