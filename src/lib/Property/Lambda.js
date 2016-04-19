@@ -456,7 +456,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
       // inject config after the 'use strict';
       FileSystem.writeFileSync(
         bootstrapFile,
-        bootstrapContent.replace(/^(['"]\s*use\s+strict\s*['"]\s*;)?/gi, `$1${cfgPlain}`)
+        bootstrapContent.replace(/^['"]\s*use\s+strict\s*['"]\s*;?/i, `$&${cfgPlain}`)
       );
     }
   }
