@@ -14,7 +14,10 @@ if [ -z ${babel} ]; then
 fi
 
 BABEL_DEPS=("babel-preset-es2015" "babel-plugin-add-module-exports");
+NPM_GLOBAL_NM=`npm root -g`
 
 for DEP in ${BABEL_DEPS[@]}; do
-    ! [ "$(npm ls -g --depth 0 | grep ${DEP}@)" ] && npm install -g ${DEP};
+    ! [ -d ${NPM_GLOBAL_NM}/${DEP} ] && npm install -g ${DEP};
 done;
+
+exit 0
