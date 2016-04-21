@@ -48,6 +48,7 @@
     "url": "https://github.com/MitocGroup/deep-package-manager.git"
   },
   "scripts": {
+    "preinstall": "bash node-bin/assure-deps.sh",
     "test": "bash node-bin/test.sh",
     "compile": "bash node-bin/compile.sh",
     "obfuscate-compiled": "bash node-bin/obfuscate-compiled.sh",
