@@ -64,7 +64,7 @@ export class Frontend {
       deployId: propertyConfig.deployId,
       awsRegion: propertyConfig.awsRegion,
       models: propertyConfig.models,
-      identityPoolId: '',
+      identityPoolId: localRuntime ? 'us-east-1:xxxxxxxx-xxxx-xxxx-xxxx-xx0123456789' : '',
       identityProviders: '',
       microservices: {},
       globals: propertyConfig.globals,
