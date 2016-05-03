@@ -424,6 +424,7 @@ export class LambdaService extends AbstractService {
     let iam = this.provisioning.iam;
     let policies = {};
     let syncStack = new AwsRequestSyncStack();
+    let rootMicroservice = this.property.rootMicroservice;
 
     for (let microserviceIdentifier in roles) {
       if (!roles.hasOwnProperty(microserviceIdentifier)) {
@@ -446,7 +447,11 @@ export class LambdaService extends AbstractService {
             microserviceIdentifier
           );
 
-          let policy = this._getAccessPolicy(microserviceIdentifier, buckets);
+          let policy = this._getAccessPolicy(
+            microserviceIdentifier,
+            buckets,
+            microserviceIdentifier === rootMicroservice.identifier
+          );
 
           let params = {
             PolicyDocument: policy.toString(),
@@ -477,10 +482,11 @@ export class LambdaService extends AbstractService {
    *
    * @param {String} microserviceIdentifier
    * @param {Array} buckets
+   * @param {Boolean} rootLambda
    *
    * @returns {Policy}
    */
-  _getAccessPolicy(microserviceIdentifier, buckets) {
+  _getAccessPolicy(microserviceIdentifier, buckets, rootLambda = false) {
     let policy = new Core.AWS.IAM.Policy();
 
     let cloudWatchLogsService = this.provisioning.services.find(CloudWatchLogsService);
@@ -518,7 +524,9 @@ export class LambdaService extends AbstractService {
         let s3Resource = s3Statement.resource.add();
 
         s3Resource.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
-        s3Resource.descriptor = `${bucket.name}/${microserviceIdentifier}/${Core.AWS.IAM.Policy.ANY}`;
+        s3Resource.descriptor = rootLambda ?
+          `${bucket.name}/${Core.AWS.IAM.Policy.ANY}` :
+          `${bucket.name}/${microserviceIdentifier}/${Core.AWS.IAM.Policy.ANY}`;
       } else {
         let s3ResourceSystem = s3Statement.resource.add();
         let s3ResourceTmp = s3Statement.resource.add();
