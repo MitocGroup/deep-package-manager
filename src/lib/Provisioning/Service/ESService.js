@@ -169,7 +169,7 @@ export class ESService extends AbstractService {
         EBSEnabled: true,
         VolumeType: 'gp2',
         VolumeSize: 10,
-        Iops: 1000,
+        Iops: 0,
       },
       SnapshotOptions: {
         AutomatedSnapshotStartHour: 0,
