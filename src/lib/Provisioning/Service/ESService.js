@@ -224,21 +224,24 @@ export class ESService extends AbstractService {
    */
   _getDomainAccessPolicy(domainName) {
     let policy = new Core.AWS.IAM.Policy();
-    let readOnlyStatement = this.generateAllowActionsStatement();
+    let readOnlyStatement = this.generateAllowActionsStatement(['ESHttpGet', 'ESHttpHead',]);
+    let safeWriteStatement = this.generateAllowActionsStatement(['ESHttpGet', 'ESHttpHead', 'ESHttpPost',], true);
 
-    readOnlyStatement.principal = { AWS: ['*'] };
+    readOnlyStatement.principal = {AWS: ['*',],};
+    safeWriteStatement.principal = {AWS: ['*',],};
 
     policy.statement.add(readOnlyStatement);
+    policy.statement.add(safeWriteStatement);
 
     return policy;
   }
 
   /**
    * @params {String[]|Array|*} actions
-   * @param {Boolean} includeSafePost
+   * @param {Boolean} safeActionsOnly
    * @returns {Core.AWS.IAM.Statement}
    */
-  generateAllowActionsStatement(actions = ['ESHttpGet', 'ESHttpHead',], includeSafePost = true) {
+  generateAllowActionsStatement(actions, safeActionsOnly = false) {
     let policy = new Core.AWS.IAM.Policy();
     let statement = policy.statement.add();
 
@@ -246,28 +249,22 @@ export class ESService extends AbstractService {
       statement.action.add(Core.AWS.Service.ELASTIC_SEARCH, actionName);
     });
 
-    statement.resource.add(
-      Core.AWS.Service.ELASTIC_SEARCH,
-      this.provisioning.elasticSearch.config.region,
-      this.awsAccountId,
-      `domain/${this._getGlobalResourceMask('', AbstractService.DELIMITER_HYPHEN_LOWER_CASE)}`
-    );
-
-    if (includeSafePost) {
-      let safeStatement = policy.statement.add();
-
-      ['ESHttpPost',].concat(actions).forEach((actionName) => {
-        safeStatement.action.add(Core.AWS.Service.ELASTIC_SEARCH, actionName);
-      });
-
+    if (safeActionsOnly) {
       ['*/_search', '*/*/_search', '*/_suggest',].forEach((type) => {
-        safeStatement.resource.add(
+        statement.resource.add(
           Core.AWS.Service.ELASTIC_SEARCH,
           this.provisioning.elasticSearch.config.region,
           this.awsAccountId,
           `domain/${this._getGlobalResourceMask('', AbstractService.DELIMITER_HYPHEN_LOWER_CASE)}/${type}`
         );
       });
+    } else {
+      statement.resource.add(
+        Core.AWS.Service.ELASTIC_SEARCH,
+        this.provisioning.elasticSearch.config.region,
+        this.awsAccountId,
+        `domain/${this._getGlobalResourceMask('', AbstractService.DELIMITER_HYPHEN_LOWER_CASE)}`
+      );
     }
 
     return statement;
