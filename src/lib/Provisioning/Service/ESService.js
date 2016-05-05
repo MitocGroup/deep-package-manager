@@ -167,9 +167,9 @@ export class ESService extends AbstractService {
       },
       EBSOptions: {
         EBSEnabled: true,
-        VolumeType: 'standard',
+        VolumeType: 'gp2',
         VolumeSize: 10,
-        Iops: 0,
+        Iops: 1000,
       },
       SnapshotOptions: {
         AutomatedSnapshotStartHour: 0,
@@ -224,7 +224,7 @@ export class ESService extends AbstractService {
    */
   _getDomainAccessPolicy(domainName) {
     let policy = new Core.AWS.IAM.Policy();
-    let readOnlyStatement = this.generateAllowActionsStatement(['ESHttpGet', 'ESHttpHead',]);
+    let readOnlyStatement = this.generateAllowActionsStatement();
 
     readOnlyStatement.principal = { AWS: ['*'] };
 
@@ -234,10 +234,11 @@ export class ESService extends AbstractService {
   }
 
   /**
-   * @params {Array} actions
+   * @params {String[]|Array|*} actions
+   * @param {Boolean} includeSafePost
    * @returns {Core.AWS.IAM.Statement}
    */
-  generateAllowActionsStatement(actions = ['ESHttpGet', 'ESHttpHead',]) {
+  generateAllowActionsStatement(actions = ['ESHttpGet', 'ESHttpHead',], includeSafePost = true) {
     let policy = new Core.AWS.IAM.Policy();
     let statement = policy.statement.add();
 
@@ -251,6 +252,23 @@ export class ESService extends AbstractService {
       this.awsAccountId,
       `domain/${this._getGlobalResourceMask('', AbstractService.DELIMITER_HYPHEN_LOWER_CASE)}`
     );
+
+    if (includeSafePost) {
+      let safeStatement = policy.statement.add();
+
+      ['ESHttpPost',].concat(actions).forEach((actionName) => {
+        safeStatement.action.add(Core.AWS.Service.ELASTIC_SEARCH, actionName);
+      });
+
+      ['*/_search', '*/*/_search', '*/_suggest',].forEach((type) => {
+        safeStatement.resource.add(
+          Core.AWS.Service.ELASTIC_SEARCH,
+          this.provisioning.elasticSearch.config.region,
+          this.awsAccountId,
+          `domain/${this._getGlobalResourceMask('', AbstractService.DELIMITER_HYPHEN_LOWER_CASE)}/${type}`
+        );
+      });
+    }
 
     return statement;
   }
