@@ -326,8 +326,8 @@ export class LambdaService extends AbstractService {
 
       let microservice = microservices[microserviceKey];
       let doUploadMicroserviceExecRole = microservice.resources.actions.reduce((isLambda, action) => {
-        return isLambda && action.type === Action.LAMBDA;
-      }, true);
+        return isLambda || action.type === Action.LAMBDA;
+      }, false);
 
       if (doUploadMicroserviceExecRole) {
         let roleName = this.generateAwsResourceName(
