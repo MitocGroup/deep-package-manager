@@ -590,7 +590,7 @@ export class Instance {
         let lambdaPath = microservice.raw.lambdas[lambdaIdentifier];
         let lambdaOptions = microservice.raw.lambdas._[lambdaIdentifier];
 
-        let lambdaExecRole = lambdaExecRoles[microserviceIdentifier][lambdaIdentifier];
+        let lambdaExecRole = lambdaExecRoles[microserviceIdentifier];
         let lambdaName = lambdaNames[microserviceIdentifier][lambdaIdentifier];
 
         let lambdaInstance = new Lambda(
