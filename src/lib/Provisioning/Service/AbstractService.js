@@ -8,6 +8,7 @@ import Core from 'deep-core';
 import {WaitFor} from '../../Helpers/WaitFor';
 import {Hash} from '../../Helpers/Hash';
 import {Exception} from '../../Exception/Exception';
+import {Inflector} from '../../Helpers/Inflector';
 
 /**
  * Abstract service
@@ -463,30 +464,20 @@ export class AbstractService extends Core.OOP.Interface {
   }
 
   /**
+   * @todo: remove
    * @param {String} str
    * @returns {String}
    */
   static capitalizeFirst(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
+    return Inflector.capitalizeFirst(str);
   }
 
   /**
+   * @todo: remove
    * @param {String} str
    * @returns {String}
    */
   static lowerCaseFirst(str) {
-    return str.charAt(0).toLowerCase() + str.slice(1);
-  }
-
-  /**
-   * @param {String} string
-   * @returns {String}
-   */
-  static stringToPascalCase(string) {
-    return string
-      .split(/[^a-zA-Z0-9]+/)
-      .reduce((pascalString, part) => {
-        return pascalString + AbstractService.capitalizeFirst(part);
-      }, '');
+    return Inflector.lowerCaseFirst(str);
   }
 }

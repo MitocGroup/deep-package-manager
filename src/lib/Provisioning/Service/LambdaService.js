@@ -9,6 +9,7 @@ import {S3Service} from './S3Service';
 import {APIGatewayService} from './APIGatewayService';
 import Core from 'deep-core';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
+import {Inflector} from '../../Helpers/Inflector';
 import {WaitFor} from '../../Helpers/WaitFor';
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
@@ -185,7 +186,7 @@ export class LambdaService extends AbstractService {
 
         if (action.type === Action.LAMBDA && action.cron) {
           let lambdaName = this.generateAwsResourceName(
-            this._actionIdentifierToPascalCase(action.identifier),
+            Inflector.pascalCase(action.identifier),
             Core.AWS.Service.LAMBDA,
             microservice.identifier
           );
@@ -331,7 +332,7 @@ export class LambdaService extends AbstractService {
 
       if (doUploadMicroserviceExecRole) {
         let roleName = this.generateAwsResourceName(
-          AbstractService.stringToPascalCase(microservice.identifier) + 'LambdaExec',
+          Inflector.pascalCase(microservice.identifier) + 'LambdaExec',
           Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
           microservice.identifier
         );
@@ -394,7 +395,7 @@ export class LambdaService extends AbstractService {
 
         if (action.type === Action.LAMBDA) {
           names[microservice.identifier][action.identifier] = this.generateAwsResourceName(
-            this._actionIdentifierToPascalCase(action.identifier),
+            Inflector.pascalCase(action.identifier),
             Core.AWS.Service.LAMBDA,
             microservice.identifier
           );
@@ -428,7 +429,7 @@ export class LambdaService extends AbstractService {
 
       if (this._isIamRoleNew(execRole.RoleName)) {
         let policyName = this.generateAwsResourceName(
-          AbstractService.stringToPascalCase(microserviceIdentifier) + 'LambdaExecPolicy',
+          Inflector.pascalCase(microserviceIdentifier) + 'LambdaExecPolicy',
           Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
           microserviceIdentifier
         );
@@ -569,23 +570,6 @@ export class LambdaService extends AbstractService {
     ec2Statement.resource.add().any();
 
     return policy;
-  }
-
-  /**
-   * @todo - use https://github.com/blakeembrey/pascal-case node package instead
-   *
-   * @param {String} actionName
-   * @returns {String}
-   * @private
-   */
-  _actionIdentifierToPascalCase(actionName) {
-    let pascalCase = '';
-
-    actionName.split('-').forEach((part) => {
-      pascalCase += AbstractService.capitalizeFirst(part);
-    });
-
-    return pascalCase;
   }
 
   /**
