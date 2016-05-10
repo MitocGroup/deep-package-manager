@@ -480,7 +480,7 @@ export class AbstractService extends Core.OOP.Interface {
 
   /**
    * @param {String} string
-   * @returns {Array}
+   * @returns {String}
    */
   static stringToPascalCase(string) {
     return string
