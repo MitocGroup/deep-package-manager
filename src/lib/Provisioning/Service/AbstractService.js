@@ -477,4 +477,16 @@ export class AbstractService extends Core.OOP.Interface {
   static lowerCaseFirst(str) {
     return str.charAt(0).toLowerCase() + str.slice(1);
   }
+
+  /**
+   * @param {String} string
+   * @returns {Array}
+   */
+  static stringToPascalCase(string) {
+    return string
+      .split(/[^a-zA-Z0-9]+/)
+      .reduce((pascalString, part) => {
+        return pascalString + AbstractService.capitalizeFirst(part);
+      }, '');
+  }
 }
