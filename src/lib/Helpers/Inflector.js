@@ -20,7 +20,11 @@ export class Inflector {
   static lowerCaseFirst(str) {
     return str.charAt(0).toLowerCase() + str.slice(1);
   }
-  
+
+  /**
+   * @param {String} string
+   * @returns {String}
+   */
   static pascalCase(string) {
     return string
       .split(/[^a-zA-Z0-9]+/)
