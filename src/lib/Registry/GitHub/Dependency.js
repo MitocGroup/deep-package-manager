@@ -4,15 +4,15 @@
 
 'use strict';
 
-import {Tag} from './Tag';
-import {SemVerStrategy} from '../Resolver/Strategy/SemVerStrategy';
-import request from 'fetchy-request';
-import tar from 'tar-stream';
+import request from 'fetchy-request'
 import gunzip from 'gunzip-maybe';
-import {WaitFor} from '../../Helpers/WaitFor';
-import {StandardStrategy} from './ExtractStrategy/StandardStrategy';
-import {_extend as extend} from 'util';
+import tar from 'tar-stream';
 import url from 'url';
+import {_extend as extend} from 'util';
+import {WaitFor} from '../../Helpers/WaitFor';
+import {SemVerStrategy} from '../Resolver/Strategy/SemVerStrategy';
+import {StandardStrategy} from './ExtractStrategy/StandardStrategy';
+import {Tag} from './Tag';
 
 export class Dependency {
   /**
@@ -142,6 +142,12 @@ export class Dependency {
     console.log(`Dumping '${this.shortDependencyName}' dependency into '${dumpPath}'`);
 
     extractStrategy = extractStrategy || new StandardStrategy(dumpPath);
+
+    // Fixes deep-microservices-* cases
+    extractStrategy.advancedMatcherFromDeepDepShortName &&
+      extractStrategy.advancedMatcherFromDeepDepShortName(
+        this.shortDependencyName
+      );
 
     let unTarStream = tar.extract();
 
