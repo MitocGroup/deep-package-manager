@@ -4,15 +4,15 @@
 
 'use strict';
 
-import request  from 'fetchy-request'
-import gunzip  from 'gunzip-maybe'
-import tar  from 'tar-stream'
-import url  from 'url'
-import { _extend as extend } from 'util'
-import { WaitFor } from '../../Helpers/WaitFor'
-import { SemVerStrategy } from '../Resolver/Strategy/SemVerStrategy'
-import { StandardStrategy } from './ExtractStrategy/StandardStrategy'
-import { Tag } from './Tag'
+import request from 'fetchy-request'
+import gunzip from 'gunzip-maybe';
+import tar from 'tar-stream';
+import url from 'url';
+import {_extend as extend} from 'util';
+import {WaitFor} from '../../Helpers/WaitFor';
+import {SemVerStrategy} from '../Resolver/Strategy/SemVerStrategy';
+import {StandardStrategy} from './ExtractStrategy/StandardStrategy';
+import {Tag} from './Tag';
 
 export class Dependency {
   /**

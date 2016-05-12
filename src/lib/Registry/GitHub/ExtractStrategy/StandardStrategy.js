@@ -4,9 +4,9 @@
 
 'use strict';
 
-import fse  from 'fs-extra'
-import path  from 'path'
-import { AbstractStrategy } from './AbstractStrategy'
+import fse from 'fs-extra';
+import path from 'path';
+import {AbstractStrategy} from './AbstractStrategy';
 
 export class StandardStrategy extends AbstractStrategy {
   /**
