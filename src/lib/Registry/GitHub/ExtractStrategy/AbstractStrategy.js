@@ -4,7 +4,7 @@
 
 'use strict';
 
-import Core  from 'deep-core'
+import Core from 'deep-core';
 
 export class AbstractStrategy extends Core.OOP.Interface {
   /**
