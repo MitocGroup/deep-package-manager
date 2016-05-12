@@ -3,6 +3,7 @@ sudo: false
 node_js:
   - '4.3'
   - '5.9'
+  - '6.1'
 cache:
   directories:
   - "$(npm root -g)"
