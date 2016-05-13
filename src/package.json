@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "1.7.59",
+  "version": "1.7.65",
   "description": "DEEP Package Manager",
   "keywords": [
     "Digital Enterprise End-To-End Platform",
@@ -48,11 +48,10 @@
     "url": "https://github.com/MitocGroup/deep-package-manager.git"
   },
   "scripts": {
-    "preinstall": "bash node-bin/assure-deps.sh",
     "test": "bash node-bin/test.sh",
     "compile": "bash node-bin/compile.sh",
     "obfuscate-compiled": "bash node-bin/obfuscate-compiled.sh",
-    "prepublish": "npm run compile && npm run obfuscate-compiled"
+    "prepublish": "bash node-bin/assure-deps.sh && bash node-bin/compile.sh && bash node-bin/obfuscate-compiled.sh"
   },
   "dependencies": {
     "deep-db": "^1.x.x",
