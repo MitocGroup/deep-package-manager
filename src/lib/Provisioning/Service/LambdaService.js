@@ -62,17 +62,9 @@ export class LambdaService extends AbstractService {
           continue;
         }
 
-        let microserviceRoles = execRoles[microserviceIdentifier];
+        let execRole = execRoles[microserviceIdentifier];
 
-        for (let lambdaIdentifier in microserviceRoles) {
-          if (!microserviceRoles.hasOwnProperty(lambdaIdentifier)) {
-            continue;
-          }
-
-          let execRole = microserviceRoles[lambdaIdentifier];
-
-          deployedRoles.push(execRole.RoleName);
-        }
+        deployedRoles.push(execRole.RoleName);
       }
     }
 
@@ -345,11 +337,6 @@ export class LambdaService extends AbstractService {
         if (this._isIamRoleNew(roleName)) {
           syncStack.push(iam.createRole(params), (error, data) => {
             if (error) {
-              // @todo: remove this hook
-              if (Lambda.isErrorFalsePositive(error)) {
-                return;
-              }
-
               throw new FailedToCreateIamRoleException(roleName, error);
             }
 
