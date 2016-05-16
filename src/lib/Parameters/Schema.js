@@ -66,23 +66,46 @@ export class Schema {
   extractInteractive() {
     let obj = {};
 
-    for (var key in this._ramlModel) {
-      if (!this._ramlModel.hasOwnProperty(key)) {
-        continue;
+    Schema._confirmInteractiveMode((confirm) => {
+      for (let key in this._ramlModel) {
+        if (!this._ramlModel.hasOwnProperty(key)) {
+          continue;
+        }
+
+        let def = this._ramlModel[key];
+
+        if (confirm || (def.required && !def.default)) {
+          let prompt = new Prompt(Schema._getQuestionInfo(key, def));
+          prompt.syncMode = true;
+
+          // don't be afraid of cb since it's in sync mode
+          prompt.read((answer) => {
+            obj[key] = answer || def.default;
+          });
+        } else {
+          obj[key] = def.default;
+        }
       }
-
-      let def = this._ramlModel[key];
-
-      let prompt = new Prompt(Schema._getQuestionInfo(key, def));
-      prompt.syncMode = true;
-
-      // don't be afraid of cb since it's in sync mode
-      prompt.read((answer) => {
-        obj[key] = answer || def.default;
-      });
-    }
+    });
 
     return this.extract(obj);
+  }
+
+  /**
+   * @param {Function} cb
+   * @private
+   */
+  static _confirmInteractiveMode(cb) {
+    if (Schema.hasOwnProperty('_interactiveConfirmation')) {
+      return cb(Schema._interactiveConfirmation);
+    }
+
+    let prompt = new Prompt('Do you want to specify parameters values?');
+    prompt.syncMode = true;
+
+    prompt.readConfirm((confirm) => {
+      cb(Schema._interactiveConfirmation = confirm);
+    });
   }
 
   /**
