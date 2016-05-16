@@ -62,17 +62,9 @@ export class LambdaService extends AbstractService {
           continue;
         }
 
-        let microserviceRoles = execRoles[microserviceIdentifier];
+        let execRole = execRoles[microserviceIdentifier];
 
-        for (let lambdaIdentifier in microserviceRoles) {
-          if (!microserviceRoles.hasOwnProperty(lambdaIdentifier)) {
-            continue;
-          }
-
-          let execRole = microserviceRoles[lambdaIdentifier];
-
-          deployedRoles.push(execRole.RoleName);
-        }
+        deployedRoles.push(execRole.RoleName);
       }
     }
 
