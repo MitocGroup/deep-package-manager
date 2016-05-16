@@ -908,6 +908,7 @@ export class Instance {
    */
   update(callback, propertyConfigSnapshot = null, microservicesToUpdate = []) {
     this._isUpdate = true;
+    this._provisioning.isUpdate();
     this.microservicesToUpdate = microservicesToUpdate;
 
     if (propertyConfigSnapshot) {

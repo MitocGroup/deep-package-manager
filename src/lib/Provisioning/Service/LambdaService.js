@@ -337,11 +337,6 @@ export class LambdaService extends AbstractService {
         if (this._isIamRoleNew(roleName)) {
           syncStack.push(iam.createRole(params), (error, data) => {
             if (error) {
-              // @todo: remove this hook
-              if (Lambda.isErrorFalsePositive(error)) {
-                return;
-              }
-
               throw new FailedToCreateIamRoleException(roleName, error);
             }
 
