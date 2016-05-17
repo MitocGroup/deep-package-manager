@@ -122,8 +122,9 @@ suite('Property/Lambda', () => {
   //  chai.expect(lambda.handler).to.be.equal('bootstrap.handler');
   //});
 
-  test('Check RUNTIMES static getter returns [\'nodejs\', \'java8\', \'python2.7\']', () => {
-    chai.expect(Lambda.RUNTIMES.length).to.be.equal(3);
+  test('Check RUNTIMES static getter returns [\'nodejs4.3\', \'nodejs\', \'java8\', \'python2.7\']', () => {
+    chai.expect(Lambda.RUNTIMES.length).to.be.equal(4);
+    chai.expect(Lambda.RUNTIMES).to.be.includes('nodejs4.3');
     chai.expect(Lambda.RUNTIMES).to.be.includes('nodejs');
     chai.expect(Lambda.RUNTIMES).to.be.includes('java8');
     chai.expect(Lambda.RUNTIMES).to.be.includes('python2.7');

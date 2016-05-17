@@ -54,18 +54,10 @@ export class FrontendEngine {
    * @returns {String}
    */
   static getEngineGitHub(engine) {
-    let depName = null;
-
-    switch (engine) {
-      case FrontendEngine.ANGULAR_ENGINE:
-        depName = GitHubDependency.getDepName(
-          FrontendEngine.GITHUB_DEEP_USER,
-          `${FrontendEngine.GITHUB_REPO_PREFIX}angularjs`
-        );
-        break;
-    }
-
-    return depName;
+    return GitHubDependency.getDepName(
+      FrontendEngine.GITHUB_DEEP_USER,
+      `${FrontendEngine.GITHUB_REPO_PREFIX}${engine}`
+    );
   }
 
   /**
@@ -76,13 +68,9 @@ export class FrontendEngine {
     let engines = microservices.map((microservice) => microservice.frontendEngine);
     let plainEnginesBatch = [];
 
-    for (let i in engines) {
-      if (!engines.hasOwnProperty(i)) {
-        continue;
-      }
-
-      plainEnginesBatch.concat(engines[i].engines);
-    }
+    engines.forEach((engineObj) => {
+      plainEnginesBatch = plainEnginesBatch.concat(engineObj.engines);
+    });
 
     plainEngineLoop: for (let i in this._rawEngines) {
       if (!this._rawEngines.hasOwnProperty(i)) {
@@ -122,20 +110,17 @@ export class FrontendEngine {
    * @returns {String}
    */
   static getRealEngine(engine) {
-    switch (engine) {
-      case FrontendEngine.ANGULAR_ENGINE:
-        engine = 'ng';
-        break;
-    }
-
-    return `deep.${engine}.root`;
+    return `deep-root-${engine}`;
   }
 
   /**
    * @returns {String[]}
    */
   static get engines() {
-    return [FrontendEngine.ANGULAR_ENGINE];
+    return [
+      FrontendEngine.ANGULAR_ENGINE,
+      FrontendEngine.VANILLA_ENGINE,
+    ];
   }
 
   /**
@@ -143,6 +128,27 @@ export class FrontendEngine {
    */
   static get ANGULAR_ENGINE() {
     return 'angular';
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get AURELIA_ENGINE() {
+    return 'aurelia';
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get REACT_ENGINE() {
+    return 'react';
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get VANILLA_ENGINE() {
+    return 'vanilla';
   }
 
   /**

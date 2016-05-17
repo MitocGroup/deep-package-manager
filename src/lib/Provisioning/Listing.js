@@ -13,7 +13,7 @@ export class Listing {
    */
   constructor(property) {
     this._property = property;
-    this._hash = this._generateHash();
+    this._hash = property.configObj.baseHash;
   }
 
   /**
@@ -90,16 +90,6 @@ export class Listing {
    */
   set hash(hash) {
     this._hash = hash;
-  }
-
-  /**
-   * @private
-   */
-  _generateHash() {
-    return AbstractService.generateUniqueResourceHash(
-      this._property.config.awsAccountId,
-      this._property.identifier
-    );
   }
 
   /**

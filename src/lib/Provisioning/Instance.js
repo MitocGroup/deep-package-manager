@@ -326,15 +326,7 @@ export class Instance {
     let remaining = servicesVector.length;
 
     if (isUpdate) {
-      for (let i in servicesVector) {
-        if (!servicesVector.hasOwnProperty(i)) {
-          continue;
-        }
-
-        let service = servicesVector[i];
-
-        service.isUpdate = true;
-      }
+      this.isUpdate();
     }
 
     for (let i in servicesVector) {
@@ -419,6 +411,24 @@ export class Instance {
   }
 
   /**
+   * @param {Boolean} value
+   */
+  isUpdate(value = true) {
+    let services = this.services;
+    let servicesVector = services.iterator;
+
+    for (let i in servicesVector) {
+      if (!servicesVector.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let service = servicesVector[i];
+
+      service.isUpdate = value;
+    }
+  }
+
+  /**
    * @param {Function} callback
    * @param {Boolean} isUpdate
    */
@@ -433,15 +443,7 @@ export class Instance {
     let remaining = servicesVector.length;
 
     if (isUpdate) {
-      for (let i in servicesVector) {
-        if (!servicesVector.hasOwnProperty(i)) {
-          continue;
-        }
-
-        let service = servicesVector[i];
-
-        service.isUpdate = true;
-      }
+      this.isUpdate();
     }
 
     for (let i in servicesVector) {

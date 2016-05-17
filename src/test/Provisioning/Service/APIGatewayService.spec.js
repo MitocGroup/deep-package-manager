@@ -281,7 +281,7 @@ suite('Provisioning/Service/APIGatewayService', () => {
     let e = null;
     let actualResult = null;
     let microservicesConfig = {
-      'deep.ng.test': {
+      'deep-root-test': {
         isRoot: false,
         parameters: {},
         resources: {

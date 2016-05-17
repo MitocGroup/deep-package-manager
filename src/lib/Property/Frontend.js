@@ -64,7 +64,7 @@ export class Frontend {
       deployId: propertyConfig.deployId,
       awsRegion: propertyConfig.awsRegion,
       models: propertyConfig.models,
-      identityPoolId: '',
+      identityPoolId: localRuntime ? 'us-east-1:xxxxxxxx-xxxx-xxxx-xxxx-xx0123456789' : '',
       identityProviders: '',
       microservices: {},
       globals: propertyConfig.globals,
@@ -77,9 +77,15 @@ export class Frontend {
 
     if (propertyConfig.provisioning) {
       let cognitoConfig = propertyConfig.provisioning[Core.AWS.Service.COGNITO_IDENTITY];
+      let iamConfig = propertyConfig.provisioning[Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT];
 
       config.identityPoolId = cognitoConfig.identityPool.IdentityPoolId;
-      config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders;
+      config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders || {};
+
+      // add Auth0 OIDC provider
+      if (iamConfig.identityProvider && iamConfig.identityProvider.domain) {
+        config.identityProviders[iamConfig.identityProvider.domain] = iamConfig.identityProvider.clientID;
+      }
 
       apiGatewayBaseUrl = propertyConfig.provisioning[Core.AWS.Service.API_GATEWAY].api.baseUrl;
 
@@ -135,6 +141,10 @@ export class Frontend {
 
           let action = resourceActions[actionName];
 
+          if (!backendTarget && action.scope === ActionFlags.PRIVATE) {
+            continue;
+          }
+
           let originalSource = (action.type === Action.LAMBDA) ?
             microservice.lambdas[action.identifier].arn :
             action.source;
@@ -155,6 +165,7 @@ export class Frontend {
               ttl: action.cacheTtl,
             },
             region: propertyConfig.awsRegion, // @todo: set it from lambda provision
+            scope: ActionFlags.stringify(action.scope),
             source: {
               api: apiEndpoint,
               original: (backendTarget || ActionFlags.isDirect(action.scope)) ? originalSource : null,
@@ -393,7 +404,8 @@ export class Frontend {
       propertyConfig.globals.gtmContainerId, // it may be empty/undefined
       this._microservicesConfig,
       propertyConfig.globals.pageLoader,
-      propertyConfig.globals.version
+      propertyConfig.globals.version,
+      propertyConfig.globals.favicon
     );
 
     if (Frontend._skipInjectDeployNumber) {

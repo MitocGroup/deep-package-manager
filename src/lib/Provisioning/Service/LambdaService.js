@@ -9,6 +9,7 @@ import {S3Service} from './S3Service';
 import {APIGatewayService} from './APIGatewayService';
 import Core from 'deep-core';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
+import {Inflector} from '../../Helpers/Inflector';
 import {WaitFor} from '../../Helpers/WaitFor';
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
@@ -61,17 +62,9 @@ export class LambdaService extends AbstractService {
           continue;
         }
 
-        let microserviceRoles = execRoles[microserviceIdentifier];
+        let execRole = execRoles[microserviceIdentifier];
 
-        for (let lambdaIdentifier in microserviceRoles) {
-          if (!microserviceRoles.hasOwnProperty(lambdaIdentifier)) {
-            continue;
-          }
-
-          let execRole = microserviceRoles[lambdaIdentifier];
-
-          deployedRoles.push(execRole.RoleName);
-        }
+        deployedRoles.push(execRole.RoleName);
       }
     }
 
@@ -185,7 +178,7 @@ export class LambdaService extends AbstractService {
 
         if (action.type === Action.LAMBDA && action.cron) {
           let lambdaName = this.generateAwsResourceName(
-            this._actionIdentifierToPascalCase(action.identifier),
+            Inflector.pascalCase(action.identifier),
             Core.AWS.Service.LAMBDA,
             microservice.identifier
           );
@@ -325,42 +318,30 @@ export class LambdaService extends AbstractService {
       }
 
       let microservice = microservices[microserviceKey];
+      let doUploadMicroserviceExecRole = microservice.resources.actions.reduce((isLambda, action) => {
+        return isLambda || action.type === Action.LAMBDA;
+      }, false);
 
-      execRoles[microservice.identifier] = {};
+      if (doUploadMicroserviceExecRole) {
+        let roleName = this.generateAwsResourceName(
+          Inflector.pascalCase(microservice.identifier) + 'LambdaExec',
+          Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
+          microservice.identifier
+        );
 
-      for (let actionKey in microservice.resources.actions) {
-        if (!microservice.resources.actions.hasOwnProperty(actionKey)) {
-          continue;
-        }
+        let params = {
+          AssumeRolePolicyDocument: execRolePolicy.toString(),
+          RoleName: roleName,
+        };
 
-        let action = microservice.resources.actions[actionKey];
+        if (this._isIamRoleNew(roleName)) {
+          syncStack.push(iam.createRole(params), (error, data) => {
+            if (error) {
+              throw new FailedToCreateIamRoleException(roleName, error);
+            }
 
-        if (action.type === Action.LAMBDA) {
-          let roleName = this.generateAwsResourceName(
-            this._actionIdentifierToPascalCase(action.identifier) + 'Exec',
-            Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
-            microservice.identifier
-          );
-
-          let params = {
-            AssumeRolePolicyDocument: execRolePolicy.toString(),
-            RoleName: roleName,
-          };
-
-          if (this._isIamRoleNew(roleName)) {
-            syncStack.push(iam.createRole(params), (error, data) => {
-              if (error) {
-                // @todo: remove this hook
-                if (Lambda.isErrorFalsePositive(error)) {
-                  return;
-                }
-
-                throw new FailedToCreateIamRoleException(roleName, error);
-              }
-
-              execRoles[microservice.identifier][action.identifier] = data.Role;
-            });
-          }
+            execRoles[microservice.identifier] = data.Role;
+          });
         }
       }
     }
@@ -401,7 +382,7 @@ export class LambdaService extends AbstractService {
 
         if (action.type === Action.LAMBDA) {
           names[microservice.identifier][action.identifier] = this.generateAwsResourceName(
-            this._actionIdentifierToPascalCase(action.identifier),
+            Inflector.pascalCase(action.identifier),
             Core.AWS.Service.LAMBDA,
             microservice.identifier
           );
@@ -424,44 +405,41 @@ export class LambdaService extends AbstractService {
     let iam = this.provisioning.iam;
     let policies = {};
     let syncStack = new AwsRequestSyncStack();
+    let rootMicroservice = this.property.rootMicroservice;
 
     for (let microserviceIdentifier in roles) {
       if (!roles.hasOwnProperty(microserviceIdentifier)) {
         continue;
       }
+      
+      let execRole = roles[microserviceIdentifier];
 
-      let microserviceRoles = roles[microserviceIdentifier];
+      if (this._isIamRoleNew(execRole.RoleName)) {
+        let policyName = this.generateAwsResourceName(
+          Inflector.pascalCase(microserviceIdentifier) + 'LambdaExecPolicy',
+          Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
+          microserviceIdentifier
+        );
 
-      for (let lambdaIdentifier in microserviceRoles) {
-        if (!microserviceRoles.hasOwnProperty(lambdaIdentifier)) {
-          continue;
-        }
+        let policy = this._getAccessPolicy(
+          microserviceIdentifier,
+          buckets,
+          microserviceIdentifier === rootMicroservice.identifier
+        );
 
-        let execRole = microserviceRoles[lambdaIdentifier];
+        let params = {
+          PolicyDocument: policy.toString(),
+          PolicyName: policyName,
+          RoleName: execRole.RoleName,
+        };
 
-        if (this._isIamRoleNew(execRole.RoleName)) {
-          let policyName = this.generateAwsResourceName(
-            this._actionIdentifierToPascalCase(lambdaIdentifier) + 'Policy',
-            Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
-            microserviceIdentifier
-          );
+        syncStack.push(iam.putRolePolicy(params), (error, data) => {
+          if (error) {
+            throw new FailedAttachingPolicyToRoleException(policyName, execRole.RoleName, error);
+          }
 
-          let policy = this._getAccessPolicy(microserviceIdentifier, buckets);
-
-          let params = {
-            PolicyDocument: policy.toString(),
-            PolicyName: policyName,
-            RoleName: execRole.RoleName,
-          };
-
-          syncStack.push(iam.putRolePolicy(params), (error, data) => {
-            if (error) {
-              throw new FailedAttachingPolicyToRoleException(policyName, execRole.RoleName, error);
-            }
-
-            policies[execRole.RoleName] = policy;
-          });
-        }
+          policies[execRole.RoleName] = policy;
+        });
       }
     }
 
@@ -477,10 +455,11 @@ export class LambdaService extends AbstractService {
    *
    * @param {String} microserviceIdentifier
    * @param {Array} buckets
+   * @param {Boolean} rootLambda
    *
    * @returns {Policy}
    */
-  _getAccessPolicy(microserviceIdentifier, buckets) {
+  _getAccessPolicy(microserviceIdentifier, buckets, rootLambda = false) {
     let policy = new Core.AWS.IAM.Policy();
 
     let cloudWatchLogsService = this.provisioning.services.find(CloudWatchLogsService);
@@ -518,7 +497,9 @@ export class LambdaService extends AbstractService {
         let s3Resource = s3Statement.resource.add();
 
         s3Resource.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
-        s3Resource.descriptor = `${bucket.name}/${microserviceIdentifier}/${Core.AWS.IAM.Policy.ANY}`;
+        s3Resource.descriptor = rootLambda ?
+          `${bucket.name}/${Core.AWS.IAM.Policy.ANY}` :
+          `${bucket.name}/${microserviceIdentifier}/${Core.AWS.IAM.Policy.ANY}`;
       } else {
         let s3ResourceSystem = s3Statement.resource.add();
         let s3ResourceTmp = s3Statement.resource.add();
@@ -559,7 +540,7 @@ export class LambdaService extends AbstractService {
     let sqsService = this.provisioning.services.find(SQSService);
     policy.statement.add(sqsService.generateAllowActionsStatement([
       'SendMessage', 'SendMessageBatch', 'ReceiveMessage',
-      'DeleteMessage', 'DeleteMessageBatch'
+      'DeleteMessage', 'DeleteMessageBatch', 'GetQueueAttributes'
     ]));
 
     let esService = this.provisioning.services.find(ESService);
@@ -576,23 +557,6 @@ export class LambdaService extends AbstractService {
     ec2Statement.resource.add().any();
 
     return policy;
-  }
-
-  /**
-   * @todo - use https://github.com/blakeembrey/pascal-case node package instead
-   *
-   * @param {String} actionName
-   * @returns {String}
-   * @private
-   */
-  _actionIdentifierToPascalCase(actionName) {
-    let pascalCase = '';
-
-    actionName.split('-').forEach((part) => {
-      pascalCase += AbstractService.capitalizeFirst(part);
-    });
-
-    return pascalCase;
   }
 
   /**

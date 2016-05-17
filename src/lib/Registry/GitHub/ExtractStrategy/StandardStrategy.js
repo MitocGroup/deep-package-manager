@@ -4,9 +4,9 @@
 
 'use strict';
 
-import {AbstractStrategy} from './AbstractStrategy';
-import path from 'path';
 import fse from 'fs-extra';
+import path from 'path';
+import {AbstractStrategy} from './AbstractStrategy';
 
 export class StandardStrategy extends AbstractStrategy {
   /**
@@ -14,6 +14,28 @@ export class StandardStrategy extends AbstractStrategy {
    */
   constructor(...args) {
     super(...args);
+
+    this._advancedMatcher = null;
+  }
+
+  /**
+   * @param {String} shortDependencyName
+   * @returns {StandardStrategy}
+   */
+  advancedMatcherFromDeepDepShortName(shortDependencyName) {
+    let dependencyBase = shortDependencyName
+      .replace(/^deep(-microservices)?-/i, '');
+
+    let matchRegexp = new RegExp(
+      `^\/?src\/(deep(-microservices)?-)?${dependencyBase}\/`,
+      'i'
+    );
+
+    this._advancedMatcher = (filePath) => {
+      return matchRegexp.test(filePath);
+    };
+
+    return this;
   }
 
   /**
@@ -22,7 +44,7 @@ export class StandardStrategy extends AbstractStrategy {
    * @param {Function} cb
    */
   extract(filePath, stream, cb) {
-    if (!StandardStrategy._haveToDump(filePath)) {
+    if (!this._haveToDump(filePath)) {
       cb();
       return;
     }
@@ -37,19 +59,20 @@ export class StandardStrategy extends AbstractStrategy {
 
   /**
    * @param {String} filePath
+   * @returns {Boolean}
+   * @private
+   */
+ _haveToDump(filePath) {
+    return /^\/?src\/[A-Z][^\/]+\//.test(filePath) ||
+      (this._advancedMatcher && this._advancedMatcher(filePath));
+  }
+
+  /**
+   * @param {String} filePath
    * @returns {String}
    * @private
    */
   static _normalizeFilePath(filePath) {
     return filePath.replace(/^(\/?src\/[^\/]+\/)/i, '');
-  }
-
-  /**
-   * @param {String} filePath
-   * @returns {Boolean}
-   * @private
-   */
-  static _haveToDump(filePath) {
-    return /^\/?src\/[A-Z][^\/]+\//.test(filePath);
   }
 }

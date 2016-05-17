@@ -127,13 +127,14 @@ export class Instance {
    * @returns {Instance}
    */
   getProvisioningCollisions(callback, matcher = null) {
+    let _this = this;
     let resourcesLister = new Listing(this);
     resourcesLister.hash = function (resourceName) {
       if (matcher) {
         return matcher.match(this.constructor.name.replace(/Driver$/i, ''), resourceName);
       }
 
-      return AbstractService.extractBaseHashFromResourceName(resourceName) === this._configObj.baseHash;
+      return AbstractService.extractBaseHashFromResourceName(resourceName) === _this._configObj.baseHash;
     };
 
     resourcesLister.list((result) => {
@@ -589,7 +590,7 @@ export class Instance {
         let lambdaPath = microservice.raw.lambdas[lambdaIdentifier];
         let lambdaOptions = microservice.raw.lambdas._[lambdaIdentifier];
 
-        let lambdaExecRole = lambdaExecRoles[microserviceIdentifier][lambdaIdentifier];
+        let lambdaExecRole = lambdaExecRoles[microserviceIdentifier];
         let lambdaName = lambdaNames[microserviceIdentifier][lambdaIdentifier];
 
         let lambdaInstance = new Lambda(
@@ -907,6 +908,7 @@ export class Instance {
    */
   update(callback, propertyConfigSnapshot = null, microservicesToUpdate = []) {
     this._isUpdate = true;
+    this._provisioning.isUpdate();
     this.microservicesToUpdate = microservicesToUpdate;
 
     if (propertyConfigSnapshot) {
