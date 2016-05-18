@@ -58,6 +58,14 @@ export class PostDeployHook {
   }
 
   /**
+   * @param {Property} property
+   * @returns {Array}
+   */
+  static getBindingParameters(property) {
+    return [property._provisioning, property._isUpdate];
+  }
+
+  /**
    * @returns {String}
    */
   static get HOOK_BASENAME() {

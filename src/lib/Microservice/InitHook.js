@@ -56,6 +56,14 @@ export class InitHook {
   }
 
   /**
+   * @param {Property} property
+   * @returns {Array}
+   */
+  static getBindingParameters(property) {
+    return [];
+  }
+
+  /**
    * @returns {String}
    */
   static get HOOK_BASENAME() {
