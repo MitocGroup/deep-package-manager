@@ -6,6 +6,7 @@
 
 import FileSystem from 'graceful-fs';
 import FileSystemExtra from 'fs-extra';
+import FS from 'fs';
 import path from 'path';
 import mkdirp from 'mkdirp';
 import ignore from 'ignore';
@@ -60,6 +61,13 @@ export class FileWalker {
   }
 
   /**
+   * @param {Object[]} args
+   */
+  remove(...args) {
+    FileSystemExtra.removeSync(...args);
+  }
+
+  /**
    * @param {String} source
    * @param {String} destination
    * @param {Function} filter
@@ -85,7 +93,9 @@ export class FileWalker {
       let fileCopy = path.join(destination, relativePath);
       let fileDir = path.dirname(fileCopy);
 
-      this.mkdir(fileDir);
+      if (!FS.existsSync(fileDir)) {
+        this.mkdir(fileDir);
+      }
 
       FileSystemExtra.copySync(file, fileCopy);
     }
