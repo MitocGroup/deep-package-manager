@@ -52,7 +52,15 @@ export class InitHook {
    * @private
    */
   _getHookFile() {
-    return path.join(this._microservice.basePath, InitHook.HOOK_BASENAME);
+    return path.join(this._microservice.basePath, this.constructor.HOOK_BASENAME);
+  }
+
+  /**
+   * @param {Property} property
+   * @returns {Array}
+   */
+  static getBindingParameters(property) {
+    return [];
   }
 
   /**
