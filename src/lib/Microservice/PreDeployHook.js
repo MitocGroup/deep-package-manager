@@ -29,6 +29,13 @@ export class PreDeployHook extends InitHook {
   }
 
   /**
+   * @returns {String}
+   */
+  static get NAME() {
+    return 'PreDeployHook';
+  }
+
+  /**
    * @param {Property} property
    * @returns {Array}
    */
