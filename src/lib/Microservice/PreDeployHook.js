@@ -15,6 +15,20 @@ export class PreDeployHook extends InitHook {
   }
 
   /**
+   * @param {Function} hook
+   * @returns {Function}
+   * @private
+   */
+  _wrap(hook) {
+    return (cb) => {
+      hook.bind({
+        microservice: this._microservice,
+        deep_package_manager: require('../bootstrap'), // @todo: remove this?
+      })(cb);
+    };
+  }
+
+  /**
    * @param {Property} property
    * @returns {Array}
    */
