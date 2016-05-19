@@ -56,6 +56,13 @@ export class InitHook {
   }
 
   /**
+   * @returns {String}
+   */
+  static get NAME() {
+    return 'InitHook';
+  }
+
+  /**
    * @param {Property} property
    * @returns {Array}
    */

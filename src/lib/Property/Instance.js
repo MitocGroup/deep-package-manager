@@ -853,7 +853,7 @@ export class Instance {
     let wait = new WaitFor();
     let microservices = this.microservices;
     let remaining = microservices.length;
-    let msHookProperty = Inflector.lowerCaseFirst(hookClass.name);
+    let msHookProperty = Inflector.lowerCaseFirst(hookClass.NAME);
 
     wait.push(() => {
       return remaining <= 0;
@@ -868,12 +868,12 @@ export class Instance {
       let hook = microservice[msHookProperty];
 
       if (!hook) {
-        console.log(`No ${hookClass.name} found for microservice ${microservice.identifier}`);
+        console.log(`No ${hookClass.NAME} found for microservice ${microservice.identifier}`);
         remaining--;
         continue;
       }
 
-      console.log(`Running ${hookClass.name} for microservice ${microservice.identifier}`);
+      console.log(`Running ${hookClass.NAME} for microservice ${microservice.identifier}`);
 
       hook(...hookClass.getBindingParameters(this).concat(() => {
         remaining--;

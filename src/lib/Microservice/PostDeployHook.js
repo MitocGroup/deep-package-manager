@@ -51,6 +51,13 @@ export class PostDeployHook {
 
   /**
    * @returns {String}
+   */
+  static get NAME() {
+    return 'PostDeployHook';
+  }
+
+  /**
+   * @returns {String}
    * @private
    */
   _getHookFile() {
