@@ -12,11 +12,15 @@ import {Instance as Provisioning} from '../Provisioning/Instance';
 import {Exception} from '../Exception/Exception';
 import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
 import {Instance as Microservice} from '../Microservice/Instance';
+import {PreDeployHook} from '../Microservice/PreDeployHook';
+import {PostDeployHook} from '../Microservice/PostDeployHook';
+import {InitHook} from '../Microservice/InitHook';
 import {DuplicateRootException} from './Exception/DuplicateRootException';
 import {MissingRootException} from './Exception/MissingRootException';
 import {MissingMicroserviceException} from './Exception/MissingMicroserviceException';
 import {Lambda} from './Lambda';
 import {WaitFor} from '../Helpers/WaitFor';
+import {Inflector} from '../Helpers/Inflector';
 import {Frontend} from './Frontend';
 import {Model} from './Model';
 import {Migration} from './Migration';
@@ -819,42 +823,8 @@ export class Instance {
    * @returns {Instance}
    * @private
    */
-  runInitMsHooks(callback) {
-    let wait = new WaitFor();
-    let microservices = this.microservices;
-    let remaining = microservices.length;
-
-    wait.push(() => {
-      return remaining <= 0;
-    });
-
-    for (let i in microservices) {
-      if (!microservices.hasOwnProperty(i)) {
-        continue;
-      }
-
-      let microservice = microservices[i];
-
-      let hook = microservice.initHook;
-
-      if (!hook) {
-        console.log(`No init hook found for microservice ${microservice.identifier}`);
-        remaining--;
-        continue;
-      }
-
-      console.log(`Running init hook for microservice ${microservice.identifier}`);
-
-      hook(() => {
-        remaining--;
-      });
-    }
-
-    wait.ready(() => {
-      callback();
-    });
-
-    return this;
+  _runPostDeployMsHooks(callback) {
+    this._runHook(PostDeployHook, callback);
   }
 
   /**
@@ -862,10 +832,28 @@ export class Instance {
    * @returns {Instance}
    * @private
    */
-  _runPostDeployMsHooks(callback) {
+  runInitMsHooks(callback) {
+    this._runHook(InitHook, callback);
+  }
+
+  /**
+   * @param {Function} callback
+   */
+  runPreDeployMsHooks(callback) {
+    this._runHook(PreDeployHook, callback);
+  }
+
+  /**
+   * @param {Object} hookClass
+   * @param {Function} callback
+   * @returns {Instance}
+   * @private
+   */
+  _runHook(hookClass, callback) {
     let wait = new WaitFor();
     let microservices = this.microservices;
     let remaining = microservices.length;
+    let msHookProperty = Inflector.lowerCaseFirst(hookClass.NAME);
 
     wait.push(() => {
       return remaining <= 0;
@@ -877,20 +865,19 @@ export class Instance {
       }
 
       let microservice = microservices[i];
-
-      let hook = microservice.postDeployHook;
+      let hook = microservice[msHookProperty];
 
       if (!hook) {
-        console.log(`No post deploy hook found for microservice ${microservice.identifier}`);
+        console.log(`No ${hookClass.NAME} found for microservice ${microservice.identifier}`);
         remaining--;
         continue;
       }
 
-      console.log(`Running post deploy hook for microservice ${microservice.identifier}`);
+      console.log(`Running ${hookClass.NAME} for microservice ${microservice.identifier}`);
 
-      hook(this._provisioning, this._isUpdate, () => {
+      hook(...hookClass.getBindingParameters(this).concat(() => {
         remaining--;
-      });
+      }));
     }
 
     wait.ready(() => {

@@ -11,6 +11,7 @@ import {Autoload} from './Metadata/Autoload';
 import {ResourceCollection} from './Metadata/ResourceCollection';
 import {Compiler} from '../Compilation/Compiler';
 import {PostDeployHook} from './PostDeployHook';
+import {PreDeployHook} from './PreDeployHook';
 import {InitHook} from './InitHook';
 import {FrontendEngine} from './FrontendEngine';
 import path from 'path';
@@ -39,6 +40,7 @@ export class Instance {
     this._autoload = new Autoload(this._config.autoload, this._basePath);
     this._resources = null;
 
+    this._preDeployHook = new PreDeployHook(this);
     this._postDeployHook = new PostDeployHook(this);
     this._initHook = new InitHook(this);
 
@@ -173,6 +175,13 @@ export class Instance {
    */
   get initHook() {
     return this._initHook.getHook();
+  }
+
+  /**
+   * @returns {Function}
+   */
+  get preDeployHook() {
+    return this._preDeployHook.getHook();
   }
 
   /**

@@ -51,10 +51,25 @@ export class PostDeployHook {
 
   /**
    * @returns {String}
+   */
+  static get NAME() {
+    return 'PostDeployHook';
+  }
+
+  /**
+   * @returns {String}
    * @private
    */
   _getHookFile() {
     return path.join(this._microservice.basePath, PostDeployHook.HOOK_BASENAME);
+  }
+
+  /**
+   * @param {Property} property
+   * @returns {Array}
+   */
+  static getBindingParameters(property) {
+    return [property._provisioning, property._isUpdate];
   }
 
   /**
