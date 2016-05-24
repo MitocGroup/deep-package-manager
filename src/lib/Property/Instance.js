@@ -8,6 +8,7 @@ import AWS from 'aws-sdk';
 import FileSystem from 'fs';
 import FileSystemExtra from 'fs-extra';
 import Path from 'path';
+import Core from 'deep-core';
 import {Instance as Provisioning} from '../Provisioning/Instance';
 import {Exception} from '../Exception/Exception';
 import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
@@ -41,7 +42,6 @@ import {DeployID} from '../Helpers/DeployID';
 import {MigrationsRegistry} from './MigrationsRegistry';
 import {DeployConfig} from './DeployConfig';
 import {InvalidConfigException} from './Exception/InvalidConfigException';
-import Core from 'deep-core';
 
 /**
  * Property instance
@@ -464,7 +464,7 @@ export class Instance {
     let searchDomains = {};
     let globalCfg = this._config.globals;
     let typeES = {type: Core.AWS.Service.ELASTIC_SEARCH,};
-    
+
     if (globalCfg.search && globalCfg.search.enabled) {
       searchDomains[ESService.CLIENT_DOMAIN_NAME] = typeES;
     }
