@@ -462,7 +462,7 @@ export class Instance {
    */
   get _searchDomains() {
     let searchDomains = {};
-    let globalCfg = this._config.globals;
+    let globalCfg = this._config.globals || {};
     let typeES = {type: Core.AWS.Service.ELASTIC_SEARCH,};
 
     if (globalCfg.search && globalCfg.search.enabled) {
