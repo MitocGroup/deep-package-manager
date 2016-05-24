@@ -41,6 +41,7 @@ import {DeployID} from '../Helpers/DeployID';
 import {MigrationsRegistry} from './MigrationsRegistry';
 import {DeployConfig} from './DeployConfig';
 import {InvalidConfigException} from './Exception/InvalidConfigException';
+import Core from 'deep-core';
 
 /**
  * Property instance
@@ -462,7 +463,7 @@ export class Instance {
   get _searchConfig() {
     let searchConfig = {};
     let globalCfg = this._config.globals;
-    let typeES = {type: 'es',};
+    let typeES = {type: Core.AWS.Service.ELASTIC_SEARCH,};
     
     if (globalCfg.search && globalCfg.search.enabled) {
       searchConfig[ESService.CLIENT_DOMAIN_NAME] = typeES;
