@@ -27,6 +27,7 @@ import {Migration} from './Migration';
 import {ValidationSchema} from './ValidationSchema';
 import {AbstractService} from '../Provisioning/Service/AbstractService';
 import {S3Service} from '../Provisioning/Service/S3Service';
+import {ESService} from '../Provisioning/Service/ESService';
 import {Config} from './Config';
 import {Hash} from '../Helpers/Hash';
 import {FrontendEngine} from '../Microservice/FrontendEngine';
@@ -371,6 +372,7 @@ export class Instance {
       }
     }
 
+    this._config.searchDomains = this._searchConfig;
     this._config.microservices = microservicesConfig;
 
     let models = Model.create(...modelsDirs);
@@ -451,6 +453,26 @@ export class Instance {
     }
 
     return lambdas;
+  }
+
+  /**
+   * @returns {Object}
+   * @private
+   */
+  get _searchConfig() {
+    let searchConfig = {};
+    let globalCfg = this._config.globals;
+    let typeES = {type: 'es',};
+    
+    if (globalCfg.search && globalCfg.search.enabled) {
+      searchConfig[ESService.CLIENT_DOMAIN_NAME] = typeES;
+    }
+
+    if (globalCfg.logDrivers && globalCfg.logDrivers.rum) {
+      searchConfig[ESService.RUM_DOMAIN_NAME] = typeES;
+    }
+
+    return searchConfig;
   }
 
   /**
