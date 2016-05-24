@@ -373,7 +373,7 @@ export class Instance {
       }
     }
 
-    this._config.searchDomains = this._searchConfig;
+    this._config.searchDomains = this._searchDomains;
     this._config.microservices = microservicesConfig;
 
     let models = Model.create(...modelsDirs);
@@ -460,20 +460,20 @@ export class Instance {
    * @returns {Object}
    * @private
    */
-  get _searchConfig() {
-    let searchConfig = {};
+  get _searchDomains() {
+    let searchDomains = {};
     let globalCfg = this._config.globals;
     let typeES = {type: Core.AWS.Service.ELASTIC_SEARCH,};
     
     if (globalCfg.search && globalCfg.search.enabled) {
-      searchConfig[ESService.CLIENT_DOMAIN_NAME] = typeES;
+      searchDomains[ESService.CLIENT_DOMAIN_NAME] = typeES;
     }
 
     if (globalCfg.logDrivers && globalCfg.logDrivers.rum) {
-      searchConfig[ESService.RUM_DOMAIN_NAME] = typeES;
+      searchDomains[ESService.RUM_DOMAIN_NAME] = typeES;
     }
 
-    return searchConfig;
+    return searchDomains;
   }
 
   /**
