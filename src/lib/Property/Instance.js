@@ -8,6 +8,7 @@ import AWS from 'aws-sdk';
 import FileSystem from 'fs';
 import FileSystemExtra from 'fs-extra';
 import Path from 'path';
+import Core from 'deep-core';
 import {Instance as Provisioning} from '../Provisioning/Instance';
 import {Exception} from '../Exception/Exception';
 import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
@@ -27,6 +28,7 @@ import {Migration} from './Migration';
 import {ValidationSchema} from './ValidationSchema';
 import {AbstractService} from '../Provisioning/Service/AbstractService';
 import {S3Service} from '../Provisioning/Service/S3Service';
+import {ESService} from '../Provisioning/Service/ESService';
 import {Config} from './Config';
 import {Hash} from '../Helpers/Hash';
 import {FrontendEngine} from '../Microservice/FrontendEngine';
@@ -371,6 +373,7 @@ export class Instance {
       }
     }
 
+    this._config.searchDomains = this._searchDomains;
     this._config.microservices = microservicesConfig;
 
     let models = Model.create(...modelsDirs);
@@ -451,6 +454,26 @@ export class Instance {
     }
 
     return lambdas;
+  }
+
+  /**
+   * @returns {Object}
+   * @private
+   */
+  get _searchDomains() {
+    let searchDomains = {};
+    let globalCfg = this._config.globals;
+    let typeES = {type: Core.AWS.Service.ELASTIC_SEARCH,};
+
+    if (globalCfg.search && globalCfg.search.enabled) {
+      searchDomains[ESService.CLIENT_DOMAIN_NAME] = typeES;
+    }
+
+    if (globalCfg.logDrivers && globalCfg.logDrivers.rum) {
+      searchDomains[ESService.RUM_DOMAIN_NAME] = typeES;
+    }
+
+    return searchDomains;
   }
 
   /**
