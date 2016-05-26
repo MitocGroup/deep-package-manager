@@ -31,7 +31,7 @@ suite('Helpers/Terminal/Prompt', () => {
   });
 
   test('Check _noInteractionMode() returns false', () => {
-    chai.expect(Prompt._noInteractionMode).to.equal(false);
+    chai.expect(Prompt._noInteractionMode).to.equal(true);
   });
 
   test('Check constructor sets  value for _text', () => {
@@ -117,7 +117,7 @@ suite('Helpers/Terminal/Prompt', () => {
 
     chai.expect(spyCallback).to.have.been.calledWith();
     chai.expect(actualResult).to.be.an.instanceof(Prompt);
-    chai.expect(callbackArgs).to.eql([`${text}:`]);
+    chai.expect(callbackArgs).to.eql(['']);
   });
 
   test('Check readWithDefaults() calls _prompt() and returns answer in cb', () => {
@@ -134,7 +134,7 @@ suite('Helpers/Terminal/Prompt', () => {
 
     chai.expect(spyCallback).to.have.been.calledWith();
     chai.expect(actualResult).to.be.an.instanceof(Prompt);
-    chai.expect(callbackArgs).to.eql([`${text} [${defaultValue}]:`]);
+    chai.expect(callbackArgs).to.eql([`{defaultValue`]);
   });
 
   test('Check _promptHidden() for !_syncMode', () => {
@@ -166,7 +166,7 @@ suite('Helpers/Terminal/Prompt', () => {
 
     chai.expect(spyCallback).to.have.been.calledWith();
     chai.expect(actualResult).to.be.an.instanceof(Prompt);
-    chai.expect(callbackArgs).to.eql([`${text}:`]);
+    chai.expect(callbackArgs).to.eql([``]);
   });
 
   //@todo - add smart logic
