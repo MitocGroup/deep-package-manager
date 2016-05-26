@@ -6,12 +6,14 @@ node_js:
   - '6.2'
 cache:
   directories:
-  - "$(npm root -g)"
+  - $(npm root -g)
   - node_modules
   - $(npm config get prefix)/bin
 notifications:
   email:
   - devs-deep@mitocgroup.com
+  slack:
+    secure: CParjUyPwAK8/GB/OUmSjzfDFzls9F05h5+vxjpkvuFRmCpqbJKwEA4M9KRR+VK+H9nGJcUzTJBFLNTsADh8+hmKDt5vDsCxZ48hQ2zUIJfMIXVtpf/Hxs3K1HfLhN/YCkO14o1MMMkmXFqrbPI8YqmupdlXBVG3YQM1N0B37vnlsjhcEtJgql8FUx1T5CtFuNjRzA5SqYhx7/G1O/xtAYKkYfD/XGyoJBZngMfQ/FY/6fUlBztedC8n6RgcrzDi0phIWmT1u0naVgK8CI9ywa2/Cn0sozTfZQA0TshlDjM6aZdBqd5rxWZKm6faCzr36mmtr0eowHt6LuhGKR/RNx/Q9LDiCleOGOv6l+qbjIqUB4WVMMec7t6V0cENeWgUPYLhUZ7Z3/HKRO4jdbeSpMc8mpJ7BxW1kCWgtYqOP/yRRfXuBC5wxybFkI3Ljv63YVMCPmL8qHcidiLsa1adr4nBuBkrV/A67BUzonhdSVOuvS/sxVxy187xwHsQITBuf2gL+oRCzBg8K/dp6O0M3xkvGsXDoUa43B85kgOEJ9YoAqnuf0Q0iuDSgu4YaCnZHSoKF+dYmy+M5fQTXSzYm9Mk9rfAA/lES/2iWJcGOqUQlpoG3y7BhJhX8X0+zWPrIzPiECMMY38bnRsxr6rxY39Zih/X6mjoph3amyru1fs=
 branches:
   only:
   - master
