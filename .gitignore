@@ -116,3 +116,4 @@ lib.compiled
 /tests/*
 coverage/*
 .parameters.json
+**/test/bin/helper/*.js
