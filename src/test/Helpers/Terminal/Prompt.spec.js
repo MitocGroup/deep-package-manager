@@ -134,7 +134,7 @@ suite('Helpers/Terminal/Prompt', () => {
 
     chai.expect(spyCallback).to.have.been.calledWith();
     chai.expect(actualResult).to.be.an.instanceof(Prompt);
-    chai.expect(callbackArgs).to.eql([`{defaultValue`]);
+    chai.expect(callbackArgs).to.eql([`{defaultValue}`]);
   });
 
   test('Check _promptHidden() for !_syncMode', () => {
