@@ -5,3 +5,5 @@ tests
 coverage
 .parameters.json
 testDirectories
+.istanbul.yml
+.babelrc
