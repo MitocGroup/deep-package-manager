@@ -326,7 +326,7 @@ export class AbstractService extends Core.OOP.Interface {
       this.appIdentifier,
       this.env,
       msIdentifier,
-      delimiter,
+      delimiter
     );
   }
 
