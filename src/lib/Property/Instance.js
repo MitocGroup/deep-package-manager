@@ -380,6 +380,7 @@ export class Instance {
     let validationSchemas = ValidationSchema.create(...validationSchemasDirs);
 
     this._config.models = models.map(m => m.extract());
+    this._config.modelsSettings = models.map(m => m.settings.extract());
     this._config.validationSchemas = validationSchemas.map((s) => {
       return {
         name: s.name,
@@ -561,6 +562,7 @@ export class Instance {
     let validationSchemas = ValidationSchema.create(...validationSchemasDirs);
 
     this._config.models = models.map(m => m.extract());
+    this._config.modelsSettings = models.map(m => m.settings.extract());
     this._config.validationSchemas = validationSchemas.map((s) => {
       return {
         name: s.name,
@@ -1031,9 +1033,9 @@ export class Instance {
       if (!this.microservices.hasOwnProperty(i)) {
         continue;
       }
-      
+
       let microservice = this.microservices[i];
-      
+
       if (identifiers.indexOf(microservice.identifier) !== -1) {
         if (identifiers.length === 1) {
           return microservice;
