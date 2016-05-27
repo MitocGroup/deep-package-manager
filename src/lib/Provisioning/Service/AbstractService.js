@@ -310,6 +310,8 @@ export class AbstractService extends Core.OOP.Interface {
   }
 
   /**
+   * @note: Leave this method as it is for back compatibility
+   *
    * @param {String} resourceName
    * @param {String} awsService
    * @param {String} msIdentifier
@@ -317,16 +319,41 @@ export class AbstractService extends Core.OOP.Interface {
    * @returns {String}
    */
   generateAwsResourceName(resourceName, awsService, msIdentifier = '', delimiter = AbstractService.DELIMITER_UPPER_CASE) {
+    return AbstractService.generateAwsResourceName(
+      resourceName,
+      awsService,
+      this.awsAccountId,
+      this.appIdentifier,
+      this.env,
+      msIdentifier,
+      delimiter,
+    );
+  }
+
+  /**
+   * @param {String} resourceName
+   * @param {String} awsService
+   * @param {String} awsAccountId
+   * @param {String} appIdentifier
+   * @param {String} env
+   * @param {String} msIdentifier
+   * @param {String} delimiter
+   * @returns {String}
+   */
+  static generateAwsResourceName(
+    resourceName, awsService, awsAccountId, appIdentifier,
+    env, msIdentifier = '', delimiter = AbstractService.DELIMITER_UPPER_CASE
+  ) {
     let name = null;
-    let uniqueHash = this.getUniqueHash(msIdentifier);
-    let nameTplLength = (AbstractService.AWS_RESOURCES_PREFIX + this.env + uniqueHash).length;
+    let uniqueHash = AbstractService.generateUniqueResourceHash(awsAccountId, appIdentifier, msIdentifier);
+    let nameTplLength = (AbstractService.AWS_RESOURCES_PREFIX + env + uniqueHash).length;
 
     switch (delimiter) {
       case AbstractService.DELIMITER_UPPER_CASE:
         resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
 
         name = AbstractService.capitalizeFirst(AbstractService.AWS_RESOURCES_PREFIX) +
-          AbstractService.capitalizeFirst(this.env) +
+          AbstractService.capitalizeFirst(env) +
           AbstractService.capitalizeFirst(resourceName) +
           uniqueHash;
 
@@ -335,14 +362,14 @@ export class AbstractService extends Core.OOP.Interface {
         nameTplLength += 3; // adding 3 dot delimiters
         resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
 
-        name = `${AbstractService.AWS_RESOURCES_PREFIX}.${this.env}.${resourceName}.${uniqueHash}`;
+        name = `${AbstractService.AWS_RESOURCES_PREFIX}.${env}.${resourceName}.${uniqueHash}`;
 
         break;
       case AbstractService.DELIMITER_UNDERSCORE:
         nameTplLength += 3; // adding 3 underscore delimiters
         resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
 
-        name = `${AbstractService.AWS_RESOURCES_PREFIX}_${this.env}_${resourceName}_${uniqueHash}`;
+        name = `${AbstractService.AWS_RESOURCES_PREFIX}_${env}_${resourceName}_${uniqueHash}`;
 
         break;
       case AbstractService.DELIMITER_HYPHEN_LOWER_CASE:
@@ -350,7 +377,7 @@ export class AbstractService extends Core.OOP.Interface {
         resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
 
         let lowerAwsResourcesPrefix = AbstractService.AWS_RESOURCES_PREFIX.toLowerCase();
-        let lowerEnv = this.env.toLowerCase();
+        let lowerEnv = env.toLowerCase();
         let lowerResourceName = resourceName.toLowerCase();
         let lowerUniqueHash = uniqueHash.toLowerCase();
 
@@ -361,7 +388,7 @@ export class AbstractService extends Core.OOP.Interface {
         nameTplLength += 3; // adding 3 hyphen delimiters
         resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
 
-        name = `${AbstractService.AWS_RESOURCES_PREFIX}-${this.env}-${resourceName}-${uniqueHash}`;
+        name = `${AbstractService.AWS_RESOURCES_PREFIX}-${env}-${resourceName}-${uniqueHash}`;
 
         break;
       default:
