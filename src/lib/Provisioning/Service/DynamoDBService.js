@@ -41,7 +41,8 @@ export class DynamoDBService extends AbstractService {
    */
   _setup(services) {
     this._createDbTables(
-      this._rawModels
+      this._rawModels,
+      this._rawModelsSettings
     )((tablesNames) => {
       this._config.tablesNames = tablesNames;
 
@@ -85,11 +86,13 @@ export class DynamoDBService extends AbstractService {
 
   /**
    * @param {Object} models
+   * @param {Object} modelsSettings
    * @returns {Function}
    * @private
    */
-  _createDbTables(models) {
+  _createDbTables(models, modelsSettings) {
     let tablesNames = this.generateTableNames(models);
+    let tablesSettings = this.generateTableSettings(modelsSettings);
     let missingTablesNames = [];
 
     if (this._isUpdate) {
@@ -108,6 +111,14 @@ export class DynamoDBService extends AbstractService {
     this._provisioning.db = deepDb;
 
     return (callback) => {
+      for (let name in tablesSettings) {
+        if (!tablesSettings.hasOwnProperty(name)) {
+          continue;
+        }
+
+        console.info(`DynamoDB model '${name}' -> ${JSON.stringify(tablesSettings[name])}`);
+      }
+
       deepDb.assureTables(() => {
         if (missingTablesNames.length <= 0) {
           callback(tablesNames);
@@ -117,7 +128,7 @@ export class DynamoDBService extends AbstractService {
         this._removeMissingTables(missingTablesNames, () => {
           callback(tablesNames);
         });
-      });
+      }, tablesSettings);
     };
   }
 
@@ -180,6 +191,14 @@ export class DynamoDBService extends AbstractService {
   }
 
   /**
+   * @returns {Object}
+   * @private
+   */
+  get _rawModelsSettings() {
+    return this.provisioning.property.config.modelsSettings;
+  }
+
+  /**
    * @param {Object} models
    * @returns {Object}
    */
@@ -199,6 +218,32 @@ export class DynamoDBService extends AbstractService {
         }
 
         tables[modelName] = this.generateAwsResourceName(modelName, Core.AWS.Service.DYNAMO_DB);
+      }
+    }
+
+    return tables;
+  }
+
+  /**
+   * @param {Object} modelsSettings
+   * @returns {Object}
+   */
+  generateTableSettings(modelsSettings) {
+    let tables = {};
+
+    for (let modelKey in modelsSettings) {
+      if (!modelsSettings.hasOwnProperty(modelKey)) {
+        continue;
+      }
+
+      let backendModelsSettings = modelsSettings[modelKey];
+
+      for (let modelName in backendModelsSettings) {
+        if (!backendModelsSettings.hasOwnProperty(modelName)) {
+          continue;
+        }
+
+        tables[modelName] = backendModelsSettings[modelName];
       }
     }
 

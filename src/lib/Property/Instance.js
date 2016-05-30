@@ -8,6 +8,7 @@ import AWS from 'aws-sdk';
 import FileSystem from 'fs';
 import FileSystemExtra from 'fs-extra';
 import Path from 'path';
+import Core from 'deep-core';
 import {Instance as Provisioning} from '../Provisioning/Instance';
 import {Exception} from '../Exception/Exception';
 import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
@@ -27,6 +28,7 @@ import {Migration} from './Migration';
 import {ValidationSchema} from './ValidationSchema';
 import {AbstractService} from '../Provisioning/Service/AbstractService';
 import {S3Service} from '../Provisioning/Service/S3Service';
+import {ESService} from '../Provisioning/Service/ESService';
 import {Config} from './Config';
 import {Hash} from '../Helpers/Hash';
 import {FrontendEngine} from '../Microservice/FrontendEngine';
@@ -371,12 +373,14 @@ export class Instance {
       }
     }
 
+    this._config.searchDomains = this._searchDomains;
     this._config.microservices = microservicesConfig;
 
     let models = Model.create(...modelsDirs);
     let validationSchemas = ValidationSchema.create(...validationSchemasDirs);
 
     this._config.models = models.map(m => m.extract());
+    this._config.modelsSettings = models.map(m => m.settings.extract());
     this._config.validationSchemas = validationSchemas.map((s) => {
       return {
         name: s.name,
@@ -451,6 +455,26 @@ export class Instance {
     }
 
     return lambdas;
+  }
+
+  /**
+   * @returns {Object}
+   * @private
+   */
+  get _searchDomains() {
+    let searchDomains = {};
+    let globalCfg = this._config.globals || {};
+    let typeES = {type: Core.AWS.Service.ELASTIC_SEARCH,};
+
+    if (globalCfg.search && globalCfg.search.enabled) {
+      searchDomains[ESService.CLIENT_DOMAIN_NAME] = typeES;
+    }
+
+    if (globalCfg.logDrivers && globalCfg.logDrivers.rum) {
+      searchDomains[ESService.RUM_DOMAIN_NAME] = typeES;
+    }
+
+    return searchDomains;
   }
 
   /**
@@ -538,6 +562,7 @@ export class Instance {
     let validationSchemas = ValidationSchema.create(...validationSchemasDirs);
 
     this._config.models = models.map(m => m.extract());
+    this._config.modelsSettings = models.map(m => m.settings.extract());
     this._config.validationSchemas = validationSchemas.map((s) => {
       return {
         name: s.name,
@@ -1008,9 +1033,9 @@ export class Instance {
       if (!this.microservices.hasOwnProperty(i)) {
         continue;
       }
-      
+
       let microservice = this.microservices[i];
-      
+
       if (identifiers.indexOf(microservice.identifier) !== -1) {
         if (identifiers.length === 1) {
           return microservice;

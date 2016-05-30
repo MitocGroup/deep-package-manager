@@ -789,7 +789,7 @@ export class APIGatewayService extends AbstractService {
                 statusCode: `${statusCode}`,
                 responseTemplates: this.getJsonResponseTemplate(resourceMethod),
                 responseParameters: this._getMethodResponseParameters(resourceMethod, Object.keys(resourceMethods)),
-                selectionPattern: statusCode == 200 ? '-' : `.*\\"${this.deepStatusCodeKey}\\":${statusCode}.*`,
+                selectionPattern: this._getSelectionPattern(statusCode),
               });
             });
             break;
@@ -829,6 +829,28 @@ export class APIGatewayService extends AbstractService {
     }
 
     return credentials;
+  }
+
+  /**
+   * @param {String} statusCode
+   * @returns {String}
+   * @private
+   */
+  _getSelectionPattern(statusCode) {
+    let pattern = null;
+
+    switch (parseInt(statusCode)) {
+      case 200:
+        pattern = '-';
+        break;
+      case 500:
+        pattern = `.*\\"${this.deepStatusCodeKey}\\":${statusCode}.*|Process exited before completing request`;
+        break;
+      default:
+        pattern = `.*\\"${this.deepStatusCodeKey}\\":${statusCode}.*`;
+    }
+
+    return pattern;
   }
 
   /**

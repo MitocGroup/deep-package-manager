@@ -8,6 +8,7 @@ import {FileWalker} from '../Helpers/FileWalker';
 import Path from 'path';
 import JsonFile from 'jsonfile';
 import FileSystem from 'fs';
+import {ModelSettings} from './ModelSettings';
 
 /**
  * DB model class
@@ -20,6 +21,19 @@ export class Model {
   constructor(name, definition) {
     this._name = name;
     this._definition = definition;
+    this._settings = new ModelSettings(this._name);
+
+    this._parseDefinition();
+  }
+
+  /**
+   * @private
+   */
+  _parseDefinition() {
+    if (this._definition.hasOwnProperty('_settings')) {
+      this._settings.update(this._definition._settings);
+      delete this._definition._settings;
+    }
   }
 
   /**
@@ -73,6 +87,13 @@ export class Model {
    */
   get definition() {
     return this._definition;
+  }
+
+  /**
+   * @returns {Object}
+   */
+  get settings() {
+    return this._settings;
   }
 
   /**

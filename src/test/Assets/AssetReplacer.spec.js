@@ -33,7 +33,7 @@ suite('Assets/AssetReplacer', () => {
   });
 
   test('Check _getExtension() method returns ""', () => {
-    let actualResult = AssetReplacer._getExtension();
+    let actualResult = AssetReplacer._getExtension('');
 
     chai.expect(actualResult).to.eql('');
   });

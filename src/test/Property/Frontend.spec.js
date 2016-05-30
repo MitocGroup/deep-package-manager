@@ -50,6 +50,7 @@ suite('Property/Frontend', () => {
     identityProviders: '',
     microservices: {},
     globals: defaultConfig.globals,
+    searchDomains: defaultConfig.searchDomains,
     validationSchemas: [],
   };
 

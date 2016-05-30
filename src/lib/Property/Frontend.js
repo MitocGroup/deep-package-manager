@@ -68,6 +68,7 @@ export class Frontend {
       identityProviders: '',
       microservices: {},
       globals: propertyConfig.globals,
+      searchDomains: propertyConfig.searchDomains,
       validationSchemas: propertyConfig.validationSchemas.map((validationSchema) => {
         return validationSchema.name;
       }),
