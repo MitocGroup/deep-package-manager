@@ -21,7 +21,7 @@ export class Model {
   constructor(name, definition) {
     this._name = name;
     this._definition = definition;
-    this._settings = new ModelSettings();
+    this._settings = new ModelSettings(this._name);
 
     this._parseDefinition();
   }

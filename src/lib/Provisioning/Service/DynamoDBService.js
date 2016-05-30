@@ -111,6 +111,14 @@ export class DynamoDBService extends AbstractService {
     this._provisioning.db = deepDb;
 
     return (callback) => {
+      for (let name in tablesSettings) {
+        if (!tablesSettings.hasOwnProperty(name)) {
+          continue;
+        }
+
+        console.info(`DynamoDB model '${name}' -> ${JSON.stringify(tablesSettings[name])}`);
+      }
+
       deepDb.assureTables(() => {
         if (missingTablesNames.length <= 0) {
           callback(tablesNames);
