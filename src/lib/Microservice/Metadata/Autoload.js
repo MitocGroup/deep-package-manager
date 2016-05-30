@@ -179,7 +179,7 @@ export class Autoload {
    * @returns {String}
    */
   static get SHARED_BACKEND_FOLDER() {
-    return 'shared_lib';
+    return 'shared-lib';
   }
 }
 
