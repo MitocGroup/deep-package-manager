@@ -243,8 +243,7 @@ export class DynamoDBService extends AbstractService {
           continue;
         }
 
-        let tableName = this.generateAwsResourceName(modelName, Core.AWS.Service.DYNAMO_DB);
-        tables[tableName] = backendModelsSettings[modelName];
+        tables[modelName] = backendModelsSettings[modelName];
       }
     }
 
