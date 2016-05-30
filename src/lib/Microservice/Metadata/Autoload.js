@@ -26,6 +26,7 @@ export class Autoload {
 
     this._frontend = this._getBuildAwareFrontendPath(path.join(basePath, frontend));
     this._backend = path.join(basePath, backend);
+    this._sharedBackend = this._getSharedBackendPath();
     this._docs = path.join(basePath, docs);
     this._models = path.join(basePath, models);
     this._validation = path.join(basePath, validation);
@@ -40,6 +41,20 @@ export class Autoload {
    */
   static _skipBuild() {
     Autoload.__skipBuild = true;
+  }
+
+  /**
+   * @returns {String|null}
+   * @private
+   */
+  _getSharedBackendPath() {
+    let sharedLib = path.join(this._backend, Autoload.SHARED_BACKEND_FOLDER);
+
+    if (FileSystem.existsSync(sharedLib) && FileSystem.lstatSync(sharedLib).isDirectory()) {
+      return sharedLib;
+    }
+
+    return null;
   }
 
   /**
@@ -132,6 +147,13 @@ export class Autoload {
   }
 
   /**
+   * @returns {String|null}
+   */
+  get sharedBackend() {
+    return this._sharedBackend;
+  }
+
+  /**
    * @returns {Object}
    */
   extract() {
@@ -151,6 +173,13 @@ export class Autoload {
    */
   static get BUILD_FOLDER() {
     return '_build';
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get SHARED_BACKEND_FOLDER() {
+    return 'shared_lib';
   }
 }
 
