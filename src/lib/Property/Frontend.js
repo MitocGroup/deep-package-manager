@@ -74,6 +74,10 @@ export class Frontend {
       }),
     };
 
+    if (backendTarget) {
+      config.modelsSettings = propertyConfig.modelsSettings;
+    }
+
     let apiGatewayBaseUrl = '';
 
     if (propertyConfig.provisioning) {
