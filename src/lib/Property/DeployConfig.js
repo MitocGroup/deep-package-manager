@@ -63,8 +63,17 @@ export class DeployConfig {
 
     return path.join(
       this._property.path,
-      `.${this.baseHash}.${deployEnv}.provisioning.json`
+      DeployConfig.generateConfigFilename(this.baseHash, deployEnv)
     );
+  }
+
+  /**
+   * @param {String} baseHash
+   * @param {String} env
+   * @returns {String}
+   */
+  static generateConfigFilename(baseHash, env) {
+    return `.${baseHash}.${env}.provisioning.json`;
   }
 
   /**
