@@ -39,8 +39,9 @@ export class Inflector {
    */
   static lispCase(str) {
     return str
+      .replace(/([a-z])([A-Z])/g, '$1-$2')
       .split(/[^a-z0-9\-]+/i)
-      .map(s => s.toLowerCase())
-      .join('-');
+      .join('-')
+      .toLowerCase();
   }
 }
