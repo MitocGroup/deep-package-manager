@@ -22,14 +22,25 @@ export class Inflector {
   }
 
   /**
-   * @param {String} string
+   * @param {String} str
    * @returns {String}
    */
-  static pascalCase(string) {
-    return string
+  static pascalCase(str) {
+    return str
       .split(/[^a-zA-Z0-9]+/)
       .reduce((pascalString, part) => {
         return pascalString + Inflector.capitalizeFirst(part);
       }, '');
+  }
+
+  /**
+   * @param {String} str
+   * @returns {*}
+   */
+  static lispCase(str) {
+    return str
+      .split(/[^a-z0-9\-]+/i)
+      .map(s => s.toLowerCase())
+      .join('-');
   }
 }
