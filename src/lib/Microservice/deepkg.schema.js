@@ -9,16 +9,16 @@ import {JoiHelper} from '../Helpers/JoiHelper';
 import {FrontendEngine} from '../Microservice/FrontendEngine';
 import path from 'path';
 
-export const FRONTEND = 'Frontend';
-export const BACKEND = 'Backend';
-export const DOCS = 'Docs';
+export const FRONTEND = 'frontend';
+export const BACKEND = 'backend';
+export const DOCS = 'docs';
 
 // base data path
-export const DATA_BASE_DIR = 'Data';
-export const MODELS = path.join(DATA_BASE_DIR, 'Models');
-export const VALIDATION = path.join(DATA_BASE_DIR, 'Validation');
-export const FIXTURES = path.join(DATA_BASE_DIR, 'Fixtures');
-export const MIGRATION = path.join(DATA_BASE_DIR, 'Migration');
+export const DATA_BASE_DIR = 'data';
+export const MODELS = path.join(DATA_BASE_DIR, 'models');
+export const VALIDATION = path.join(DATA_BASE_DIR, 'validation');
+export const FIXTURES = path.join(DATA_BASE_DIR, 'fixtures');
+export const MIGRATION = path.join(DATA_BASE_DIR, 'migration');
 
 export default Joi.object().keys({
   identifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/),
