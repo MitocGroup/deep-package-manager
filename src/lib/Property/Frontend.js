@@ -219,11 +219,11 @@ export class Frontend {
     credentials += `aws_secret_access_key=${AWS.config.credentials.secretAccessKey}${OS.EOL}`;
     credentials += `region=${AWS.config.region}${OS.EOL}`;
 
-    console.log(`dump AWS tmp credentials into ${credentialsFile}`);
+    console.debug(`Dumping AWS tmp credentials into ${credentialsFile}`);
 
     FileSystem.writeFileSync(credentialsFile, credentials);
 
-    console.log(`Syncing ${this.path} with ${bucketName} (non HTML, TTL=86400)`);
+    console.debug(`Syncing ${this.path} with ${bucketName} (non HTML, TTL=86400)`);
 
     let syncResultNoHtml = this
       ._getSyncCommandNoHtml(credentialsFile, bucketName, bucketRegion)
@@ -233,7 +233,7 @@ export class Frontend {
       throw new FailedUploadingFileToS3Exception('*', bucketName, syncResultNoHtml.error);
     }
 
-    console.log(`Syncing ${this.path} with ${bucketName} (HTML only, TTL=600)`);
+    console.debug(`Syncing ${this.path} with ${bucketName} (HTML only, TTL=600)`);
 
     let syncResultHtml = this
       ._getSyncCommandHtmlOnly(credentialsFile, bucketName, bucketRegion)

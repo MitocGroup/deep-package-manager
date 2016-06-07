@@ -131,13 +131,13 @@ export class Dumper {
         cb(error);
         return;
       } else if (!hasToDump) {
-        console.log(`Module '${moduleName}@${moduleVersion}' has been already dumped. Skipping...`);
+        console.debug(`Module '${moduleName}@${moduleVersion}' has been already dumped. Skipping...`);
 
         cb(null);
         return;
       }
 
-      console.log(`Fetching '${moduleName}@${moduleVersion}' module data`);
+      console.debug(`Fetching '${moduleName}@${moduleVersion}' module data`);
 
       this._storage.readModule(moduleName, moduleVersion, (error, moduleObj) => {
         if (error) {
@@ -145,7 +145,7 @@ export class Dumper {
           return;
         }
 
-        console.log(`Dumping '${moduleName}@${moduleVersion}' module`);
+        console.debug(`Dumping '${moduleName}@${moduleVersion}' module`);
 
         this._dumpDriver.dump(moduleObj, cb);
       });

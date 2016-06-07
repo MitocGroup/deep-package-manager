@@ -21,7 +21,7 @@ export class Optimizer {
    * @returns {Optimizer}
    */
   optimize(callback = () => {}) {
-    console.log(`Optimize frontend in '${this._path}' by compressing it`);
+    console.debug(`Optimize frontend in '${this._path}' by compressing it`);
 
     let cmd = new Exec(
       'find', // find

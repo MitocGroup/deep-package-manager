@@ -373,7 +373,7 @@ export class Instance {
         if (isUpdate) {
           callback(this._config);
         } else {
-          console.log('Start tagging resources');
+          console.debug('Start tagging resources');
 
           Tagging.create(this._property).tag(() => {
             callback(this._config);

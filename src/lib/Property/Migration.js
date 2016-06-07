@@ -146,7 +146,7 @@ export class Migration {
 
       new Core.Runtime.Sandbox(() => {
         let ensureResult = this._registry.ensure(version, () => {
-          console.log(`Running migration #${version}`);
+          console.debug(`Running migration #${version}`);
 
           migration[type].bind({
             awsAsync: AwsRequestSyncStack,
@@ -161,7 +161,7 @@ export class Migration {
         });
 
         if (!ensureResult) {
-          console.log(`Skipping migration #${version}`);
+          console.debug(`Skipping migration #${version}`);
           cb(null);
         }
       })

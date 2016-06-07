@@ -290,7 +290,7 @@ export class Lambda {
    */
   deploy(callback) {
     this.pack().ready(() => {
-      console.log(`Lambda ${this._identifier} packing is ready`);
+      console.debug(`Lambda ${this._identifier} packing is ready`);
 
       this.upload().ready(callback);
     });
@@ -409,7 +409,7 @@ export class Lambda {
    * @returns {WaitFor}
    */
   pack() {
-    console.log(`Start packing lambda ${this._identifier}`);
+    console.debug(`Start packing lambda ${this._identifier}`);
 
     this.persistConfig();
     this._injectDeepConfigIntoBootstrap();
@@ -417,7 +417,7 @@ export class Lambda {
     let buildFile = `${this._path}.zip`;
 
     if (FileSystem.existsSync(buildFile)) {
-      console.log(`Lambda prebuilt in ${buildFile}`);
+      console.debug(`Lambda prebuilt in ${buildFile}`);
 
       FileSystemExtra.copySync(buildFile, this._zipPath);
 
@@ -517,7 +517,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    * @returns {AwsRequestSyncStack|WaitFor|*}
    */
   upload(update = false) {
-    console.log(`Start uploading lambda ${this._identifier}`);
+    console.debug(`Start uploading lambda ${this._identifier}`);
 
     let lambda = this._property.provisioning.lambda;
     let s3 = this._property.provisioning.s3;
@@ -551,7 +551,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
 
       let request = null;
 
-      console.log(`Lambda ${this._identifier} uploaded`);
+      console.debug(`Lambda ${this._identifier} uploaded`);
 
       let params = {
         FunctionName: this.functionName,

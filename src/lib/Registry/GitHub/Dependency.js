@@ -89,7 +89,7 @@ export class Dependency {
    * @param {AbstractStrategy|StandardStrategy|*} extractStrategy
    */
   extract(dumpPath, cb, extractStrategy = null) {
-    console.log(`Searching for suitable '${this.shortDependencyName}' dependency version`);
+    console.debug(`Searching for suitable '${this.shortDependencyName}' dependency version`);
 
     this.findSuitableTag((error, tag) => {
       if (error) {
@@ -97,13 +97,13 @@ export class Dependency {
         return;
       }
 
-      console.log(`Fetching suitable '${this.shortDependencyName}' dependency version from '${tag.sourceUrl}'`);
+      console.debug(`Fetching suitable '${this.shortDependencyName}' dependency version from '${tag.sourceUrl}'`);
 
       if (this._authHeader) {
         request(this._createRequestPayload(tag.sourceUrl))
           .then((response) => {
             Dependency._doOnRedirectResponse(response, (redirectUrl) => {
-              console.log(`Following redirection to ${redirectUrl}`);
+              console.debug(`Following redirection to ${redirectUrl}`);
 
               request(this._createRequestPayload(redirectUrl))
                 .then((response) => {
@@ -116,7 +116,7 @@ export class Dependency {
       } else {
         let normalizedSourceUrl = Dependency._normalizeSourceUrl(tag.sourceUrl);
 
-        console.log(`Switching between '${tag.sourceUrl}' and '${normalizedSourceUrl}' source urls`);
+        console.debug(`Switching between '${tag.sourceUrl}' and '${normalizedSourceUrl}' source urls`);
 
         request(this._createRequestPayload(normalizedSourceUrl))
           .then((response) => {
@@ -139,7 +139,7 @@ export class Dependency {
       return;
     }
 
-    console.log(`Dumping '${this.shortDependencyName}' dependency into '${dumpPath}'`);
+    console.debug(`Dumping '${this.shortDependencyName}' dependency into '${dumpPath}'`);
 
     extractStrategy = extractStrategy || new StandardStrategy(dumpPath);
 
@@ -231,13 +231,13 @@ export class Dependency {
    */
   findSuitableTag(cb) {
     if (Dependency.__cache__.hasOwnProperty(this._repository)) {
-      console.log(`Using GitHub repository '${this._repository}' tags from cache`);
+      console.debug(`Using GitHub repository '${this._repository}' tags from cache`);
 
       cb(...this._findSuitable(Dependency.__cache__[this._repository]));
       return;
     }
 
-    console.log(`Fetching GitHub repository '${this._repository}' tags`);
+    console.debug(`Fetching GitHub repository '${this._repository}' tags`);
 
     this.getAvailableTags((error, tags) => {
       if (error) {

@@ -205,6 +205,7 @@ export class Exec {
 
     let proc = spawnCmd(realCmd, realArgs, {
       cwd: this._cwd,
+      env: Exec.DEEP_ENV_VARS,
       stdio: [process.stdin, 'pipe', 'pipe'],
     });
 
@@ -258,6 +259,7 @@ export class Exec {
   _exec(cb) {
     ChildProcess.exec(this._fullCmd, {
       cwd: this._cwd,
+      env: Exec.DEEP_ENV_VARS,
     }, (error, stdout) => {
       if (error) {
         this._error = new Error(
@@ -271,6 +273,25 @@ export class Exec {
     });
 
     return this;
+  }
+
+  /**
+   * DEEP env variables reused from executed binaries
+   *
+   * @returns {Object}
+   */
+  static get DEEP_ENV_VARS() {
+    let vars = {};
+
+    for (let envVar in process.env) {
+      if (!process.env.hasOwnProperty(envVar) || !/^deep_/i.test(envVar)) {
+        continue;
+      }
+
+      vars[envVar] = process.env[envVar];
+    }
+
+    return vars;
   }
 
   /**

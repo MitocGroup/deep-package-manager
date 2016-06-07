@@ -59,7 +59,7 @@ export class Instance {
       // @todo: get rid of this?
       if (error instanceof InvalidConfigException) {
         console.error(error.message);
-        console.log(`The configuration structure may be have changed.` +
+        console.info(`The configuration structure may be have changed.` +
         ` Try to delete '${Config.DEFAULT_FILENAME}' and rerun the command in order to get it regenerated.`);
         process.exit(1);
       }
@@ -489,7 +489,7 @@ export class Instance {
 
     let isUpdate = this._isUpdate;
 
-    console.log(`Start building application`);
+    console.debug(`Start building application`);
 
     let microservicesConfig = isUpdate ? this._config.microservices : {};
     let microservices = this.microservices;
@@ -573,12 +573,12 @@ export class Instance {
     if (skipProvision) {
       callback();
     } else {
-      console.log(`Start ${isUpdate ? 'updating' : 'creating'} provisioning`);
+      console.debug(`Start ${isUpdate ? 'updating' : 'creating'} provisioning`);
 
       this.provisioning.create((config) => {
         this._config.provisioning = config;
 
-        console.log(`Provisioning is done`);
+        console.info(`Application resources have been provisioned`);
 
         callback();
       }, isUpdate);
@@ -598,7 +598,7 @@ export class Instance {
       throw new InvalidArgumentException(callback, 'Function');
     }
 
-    console.log(`Start deploying backend`);
+    console.debug(`Start deploying backend`);
 
     let lambdas = [];
     let lambdaExecRoles = this._config.provisioning.lambda.executionRoles;
@@ -730,7 +730,7 @@ export class Instance {
         if (isUpdate && this._localDeploy) {
           callback();
         } else {
-          console.log(`Start deploying frontend`);
+          console.debug(`Start deploying frontend`);
 
           frontend.deploy(this._aws, publicBucket).ready(callback);
         }
@@ -793,7 +793,7 @@ export class Instance {
     let migrations = Migration.create(...migrationDirs);
 
     if (migrations.length <= 0) {
-      console.log('No migrations to be loaded. Skipping...');
+      console.debug('No migrations to be loaded. Skipping...');
 
       callback();
       return;
@@ -801,7 +801,7 @@ export class Instance {
 
     let registry = MigrationsRegistry.create(this);
 
-    console.log('Loading migrations registry');
+    console.debug('Loading migrations registry');
 
     registry.load((error) => {
       if (error) {
@@ -830,7 +830,7 @@ export class Instance {
       });
 
       wait.ready(() => {
-        console.log('Persisting migrations registry');
+        console.debug('Persisting migrations registry');
 
         registry.dump((error) => {
           if (error) {
@@ -893,12 +893,12 @@ export class Instance {
       let hook = microservice[msHookProperty];
 
       if (!hook) {
-        console.log(`No ${hookClass.NAME} found for microservice ${microservice.identifier}`);
+        console.info(`No ${hookClass.NAME} found for microservice ${microservice.identifier}`);
         remaining--;
         continue;
       }
 
-      console.log(`Running ${hookClass.NAME} for microservice ${microservice.identifier}`);
+      console.debug(`Running ${hookClass.NAME} for microservice ${microservice.identifier}`);
 
       hook(...hookClass.getBindingParameters(this).concat(() => {
         remaining--;
@@ -947,10 +947,10 @@ export class Instance {
     }
 
     if (!this._isUpdate) {
-      console.log(`Checking possible provisioning collisions for application #${this.identifier}/${this._config.env}`);
+      console.debug(`Checking possible provisioning collisions for application #${this.identifier}/${this._config.env}`);
 
       this.verifyProvisioningCollisions(() => {
-        console.log(`Start installing application #${this.identifier}/${this._config.env}`);
+        console.debug(`Start installing application #${this.identifier}/${this._config.env}`);
 
         this.build(() => {
           this.deploy(() => {
@@ -962,7 +962,7 @@ export class Instance {
       return this;
     }
 
-    console.log(`Start updating application #${this.identifier}/${this._config.env}`);
+    console.debug(`Start updating application #${this.identifier}/${this._config.env}`);
 
     return this.build(() => {
       this.deploy(() => {
