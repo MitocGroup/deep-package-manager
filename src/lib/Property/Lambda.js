@@ -123,7 +123,13 @@ export class Lambda {
             continue;
           }
 
-          config.tablesNames[modelName] = AbstractService.generateAwsResourceName(modelName, Core.AWS.Service.DYNAMO_DB);
+          config.tablesNames[modelName] = AbstractService.generateAwsResourceName(
+            modelName,
+            Core.AWS.Service.DYNAMO_DB,
+            propertyConfig.awsAccountId,
+            propertyConfig.appIdentifier,
+            propertyConfig.env
+          );
         }
       }
     }
