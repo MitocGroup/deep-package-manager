@@ -893,7 +893,7 @@ export class Instance {
       let hook = microservice[msHookProperty];
 
       if (!hook) {
-        console.info(`No ${hookClass.NAME} found for microservice ${microservice.identifier}`);
+        console.debug(`No ${hookClass.NAME} found for microservice ${microservice.identifier}`);
         remaining--;
         continue;
       }
