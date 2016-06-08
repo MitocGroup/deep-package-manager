@@ -16,6 +16,7 @@ import {Frontend} from './Frontend';
 import Core from 'deep-core';
 import JsonFile from 'jsonfile';
 import {S3Service} from '../Provisioning/Service/S3Service';
+import {SQSService} from '../Provisioning/Service/SQSService';
 import {AbstractService} from '../Provisioning/Service/AbstractService';
 import Mime from 'mime';
 import FileSystemExtra from 'fs-extra';
