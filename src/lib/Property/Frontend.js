@@ -361,6 +361,8 @@ export class Frontend {
 
     FileSystem.mkdirSync(this.path);
 
+    let workingMicroserviceConfig = null;
+
     for (let identifier in this._microservicesConfig) {
       if (!this._microservicesConfig.hasOwnProperty(identifier)) {
         continue;
@@ -376,6 +378,8 @@ export class Frontend {
 
       // @todo: implement this in a smarter way
       if (config.isRoot) {
+        workingMicroserviceConfig = config;
+
         try {
           let indexFile = Path.join(frontendPath, 'index.html');
           let indexStats = FileSystem.lstatSync(indexFile);
@@ -397,6 +401,31 @@ export class Frontend {
       }
     }
 
+    let mainIndexFile = Path.join(this.path, 'index.html');
+
+    // override default index.html if exists in non-root microservices
+    for (let identifier in this._microservicesConfig) {
+      if (!this._microservicesConfig.hasOwnProperty(identifier)) {
+        continue;
+      }
+
+      let config = this._microservicesConfig[identifier];
+      let frontendPath = config.autoload.frontend;
+
+      if (config.isRoot) {
+        continue;
+      }
+
+      try {
+        let indexFile = Path.join(frontendPath, 'index.html');
+
+        if (FileSystem.lstatSync(indexFile).isFile()) {
+          FileSystemExtra.copySync(indexFile, mainIndexFile);
+          workingMicroserviceConfig = config;
+        }
+      } catch (e) {   }
+    }
+
     Frontend.dumpValidationSchemas(this._property.config, this.path);
 
     JsonFile.writeFileSync(this.configPath, propertyConfig);
@@ -410,7 +439,8 @@ export class Frontend {
       this._microservicesConfig,
       propertyConfig.globals.pageLoader,
       propertyConfig.globals.version,
-      propertyConfig.globals.favicon
+      propertyConfig.globals.favicon,
+      workingMicroserviceConfig
     );
 
     if (Frontend._skipInjectDeployNumber) {
