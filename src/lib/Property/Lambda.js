@@ -16,6 +16,7 @@ import {Frontend} from './Frontend';
 import Core from 'deep-core';
 import JsonFile from 'jsonfile';
 import {S3Service} from '../Provisioning/Service/S3Service';
+import {AbstractService} from '../Provisioning/Service/AbstractService';
 import Mime from 'mime';
 import FileSystemExtra from 'fs-extra';
 import {InvalidConfigException} from './Exception/InvalidConfigException';
@@ -97,7 +98,7 @@ export class Lambda {
     config.appIdentifier = propertyConfig.appIdentifier;
     config.timestamp = (new Date()).getTime();
     config.buckets = S3Service.fakeBucketsConfig(propertyConfig.appIdentifier);
-    config.tablesNames = [];
+    config.tablesNames = {};
 
     config.cacheDsn = '';
 
@@ -109,6 +110,22 @@ export class Lambda {
       config.tablesNames = propertyConfig.provisioning[Core.AWS.Service.DYNAMO_DB].tablesNames;
 
       config.cacheDsn = propertyConfig.provisioning[Core.AWS.Service.ELASTIC_CACHE].dsn;
+    } else {
+      for (let modelKey in config.models) {
+        if (!config.models.hasOwnProperty(modelKey)) {
+          continue;
+        }
+
+        let backendModels = config.models[modelKey];
+
+        for (let modelName in backendModels) {
+          if (!backendModels.hasOwnProperty(modelName)) {
+            continue;
+          }
+
+          config.tablesNames[modelName] = AbstractService.generateAwsResourceName(modelName, Core.AWS.Service.DYNAMO_DB);
+        }
+      }
     }
 
     for (let microserviceIdentifier in propertyConfig.microservices) {
