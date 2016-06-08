@@ -102,6 +102,9 @@ export class Lambda {
     config.cacheDsn = '';
 
     if (propertyConfig.provisioning) {
+      let sqsQueues = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_QUEUE_SERVICE].queues;
+      config.dbOffloadQueue = sqsQueues[SQSService.DB_OFFLOAD_QUEUE] || {};
+
       config.buckets = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_STORAGE_SERVICE].buckets;
       config.tablesNames = propertyConfig.provisioning[Core.AWS.Service.DYNAMO_DB].tablesNames;
 
