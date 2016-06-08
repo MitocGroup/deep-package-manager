@@ -125,11 +125,10 @@ export class SQSService extends AbstractService {
 
   /**
    * @private
-   * @todo Set it configurable from config or runtime
    */
   getDBOffloadConfig() {
     return {
-      enabled: false,
+      enabled: true, // TODO: Set it configurable from config or runtime
     };
   }
 
