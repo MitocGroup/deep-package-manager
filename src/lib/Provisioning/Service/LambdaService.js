@@ -506,7 +506,7 @@ export class LambdaService extends AbstractService {
         let s3ResourceShared = s3Statement.resource.add();
 
         s3ResourceSystem.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
-        s3ResourceSystem.descriptor = `${bucket.name}/${S3Service.SYSTEM_BUCKET}/` +
+        s3ResourceSystem.descriptor = `${bucket.name}/${S3Service.PRIVATE_BUCKET}/` +
           `${microserviceIdentifier}/${Core.AWS.IAM.Policy.ANY}`;
 
         s3ResourceTmp.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;

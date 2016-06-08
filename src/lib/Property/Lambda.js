@@ -527,7 +527,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
       return buckets[S3Service.TMP_BUCKET].name;
     }
 
-    return buckets[S3Service.SYSTEM_BUCKET].name;
+    return buckets[S3Service.PRIVATE_BUCKET].name;
   }
 
   /**

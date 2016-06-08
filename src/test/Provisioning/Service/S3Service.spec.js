@@ -23,8 +23,8 @@ suite('Provisioning/Service/S3Service', () => {
     chai.expect(S3Service.PUBLIC_BUCKET).to.be.equal('public');
   });
 
-  test('Check SYSTEM_BUCKET static getter returns \'system\'', () => {
-    chai.expect(S3Service.SYSTEM_BUCKET).to.be.equal('system');
+  test('Check PRIVATE_BUCKET static getter returns \'private\'', () => {
+    chai.expect(S3Service.PRIVATE_BUCKET).to.be.equal('private');
   });
 
   test('Check SHARED_BUCKET static getter returns \'shared\'', () => {
@@ -35,7 +35,7 @@ suite('Provisioning/Service/S3Service', () => {
     chai.expect(S3Service.FS_BUCKETS_SUFFIX.length).to.be.equal(4);
     chai.expect(S3Service.FS_BUCKETS_SUFFIX).to.be.include(S3Service.TMP_BUCKET);
     chai.expect(S3Service.FS_BUCKETS_SUFFIX).to.be.include(S3Service.PUBLIC_BUCKET);
-    chai.expect(S3Service.FS_BUCKETS_SUFFIX).to.be.include(S3Service.SYSTEM_BUCKET);
+    chai.expect(S3Service.FS_BUCKETS_SUFFIX).to.be.include(S3Service.PRIVATE_BUCKET);
     chai.expect(S3Service.FS_BUCKETS_SUFFIX).to.be.include(S3Service.SHARED_BUCKET);
   });
 
