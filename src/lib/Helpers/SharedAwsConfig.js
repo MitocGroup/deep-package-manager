@@ -51,7 +51,7 @@ export class SharedAwsConfig {
       config.aws.accessKeyId === SharedAwsConfig.DEFAULT_ACCESS_KEY ||
       config.aws.secretAccessKey === SharedAwsConfig.DEFAULT_SECRET_ACCESS_KEY) {
 
-      console.log(`You should set real AWS keys in order to use it in production`);
+      console.warn(`You should set real AWS keys in order to use it in production`);
 
       config.aws = this.choose();
 

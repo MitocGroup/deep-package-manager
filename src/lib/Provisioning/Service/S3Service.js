@@ -51,8 +51,8 @@ export class S3Service extends AbstractService {
   /**
    * @returns {String}
    */
-  static get SYSTEM_BUCKET() {
-    return 'system'; // @note - do not change this prefix, it is also used in deep-fs component
+  static get PRIVATE_BUCKET() {
+    return 'private'; // @note - do not change this prefix, it is also used in deep-fs component
   }
 
   /**
@@ -62,7 +62,7 @@ export class S3Service extends AbstractService {
     return [
       S3Service.TMP_BUCKET,
       S3Service.PUBLIC_BUCKET,
-      S3Service.SYSTEM_BUCKET,
+      S3Service.PRIVATE_BUCKET,
       S3Service.SHARED_BUCKET,
     ];
   }
@@ -73,7 +73,7 @@ export class S3Service extends AbstractService {
   static get FS_BUCKETS_SUFFIX_NO_TMP_AND_SHARED() {
     return [
       S3Service.PUBLIC_BUCKET,
-      S3Service.SYSTEM_BUCKET,
+      S3Service.PRIVATE_BUCKET,
     ];
   }
 
@@ -93,8 +93,8 @@ export class S3Service extends AbstractService {
       name: `${propertyHash}-${S3Service.PUBLIC_BUCKET}`,
     };
 
-    config[S3Service.SYSTEM_BUCKET] = {
-      name: `${propertyHash}-${S3Service.SYSTEM_BUCKET}`,
+    config[S3Service.PRIVATE_BUCKET] = {
+      name: `${propertyHash}-${S3Service.PRIVATE_BUCKET}`,
     };
 
     config[S3Service.SHARED_BUCKET] = {
@@ -130,7 +130,7 @@ export class S3Service extends AbstractService {
       let buckets = this._config.buckets;
       let tmpBucket = buckets.hasOwnProperty(S3Service.TMP_BUCKET) ?
         buckets[S3Service.TMP_BUCKET].name :
-        buckets[S3Service.SYSTEM_BUCKET].name;
+        buckets[S3Service.PRIVATE_BUCKET].name;
 
       this._enableTmpBucketLifecycle(tmpBucket, () => {
         this._ready = true;
@@ -508,7 +508,7 @@ export class S3Service extends AbstractService {
    * @returns {Boolean}
    */
   static isBucketSystem(bucketName) {
-    return bucketName.indexOf(S3Service.SYSTEM_BUCKET) !== -1;
+    return bucketName.indexOf(S3Service.PRIVATE_BUCKET) !== -1;
   }
 
   /**

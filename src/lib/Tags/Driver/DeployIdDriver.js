@@ -41,7 +41,7 @@ export class DeployIdDriver extends AbstractDriver {
    * @returns {String}
    */
   static get TAG_SUFFIX() {
-    return 'deployId';
+    return 'deploy-id';
   }
 
   /**

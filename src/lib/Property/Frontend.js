@@ -219,11 +219,11 @@ export class Frontend {
     credentials += `aws_secret_access_key=${AWS.config.credentials.secretAccessKey}${OS.EOL}`;
     credentials += `region=${AWS.config.region}${OS.EOL}`;
 
-    console.log(`dump AWS tmp credentials into ${credentialsFile}`);
+    console.debug(`Dumping AWS tmp credentials into ${credentialsFile}`);
 
     FileSystem.writeFileSync(credentialsFile, credentials);
 
-    console.log(`Syncing ${this.path} with ${bucketName} (non HTML, TTL=86400)`);
+    console.debug(`Syncing ${this.path} with ${bucketName} (non HTML, TTL=86400)`);
 
     let syncResultNoHtml = this
       ._getSyncCommandNoHtml(credentialsFile, bucketName, bucketRegion)
@@ -233,7 +233,7 @@ export class Frontend {
       throw new FailedUploadingFileToS3Exception('*', bucketName, syncResultNoHtml.error);
     }
 
-    console.log(`Syncing ${this.path} with ${bucketName} (HTML only, TTL=600)`);
+    console.debug(`Syncing ${this.path} with ${bucketName} (HTML only, TTL=600)`);
 
     let syncResultHtml = this
       ._getSyncCommandHtmlOnly(credentialsFile, bucketName, bucketRegion)
@@ -361,6 +361,8 @@ export class Frontend {
 
     FileSystem.mkdirSync(this.path);
 
+    let workingMicroserviceConfig = null;
+
     for (let identifier in this._microservicesConfig) {
       if (!this._microservicesConfig.hasOwnProperty(identifier)) {
         continue;
@@ -376,6 +378,8 @@ export class Frontend {
 
       // @todo: implement this in a smarter way
       if (config.isRoot) {
+        workingMicroserviceConfig = config;
+
         try {
           let indexFile = Path.join(frontendPath, 'index.html');
           let indexStats = FileSystem.lstatSync(indexFile);
@@ -397,6 +401,31 @@ export class Frontend {
       }
     }
 
+    let mainIndexFile = Path.join(this.path, 'index.html');
+
+    // override default index.html if exists in non-root microservices
+    for (let identifier in this._microservicesConfig) {
+      if (!this._microservicesConfig.hasOwnProperty(identifier)) {
+        continue;
+      }
+
+      let config = this._microservicesConfig[identifier];
+      let frontendPath = config.autoload.frontend;
+
+      if (config.isRoot) {
+        continue;
+      }
+
+      try {
+        let indexFile = Path.join(frontendPath, 'index.html');
+
+        if (FileSystem.lstatSync(indexFile).isFile()) {
+          FileSystemExtra.copySync(indexFile, mainIndexFile);
+          workingMicroserviceConfig = config;
+        }
+      } catch (e) {   }
+    }
+
     Frontend.dumpValidationSchemas(this._property.config, this.path);
 
     JsonFile.writeFileSync(this.configPath, propertyConfig);
@@ -410,7 +439,8 @@ export class Frontend {
       this._microservicesConfig,
       propertyConfig.globals.pageLoader,
       propertyConfig.globals.version,
-      propertyConfig.globals.favicon
+      propertyConfig.globals.favicon,
+      workingMicroserviceConfig
     );
 
     if (Frontend._skipInjectDeployNumber) {

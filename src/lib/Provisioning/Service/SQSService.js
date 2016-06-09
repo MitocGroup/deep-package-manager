@@ -36,6 +36,13 @@ export class SQSService extends AbstractService {
   }
 
   /**
+   * @returns {String}
+   */
+  static get DB_OFFLOAD_QUEUE() {
+    return 'dbOffload';
+  }
+
+  /**
    * @returns {String[]}
    */
   static get AVAILABLE_REGIONS() {
@@ -61,6 +68,7 @@ export class SQSService extends AbstractService {
     let oldQueues = {};
     let queuesConfig = {};
     let rum = this.getRumConfig();
+    let dbOffload = this.getDBOffloadConfig();
 
     if (this._isUpdate) {
       oldQueues = this._config.queues;
@@ -68,6 +76,10 @@ export class SQSService extends AbstractService {
 
     if (rum.enabled && !oldQueues.hasOwnProperty(SQSService.RUM_QUEUE)) {
       queuesConfig[SQSService.RUM_QUEUE] = {}; // @note - here you can add some sqs queue config options
+    }
+
+    if (dbOffload.enabled && !oldQueues.hasOwnProperty(SQSService.DB_OFFLOAD_QUEUE)) {
+      queuesConfig[SQSService.DB_OFFLOAD_QUEUE] = {}; // @note - here you can add some sqs queue config options
     }
 
     this._createQueues(
@@ -109,6 +121,15 @@ export class SQSService extends AbstractService {
     this._ready = true;
 
     return this;
+  }
+
+  /**
+   * @private
+   */
+  getDBOffloadConfig() {
+    return {
+      enabled: true, // TODO: Set it configurable from config or runtime
+    };
   }
 
   /**

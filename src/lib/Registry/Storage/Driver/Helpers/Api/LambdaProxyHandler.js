@@ -303,7 +303,7 @@ export class LambdaProxyHandler extends Core.AWS.Lambda.Runtime {
    */
   get _registryStorage() {
     let config = this._registryConfig;
-    let bucket = config.bucket || this.kernel.config.buckets.system.name;
+    let bucket = config.bucket || this.kernel.config.buckets.private.name;
     let prefix = config.prefix || '';
 
     return new S3RegistryStorage(this._registryS3, bucket, prefix);

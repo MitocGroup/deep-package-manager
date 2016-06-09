@@ -5,7 +5,6 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
-import {InvalidGTMContainerIdException} from './Exception/InvalidGTMContainerIdException';
 
 export class DeepConfigDriver extends AbstractDriver {
   /**

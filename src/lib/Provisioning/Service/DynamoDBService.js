@@ -116,7 +116,7 @@ export class DynamoDBService extends AbstractService {
           continue;
         }
 
-        console.info(`DynamoDB model '${name}' -> ${JSON.stringify(tablesSettings[name])}`);
+        console.debug(`DynamoDB model '${name}' -> ${JSON.stringify(tablesSettings[name])}`);
       }
 
       deepDb.assureTables(() => {
@@ -158,7 +158,7 @@ export class DynamoDBService extends AbstractService {
    * @private
    */
   _removeMissingTables(missingTablesNames, callback) {
-    console.log(`Removing DynamoDB tables: ${missingTablesNames.join(', ')}`);
+    console.debug(`Removing DynamoDB tables: ${missingTablesNames.join(', ')}`);
 
     for (let i in missingTablesNames) {
       if (!missingTablesNames.hasOwnProperty(i)) {
