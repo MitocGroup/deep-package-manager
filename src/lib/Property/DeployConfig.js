@@ -87,7 +87,7 @@ export class DeployConfig {
       return null;
     }
 
-    return this._property.config.provisioning.s3.buckets[S3Service.SYSTEM_BUCKET].name;
+    return this._property.config.provisioning.s3.buckets[S3Service.PRIVATE_BUCKET].name;
   }
 
   /**
