@@ -105,7 +105,20 @@ export class Lambda {
 
     if (propertyConfig.provisioning) {
       let sqsQueues = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_QUEUE_SERVICE].queues;
-      config.dbOffloadQueue = sqsQueues[SQSService.DB_OFFLOAD_QUEUE] || {};
+      let sqsDbOffloadQueuesMapping = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_QUEUE_SERVICE].dbOffloadQueues;
+      config.dbOffloadQueues = {};
+
+      for (let queueName in sqsDbOffloadQueuesMapping) {
+        if (!sqsDbOffloadQueuesMapping.hasOwnProperty(queueName) ||
+          !sqsQueues.hasOwnProperty(queueName)) { // weird case but we should handle it
+          continue;
+        }
+
+        let modelName = sqsDbOffloadQueuesMapping[queueName];
+        let queueConfig = sqsQueues[queueName];
+
+        config.dbOffloadQueues[modelName] = queueConfig;
+      }
 
       config.buckets = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_STORAGE_SERVICE].buckets;
       config.tablesNames = propertyConfig.provisioning[Core.AWS.Service.DYNAMO_DB].tablesNames;
