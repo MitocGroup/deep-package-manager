@@ -411,7 +411,7 @@ export class LambdaService extends AbstractService {
       if (!roles.hasOwnProperty(microserviceIdentifier)) {
         continue;
       }
-      
+
       let execRole = roles[microserviceIdentifier];
 
       if (this._isIamRoleNew(execRole.RoleName)) {
