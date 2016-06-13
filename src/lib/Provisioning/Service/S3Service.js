@@ -458,6 +458,7 @@ export class S3Service extends AbstractService {
       return  [
         {
           Redirect: {
+            Protocol: 'https',
             HostName: hostname,
             ReplaceKeyPrefixWith: '#/',
           },

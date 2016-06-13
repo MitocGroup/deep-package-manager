@@ -25,7 +25,7 @@ export class CloudFrontService extends AbstractService {
     super(...args);
 
     this._distMetadata = {
-      ViewerProtocolPolicy: 'allow-all',
+      ViewerProtocolPolicy: 'redirect-to-https',
       ViewerCertificate: {
         CloudFrontDefaultCertificate: true,
         CertificateSource: 'cloudfront',
@@ -205,6 +205,7 @@ export class CloudFrontService extends AbstractService {
             Quantity: 0,
           },
           ViewerProtocolPolicy: this._distMetadata.ViewerProtocolPolicy,
+          Compress: true,
         },
         Enabled: true,
         Origins: {
