@@ -558,7 +558,7 @@ export class LambdaService extends AbstractService {
 
     // @todo: move it to DynamoDBService?
     let dynamoDbECStatement = policy.statement.add();
-    dynamoDbECStatement.action.add('cloudwatch', 'setAlarmState');
+    dynamoDbECStatement.action.add(Core.AWS.Service.CLOUD_WATCH, 'setAlarmState');
     dynamoDbECStatement.resource.add().any();
 
     return policy;
