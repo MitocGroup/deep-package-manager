@@ -556,6 +556,11 @@ export class LambdaService extends AbstractService {
     ec2Statement.action.add(Core.AWS.Service.EC2, 'DeleteNetworkInterface');
     ec2Statement.resource.add().any();
 
+    // @todo: move it to DynamoDBService?
+    let dynamoDbECStatement = policy.statement.add();
+    dynamoDbECStatement.action.add(Core.AWS.Service.CLOUD_WATCH, 'setAlarmState');
+    dynamoDbECStatement.resource.add().any();
+
     return policy;
   }
 
