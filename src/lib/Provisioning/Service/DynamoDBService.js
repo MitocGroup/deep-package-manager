@@ -221,7 +221,7 @@ export class DynamoDBService extends AbstractService {
         };
 
         lambda.addPermission(permissionsPayload, error => {
-          if (error) {
+          if (error && error.code !== 'ResourceConflictException') {
             console.warn(error);
           }
 
@@ -300,7 +300,7 @@ export class DynamoDBService extends AbstractService {
       };
 
       cloudWatch.putMetricAlarm(payload, error => {
-        if (error) {
+        if (error && error.code !== 'ResourceConflictException') {
           console.warn(error);
         }
 
@@ -345,7 +345,7 @@ export class DynamoDBService extends AbstractService {
       };
 
       sns.createTopic(payload, error => {
-        if (error) {
+        if (error && error.code !== 'ResourceConflictException') {
           console.warn(error);
         }
 
