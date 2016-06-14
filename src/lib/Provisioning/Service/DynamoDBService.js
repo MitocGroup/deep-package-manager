@@ -75,9 +75,11 @@ export class DynamoDBService extends AbstractService {
    * @returns {DynamoDBService}
    */
   _postDeployProvision(services) {
-    this._attachEventualConsistencyAlarms(() => {
+    /*this._attachEventualConsistencyAlarms(() => {
       this._ready = true;
-    });
+    });*/
+
+    this._ready = true;
 
     return this;
   }
@@ -85,7 +87,7 @@ export class DynamoDBService extends AbstractService {
   /**
    * @returns {String}
    */
-  get _eventualConsistencyEnspoint() {
+  get _eventualConsistencyEndpoint() {
     let globalsConfig = this.property.config.globals;
 
     return globalsConfig.storage.eventualConsistency.offloaderEndpoint;
@@ -94,6 +96,7 @@ export class DynamoDBService extends AbstractService {
   /**
    * @param {Function} cb
    * @private
+   * @deprecated
    */
   _attachEventualConsistencyAlarms(cb) {
     let offloadingBackendArn = null;
@@ -101,7 +104,7 @@ export class DynamoDBService extends AbstractService {
     let offloadQueuesNames = [];
 
     try {
-      let offloadingEndpoint = this._eventualConsistencyEnspoint;
+      let offloadingEndpoint = this._eventualConsistencyEndpoint;
 
       if (!offloadingEndpoint) {
         throw new Error('Missing eventual consistency offloading endpoint from globals config');
