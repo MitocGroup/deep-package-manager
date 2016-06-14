@@ -87,7 +87,7 @@ export class DynamoDBService extends AbstractService {
   /**
    * @returns {String}
    */
-  get _eventualConsistencyEnspoint() {
+  get _eventualConsistencyEndpoint() {
     let globalsConfig = this.property.config.globals;
 
     return globalsConfig.storage.eventualConsistency.offloaderEndpoint;
@@ -104,7 +104,7 @@ export class DynamoDBService extends AbstractService {
     let offloadQueuesNames = [];
 
     try {
-      let offloadingEndpoint = this._eventualConsistencyEnspoint;
+      let offloadingEndpoint = this._eventualConsistencyEndpoint;
 
       if (!offloadingEndpoint) {
         throw new Error('Missing eventual consistency offloading endpoint from globals config');
