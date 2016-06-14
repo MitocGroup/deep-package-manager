@@ -75,9 +75,11 @@ export class DynamoDBService extends AbstractService {
    * @returns {DynamoDBService}
    */
   _postDeployProvision(services) {
-    this._attachEventualConsistencyAlarms(() => {
+    /*this._attachEventualConsistencyAlarms(() => {
       this._ready = true;
-    });
+    });*/
+
+    this._ready = true;
 
     return this;
   }
@@ -94,6 +96,7 @@ export class DynamoDBService extends AbstractService {
   /**
    * @param {Function} cb
    * @private
+   * @deprecated
    */
   _attachEventualConsistencyAlarms(cb) {
     let offloadingBackendArn = null;
