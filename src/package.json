@@ -79,7 +79,6 @@
     "raml-sanitize": "^1.0.x",
     "raml-validate": "^1.0.x",
     "readline-sync": "^1.2.x",
-    "request": "^2.72.0",
     "semver": "^5.1.x",
     "spawn-cmd": "^0.0.x",
     "string2stream": "MitocGroup/string2stream",
