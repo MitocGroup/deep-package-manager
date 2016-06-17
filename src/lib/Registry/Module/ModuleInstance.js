@@ -4,26 +4,25 @@
 
 'use strict';
 
-import {ModuleConfig} from './ModuleConfig';
 import fse from 'fs-extra';
 import tar from 'tar-stream';
 import string2stream from 'string2stream';
-import {FileWalker} from '../Helpers/FileWalker';
-import {WaitFor} from '../Helpers/WaitFor';
+import {FileWalker} from '../../Helpers/FileWalker';
+import {WaitFor} from '../../Helpers/WaitFor';
+import {GitHubContext} from '../Context/GitHubContext';
+import {GitHubModuleInstance} from './GitHubModuleInstance';
 import path from 'path';
 import fs from 'fs';
 import stream from 'stream';
 
 export class ModuleInstance {
   /**
-   * @param {String} moduleName
-   * @param {String} moduleVersion
+   * @param {Context} moduleContext
    * @param {String} rawContent
    * @param {Storage|*} storage
    */
-  constructor(moduleName, moduleVersion, rawContent, storage) {
-    this._moduleName = moduleName;
-    this._moduleVersion = moduleVersion;
+  constructor(moduleContext, rawContent, storage) {
+    this._context = moduleContext;
     this._storage = storage;
     this._rawContent = rawContent;
   }
@@ -154,14 +153,39 @@ export class ModuleInstance {
    * @returns {String}
    */
   get moduleName() {
-    return this._moduleName;
+    return this._context.name;
   }
 
   /**
    * @returns {String}
    */
   get moduleVersion() {
-    return this._moduleVersion;
+    return this._context.version;
+  }
+
+  /**
+   * @returns {Context|GitHubContext}
+   */
+  get context() {
+    return this._context;
+  }
+
+  /**
+   * @param {Context} moduleContext
+   * @param {String} rawContent
+   * @param {Storage} storage
+   * @returns {*}
+   */
+  static create(moduleContext, rawContent, storage) {
+    if (moduleContext instanceof GitHubContext) {
+      let module = new GitHubModuleInstance(moduleContext, rawContent, storage);
+
+      // module.auth(moduleContext.user, moduleContext.token)
+
+      return module;
+    }
+
+    return new ModuleInstance(moduleContext, rawContent, storage);
   }
 
   /**

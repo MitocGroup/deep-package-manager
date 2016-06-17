@@ -8,9 +8,9 @@ import {ObjectLockedException} from './ObjectLockedException';
 
 export class ModuleDBLockedException extends ObjectLockedException {
   /**
-   * @param {String} moduleName
+   * @param {Context} moduleContext
    */
-  constructor(moduleName) {
-    super(`The module '${moduleName}' DB file is locked`);
+  constructor(moduleContext) {
+    super(`The module '${moduleContext.name}' DB file is locked`);
   }
 }

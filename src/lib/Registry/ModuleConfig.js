@@ -5,6 +5,7 @@
 'use strict';
 
 import {Config} from '../Microservice/Config';
+import {Context} from './Context/Context';
 import {BrokenModuleConfigException} from './Exception/BrokenModuleConfigException';
 import fse from 'fs-extra';
 import path from 'path';
@@ -12,26 +13,24 @@ import {Instance as Microservice} from '../Microservice/Instance';
 
 export class ModuleConfig {
   /**
-   * @param {String} moduleName
-   * @param {String} moduleVersion
+   * @param {Context} moduleContext
    * @param {Object} config
    * @param {Storage|*} storage
    */
-  constructor(moduleName, moduleVersion, config, storage) {
-    this._moduleName = moduleName;
-    this._moduleVersion = moduleVersion;
+  constructor(moduleContext, config, storage) {
+    this._context = moduleContext;
     this._storage = storage;
 
     let configObj = new Config(config);
 
     if (!configObj.valid) {
-      throw new BrokenModuleConfigException(moduleName, moduleVersion);
+      throw new BrokenModuleConfigException(moduleContext);
     }
 
     try {
       this._config = configObj.extract();
     } catch (e) {
-      throw new BrokenModuleConfigException(moduleName, moduleVersion);
+      throw new BrokenModuleConfigException(moduleContext);
     }
   }
 
@@ -50,8 +49,7 @@ export class ModuleConfig {
       cb(
         null,
         new ModuleConfig(
-          configObj.identifier,
-          configObj.version,
+          Context.create(configObj.identifier, configObj.version),
           configObj,
           storage
         )
@@ -84,14 +82,14 @@ export class ModuleConfig {
    * @returns {String}
    */
   get moduleName() {
-    return this._moduleName;
+    return this._context.name;
   }
 
   /**
    * @returns {String}
    */
   get moduleVersion() {
-    return this._moduleVersion;
+    return this._context.version;
   }
 
   /**
@@ -99,6 +97,13 @@ export class ModuleConfig {
    */
   get config() {
     return this._config;
+  }
+
+  /**
+   * @returns {Context}
+   */
+  get context() {
+    return this._context;
   }
 
   /**

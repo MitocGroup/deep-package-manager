@@ -10,12 +10,15 @@ import {Storage} from './Storage/Storage';
 import {S3Driver} from './Storage/Driver/S3Driver';
 import {FSDriver as StorageFSDriver} from './Storage/Driver/FSDriver';
 import {ApiDriver as ApiDriverDriver} from './Storage/Driver/ApiDriver';
+import {GitHubDriver} from './Storage/Driver/GitHubDriver';
+import {ComplexDriver} from './Storage/Driver/ComplexDriver';
 import {PropertyAwareFSDriver} from './Dumper/Driver/PropertyAwareFSDriver';
 import {FSDriver} from './Dumper/Driver/FSDriver';
 import {DependenciesResolver} from './Resolver/DependenciesResolver';
-import {ModuleInstance} from './ModuleInstance';
+import {ModuleInstance} from './Module/ModuleInstance';
 import {ModuleConfig} from './ModuleConfig';
 import {Server} from './Local/Server';
+import {Context} from './Context/Context';
 
 export class Registry {
   /**
@@ -70,14 +73,18 @@ export class Registry {
    * @param {Boolean} cached
    */
   static createApiRegistry(baseHost, cb, cached = false) {
+    let driver = new ComplexDriver(new GitHubDriver());
+    let storage = new Storage(driver);
+
     ApiDriverDriver.autoDiscover(baseHost, (error, apiDriver) => {
       if (error) {
-        cb(error, null);
-        return;
+        console.warn(`deep-registry(${baseHost}) is down!`);
+      } else {
+        driver.addDriver(apiDriver);
       }
-
+    
       try {
-        cb(null, new Registry(new Storage(apiDriver)));
+        cb(null, new Registry(storage));
       } catch (error) {
         cb(error, null);
       }
@@ -88,7 +95,12 @@ export class Registry {
    * @param {String} storagePath
    */
   static createLocalRegistry(storagePath) {
-    let storage = new Storage(new StorageFSDriver(storagePath));
+    let driver = new ComplexDriver(
+      new StorageFSDriver(storagePath),
+      new GitHubDriver()
+    );
+
+    let storage = new Storage(driver);
 
     return new Registry(storage);
   }
@@ -143,8 +155,9 @@ export class Registry {
         }
 
         let dependencyRawVersion = dependencies[dependencyName];
+        let moduleContext = Context.create(dependencyName, dependencyRawVersion);
 
-        this.installModule(dependencyName, dependencyRawVersion, dumpPath, (error) => {
+        this.installModule(moduleContext, dumpPath, (error) => {
           if (error) {
             if (!cbSent) {
               cbSent = true;
@@ -227,22 +240,23 @@ export class Registry {
   }
 
   /**
-   * @param {String} moduleName
-   * @param {String} moduleRawVersion
+   * @param {Context} moduleContext
    * @param {String} dumpPath
    * @param {Function} cb
    * @param {Property|Instance|null|*} property
    *
    * @todo: Remove property argument?
    */
-  installModule(moduleName, moduleRawVersion, dumpPath, cb, property = null) {
+  installModule(moduleContext, dumpPath, cb, property = null) {
+    let moduleName = moduleContext.name;
+    let moduleRawVersion = moduleContext.version;
+
     console.debug(`Installing '${moduleName}@${moduleRawVersion}' module into '${dumpPath}'`);
 
     DependenciesResolver.createUsingRawVersion(
       this._storage,
       null,
-      moduleName,
-      moduleRawVersion,
+      moduleContext,
       (error, dependenciesResolver) => {
         if (error) {
           console.error(`Module '${moduleName}@${moduleRawVersion}' installation failed: ${error}`);
