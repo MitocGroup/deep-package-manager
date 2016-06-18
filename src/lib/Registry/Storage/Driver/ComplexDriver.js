@@ -23,7 +23,7 @@ export class ComplexDriver /* extends AbstractDriver */ {
    */
   addDriver(driver) {
     for (let _driver of this._drivers) {
-      if (_driver.prototype === driver.prototype) {
+      if (_driver.constructor === driver.constructor) {
         return this;
       }
     }
