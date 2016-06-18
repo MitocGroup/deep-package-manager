@@ -26,7 +26,7 @@ export class GitHubModuleInstance extends ModuleInstance {
   extract(dumpPath, cb) {
     let moduleUri = this.storage.strategy.getModuleLocation(this.context);
 
-    this.gitHubDriver.readObjStreamed(moduleUri, (error, streamResponse) => {
+    this._gitHubDriver.readObjStreamed(moduleUri, (error, streamResponse) => {
       if (error) {
         cb(error, null);
         return;
@@ -93,7 +93,7 @@ export class GitHubModuleInstance extends ModuleInstance {
   /**
    * @returns {GitHubDriver}
    */
-  get gitHubDriver() {
+  get _gitHubDriver() {
     return this.storage.driver.find(GitHubDriver);
   }
 }

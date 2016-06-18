@@ -177,15 +177,11 @@ export class ModuleInstance {
    * @returns {*}
    */
   static create(moduleContext, rawContent, storage) {
-    if (moduleContext instanceof GitHubContext) {
-      let module = new GitHubModuleInstance(moduleContext, rawContent, storage);
+    let ModuleProto = moduleContext instanceof GitHubContext ?
+      GitHubModuleInstance :
+      ModuleInstance;
 
-      // module.auth(moduleContext.user, moduleContext.token)
-
-      return module;
-    }
-
-    return new ModuleInstance(moduleContext, rawContent, storage);
+    return new ModuleProto(moduleContext, rawContent, storage);
   }
 
   /**

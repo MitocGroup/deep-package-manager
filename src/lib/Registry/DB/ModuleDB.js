@@ -85,8 +85,10 @@ export class ModuleDB {
   toString() {
     return ModuleDB._encode(this.config);
   }
-  
+
   /**
+   * @returns {Context}
+   */
   get context() {
     return this._context;
   }
