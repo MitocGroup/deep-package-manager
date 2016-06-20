@@ -8,9 +8,9 @@ import {RegistryException} from './RegistryException';
 
 export class BrokenModuleDBException extends RegistryException {
   /**
-   * @param {String} moduleName
+   * @param {Context} moduleContext
    */
-  constructor(moduleName) {
-    super(`Unable to decode module DB file for ${moduleName}`);
+  constructor(moduleContext) {
+    super(`Unable to decode module DB file for ${moduleContext}`);
   }
 }

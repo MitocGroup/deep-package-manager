@@ -69,7 +69,7 @@ export class Dumper {
       });
 
       depObjectsStack.forEach((dependencyObj) => {
-        this._dumpSingle(dependencyObj.name, dependencyObj.version, (error) => {
+        this._dumpSingle(dependencyObj.context, (error) => {
           if (error) {
             if (!cbCalled) {
               cbCalled = true;
@@ -120,13 +120,15 @@ export class Dumper {
   }
 
   /**
-   * @param {String} moduleName
-   * @param {String} moduleVersion
+   * @param {Context} moduleContext
    * @param {Function} cb
    * @private
    */
-  _dumpSingle(moduleName, moduleVersion, cb) {
-    this._dumpDriver.hasToDump(moduleName, moduleVersion, (error, hasToDump) => {
+  _dumpSingle(moduleContext, cb) {
+    let moduleName = moduleContext.name;
+    let moduleVersion = moduleContext.version;
+
+    this._dumpDriver.hasToDump(moduleContext, (error, hasToDump) => {
       if (error) {
         cb(error);
         return;
@@ -139,7 +141,7 @@ export class Dumper {
 
       console.debug(`Fetching '${moduleName}@${moduleVersion}' module data`);
 
-      this._storage.readModule(moduleName, moduleVersion, (error, moduleObj) => {
+      this._storage.readModule(moduleContext, (error, moduleObj) => {
         if (error) {
           cb(error);
           return;
@@ -167,8 +169,7 @@ export class Dumper {
     }
 
     depsVector.push({
-      name: depsTree.name,
-      version: depsTree.version,
+      context: depsTree.context
     });
 
     let deps = depsTree.dependencies || {};
@@ -187,8 +188,8 @@ export class Dumper {
   }
 
   /**
-   * @param {{name:*,version:*}[]} depsVector
-   * @returns {{name:*,version:*}[]}
+   * @param {{context:*}[]} depsVector
+   * @returns {{context:*}[]}
    * @private
    */
   static _removeDepsVectorDuplicates(depsVector) {
@@ -196,7 +197,7 @@ export class Dumper {
     let cleanVector = [];
 
     depsVector.forEach((depObj) => {
-      let storageKey = `${depObj.name}@${depObj.version}`;
+      let storageKey = depObj.context.toString();
 
       if (storageKeys.indexOf(storageKey) === -1) {
         storageKeys.push(storageKey);

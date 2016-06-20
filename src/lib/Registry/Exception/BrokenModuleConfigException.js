@@ -8,10 +8,9 @@ import {RegistryException} from './RegistryException';
 
 export class BrokenModuleConfigException extends RegistryException {
   /**
-   * @param {String} moduleName
-   * @param {String} moduleVersion
+   * @param {Context} moduleContext
    */
-  constructor(moduleName, moduleVersion) {
-    super(`Unable to decode module config for ${moduleName}@${moduleVersion}`);
+  constructor(moduleContext) {
+    super(`Unable to decode module config for ${moduleContext}`);
   }
 }

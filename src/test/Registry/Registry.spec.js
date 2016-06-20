@@ -23,7 +23,7 @@ suite('Registry/Registry', function() {
   const testMaterialsPath = path.join(__dirname, '..', 'testMaterials');
   const registryPath = path.join(testMaterialsPath, 'registry');
 
-  let localRegistry = Registry.createLocalRegistry(registryPath);
+  let localRegistry = Registry.createRegistry(registryPath);
 
   // cleanup local test registry
   fse.removeSync(registryPath);

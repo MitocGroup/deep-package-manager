@@ -8,9 +8,9 @@ import {RegistryException} from '../../Exception/RegistryException';
 
 export class MissingModuleDBException extends RegistryException {
   /**
-   * @param {String} moduleName
+   * @param {Context} moduleContext
    */
-  constructor(moduleName) {
-    super(`Missing '${moduleName}' module DB`);
+  constructor(moduleContext) {
+    super(`Missing '${moduleContext.name}' module DB`);
   }
 }
