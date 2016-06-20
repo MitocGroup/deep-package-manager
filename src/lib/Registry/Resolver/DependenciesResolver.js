@@ -62,8 +62,8 @@ export class DependenciesResolver {
             return;
           }
 
-          console.debug(`Fetching '${moduleContext.name}@${matchedVersion}' module config`);
           moduleContext.version = matchedVersion;
+          console.debug(`Fetching '${moduleContext}' module config`);
 
           storage.readModuleConfig(moduleContext, (error, moduleConfig) => {
             if (error) {

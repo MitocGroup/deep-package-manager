@@ -188,19 +188,18 @@ export class Registry {
         return;
       }
 
-      console.debug(`Publishing '${moduleConfig.moduleName}@${moduleConfig.moduleVersion}' module`);
+      console.debug(`Publishing '${moduleConfig.context}' module`);
 
       let moduleObj = new ModuleInstance(
-        moduleConfig.moduleName,
-        moduleConfig.moduleVersion,
+        moduleConfig.context,
         '',
         this._storage
       );
 
-      console.debug(`Archiving '${moduleConfig.moduleName}@${moduleConfig.moduleVersion}' module content`);
+      console.debug(`Archiving '${moduleConfig.context}' module content`);
 
       moduleObj.load(modulePath, () => {
-        console.debug(`Uploading '${moduleConfig.moduleName}@${moduleConfig.moduleVersion}' module to remote registry`);
+        console.debug(`Uploading '${moduleConfig.context}' module to remote registry`);
 
         moduleObj.upload((error) => {
           if (error) {
@@ -209,7 +208,7 @@ export class Registry {
           }
 
           console.debug(
-            `Saving '${moduleConfig.moduleName}@${moduleConfig.moduleVersion}' module config to remote registry`
+            `Saving '${moduleConfig.context}' module config to remote registry`
           );
 
           moduleConfig.dump((error) => {
@@ -218,16 +217,16 @@ export class Registry {
               return;
             }
 
-            console.debug(`Updating '${moduleConfig.moduleName}@${moduleConfig.moduleVersion}' module DB`);
+            console.debug(`Updating '${moduleConfig.context}' module DB`);
 
-            this._storage.updateModuleDb(moduleConfig.moduleName, moduleConfig.moduleVersion, (error) => {
+            this._storage.updateModuleDb(moduleConfig.context, (error) => {
               if (error) {
                 console.error(
-                  `Module '${moduleConfig.moduleName}@${moduleConfig.moduleVersion}' publication failed: ${error}`
+                  `Module '${moduleConfig.context}' publication failed: ${error}`
                 );
               } else {
                 console.debug(
-                  `Module '${moduleConfig.moduleName}@${moduleConfig.moduleVersion}' successfully published`
+                  `Module '${moduleConfig.context}' successfully published`
                 );
               }
 
@@ -248,10 +247,7 @@ export class Registry {
    * @todo: Remove property argument?
    */
   installModule(moduleContext, dumpPath, cb, property = null) {
-    let moduleName = moduleContext.name;
-    let moduleRawVersion = moduleContext.version;
-
-    console.debug(`Installing '${moduleName}@${moduleRawVersion}' module into '${dumpPath}'`);
+    console.debug(`Installing '${moduleContext}' module into '${dumpPath}'`);
 
     DependenciesResolver.createUsingRawVersion(
       this._storage,
@@ -259,7 +255,7 @@ export class Registry {
       moduleContext,
       (error, dependenciesResolver) => {
         if (error) {
-          console.error(`Module '${moduleName}@${moduleRawVersion}' installation failed: ${error}`);
+          console.error(`Module '${moduleContext}' installation failed: ${error}`);
           cb(error);
           return;
         }
@@ -272,9 +268,9 @@ export class Registry {
 
         dumper.dump((error) => {
           if (error) {
-            console.error(`Module '${moduleName}@${moduleRawVersion}' installation failed: ${error}`);
+            console.error(`Module '${moduleContext}' installation failed: ${error}`);
           } else {
-            console.debug(`Module '${moduleName}@${moduleRawVersion}' successfully installed`);
+            console.log(`Module '${moduleContext}' successfully installed`);
           }
 
           cb(error);

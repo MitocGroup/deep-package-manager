@@ -10,6 +10,8 @@ import {WaitFor} from '../../Helpers/WaitFor';
 import {GitHubDriver} from '../Storage/Driver/GitHubDriver';
 import tar from 'tar-stream';
 import gunzip from 'gunzip-maybe';
+import path from 'path';
+import fse from 'fs-extra';
 
 export class GitHubModuleInstance extends ModuleInstance {
   /**
@@ -72,11 +74,21 @@ export class GitHubModuleInstance extends ModuleInstance {
 
       let filePath = header.name.replace(/^([^\/]+\/)/, '');
 
-      extractStrategy.extract(filePath, stream, () => {
-        filesToExtract--;
+      if (this._haveToDump(filePath)) {
+        let file = path.join(dumpPath, StandardStrategy.normalizeFilePath(filePath));
+        let output = fse.createOutputStream(file);
 
-        next();
-      });
+        output.on('finish', () => {
+          filesToExtract--;
+          next();
+        });
+
+        stream.pipe(output);
+        return;
+      }
+
+      filesToExtract--;
+      next();
     });
 
     unTarStream.on('finish', () => {
@@ -88,6 +100,21 @@ export class GitHubModuleInstance extends ModuleInstance {
     dataStream
       .pipe(gunzip())
       .pipe(unTarStream);
+  }
+
+  /**
+   * @param {String} filePath
+   * @returns {Boolean}
+   * @private
+   */
+  _haveToDump(filePath) {
+    let depName = this.context.name;
+    let regExp = new RegExp(
+      `^\/?src\/${depName}\/`,
+      'i'
+    );
+
+    return regExp.test(filePath);
   }
 
   /**

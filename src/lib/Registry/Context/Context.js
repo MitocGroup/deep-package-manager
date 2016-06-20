@@ -43,6 +43,13 @@ export class Context {
   }
 
   /**
+   * @returns {String}
+   */
+  toString() {
+    return `${this._name}@${this._version}`;
+  }
+
+  /**
    * @param {String} name
    * @param {String} rawVersion
    * @returns {Context|GitHubContext}

@@ -90,7 +90,7 @@ export class ComplexDriver /* extends AbstractDriver */ {
         errors.push(error);
 
         if (drivers.length === 0) {
-          originalCb(errors, null);
+          originalCb(errors, results.length === 0 ? null : results);
         } else {
           this._writeMethodQueueMap(drivers, method, errors, results, ...args.concat(originalCb));
         }
