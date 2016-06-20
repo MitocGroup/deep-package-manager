@@ -67,7 +67,7 @@ export class FSDriver extends AbstractDriver {
   _dumpPath(moduleContext) {
     return path.join(
       this._basePath, 
-      this._appendVersion ? `${moduleContext.name}@${moduleContext.version}` : moduleContext.name
+      this._appendVersion ? moduleContext.toString() : moduleContext.name
     );
   }
 }

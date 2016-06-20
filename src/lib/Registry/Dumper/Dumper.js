@@ -197,7 +197,7 @@ export class Dumper {
     let cleanVector = [];
 
     depsVector.forEach((depObj) => {
-      let storageKey = `${depObj.context.name}@${depObj.context.version}`;
+      let storageKey = depObj.context.toString();
 
       if (storageKeys.indexOf(storageKey) === -1) {
         storageKeys.push(storageKey);

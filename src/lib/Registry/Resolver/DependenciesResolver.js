@@ -164,7 +164,7 @@ export class DependenciesResolver {
         }
 
         // @todo: remove circular deps check?
-        let depUqKey = `${moduleContext.name}@${moduleContext.version}`;
+        let depUqKey = moduleContext.toString();
 
         if (this._resolveUqStack.indexOf(depUqKey) !== -1) {
           console.warn(`Circular dependency '${depUqKey}' found`);
@@ -239,7 +239,7 @@ export class DependenciesResolver {
         return;
       }
 
-      console.debug(`Resolving '${moduleContext.name}@${moduleContext.version}'`);
+      console.debug(`Resolving '${moduleContext}'`);
 
       let matchedVersion = this._strategy.resolve(moduleDB, moduleContext.version);
 
@@ -260,18 +260,16 @@ export class DependenciesResolver {
    * @private
    */
   _getModuleConfig(moduleContext, cb) {
-    let moduleName = moduleContext.name;
-    let moduleVersion = moduleContext.version;
-    let cacheKey = `${moduleName}@${moduleVersion}`;
+    let cacheKey = moduleContext.toString();
 
     if (this._configCache.hasOwnProperty(cacheKey)) {
-      console.debug(`Reading '${moduleName}@${moduleVersion}' module config from cache`);
+      console.debug(`Reading '${moduleContext}' module config from cache`);
 
       cb(null, this._configCache[cacheKey]);
       return;
     }
 
-    console.debug(`Fetching '${moduleName}@${moduleVersion}' module config`);
+    console.debug(`Fetching '${moduleContext}' module config`);
 
     this._storage.readModuleConfig(moduleContext, (error, moduleConfig) => {
       if (error) {
