@@ -11,6 +11,6 @@ export class BrokenModuleDBException extends RegistryException {
    * @param {Context} moduleContext
    */
   constructor(moduleContext) {
-    super(`Unable to decode module DB file for ${moduleContext.name}`);
+    super(`Unable to decode module DB file for ${moduleContext}`);
   }
 }

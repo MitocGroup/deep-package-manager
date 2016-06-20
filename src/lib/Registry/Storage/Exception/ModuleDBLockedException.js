@@ -11,6 +11,6 @@ export class ModuleDBLockedException extends ObjectLockedException {
    * @param {Context} moduleContext
    */
   constructor(moduleContext) {
-    super(`The module '${moduleContext.name}' DB file is locked`);
+    super(`The module '${moduleContext}' DB file is locked`);
   }
 }

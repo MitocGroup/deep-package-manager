@@ -46,15 +46,7 @@ export class GitHubModuleInstance extends ModuleInstance {
    * @private
    */
   _extractResponse(dataStream, dumpPath, cb, extractStrategy = null) {
-    console.debug(`Dumping '${this.context.name}' dependency into '${dumpPath}'`);
-
-    extractStrategy = extractStrategy || new StandardStrategy(dumpPath);
-
-    // Fixes deep-microservices-* cases
-    extractStrategy.advancedMatcherFromDeepDepShortName &&
-    extractStrategy.advancedMatcherFromDeepDepShortName(
-      this.context.name
-    );
+    console.debug(`Dumping '${this.context}' dependency into '${dumpPath}'`);
 
     let unTarStream = tar.extract();
     let wait = new WaitFor();

@@ -59,7 +59,7 @@ export class Context {
     let GitHubContext = require('../Context/GitHubContext').GitHubContext;
 
     if (GitHubContext.isGitHubVersion(rawVersion)) {
-      return GitHubContext.create(name, rawVersion)
+      return GitHubContext.create(name, rawVersion);
     }
     
     return new Context(name, rawVersion);

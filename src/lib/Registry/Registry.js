@@ -78,7 +78,7 @@ export class Registry {
 
     ApiDriverDriver.autoDiscover(baseHost, (error, apiDriver) => {
       if (error) {
-        console.warn(`deep-registry(${baseHost}) is down!`);
+        console.warn(`DEEP registry is not available on ${baseHost}`);
       } else {
         driver.addDriver(apiDriver);
       }
@@ -94,7 +94,7 @@ export class Registry {
   /**
    * @param {String} storagePath
    */
-  static createLocalRegistry(storagePath) {
+  static createRegistry(storagePath) {
     let driver = new ComplexDriver(
       new StorageFSDriver(storagePath),
       new GitHubDriver()

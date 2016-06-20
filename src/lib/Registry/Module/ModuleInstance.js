@@ -11,17 +11,20 @@ import {FileWalker} from '../../Helpers/FileWalker';
 import {WaitFor} from '../../Helpers/WaitFor';
 import {GitHubContext} from '../Context/GitHubContext';
 import {GitHubModuleInstance} from './GitHubModuleInstance';
+import {AbstractModuleInstance} from './AbstractModuleInstance';
 import path from 'path';
 import fs from 'fs';
 import stream from 'stream';
 
-export class ModuleInstance {
+export class ModuleInstance extends AbstractModuleInstance {
   /**
    * @param {Context} moduleContext
    * @param {String} rawContent
    * @param {Storage|*} storage
    */
   constructor(moduleContext, rawContent, storage) {
+    super();
+
     this._context = moduleContext;
     this._storage = storage;
     this._rawContent = rawContent;

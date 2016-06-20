@@ -11,6 +11,6 @@ export class BrokenModuleConfigException extends RegistryException {
    * @param {Context} moduleContext
    */
   constructor(moduleContext) {
-    super(`Unable to decode module config for ${moduleContext.name}@${moduleContext.version}`);
+    super(`Unable to decode module config for ${moduleContext}`);
   }
 }

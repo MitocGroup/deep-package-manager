@@ -7,14 +7,17 @@
 import {BrokenModuleDBException} from '../Exception/BrokenModuleDBException';
 import {GitHubContext} from '../Context/GitHubContext';
 import {GitHubDB} from './GitHubDB';
+import {AbstractModuleDB} from './AbstractModuleDB';
 
-export class ModuleDB {
+export class ModuleDB extends AbstractModuleDB {
   /**
    * @param {Context} moduleContext
    * @param {Object} config
    * @param {Storage|*} storage
    */
   constructor(moduleContext, config, storage) {
+    super();
+
     this._context = moduleContext;
     this._config = config;
     this._storage = storage;
@@ -57,8 +60,7 @@ export class ModuleDB {
    * @returns {null|GitHubDB, ModuleDB}
    */
   static create(moduleContext, storage, configObj) {
-    let DBProto = moduleContext instanceof GitHubContext ?
-      GitHubDB : ModuleDB;
+    let DBProto = moduleContext instanceof GitHubContext ? GitHubDB : ModuleDB;
 
     return new DBProto(moduleContext, configObj, storage);
   }
