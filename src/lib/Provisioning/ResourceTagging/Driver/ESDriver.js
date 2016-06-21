@@ -34,10 +34,11 @@ export class ESDriver extends AbstractDriver {
       };
 
       stack.push(this._elasticSearch.addTags(payload), (error) => {
-        console.log(error ?
-            `Error on tagging Elasticsearch domain ${domain.DomainName}` :
-            `Elasticsearch domain ${domain.DomainName} has been tagged`
-        );
+        if (error) {
+          console.warn(`Error on tagging Elasticsearch domain ${domain.DomainName}`);
+        } else {
+          console.debug(`Elasticsearch domain ${domain.DomainName} has been tagged`);
+        }
       });
     });
 

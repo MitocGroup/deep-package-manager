@@ -85,6 +85,9 @@ export class Instance {
     this._cloudWatchEvents = new property.AWS.CloudWatchEvents({
       region: this._lambda.config.region,
     });
+    this._cloudWatch = new property.AWS.CloudWatch({
+      region: this._lambda.config.region,
+    });
 
     this._config = {};
 
@@ -146,6 +149,13 @@ export class Instance {
    */
   get cloudWatchEvents() {
     return this._cloudWatchEvents;
+  }
+
+  /**
+   * @returns {AWS.CloudWatch|*}
+   */
+  get cloudWatch() {
+    return this._cloudWatch;
   }
 
   /**
@@ -373,7 +383,7 @@ export class Instance {
         if (isUpdate) {
           callback(this._config);
         } else {
-          console.log('Start tagging resources');
+          console.debug('Start tagging resources');
 
           Tagging.create(this._property).tag(() => {
             callback(this._config);

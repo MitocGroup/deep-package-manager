@@ -36,6 +36,13 @@ export class SQSService extends AbstractService {
   }
 
   /**
+   * @returns {String}
+   */
+  static get DB_OFFLOAD_QUEUE() {
+    return 'dbol';
+  }
+
+  /**
    * @returns {String[]}
    */
   static get AVAILABLE_REGIONS() {
@@ -61,24 +68,65 @@ export class SQSService extends AbstractService {
     let oldQueues = {};
     let queuesConfig = {};
     let rum = this.getRumConfig();
+    let dbOffload = this.getDBOffloadConfig();
+    let dbOffloadQueues = {};
 
     if (this._isUpdate) {
-      oldQueues = this._config.queues;
+      oldQueues = this._config.queues || {};
+      dbOffloadQueues = this._config.dbOffloadQueues || {};
     }
 
     if (rum.enabled && !oldQueues.hasOwnProperty(SQSService.RUM_QUEUE)) {
       queuesConfig[SQSService.RUM_QUEUE] = {}; // @note - here you can add some sqs queue config options
     }
 
+    if (dbOffload.enabled) {
+      this._dynamoDBModelsVector.forEach((modelName) => {
+        let modelQueueName = `${SQSService.DB_OFFLOAD_QUEUE}-${modelName}`;
+
+        if (!oldQueues.hasOwnProperty(modelQueueName)) {
+          queuesConfig[modelQueueName] = {}; // @note - here you can add some sqs queue config options
+          dbOffloadQueues[modelQueueName] = modelName;
+        }
+      });
+    }
+
     this._createQueues(
       queuesConfig
     )((queues) => {
       this._config.queues = objectMerge(oldQueues, queues);
+      this._config.dbOffloadQueues = dbOffloadQueues;
 
       this._ready = true;
     });
 
     return this;
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  get _dynamoDBModelsVector() {
+    let modelsVector = [];
+    let models = this.provisioning.property.config.models;
+
+    for (let modelKey in models) {
+      if (!models.hasOwnProperty(modelKey)) {
+        continue;
+      }
+
+      let backendModels = models[modelKey];
+
+      for (let modelName in backendModels) {
+        if (!backendModels.hasOwnProperty(modelName)) {
+          continue;
+        }
+
+        modelsVector.push(modelName);
+      }
+    }
+
+    return modelsVector;
   }
 
   /**
@@ -109,6 +157,15 @@ export class SQSService extends AbstractService {
     this._ready = true;
 
     return this;
+  }
+
+  /**
+   * @private
+   */
+  getDBOffloadConfig() {
+    return {
+      enabled: true, // TODO: Set it configurable from config or runtime
+    };
   }
 
   /**

@@ -16,6 +16,8 @@ import {Frontend} from './Frontend';
 import Core from 'deep-core';
 import JsonFile from 'jsonfile';
 import {S3Service} from '../Provisioning/Service/S3Service';
+import {SQSService} from '../Provisioning/Service/SQSService';
+import {AbstractService} from '../Provisioning/Service/AbstractService';
 import Mime from 'mime';
 import FileSystemExtra from 'fs-extra';
 import {InvalidConfigException} from './Exception/InvalidConfigException';
@@ -97,15 +99,53 @@ export class Lambda {
     config.appIdentifier = propertyConfig.appIdentifier;
     config.timestamp = (new Date()).getTime();
     config.buckets = S3Service.fakeBucketsConfig(propertyConfig.appIdentifier);
-    config.tablesNames = [];
+    config.tablesNames = {};
 
     config.cacheDsn = '';
 
     if (propertyConfig.provisioning) {
+      let sqsQueues = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_QUEUE_SERVICE].queues;
+      let sqsDbOffloadQueuesMapping = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_QUEUE_SERVICE].dbOffloadQueues;
+      config.dbOffloadQueues = {};
+
+      for (let queueName in sqsDbOffloadQueuesMapping) {
+        if (!sqsDbOffloadQueuesMapping.hasOwnProperty(queueName) ||
+          !sqsQueues.hasOwnProperty(queueName)) { // weird case but we should handle it
+          continue;
+        }
+
+        let modelName = sqsDbOffloadQueuesMapping[queueName];
+        let queueConfig = sqsQueues[queueName];
+
+        config.dbOffloadQueues[modelName] = queueConfig;
+      }
+
       config.buckets = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_STORAGE_SERVICE].buckets;
       config.tablesNames = propertyConfig.provisioning[Core.AWS.Service.DYNAMO_DB].tablesNames;
 
       config.cacheDsn = propertyConfig.provisioning[Core.AWS.Service.ELASTIC_CACHE].dsn;
+    } else {
+      for (let modelKey in config.models) {
+        if (!config.models.hasOwnProperty(modelKey)) {
+          continue;
+        }
+
+        let backendModels = config.models[modelKey];
+
+        for (let modelName in backendModels) {
+          if (!backendModels.hasOwnProperty(modelName)) {
+            continue;
+          }
+
+          config.tablesNames[modelName] = AbstractService.generateAwsResourceName(
+            modelName,
+            Core.AWS.Service.DYNAMO_DB,
+            propertyConfig.awsAccountId,
+            propertyConfig.appIdentifier,
+            propertyConfig.env
+          );
+        }
+      }
     }
 
     for (let microserviceIdentifier in propertyConfig.microservices) {
@@ -290,7 +330,7 @@ export class Lambda {
    */
   deploy(callback) {
     this.pack().ready(() => {
-      console.log(`Lambda ${this._identifier} packing is ready`);
+      console.debug(`Lambda ${this._identifier} packing is ready`);
 
       this.upload().ready(callback);
     });
@@ -409,7 +449,7 @@ export class Lambda {
    * @returns {WaitFor}
    */
   pack() {
-    console.log(`Start packing lambda ${this._identifier}`);
+    console.debug(`Start packing lambda ${this._identifier}`);
 
     this.persistConfig();
     this._injectDeepConfigIntoBootstrap();
@@ -417,7 +457,7 @@ export class Lambda {
     let buildFile = `${this._path}.zip`;
 
     if (FileSystem.existsSync(buildFile)) {
-      console.log(`Lambda prebuilt in ${buildFile}`);
+      console.debug(`Lambda prebuilt in ${buildFile}`);
 
       FileSystemExtra.copySync(buildFile, this._zipPath);
 
@@ -500,7 +540,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
       return buckets[S3Service.TMP_BUCKET].name;
     }
 
-    return buckets[S3Service.SYSTEM_BUCKET].name;
+    return buckets[S3Service.PRIVATE_BUCKET].name;
   }
 
   /**
@@ -517,7 +557,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    * @returns {AwsRequestSyncStack|WaitFor|*}
    */
   upload(update = false) {
-    console.log(`Start uploading lambda ${this._identifier}`);
+    console.debug(`Start uploading lambda ${this._identifier}`);
 
     let lambda = this._property.provisioning.lambda;
     let s3 = this._property.provisioning.s3;
@@ -551,7 +591,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
 
       let request = null;
 
-      console.log(`Lambda ${this._identifier} uploaded`);
+      console.debug(`Lambda ${this._identifier} uploaded`);
 
       let params = {
         FunctionName: this.functionName,

@@ -12,6 +12,7 @@ import {RootAssetsDriver} from './Driver/RootAssetsDriver';
 import {PageLoaderDriver} from './Driver/PageLoaderDriver';
 import {VersionDriver} from './Driver/VersionDriver';
 import {FaviconDriver} from './Driver/FaviconDriver';
+import {DeepEnvPlaceholderDriver} from './Driver/DeepEnvPlaceholderDriver';
 
 export class Injector {
   /**
@@ -30,7 +31,12 @@ export class Injector {
    * @param {String|null} version
    * @param {String|null} favicon
    */
-  static fileInjectAll(htmlFile, deepConfig = null, gtmContainerId = null, microservices = {}, pageLoader = null, version = null, favicon = null) {
+  static fileInjectAll(
+    htmlFile,
+    deepConfig = null, gtmContainerId = null, microservices = {},
+    pageLoader = null, version = null, favicon = null,
+    workingMicroserviceConfig = null) {
+
     let drivers = [];
 
     if (deepConfig) {
@@ -56,6 +62,10 @@ export class Injector {
 
     if (version) {
       drivers.push(new VersionDriver(version));
+    }
+
+    if (workingMicroserviceConfig) {
+      drivers.push(new DeepEnvPlaceholderDriver(workingMicroserviceConfig));
     }
 
     if (drivers.length <= 0) {

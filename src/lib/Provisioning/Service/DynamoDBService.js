@@ -7,6 +7,8 @@
 import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
 import DB from 'deep-db';
+import {SQSService} from './SQSService';
+import {LambdaService} from './LambdaService';
 
 /**
  * DynamoDB service
@@ -73,15 +75,303 @@ export class DynamoDBService extends AbstractService {
    * @returns {DynamoDBService}
    */
   _postDeployProvision(services) {
-    // @todo: implement!
-    if (this._isUpdate) {
+    /*this._attachEventualConsistencyAlarms(() => {
       this._ready = true;
-      return this;
-    }
+    });*/
 
     this._ready = true;
 
     return this;
+  }
+
+  /**
+   * @returns {String}
+   */
+  get _eventualConsistencyEndpoint() {
+    let globalsConfig = this.property.config.globals;
+
+    return globalsConfig.storage.eventualConsistency.offloaderEndpoint;
+  }
+
+  /**
+   * @param {Function} cb
+   * @private
+   * @deprecated
+   */
+  _attachEventualConsistencyAlarms(cb) {
+    let offloadingBackendArn = null;
+    let offloadingBackendName = null;
+    let offloadQueuesNames = [];
+
+    try {
+      let offloadingEndpoint = this._eventualConsistencyEndpoint;
+
+      if (!offloadingEndpoint) {
+        throw new Error('Missing eventual consistency offloading endpoint from globals config');
+      }
+
+      let offloadEndpointParts = offloadingEndpoint.replace(/^@/, '').split(':');
+      let offloadMicroserviceIdentifier = offloadEndpointParts[0];
+      let offloadActionIdentifier = `${offloadEndpointParts[1]}-${offloadEndpointParts[2]}`;
+      let lambda = this.provisioning.lambda;
+      let lambdaConfig = this.provisioning.services.find(LambdaService).config();
+      offloadingBackendName = lambdaConfig.names[offloadMicroserviceIdentifier][offloadActionIdentifier];
+      offloadingBackendArn = this._generateLambdaArn(lambda, offloadingBackendName);
+
+      let sqsConfig = this.provisioning.services.find(SQSService).config();
+      let offloadQueuesVector = Object.keys(sqsConfig.dbOffloadQueues);
+
+      for (let queueShortName in sqsConfig.queues) {
+        if (!sqsConfig.queues.hasOwnProperty(queueShortName) ||
+          offloadQueuesVector.indexOf(queueShortName) === -1) {
+          continue;
+        }
+
+        offloadQueuesNames.push(sqsConfig.queues[queueShortName].name);
+      }
+
+      if (offloadQueuesNames.length <= 0) {
+        return cb();
+      }
+    } catch (error) {
+      console.warn(error);
+      return cb();
+    }
+
+    console.debug(`Setting up eventual consistency using queues: ${offloadQueuesNames.join(', ')}`);
+
+    this._ensureSnsTopicsForEventualConsistency(offloadQueuesNames)
+      .then((...args) => {
+        console.debug('Ensure CloudWatch Alarms set up for eventual consistency');
+
+        this._ensureCloudWatchAlarmsForEventualConsistency(offloadQueuesNames, ...args)
+          .then((...args) => {
+            console.debug('Ensure eventual consistency offload backend subscribed to SNS topics');
+
+            this._ensureLambdasSubscribedToEventualConsistencyTopics(offloadingBackendArn, offloadingBackendName, offloadQueuesNames, ...args)
+              .then(cb)
+              .catch(error => {
+                console.warn(error);
+                cb();
+              });
+          }).catch(error => {
+            console.warn(error);
+            cb();
+          });
+      }).catch(error => {
+        console.warn(error);
+        cb();
+      });
+  }
+
+  /**
+   * @param {String} offloadingBackendArn
+   * @param {String} offloadingBackendName
+   * @param {String[]} offloadQueuesNames
+   * @param {Object} snsTopicsMapping
+   * @returns {Promise|*}
+   */
+  _ensureLambdasSubscribedToEventualConsistencyTopics(offloadingBackendArn, offloadingBackendName, offloadQueuesNames, snsTopicsMapping) {
+    return new Promise((resolve, reject) => {
+      let sns = this.provisioning.sns;
+      let lambda = this.provisioning.lambda;
+      let cloudWatchEvents = this.provisioning.cloudWatchEvents;
+
+      let premises = offloadQueuesNames.map(topicName => {
+        return this._subscribeLambdaToSnsTopic(
+          sns,
+          lambda,
+          cloudWatchEvents,
+          topicName,
+          offloadingBackendArn,
+          offloadingBackendName,
+          snsTopicsMapping[topicName]
+        );
+      });
+
+      Promise.all(premises).then(resolve);
+    });
+  }
+
+  /**
+   * @param {*} sns
+   * @param {*} lambda
+   * @param {*} cloudWatchEvents
+   * @param {String} topicName
+   * @param {String} lambdaArn
+   * @param {String} lambdaName
+   * @param {String} topicArn
+   * @returns {Promise|*}
+   */
+  _subscribeLambdaToSnsTopic(sns, lambda, cloudWatchEvents, topicName, lambdaArn, lambdaName, topicArn) {
+    return new Promise((resolve, reject) => {
+      let subscribePayload = {
+        TopicArn: topicArn,
+        Protocol: 'lambda',
+        Endpoint: lambdaArn,
+      };
+
+      sns.subscribe(subscribePayload, error => {
+        if (error) {
+          console.warn(error);
+        }
+
+        let permissionsPayload = {
+          Action: `${Core.AWS.Service.LAMBDA}:InvokeFunction`,
+          Principal: Core.AWS.Service.identifier(Core.AWS.Service.SIMPLE_NOTIFICATION_SERVICE),
+          FunctionName: lambdaArn,
+          StatementId: lambdaName,
+        };
+
+        lambda.addPermission(permissionsPayload, error => {
+          if (error && error.code !== 'ResourceConflictException') {
+            console.warn(error);
+          }
+
+          resolve();
+        });
+      });
+    });
+  }
+
+  /**
+   * @param {String[]} offloadQueuesNames
+   * @param {Object} snsTopicsMapping
+   * @returns {Promise|*}
+   */
+  _ensureCloudWatchAlarmsForEventualConsistency(offloadQueuesNames, snsTopicsMapping) {
+    return new Promise((resolve, reject) => {
+      let cloudWatch = this.provisioning.cloudWatch;
+
+      let listAlarmsPayload = {
+        AlarmNames: offloadQueuesNames,
+      };
+
+      cloudWatch.describeAlarms(listAlarmsPayload, (error, data) => {
+        if (error) {
+          return reject(error);
+        }
+
+        let existingAlarms = (data.MetricAlarms || []).map(alarm => alarm.AlarmName);
+
+        let premises = offloadQueuesNames
+          .filter(alarmName => existingAlarms.indexOf(alarmName) === -1)
+          .map(alarmName => {
+            return this._createCloudWatchAlarmForEventualConsistency(
+              cloudWatch,
+              alarmName,
+              snsTopicsMapping[alarmName]
+            );
+          });
+
+          Promise.all(premises).then(() => {
+            resolve(snsTopicsMapping);
+          });
+      });
+    });
+  }
+
+  /**
+   * @param {*} cloudWatch
+   * @param {String} alarmName
+   * @param {String} snsTopicArn
+   * @returns {Promise|*}
+   */
+  _createCloudWatchAlarmForEventualConsistency(cloudWatch, alarmName, snsTopicArn) {
+    return new Promise((resolve, reject) => {
+      let payload = {
+        AlarmName: alarmName,
+        ComparisonOperator: 'GreaterThanThreshold',
+        EvaluationPeriods: 1,
+        MetricName: 'ApproximateNumberOfMessagesVisible',
+        Namespace: 'AWS/SQS',
+        Period: 60,
+        Statistic: 'Minimum',
+        Threshold: 0.0,
+        ActionsEnabled: true,
+        AlarmActions: [
+          snsTopicArn,
+        ],
+        AlarmDescription: `DynamoDB eventual consistency data offload from queue ${alarmName}`,
+        Dimensions: [
+          {
+            Name: 'QueueName',
+            Value: alarmName,
+          },
+        ],
+        Unit: 'Count',
+      };
+
+      cloudWatch.putMetricAlarm(payload, error => {
+        if (error && error.code !== 'ResourceConflictException') {
+          console.warn(error);
+        }
+
+        resolve();
+      });
+    });
+  }
+
+  /**
+   * @param {String[]} offloadQueuesNames
+   * @returns {Promise|*}
+   */
+  _ensureSnsTopicsForEventualConsistency(offloadQueuesNames) {
+    return new Promise((resolve, reject) => {
+      let sns = this.provisioning.sns;
+      let snsTopicsMapping = {};
+
+      offloadQueuesNames.forEach(queueName => {
+        snsTopicsMapping[queueName] = this._generateTopicArn(sns, queueName);
+      });
+
+      let premises = offloadQueuesNames.map(topicName => {
+        return this._createSnsTopicForEventualConsistency(sns, topicName);
+      });
+
+      Promise.all(premises)
+        .then(() => {
+          resolve(snsTopicsMapping);
+        });
+    });
+  }
+
+  /**
+   * @param {*} sns
+   * @param {String} topicName
+   * @returns {Promise|*}
+   */
+  _createSnsTopicForEventualConsistency(sns, topicName) {
+    return new Promise((resolve, reject) => {
+      let payload = {
+        Name: topicName,
+      };
+
+      sns.createTopic(payload, error => {
+        if (error && error.code !== 'ResourceConflictException') {
+          console.warn(error);
+        }
+
+        resolve();
+      });
+    });
+  }
+
+  /**
+   * @param {String} functionId
+   * @returns {String}
+   */
+  _generateLambdaArn(lambda, functionId) {
+    return `arn:aws:lambda:${lambda.config.region}:${this.awsAccountId}:function:${functionId}`;
+  }
+
+  /**
+   * @param {*} sns
+   * @param {String} topicName
+   * @returns {String}
+   */
+  _generateTopicArn(sns, topicName) {
+    return `arn:aws:sns:${sns.config.region}:${this.awsAccountId}:${topicName}`;
   }
 
   /**
@@ -116,7 +406,7 @@ export class DynamoDBService extends AbstractService {
           continue;
         }
 
-        console.info(`DynamoDB model '${name}' -> ${JSON.stringify(tablesSettings[name])}`);
+        console.debug(`DynamoDB model '${name}' -> ${JSON.stringify(tablesSettings[name])}`);
       }
 
       deepDb.assureTables(() => {
@@ -158,7 +448,7 @@ export class DynamoDBService extends AbstractService {
    * @private
    */
   _removeMissingTables(missingTablesNames, callback) {
-    console.log(`Removing DynamoDB tables: ${missingTablesNames.join(', ')}`);
+    console.debug(`Removing DynamoDB tables: ${missingTablesNames.join(', ')}`);
 
     for (let i in missingTablesNames) {
       if (!missingTablesNames.hasOwnProperty(i)) {

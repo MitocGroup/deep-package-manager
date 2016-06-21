@@ -14,38 +14,35 @@ export class StdStrategy extends AbstractStrategy {
   }
 
   /**
-   * @param {String} moduleName
-   * @param {String} moduleVersion
+   * @param {Context} moduleContext
    * @returns {String}
    */
-  getModuleBaseLocation(moduleName, moduleVersion) {
-    return `${moduleName}/@${moduleVersion}`;
+  getModuleBaseLocation(moduleContext) {
+    return `${moduleContext.name}/@${moduleContext.version}`;
   }
 
   /**
-   * @param {String} moduleName
-   * @param {String} moduleVersion
+   * @param {Context} moduleContext
    * @returns {*}
    */
-  getModuleConfigLocation(moduleName, moduleVersion) {
-    return `${this.getModuleBaseLocation(moduleName, moduleVersion)}/${Microservice.CONFIG_FILE}`;
+  getModuleConfigLocation(moduleContext) {
+    return `${this.getModuleBaseLocation(moduleContext)}/${Microservice.CONFIG_FILE}`;
   }
 
   /**
-   * @param {String} moduleName
-   * @param {String} moduleVersion
+   * @param {Context} moduleContext
    * @returns {*}
    */
-  getModuleLocation(moduleName, moduleVersion) {
-    return `${this.getModuleBaseLocation(moduleName, moduleVersion)}/${StdStrategy.MODULE_FILE}`;
+  getModuleLocation(moduleContext) {
+    return `${this.getModuleBaseLocation(moduleContext)}/${StdStrategy.MODULE_FILE}`;
   }
 
   /**
-   * @param {String} moduleName
+   * @param {Context} moduleContext
    * @returns {String}
    */
-  getDbLocation(moduleName) {
-    return `${moduleName}/${StdStrategy.DB_FILE}`;
+  getDbLocation(moduleContext) {
+    return `${moduleContext.name}/${StdStrategy.DB_FILE}`;
   }
 
   /**

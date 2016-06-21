@@ -63,8 +63,17 @@ export class DeployConfig {
 
     return path.join(
       this._property.path,
-      `.${this.baseHash}.${deployEnv}.provisioning.json`
+      DeployConfig.generateConfigFilename(this.baseHash, deployEnv)
     );
+  }
+
+  /**
+   * @param {String} baseHash
+   * @param {String} env
+   * @returns {String}
+   */
+  static generateConfigFilename(baseHash, env) {
+    return `.${baseHash}.${env}.provisioning.json`;
   }
 
   /**
@@ -78,7 +87,7 @@ export class DeployConfig {
       return null;
     }
 
-    return this._property.config.provisioning.s3.buckets[S3Service.SYSTEM_BUCKET].name;
+    return this._property.config.provisioning.s3.buckets[S3Service.PRIVATE_BUCKET].name;
   }
 
   /**

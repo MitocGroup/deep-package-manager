@@ -30,7 +30,7 @@ export class DeployIdInjector {
   prepare(callback = () => {}) {
     let assets = this._findAssets();
 
-    console.log(
+    console.debug(
       `Preparing to inject version #${this._deployId} into ${assets.length} assets`
     );
 

@@ -4,16 +4,21 @@
 
 'use strict';
 
-import {BrokenModuleDBException} from './Exception/BrokenModuleDBException';
+import {BrokenModuleDBException} from '../Exception/BrokenModuleDBException';
+import {GitHubContext} from '../Context/GitHubContext';
+import {GitHubDB} from './GitHubDB';
+import {AbstractModuleDB} from './AbstractModuleDB';
 
-export class ModuleDB {
+export class ModuleDB extends AbstractModuleDB {
   /**
-   * @param {String} moduleName
+   * @param {Context} moduleContext
    * @param {Object} config
    * @param {Storage|*} storage
    */
-  constructor(moduleName, config, storage) {
-    this._moduleName = moduleName;
+  constructor(moduleContext, config, storage) {
+    super();
+
+    this._context = moduleContext;
     this._config = config;
     this._storage = storage;
   }
@@ -48,20 +53,32 @@ export class ModuleDB {
     this._storage.dumpModuleDb(this, cb);
   }
 
+  /** 
+   * @param {String} moduleContext
+   * @param {Storage} storage
+   * @param {Object} configObj
+   * @returns {null|GitHubDB, ModuleDB}
+   */
+  static create(moduleContext, storage, configObj) {
+    let DBProto = moduleContext instanceof GitHubContext ? GitHubDB : ModuleDB;
+
+    return new DBProto(moduleContext, configObj, storage);
+  }
+
   /**
-   * @param {String} moduleName
+   * @param {Context} moduleContext
    * @param {Storage|*} storage
    * @param {String} rawConfig
    * @returns {ModuleDB}
    */
-  static createFromRawConfig(moduleName, storage, rawConfig) {
+  static createFromRawConfig(moduleContext, storage, rawConfig) {
     let config = ModuleDB._decode(rawConfig);
 
     if (!config) {
-      throw new BrokenModuleDBException(this._moduleName);
+      throw new BrokenModuleDBException(moduleContext);
     }
 
-    return new ModuleDB(moduleName, config, storage);
+    return ModuleDB.create(moduleContext, storage, config);
   }
 
   /**
@@ -72,10 +89,17 @@ export class ModuleDB {
   }
 
   /**
+   * @returns {Context}
+   */
+  get context() {
+    return this._context;
+  }
+
+  /**
    * @returns {String}
    */
   get moduleName() {
-    return this._moduleName;
+    return this._context.name;
   }
 
   /**

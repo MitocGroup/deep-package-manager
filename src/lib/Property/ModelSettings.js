@@ -4,7 +4,6 @@
 
 'use strict';
 
-import {_extend as extend} from 'util';
 import objectMerge from 'object-merge';
 
 export class ModelSettings {
@@ -61,6 +60,15 @@ export class ModelSettings {
     return {
       readCapacity: 1,
       writeCapacity: 1,
+      maxReadCapacity: ModelSettings.DYNAMO_DB_MAX_THROUGHPUT,
+      maxWriteCapacity: ModelSettings.DYNAMO_DB_MAX_THROUGHPUT,
     };
+  }
+
+  /**
+   * @returns {Number}
+   */
+  static get DYNAMO_DB_MAX_THROUGHPUT() {
+    return 10000;
   }
 }

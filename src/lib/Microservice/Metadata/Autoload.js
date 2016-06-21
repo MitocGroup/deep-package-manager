@@ -93,6 +93,13 @@ export class Autoload {
   }
 
   /**
+   * @param {String} frontend
+   */
+  set frontend(frontend) {
+    this._frontend = frontend;
+  }
+
+  /**
    * Get backend directory
    *
    * @returns {String}

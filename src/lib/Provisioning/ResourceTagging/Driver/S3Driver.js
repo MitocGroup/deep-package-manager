@@ -41,9 +41,9 @@ export class S3Driver extends AbstractDriver {
 
       stack.push(this._s3.putBucketTagging(payload), (error) => {
         if (error) {
-          console.error(`Error on tagging S3 bucket ${bucket}: ${error}`);
+          console.warn(`Error on tagging S3 bucket ${bucket}: ${error}`);
         } else {
-          console.log(`S3 bucket ${bucket} has been successfully tagged`);
+          console.debug(`S3 bucket ${bucket} has been successfully tagged`);
         }
       });
     });

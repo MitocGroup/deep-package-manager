@@ -46,27 +46,28 @@ export class FSDriver extends AbstractDriver {
    * @param {Function} cb
    */
   dump(moduleObj, cb) {
-    moduleObj.extract(this._dumpPath(moduleObj.moduleName, moduleObj.moduleVersion), cb);
+    moduleObj.extract(this._dumpPath(moduleObj.context), cb);
   }
 
   /**
-   * @param {String} moduleName
-   * @param {String} moduleVersion
+   * @param {Context} moduleContext
    * @param {Function} cb
    */
-  hasToDump(moduleName, moduleVersion, cb) {
-    fs.exists(this._dumpPath(moduleName, moduleVersion), (exists) => {
+  hasToDump(moduleContext, cb) {
+    fs.exists(this._dumpPath(moduleContext), (exists) => {
       cb(null, !exists);
     });
   }
 
   /**
-   * @param {String} moduleName
-   * @param {String} moduleVersion
+   * @param {Context} moduleContext
    * @returns {String}
    * @private
    */
-  _dumpPath(moduleName, moduleVersion) {
-    return path.join(this._basePath, this._appendVersion ? `${moduleName}@${moduleVersion}` : moduleName);
+  _dumpPath(moduleContext) {
+    return path.join(
+      this._basePath, 
+      this._appendVersion ? moduleContext.toString() : moduleContext.name
+    );
   }
 }

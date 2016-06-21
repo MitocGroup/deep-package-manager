@@ -31,11 +31,10 @@ export class PropertyAwareFSDriver extends FSDriver {
   }
 
   /**
-   * @param {String} moduleName
-   * @param {String} moduleVersion
+   * @param {Context} moduleContext
    * @param {Function} cb
    */
-  hasToDump(moduleName, moduleVersion, cb) {
+  hasToDump(moduleContext, cb) {
     let microservices = this._property.microservices;
 
     for (let i in microservices) {
@@ -45,7 +44,7 @@ export class PropertyAwareFSDriver extends FSDriver {
 
       let microservice = microservices[i];
 
-      if (microservice.identifier === moduleName) {
+      if (microservice.identifier === moduleContext.name) {
         cb(null, false);
         return;
       }

@@ -8,6 +8,7 @@ import {WaitFor} from '../../Helpers/WaitFor';
 import {MissingModuleDBException} from './Exception/MissingModuleDBException';
 import {SemVerStrategy} from './Strategy/SemVerStrategy';
 import {NoVersionMatchingException} from './Exception/NoVersionMatchingException';
+import {Context} from '../Context/Context';
 
 export class DependenciesResolver {
   /**
@@ -30,24 +31,23 @@ export class DependenciesResolver {
   /**
    * @param {Storage|*} storage
    * @param {SemVerStrategy|AbstractStrategy|null|*} strategy
-   * @param {String} moduleName
-   * @param {String} moduleVersion
+   * @param {Context} moduleContext
    * @param {Function} cb
    *
    * @todo: Find out an elegant way to define optional strategy
    */
-  static createUsingRawVersion(storage, strategy /* = null */, moduleName, moduleVersion, cb) {
-    console.log(`Looking for '${moduleName}' module DB`);
+  static createUsingRawVersion(storage, strategy /* = null */, moduleContext, cb) {
+    console.debug(`Looking for '${moduleContext.name}' module DB`);
 
-    storage.moduleDbExists(moduleName, (error, state) => {
+    storage.moduleDbExists(moduleContext, (error, state) => {
       if (error) {
         cb(error, null);
       } else if(!state) {
-        cb(new MissingModuleDBException(moduleName), null);
+        cb(new MissingModuleDBException(moduleContext), null);
       } else {
-        console.log(`Fetching '${moduleName}' module DB`);
+        console.debug(`Fetching '${moduleContext.name}' module DB`);
 
-        storage.readModuleDb(moduleName, (error, moduleDB) => {
+        storage.readModuleDb(moduleContext, (error, moduleDB) => {
           if (error) {
             cb(error, null);
             return;
@@ -55,16 +55,17 @@ export class DependenciesResolver {
 
           strategy = strategy || new SemVerStrategy();
 
-          let matchedVersion = strategy.resolve(moduleDB, moduleVersion);
+          let matchedVersion = strategy.resolve(moduleDB, moduleContext.version);
 
           if (!matchedVersion) {
-            cb(new NoVersionMatchingException(moduleName, moduleVersion, moduleDB), null);
+            cb(new NoVersionMatchingException(moduleContext, moduleDB), null);
             return;
           }
 
-          console.log(`Fetching '${moduleName}@${matchedVersion}' module config`);
+          moduleContext.version = matchedVersion;
+          console.debug(`Fetching '${moduleContext}' module config`);
 
-          storage.readModuleConfig(moduleName, matchedVersion, (error, moduleConfig) => {
+          storage.readModuleConfig(moduleContext, (error, moduleConfig) => {
             if (error) {
               cb(error, null);
               return;
@@ -116,9 +117,8 @@ export class DependenciesResolver {
       }
 
       cb(null, {
-        name: this._baseModuleConfig.moduleName,
+        context: this._baseModuleConfig.context,
         rawVersion: this._baseModuleConfig.moduleVersion,
-        version: this._baseModuleConfig.moduleVersion,
         dependencies: depsTree,
       });
     });
@@ -145,10 +145,11 @@ export class DependenciesResolver {
       }
 
       let dependencyVersion = deps[dependencyName];
+      let moduleContext = Context.create(dependencyName, dependencyVersion);
 
-      console.log(`Resolving dependency '${dependencyName}@${dependencyVersion}'`);
+      console.debug(`Resolving dependency '${dependencyName}@${dependencyVersion}'`);
 
-      this._resolveSingle(dependencyName, dependencyVersion, (error, versionMatched) => {
+      this._resolveSingle(moduleContext, (error, moduleContext) => {
         if (error || cbCalled) {
           remaining--;
 
@@ -163,15 +164,14 @@ export class DependenciesResolver {
         }
 
         // @todo: remove circular deps check?
-        let depUqKey = `${dependencyName}@${versionMatched}`;
+        let depUqKey = moduleContext.toString();
 
         if (this._resolveUqStack.indexOf(depUqKey) !== -1) {
-          console.log(`Circular dependency '${depUqKey}' found`);
+          console.warn(`Circular dependency '${depUqKey}' found`);
 
-          depsTree[dependencyName] = {
-            name: dependencyName,
+          depsTree[moduleContext.name] = {
+            context: moduleContext,
             rawVersion: dependencyVersion,
-            version: versionMatched,
             dependencies: null,
             _isCircular: true,
           };
@@ -183,13 +183,12 @@ export class DependenciesResolver {
         }
 
         let dependencyObject = {
-          name: dependencyName,
+          context: moduleContext,
           rawVersion: dependencyVersion,
-          version: versionMatched,
           dependencies: {},
         };
 
-        this._resolveNested(dependencyName, versionMatched, (error, nestedDepsTree) => {
+        this._resolveNested(moduleContext, (error, nestedDepsTree) => {
           if (error) {
             if (!cbCalled) {
               cbCalled = true;
@@ -197,7 +196,7 @@ export class DependenciesResolver {
             }
           } else {
             dependencyObject.dependencies = nestedDepsTree;
-            depsTree[dependencyName] = dependencyObject;
+            depsTree[moduleContext.name] = dependencyObject;
           }
 
           remaining--;
@@ -213,13 +212,12 @@ export class DependenciesResolver {
   }
 
   /**
-   * @param {String} dependencyName
-   * @param {String} dependencyVersion
+   * @param {Context} moduleContext
    * @param {Function} cb
    * @private
    */
-  _resolveNested(dependencyName, dependencyVersion, cb) {
-    this._getModuleConfig(dependencyName, dependencyVersion, (error, moduleConfig) => {
+  _resolveNested(moduleContext, cb) {
+    this._getModuleConfig(moduleContext, (error, moduleConfig) => {
       if (error) {
         cb(error, null);
         return;
@@ -230,50 +228,50 @@ export class DependenciesResolver {
   }
 
   /**
-   * @param {String} dependencyName
-   * @param {String} dependencyVersion
+   * @param {Context} moduleContext
    * @param {Function} cb
    * @private
    */
-  _resolveSingle(dependencyName, dependencyVersion, cb) {
-    this._getModuleDb(dependencyName, (error, moduleDB) => {
+  _resolveSingle(moduleContext, cb) {
+    this._getModuleDb(moduleContext, (error, moduleDB) => {
       if (error) {
         cb(error, null);
         return;
       }
 
-      console.log(`Resolving '${dependencyName}@${dependencyVersion}'`);
+      console.debug(`Resolving '${moduleContext}'`);
 
-      let matchedVersion = this._strategy.resolve(moduleDB, dependencyVersion);
+      let matchedVersion = this._strategy.resolve(moduleDB, moduleContext.version);
 
       if (!matchedVersion) {
-        cb(new NoVersionMatchingException(dependencyName, dependencyVersion, moduleDB), null);
+        cb(new NoVersionMatchingException(moduleContext, moduleDB), null);
         return;
       }
+      
+      moduleContext.version = matchedVersion;
 
-      cb(null, matchedVersion);
+      cb(null, moduleContext);
     });
   }
 
   /**
-   * @param {String} moduleName
-   * @param {String} moduleVersion
+   * @param {Context} moduleContext
    * @param {Function} cb
    * @private
    */
-  _getModuleConfig(moduleName, moduleVersion, cb) {
-    let cacheKey = `${moduleName}@${moduleVersion}`;
+  _getModuleConfig(moduleContext, cb) {
+    let cacheKey = moduleContext.toString();
 
     if (this._configCache.hasOwnProperty(cacheKey)) {
-      console.log(`Reading '${moduleName}@${moduleVersion}' module config from cache`);
+      console.debug(`Reading '${moduleContext}' module config from cache`);
 
       cb(null, this._configCache[cacheKey]);
       return;
     }
 
-    console.log(`Fetching '${moduleName}@${moduleVersion}' module config`);
+    console.debug(`Fetching '${moduleContext}' module config`);
 
-    this._storage.readModuleConfig(moduleName, moduleVersion, (error, moduleConfig) => {
+    this._storage.readModuleConfig(moduleContext, (error, moduleConfig) => {
       if (error) {
         cb(error, null);
         return;
@@ -286,29 +284,31 @@ export class DependenciesResolver {
   }
 
   /**
-   * @param {String} moduleName
+   * @param {Context} moduleContext
    * @param {Function} cb
    * @private
    */
-  _getModuleDb(moduleName, cb) {
+  _getModuleDb(moduleContext, cb) {
+    let moduleName = moduleContext.name;
+    
     if (this._dbCache.hasOwnProperty(moduleName)) {
-      console.log(`Reading '${moduleName}' module DB from cache`);
+      console.debug(`Reading '${moduleName}' module DB from cache`);
 
       cb(null, this._dbCache[moduleName]);
       return;
     }
 
-    console.log(`Looking for '${moduleName}' module DB`);
+    console.debug(`Looking for '${moduleName}' module DB`);
 
-    this._storage.moduleDbExists(moduleName, (error, state) => {
+    this._storage.moduleDbExists(moduleContext, (error, state) => {
       if (error) {
         cb(error, null);
       } else if(!state) {
-        cb(new MissingModuleDBException(moduleName), null);
+        cb(new MissingModuleDBException(moduleContext), null);
       } else {
-        console.log(`Fetching '${moduleName}' module DB`);
+        console.debug(`Fetching '${moduleName}' module DB`);
 
-        this._storage.readModuleDb(moduleName, (error, moduleDB) => {
+        this._storage.readModuleDb(moduleContext, (error, moduleDB) => {
           if (error) {
             cb(error, null);
             return;

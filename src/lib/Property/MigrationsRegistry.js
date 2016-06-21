@@ -150,7 +150,7 @@ export class MigrationsRegistry {
   static _getSystemBucket(property) {
     return property.config
       .provisioning[Core.AWS.Service.SIMPLE_STORAGE_SERVICE]
-      .buckets[S3Service.SYSTEM_BUCKET]
+      .buckets[S3Service.PRIVATE_BUCKET]
       .name;
   }
 

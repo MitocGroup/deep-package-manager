@@ -411,7 +411,7 @@ export class LambdaService extends AbstractService {
       if (!roles.hasOwnProperty(microserviceIdentifier)) {
         continue;
       }
-      
+
       let execRole = roles[microserviceIdentifier];
 
       if (this._isIamRoleNew(execRole.RoleName)) {
@@ -506,7 +506,7 @@ export class LambdaService extends AbstractService {
         let s3ResourceShared = s3Statement.resource.add();
 
         s3ResourceSystem.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
-        s3ResourceSystem.descriptor = `${bucket.name}/${S3Service.SYSTEM_BUCKET}/` +
+        s3ResourceSystem.descriptor = `${bucket.name}/${S3Service.PRIVATE_BUCKET}/` +
           `${microserviceIdentifier}/${Core.AWS.IAM.Policy.ANY}`;
 
         s3ResourceTmp.service = Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
@@ -555,6 +555,11 @@ export class LambdaService extends AbstractService {
     ec2Statement.action.add(Core.AWS.Service.EC2, 'DescribeNetworkInterfaces');
     ec2Statement.action.add(Core.AWS.Service.EC2, 'DeleteNetworkInterface');
     ec2Statement.resource.add().any();
+
+    // @todo: move it to DynamoDBService?
+    let dynamoDbECStatement = policy.statement.add();
+    dynamoDbECStatement.action.add(Core.AWS.Service.CLOUD_WATCH, 'setAlarmState');
+    dynamoDbECStatement.resource.add().any();
 
     return policy;
   }

@@ -49,7 +49,7 @@ export class StandardStrategy extends AbstractStrategy {
       return;
     }
 
-    let file = path.join(this.dumpPath, StandardStrategy._normalizeFilePath(filePath));
+    let file = path.join(this.dumpPath, StandardStrategy.normalizeFilePath(filePath));
     let output = fse.createOutputStream(file);
 
     output.on('finish', cb);
@@ -70,9 +70,8 @@ export class StandardStrategy extends AbstractStrategy {
   /**
    * @param {String} filePath
    * @returns {String}
-   * @private
    */
-  static _normalizeFilePath(filePath) {
+  static normalizeFilePath(filePath) {
     return filePath.replace(/^(\/?src\/[^\/]+\/)/i, '');
   }
 }
