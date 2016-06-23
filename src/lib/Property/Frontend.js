@@ -26,6 +26,7 @@ import {ESService} from '../Provisioning/Service/ESService';
 import {DeployIdInjector} from '../Assets/DeployIdInjector';
 import {Optimizer} from '../Assets/Optimizer';
 import {Injector as TagsInjector} from '../Tags/Injector';
+import {EnvHashDriver} from '../Tags/Driver/EnvHashDriver';
 import {ActionFlags} from '../Microservice/Metadata/Helpers/ActionFlags';
 
 /**
@@ -442,6 +443,17 @@ export class Frontend {
       propertyConfig.globals.favicon,
       workingMicroserviceConfig
     );
+
+    let deepServiceWorkerPath = Path.join(this.path, 'deep-sw.js');
+
+    if (FileSystem.existsSync(deepServiceWorkerPath)) {
+      console.debug('Injecting env-hash tag into deep service worker');
+
+      TagsInjector.fileInject(
+        deepServiceWorkerPath,
+        new EnvHashDriver(propertyConfig.env, this._property.configObj.baseHash)
+      );
+    }
 
     if (Frontend._skipInjectDeployNumber) {
       return this._optimizeAssets(callback);
