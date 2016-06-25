@@ -66,6 +66,10 @@ export class Schema {
   extractInteractive() {
     let obj = {};
 
+    if (Object.keys(this._ramlModel).length === 0) {
+      return {};
+    }
+
     Schema._confirmInteractiveMode((confirm) => {
       for (let key in this._ramlModel) {
         if (!this._ramlModel.hasOwnProperty(key)) {
