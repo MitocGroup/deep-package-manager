@@ -145,20 +145,8 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
           deployProvisioning.lambda.executionRoles
         );
 
-        for (let i in lambdaExecRolesVector) {
-          if (!lambdaExecRolesVector.hasOwnProperty(i)) {
-            continue;
-          }
-
-          let lambdaExecRoles = ProvisioningDumpFileMatcher._objectValues(lambdaExecRolesVector[i]);
-
-          for (let j in lambdaExecRoles) {
-            if (!lambdaExecRoles.hasOwnProperty(j)) {
-              continue;
-            }
-
-            this._deployConfig.IAM.push(lambdaExecRoles[j].RoleName);
-          }
+        for (let lambdaExecRole of lambdaExecRolesVector) {
+          this._deployConfig.IAM.push(lambdaExecRole.RoleName);
         }
       }
 

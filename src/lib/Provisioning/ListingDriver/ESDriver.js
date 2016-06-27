@@ -24,17 +24,27 @@ export class ESDriver extends AbstractDriver {
         return;
       }
 
-      for (let i in data.DomainNames) {
-        if (!data.DomainNames.hasOwnProperty(i)) {
-          continue;
+      data.DomainNames = data.DomainNames.map(a => a.DomainName);
+
+      this.awsService.describeElasticsearchDomains(data, (error, data) => {
+        if (error) {
+          cb(error);
+          return;
         }
 
-        let domainName = data.DomainNames[i].DomainName;
+        for (let i in data.DomainStatusList) {
+          if (!data.DomainStatusList.hasOwnProperty(i)) {
+            continue;
+          }
 
-        this._checkPushStack(domainName, domainName);
-      }
+          let domainData = data.DomainStatusList[i];
+          let domainName = domainData.DomainName;
 
-      cb(null);
+          this._checkPushStack(domainName, domainName, domainData);
+        }
+
+        cb(null);
+      });
     });
   }
 }
