@@ -42,6 +42,13 @@ export class DeployConfig {
   }
 
   /**
+   * @param {String} baseHash
+   */
+  set baseHash(baseHash) {
+    this._baseHash = baseHash;
+  }
+
+  /**
    * @returns {Property|*}
    */
   get property() {
