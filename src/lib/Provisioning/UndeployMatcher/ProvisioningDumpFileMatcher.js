@@ -101,6 +101,15 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
         );
       }
 
+      if (deployProvisioning['cognito-idp'] &&
+        deployProvisioning['cognito-idp'].UserPool &&
+        deployProvisioning['cognito-idp'].UserPool.Id) {
+
+        this._deployConfig.CognitoIdentityProvider.push(
+          deployProvisioning['cognito-idp'].UserPool.Id
+        );
+      }
+
       if (deployProvisioning.cloudfront && deployProvisioning.cloudfront.id) {
         this._deployConfig.CloudFront.push(deployProvisioning.cloudfront.id);
       }
