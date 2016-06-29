@@ -1,0 +1,55 @@
+/**
+ * Created by CCristi on 6/28/16.
+ */
+
+'use strict';
+
+import {AbstractDriver} from './AbstractDriver';
+
+export class CognitoIdentityProviderDriver extends AbstractDriver {
+  /**
+   * @param {Object[]} args
+   */
+  constructor(...args) {
+    super(...args);
+  }
+
+  /**
+   * @param {Function} cb
+   * @param {String} pageToken
+   */
+  list(cb, pageToken = null) {
+    let payload = {
+      MaxResults: CognitoIdentityProviderDriver.MAX_RESULT,
+    };
+
+    if (pageToken) {
+      payload.NextToken = pageToken;
+    }
+
+    this._awsService.listUserPools(payload, (error, data) => {
+      if (error) {
+        cb(error);
+        return;
+      }
+
+      data.UserPools.forEach(poolObj => {
+        this._checkPushStack(poolObj.Name, poolObj.Id, poolObj);
+      });
+
+      if (data.NextToken) {
+        this.list(cb, data.NextToken);
+      } else {
+        cb(null);
+      }
+    })
+  }
+
+  /**
+   * @returns {Number}
+   */
+  static get MAX_RESULT() {
+    return 60;
+  }
+}
+
