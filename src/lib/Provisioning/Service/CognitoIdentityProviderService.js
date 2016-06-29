@@ -17,7 +17,7 @@ export class CognitoIdentityProviderService extends AbstractService {
   constructor(...args) {
     super(...args);
 
-    this._userPoolConfig = null;
+    this._userPoolMetadata = null;
   }
 
   /**
@@ -32,13 +32,18 @@ export class CognitoIdentityProviderService extends AbstractService {
    * @private
    */
   _setup() {
-    let userPoolConfig = this.userPoolConfig;
+    let userPoolMetadata = this.userPoolMetadata;
     let oldPool = this._config.UserPool;
 
-    if (userPoolConfig.enabled && !oldPool) {
-      this._createUserPool(poolMetadata => {
-        this._config = Object.assign(this._config, poolMetadata);
-        this._ready = true;
+    if (userPoolMetadata.enabled && !oldPool) {
+      this._createUserPool(userPool => {
+        this._config.UserPool = userPool;
+
+        this._createUserPoolClient(userPool, userPoolClient => {
+          this._config.UserPoolClient = userPoolClient;
+
+          this._ready = true;
+        });
       });
 
       return this;
@@ -70,7 +75,7 @@ export class CognitoIdentityProviderService extends AbstractService {
    */
   _postDeployProvision(services) {
     let cognitoIdentity = services.find(CognitoIdentityService);
-    let cognitoConfig = cognitoIdentity._config;
+    let cognitoConfig = cognitoIdentity.config();
     let identityPool = cognitoConfig.identityPool;
 
     if (this._isUpdate && identityPool.CognitoIdentityProviders) {
@@ -94,34 +99,40 @@ export class CognitoIdentityProviderService extends AbstractService {
    */
   _createUserPool(cb) {
     let cognitoIdentityServiceProvider = this.provisioning.cognitoIdentityServiceProvider;
-    let userPoolConfig = this.userPoolConfig;
-    let userPoolMetadata = {};
+    let userPoolMetadata = this.userPoolMetadata;
     let payload = {
-      PoolName: userPoolConfig.poolName,
+      PoolName: userPoolMetadata.poolName,
     };
 
     cognitoIdentityServiceProvider.createUserPool(payload, (error, data) => {
       if (error) {
-        throw new FailedToCreateCognitoUserPoolException(userPoolConfig.poolName, error);
+        throw new FailedToCreateCognitoUserPoolException(userPoolMetadata.poolName, error);
       }
 
-      userPoolMetadata.UserPool = data.UserPool;
+      cb(data.UserPool);
+    });
+  }
 
-      let payload = {
-        UserPoolId: data.UserPool.Id,
-        GenerateSecret: false,
-        ClientName: userPoolConfig.clientName,
-      };
+  /**
+   * @param {Object} userPool
+   * @param {Function} cb
+   * @private
+   */
+  _createUserPoolClient(userPool, cb) {
+    let userPoolMetadata = this.userPoolMetadata;
+    let cognitoIdentityServiceProvider = this.provisioning.cognitoIdentityServiceProvider;
+    let payload = {
+      UserPoolId: userPool.Id,
+      GenerateSecret: false,
+      ClientName: userPoolMetadata.clientName,
+    };
 
-      cognitoIdentityServiceProvider.createUserPoolClient(payload, (error, data) => {
-        if (error) {
-          throw new FailedToCreateCognitoUserPoolException(userPoolConfig.poolName, error);
-        }
+    cognitoIdentityServiceProvider.createUserPoolClient(payload, (error, data) => {
+      if (error) {
+        throw new FailedToCreateCognitoUserPoolException(userPoolMetadata.poolName, error);
+      }
 
-        userPoolMetadata.UserPoolClient = data.UserPoolClient;
-
-        cb(userPoolMetadata);
-      });
+      cb(data.UserPoolClient);
     });
   }
 
@@ -155,11 +166,11 @@ export class CognitoIdentityProviderService extends AbstractService {
    * @todo: add user schema specific attributes
    * @returns {{enabled: Boolean, name: String}}
    */
-  get userPoolConfig() {
-    if (this._userPoolConfig === null) {
+  get userPoolMetadata() {
+    if (this._userPoolMetadata === null) {
       let globalConfig = this.property.config.globals;
 
-      this._userPoolConfig = {
+      this._userPoolMetadata = {
         enabled: globalConfig.userPool && globalConfig.userPool.enabled,
         clientName: this.generateAwsResourceName(
           CognitoIdentityProviderService.USER_POOL_CLIENT_NAME,
@@ -172,7 +183,7 @@ export class CognitoIdentityProviderService extends AbstractService {
       };
     }
 
-    return this._userPoolConfig;
+    return this._userPoolMetadata;
   }
 
   /**
