@@ -194,7 +194,7 @@ export class CognitoIdentityProviderService extends AbstractService {
   _generateCognitoProviderName(userPool) {
     let region = this.provisioning.cognitoIdentityServiceProvider.config.region;
 
-    return `${this.name()}.${region}.amazonaws.com/${userPool.Id}`
+    return `${this.name()}.${region}.amazonaws.com/${userPool.Id}`;
   }
 
   /**
