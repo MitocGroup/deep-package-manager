@@ -32,10 +32,9 @@ export class CognitoIdentityProviderService extends AbstractService {
    * @private
    */
   _setup() {
-    let userPoolMetadata = this.userPoolMetadata;
     let oldPool = this._config.UserPool;
 
-    if (userPoolMetadata.enabled && !oldPool) {
+    if (this.isCognitoPoolEnabled && !oldPool) {
       this._createUserPool(userPool => {
         this._config.UserPool = userPool;
 
@@ -78,7 +77,7 @@ export class CognitoIdentityProviderService extends AbstractService {
     let cognitoConfig = cognitoIdentity.config();
     let identityPool = cognitoConfig.identityPool;
 
-    if (this._isUpdate && identityPool.CognitoIdentityProviders) {
+    if (!this.isCognitoPoolEnabled || this._isUpdate && identityPool.CognitoIdentityProviders) {
       this._ready = true;
 
       return this;
@@ -195,6 +194,13 @@ export class CognitoIdentityProviderService extends AbstractService {
     let region = this.provisioning.cognitoIdentityServiceProvider.config.region;
 
     return `${this.name()}.${region}.amazonaws.com/${userPool.Id}`;
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  get isCognitoPoolEnabled() {
+    return this.userPoolMetadata.enabled;
   }
 
   /**
