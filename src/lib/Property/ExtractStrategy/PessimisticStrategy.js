@@ -15,13 +15,13 @@ import crypto from 'crypto';
 export class PessimisticStrategy extends AbstractStrategy {
   /**
    * @param {String} path
-   * @param {String[]} identifiers
+   * @param {String[]} positiveIdentifiers
    */
-  constructor(path, ...identifiers) {
+  constructor(path, ...positiveIdentifiers) {
     super();
 
     this._path = path;
-    this._identifiers = identifiers.sort();
+    this._identifiers = positiveIdentifiers.sort();
   }
 
   /**
