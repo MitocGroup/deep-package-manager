@@ -36,7 +36,7 @@ export class PessimisticStrategy extends AbstractStrategy {
    * @returns {Boolean}
    */
   shouldPreserve(microservice) {
-    return this._identifiers.indexOf(microservice.identifier) !== -1;
+    return microservice.isRoot || this._identifiers.indexOf(microservice.identifier) !== -1;
   }
 
   /**
@@ -81,19 +81,7 @@ export class PessimisticStrategy extends AbstractStrategy {
   static create(msPath) {
     let microservice = Microservice.create(msPath);
     let identifiers = [microservice.identifier]
-      .concat(Object.keys(microservice.config.dependencies))
-      .concat(
-        // @todo: find smarter way to  inject property root
-        microservice.config.frontendEngine.map(e => `deep-root-${e}`)
-      );
-
-    identifiers = identifiers.reduce((uniqueArr, i) => {
-      if (uniqueArr.indexOf(i) === -1) {
-        uniqueArr.push(i);
-      }
-
-      return uniqueArr;
-    }, []);
+      .concat(Object.keys(microservice.config.dependencies));
 
     return new PessimisticStrategy(path.join(msPath, '..'), ...identifiers);
   }
