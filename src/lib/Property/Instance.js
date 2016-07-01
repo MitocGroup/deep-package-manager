@@ -42,6 +42,8 @@ import {DeployID} from '../Helpers/DeployID';
 import {MigrationsRegistry} from './MigrationsRegistry';
 import {DeployConfig} from './DeployConfig';
 import {InvalidConfigException} from './Exception/InvalidConfigException';
+import {AbstractStrategy} from './ExtractStrategy/AbstractStrategy';
+import {OptimisticStrategy} from './ExtractStrategy/OptimisticStrategy';
 
 /**
  * Property instance
@@ -77,6 +79,7 @@ export class Instance {
     this._localDeploy = false;
     this._provisioning = new Provisioning(this);
     this._isUpdate = false;
+    this._strategy = null;
 
     this._microservicesToUpdate = [];
 
@@ -87,16 +90,14 @@ export class Instance {
 
   /**
    * @param {String} path
-   * @param {String} config
    */
-  static create(path, config = Config.DEFAULT_FILENAME) {
-    let configFile = Path.join(path, config);
+  static create(path) {
+    let strategy = AbstractStrategy.create(path);
+    let propInstance = new Instance(strategy.path(), strategy.config());
 
-    if (!FileSystem.existsSync(configFile)) {
-      FileSystemExtra.outputJsonSync(configFile, Config.generate());
-    }
+    propInstance.strategy = strategy;
 
-    return new Instance(path, config);
+    return propInstance;
   }
 
   /**
@@ -104,6 +105,24 @@ export class Instance {
    */
   get configObj() {
     return this._configObj;
+  }
+
+  /**
+   * @param {AbstractStrategy} strategy
+   */
+  set strategy(strategy) {
+    this._strategy = strategy;
+  }
+
+  /**
+   * @returns {AbstractStrategy}
+   */
+  get strategy() {
+    if (this._strategy === null) {
+      this._strategy = new OptimisticStrategy(this._path);
+    }
+
+    return this._strategy;
   }
 
   /**
@@ -1130,10 +1149,12 @@ export class Instance {
         if (FileSystem.statSync(fullPath).isDirectory() &&
           FileSystem.existsSync(Path.join(fullPath, Microservice.CONFIG_FILE))) {
 
-          let microservices = Microservice.create(fullPath);
-          microservices.property = this;
+          let microservice = Microservice.create(fullPath);
+          microservice.property = this;
 
-          this._microservices.push(microservices);
+          if (this.strategy.shouldPreserve(microservice)) {
+            this._microservices.push(microservice); 
+          }
         }
       }
     }
