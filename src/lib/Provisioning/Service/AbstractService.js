@@ -465,7 +465,7 @@ export class AbstractService extends Core.OOP.Interface {
       case Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT:
         awsServiceLimit = 64;
         break;
-
+      case Core.AWS.Service.COGNITO_IDENTITY_PROVIDER:
       case Core.AWS.Service.COGNITO_IDENTITY:
       case Core.AWS.Service.API_GATEWAY:
         awsServiceLimit = 128;

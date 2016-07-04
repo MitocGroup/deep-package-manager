@@ -9,6 +9,7 @@ import {InvalidArgumentException} from '../Exception/InvalidArgumentException';
 import {AbstractService} from './Service/AbstractService';
 import {S3Service} from './Service/S3Service';
 import {CognitoIdentityService} from './Service/CognitoIdentityService';
+import {CognitoIdentityProviderService} from './Service/CognitoIdentityProviderService';
 import {IAMService} from './Service/IAMService';
 import {CloudFrontService} from './Service/CloudFrontService';
 import {ACMService} from './Service/ACMService.js';
@@ -61,6 +62,9 @@ export class Instance {
     });
     this._cognitoIdentity = new property.AWS.CognitoIdentity({
       region: this.getAwsServiceRegion(CognitoIdentityService, property.config.awsRegion),
+    });
+    this._cognitoIdentityServiceProvider = new property.AWS.CognitoIdentityServiceProvider({
+      region: this.getAwsServiceRegion(CognitoIdentityProviderService, property.config.awsRegion),
     });
     this._apiGateway = new property.AWS.APIGateway({
       region: this.getAwsServiceRegion(APIGatewayService, property.config.awsRegion),
@@ -236,6 +240,13 @@ export class Instance {
   }
 
   /**
+   * @returns {AWS.CognitoIdentityServiceProvider|*}
+   */
+  get cognitoIdentityServiceProvider() {
+    return this._cognitoIdentityServiceProvider;
+  }
+
+  /**
    * @returns {AWS.CloudFront|*}
    */
   get cloudFront() {
@@ -284,6 +295,9 @@ export class Instance {
       case 'ES':
         name = 'elasticSearch';
         break;
+      case 'CognitoIdentityProvider':
+        name = 'cognitoIdentityServiceProvider';
+        break;
       default:
         name = AbstractService.lowerCaseFirst(name);
     }
@@ -305,6 +319,7 @@ export class Instance {
         new SNSService(this),
         new IAMService(this),
         new CognitoIdentityService(this),
+        new CognitoIdentityProviderService(this),
         new ACMService(this),
         new CloudFrontService(this),
         new LambdaService(this),

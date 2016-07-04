@@ -195,7 +195,7 @@ export class ESService extends AbstractService {
       let params = domainsConfig[domainName];
 
       params.DomainName = this.generateAwsResourceName(
-        `${domainName}`,
+        domainName,
         this.name(),
         '',
         AbstractService.DELIMITER_HYPHEN_LOWER_CASE

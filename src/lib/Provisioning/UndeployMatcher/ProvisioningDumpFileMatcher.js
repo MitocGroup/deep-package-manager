@@ -101,6 +101,15 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
         );
       }
 
+      if (deployProvisioning['cognito-idp'] &&
+        deployProvisioning['cognito-idp'].UserPool &&
+        deployProvisioning['cognito-idp'].UserPool.Id) {
+
+        this._deployConfig.CognitoIdentityProvider.push(
+          deployProvisioning['cognito-idp'].UserPool.Id
+        );
+      }
+
       if (deployProvisioning.cloudfront && deployProvisioning.cloudfront.id) {
         this._deployConfig.CloudFront.push(deployProvisioning.cloudfront.id);
       }
@@ -145,20 +154,8 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
           deployProvisioning.lambda.executionRoles
         );
 
-        for (let i in lambdaExecRolesVector) {
-          if (!lambdaExecRolesVector.hasOwnProperty(i)) {
-            continue;
-          }
-
-          let lambdaExecRoles = ProvisioningDumpFileMatcher._objectValues(lambdaExecRolesVector[i]);
-
-          for (let j in lambdaExecRoles) {
-            if (!lambdaExecRoles.hasOwnProperty(j)) {
-              continue;
-            }
-
-            this._deployConfig.IAM.push(lambdaExecRoles[j].RoleName);
-          }
+        for (let lambdaExecRole of lambdaExecRolesVector) {
+          this._deployConfig.IAM.push(lambdaExecRole.RoleName);
         }
       }
 
