@@ -12,6 +12,7 @@ import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleE
 import {FailedSettingIdentityPoolRolesException} from './Exception/FailedSettingIdentityPoolRolesException';
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
 import {FailedToUpdateIdentityPoolException} from './Exception/FailedToUpdateIdentityPoolException';
+import {CognitoIdentityProviderService} from './CognitoIdentityProviderService';
 import {Exception} from '../../Exception/Exception';
 import {LambdaService} from './LambdaService';
 import {APIGatewayService} from './APIGatewayService';
@@ -108,13 +109,28 @@ export class CognitoIdentityService extends AbstractService {
     }
 
     let iamInstance = services.find(IAMService);
+    let cognitoIdpService = services.find(CognitoIdentityProviderService);
+    let cognitoIdpConfig = cognitoIdpService.config();
     let oidcProvider = iamInstance.config().identityProvider;
-    let oidcProviderARNs = oidcProvider ? [oidcProvider.OpenIDConnectProviderArn] : [];
+    let changeSet = {};
 
-    this._updateIdentityPool(this._config.identityPool, oidcProviderARNs, (data) => {
-      if (data) {
-        this._config.identityPool = data;
-      }
+    if (oidcProvider) {
+      changeSet.OpenIdConnectProviderARNs = [
+        oidcProvider.OpenIDConnectProviderArn,
+      ];
+    }
+
+    if (cognitoIdpService.isCognitoPoolEnabled) {
+      changeSet.CognitoIdentityProviders = [
+        {
+          ProviderName: cognitoIdpConfig.ProviderName,
+          ClientId: cognitoIdpConfig.UserPoolClient.ClientId,
+        },
+      ];
+    }
+
+    this._updateIdentityPool(this._config.identityPool, changeSet, (data) => {
+      this._config.identityPool = data;
 
       this._setIdentityPoolRoles(this._config.identityPool)((roles) => {
         this._readyTeardown = true;
@@ -181,25 +197,19 @@ export class CognitoIdentityService extends AbstractService {
 
   /**
    * @param {Object} identityPool
-   * @param {Array} oidcProviderARNs
+   * @param {Object} changeSet
    * @param {Function} callback
    * @returns {Function}
    * @private
    */
-  _updateIdentityPool(identityPool, oidcProviderARNs, callback) {
-    if (oidcProviderARNs.length === 0) {
-      callback(null);
+  _updateIdentityPool(identityPool, changeSet, callback) {
+    if (Object.keys(changeSet).length === 0) {
+      callback(identityPool);
       return;
     }
 
     let cognitoIdentity = this.provisioning.cognitoIdentity;
-    let params = {
-      AllowUnauthenticatedIdentities: identityPool.AllowUnauthenticatedIdentities,
-      IdentityPoolId: identityPool.IdentityPoolId,
-      IdentityPoolName: identityPool.IdentityPoolName,
-      SupportedLoginProviders: identityPool.SupportedLoginProviders,
-      OpenIdConnectProviderARNs: oidcProviderARNs,
-    };
+    let params = Object.assign(identityPool, changeSet);
 
     cognitoIdentity.updateIdentityPool(params, (error, data) => {
       if (error) {

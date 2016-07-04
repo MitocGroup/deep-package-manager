@@ -37,6 +37,7 @@ export class CognitoIdentityProviderService extends AbstractService {
     if (this.isCognitoPoolEnabled && !oldPool) {
       this._createUserPool(userPool => {
         this._config.UserPool = userPool;
+        this._config.ProviderName = this._generateCognitoProviderName(userPool);
 
         this._createUserPoolClient(userPool, userPoolClient => {
           this._config.UserPoolClient = userPoolClient;
@@ -73,22 +74,13 @@ export class CognitoIdentityProviderService extends AbstractService {
    * @returns {CognitoIdentityProviderService}
    */
   _postDeployProvision(services) {
-    let cognitoIdentity = services.find(CognitoIdentityService);
-    let cognitoConfig = cognitoIdentity.config();
-    let identityPool = cognitoConfig.identityPool;
-
-    if (!this.isCognitoPoolEnabled || this._isUpdate && identityPool.CognitoIdentityProviders) {
+    // @todo: implement!
+    if (this._isUpdate) {
       this._ready = true;
-
       return this;
     }
 
-    this._linkUserPoolWithIdentityPool(identityPool, updatedIdentity => {
-      cognitoConfig.identityPool = updatedIdentity;
-
-      this._ready = true;
-    });
-
+    this._ready = true;
     return this;
   }
 
@@ -122,6 +114,8 @@ export class CognitoIdentityProviderService extends AbstractService {
     let cognitoIdentityServiceProvider = this.provisioning.cognitoIdentityServiceProvider;
     let payload = {
       UserPoolId: userPool.Id,
+      // JavaScript SDK doesn't support apps that have a client secret, 
+      // http://docs.aws.amazon.com/cognito/latest/developerguide/setting-up-the-javascript-sdk.html
       GenerateSecret: false,
       ClientName: userPoolMetadata.clientName,
     };
@@ -132,32 +126,6 @@ export class CognitoIdentityProviderService extends AbstractService {
       }
 
       cb(data.UserPoolClient);
-    });
-  }
-
-  /**
-   * @param {Object} identityPool
-   * @param {Function} cb
-   * @private
-   */
-  _linkUserPoolWithIdentityPool(identityPool, cb) {
-    let userPool = this._config.UserPool;
-    let userPoolClient = this._config.UserPoolClient;
-    let cognitoIdentity = this.provisioning.cognitoIdentity;
-
-    identityPool.CognitoIdentityProviders = [
-      {
-        ClientId: userPoolClient.ClientId,
-        ProviderName: this._generateCognitoProviderName(userPool),
-      },
-    ];
-
-    cognitoIdentity.updateIdentityPool(identityPool, (error, updatedIdentity) => {
-      if (error) {
-        throw new FailedToUpdateIdentityPoolException(identityPool.IdentityPoolName, error);
-      }
-
-      cb(updatedIdentity);
     });
   }
 
