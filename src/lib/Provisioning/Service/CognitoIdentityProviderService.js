@@ -7,7 +7,6 @@
 import {AbstractService} from './AbstractService';
 import {CognitoIdentityService} from './CognitoIdentityService';
 import {FailedToCreateCognitoUserPoolException} from './Exception/FailedToCreateCognitoUserPoolException';
-import {FailedToUpdateIdentityPoolException} from './Exception/FailedToUpdateIdentityPoolException';
 import Core from 'deep-core';
 
 export class CognitoIdentityProviderService extends AbstractService {
@@ -189,8 +188,6 @@ export class CognitoIdentityProviderService extends AbstractService {
    * @returns {String[]}
    */
   static get AVAILABLE_REGIONS() {
-    return [
-      Core.AWS.Region.ANY,
-    ];
+    return CognitoIdentityService.AVAILABLE_REGIONS;
   }
 }
