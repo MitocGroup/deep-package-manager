@@ -627,16 +627,17 @@ export class LambdaService extends AbstractService {
   /**
    * Deny Cognito and ApiGateway users to invoke these lambdas
    *
+   * @params {Function} filter
    * @returns {Core.AWS.IAM.Statement|null}
    */
-  generateDenyInvokeFunctionStatement() {
+  generateDenyInvokeFunctionStatement(filter = ActionFlags.NON_DIRECT_ACTION_FILTER) {
     let policy = new Core.AWS.IAM.Policy();
 
     let statement = policy.statement.add();
     statement.effect = statement.constructor.DENY;
     statement.action.add(Core.AWS.Service.LAMBDA, 'InvokeFunction');
 
-    let lambdaArns = this.extractFunctionIdentifiers(ActionFlags.NON_DIRECT_ACTION_FILTER);
+    let lambdaArns = this.extractFunctionIdentifiers(filter);
 
     if (lambdaArns.length <= 0) {
       return null;

@@ -76,6 +76,7 @@
     "mkdirp": "^0.5.x",
     "moment": "^2.10.x",
     "object-merge": "^2.5.x",
+    "pwgen": "^0.1.6",
     "raml-sanitize": "^1.0.x",
     "raml-validate": "^1.0.x",
     "readline-sync": "^1.2.x",

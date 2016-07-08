@@ -5,9 +5,9 @@
 'use strict';
 
 import {AbstractService} from './AbstractService';
-import {CognitoIdentityService} from './CognitoIdentityService';
 import {FailedToCreateCognitoUserPoolException} from './Exception/FailedToCreateCognitoUserPoolException';
 import Core from 'deep-core';
+import PwGen from 'pwgen/lib/pwgen_module';
 
 export class CognitoIdentityProviderService extends AbstractService {
   /**
@@ -73,14 +73,47 @@ export class CognitoIdentityProviderService extends AbstractService {
    * @returns {CognitoIdentityProviderService}
    */
   _postDeployProvision(services) {
-    // @todo: implement!
-    if (this._isUpdate) {
+    if (this._isUpdate || !this.isCognitoPoolEnabled) {
       this._ready = true;
       return this;
     }
 
-    this._ready = true;
+    this._createAdminUser()
+
     return this;
+  }
+
+  /**
+   * @param {Function} cb
+   * @private
+   */
+  _createAdminUser(cb) {
+    let payload = {
+      ClientId: this._config.UserPoolClient.Id,
+      Password: this._generatePseudoRandomPassword(),
+      Username: CognitoIdentityProviderService.ADMIN_USERNAME,
+    };
+
+    cognitoIdentityServiceProvider.signUp(payload, (error, response) => {
+      if (error) {
+        throw new Error(`Error while generating admin user: ${error}`);
+      }
+
+      cb(response.user);
+    });
+  }
+
+  /**
+   * @returns {String}
+   * @private
+   */
+  _generatePseudoRandomPassword() {
+    let pwGen = new PwGen();
+
+    pwGen.includeCapitalLetter = true;
+    pwGen.includeNumber = true;
+
+    return pwGen.generate();
   }
 
   /**
@@ -92,6 +125,7 @@ export class CognitoIdentityProviderService extends AbstractService {
     let userPoolMetadata = this.userPoolMetadata;
     let payload = {
       PoolName: userPoolMetadata.poolName,
+      PasswordPolicy: userPoolMetadata.passwordPolicy,
     };
 
     cognitoIdentityServiceProvider.createUserPool(payload, (error, data) => {
@@ -146,6 +180,7 @@ export class CognitoIdentityProviderService extends AbstractService {
           CognitoIdentityProviderService.USER_POOL_NAME,
           this.name()
         ),
+        passwordPolicy: CognitoIdentityProviderService.DEFAULT_PASSWORD_POLICY,
       };
     }
 
@@ -182,6 +217,27 @@ export class CognitoIdentityProviderService extends AbstractService {
    */
   static get USER_POOL_CLIENT_NAME() {
     return 'UserPoolClient';
+  }
+
+  /**
+   * @todo: move into config
+   * @returns {String}
+   */
+  static get ADMIN_USERNAME() {
+    return 'admin';
+  }
+
+  /**
+   * @returns {{MinimumLength: Number, RequireUppercase: Boolean, RequireLowercase: Boolean, RequireNumbers: Boolean, RequireSymbols: Boolean}}
+   */
+  static get DEFAULT_PASSWORD_POLICY() {
+    return {
+      MinimumLength: 8,
+      RequireUppercase: true,
+      RequireLowercase: true,
+      RequireNumbers: true,
+      RequireSymbols: false,
+    }
   }
 
   /**

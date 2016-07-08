@@ -8,6 +8,7 @@ import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
 import {FailedToCreateIdentityPoolException} from './Exception/FailedToCreateIdentityPoolException';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
+import {Inflector} from '../../Helpers/Inflector';
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
 import {FailedSettingIdentityPoolRolesException} from './Exception/FailedSettingIdentityPoolRolesException';
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
@@ -15,9 +16,10 @@ import {FailedToUpdateIdentityPoolException} from './Exception/FailedToUpdateIde
 import {CognitoIdentityProviderService} from './CognitoIdentityProviderService';
 import {Exception} from '../../Exception/Exception';
 import {LambdaService} from './LambdaService';
-import {APIGatewayService} from './APIGatewayService';
-import {SQSService} from './SQSService';
 import {IAMService} from './IAMService';
+import {AbstractProvider} from './Helper/PolicyProvider/AbstractProvider';
+import {SQSService} from './SQSService';
+import {APIGatewayService} from './APIGatewayService';
 
 /**
  * Cognito service
@@ -28,6 +30,8 @@ export class CognitoIdentityService extends AbstractService {
    */
   constructor(...args) {
     super(...args);
+
+    this._policyProvider = AbstractProvider.create(this.provisioning);
   }
 
   /**
@@ -142,15 +146,11 @@ export class CognitoIdentityService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
    * @returns {CognitoIdentityService}
    */
-  _postDeployProvision(services) {
-    let apiGatewayInstance = services.find(APIGatewayService);
-
+  _postDeployProvision(/* services */) {
     this._updateCognitoRolesPolicy(
-      this._config.roles,
-      apiGatewayInstance.getAllEndpointsArn()
+      this._config.roles
     )((policies) => {
       this._config.postDeploy = {
         inlinePolicies: policies,
@@ -317,11 +317,10 @@ export class CognitoIdentityService extends AbstractService {
    * Adds inline policies to Cognito auth and unauth roles
    *
    * @param {Object} cognitoRoles
-   * @param {Object} endpointsARNs
    * @returns {function}
    * @private
    */
-  _updateCognitoRolesPolicy(cognitoRoles, endpointsARNs) {
+  _updateCognitoRolesPolicy(cognitoRoles) {
     let iam = this.provisioning.iam;
     let policies = {};
     let syncStack = new AwsRequestSyncStack();
@@ -332,37 +331,23 @@ export class CognitoIdentityService extends AbstractService {
       }
 
       let cognitoRole = cognitoRoles[cognitoRoleType];
-
-      let lambdaService = this.provisioning.services.find(LambdaService);
-      let sqsService = this.provisioning.services.find(SQSService);
-
-      let policy = new Core.AWS.IAM.Policy();
-      policy.statement.add(lambdaService.generateAllowActionsStatement());
-      policy.statement.add(APIGatewayService.generateAllowInvokeMethodStatement(endpointsARNs));
-      policy.statement.add(this.generateAllowCognitoSyncStatement(['ListRecords', 'UpdateRecords', 'ListDatasets']));
-      policy.statement.add(sqsService.generateAllowActionsStatement());
-
-      let denyLambdaStatement = lambdaService.generateDenyInvokeFunctionStatement();
-
-      if (denyLambdaStatement) {
-        policy.statement.add(denyLambdaStatement);
-      }
-
-      let params = {
+      // getAuthenticatedPolicy, getUnauthenticatedPolicy
+      let policyProviderMethod = `get${Inflector.capitalizeFirst(cognitoRoleType)}Policy`;
+      let policy = this._policyProvider[policyProviderMethod]();
+      let authPolicyPayload = {
         PolicyDocument: policy.toString(),
-        PolicyName: this.generateAwsResourceName(
-          cognitoRoleType + 'Policy',
-          Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
-        ),
+        PolicyName: cognitoRole.RoleName, // Security `policyName` should be same `roleName` for deep-account
         RoleName: cognitoRole.RoleName,
       };
 
-      syncStack.push(iam.putRolePolicy(params), (error, data) => {
-        if (error) {
-          throw new FailedAttachingPolicyToRoleException(params.PolicyName, params.RoleName, error);
-        }
+      [authPolicyPayload, this._createBasicPolicyPayload(cognitoRole)].forEach(params => {
+        syncStack.push(iam.putRolePolicy(params), (error) => {
+          if (error) {
+            throw new FailedAttachingPolicyToRoleException(params.PolicyName, params.RoleName, error);
+          }
 
-        policies[params.RoleName] = policy;
+          policies[params.RoleName] = policy;
+        });
       });
     }
 
@@ -370,6 +355,33 @@ export class CognitoIdentityService extends AbstractService {
       return syncStack.join().ready(() => {
         callback(policies);
       });
+    };
+  }
+
+  /**
+   * @param {Object} cognitoRole
+   * @returns {Object}
+   * @private
+   */
+  _createBasicPolicyPayload(cognitoRole) {
+    let policy = new Core.AWS.IAM.Policy();
+    let apiGateway = this.provisioning.services.find(APIGatewayService);
+    let sqsService = this.provisioning.services.find(SQSService);
+    let cognitoIdentity = this.provisioning.services.find(CognitoIdentityService);
+
+    policy.statement.add(APIGatewayService.generateAllowInvokeMethodStatement(apiGateway.getAllEndpointsArn()));
+    policy.statement.add(sqsService.generateAllowActionsStatement());
+    policy.statement.add(cognitoIdentity.generateAllowCognitoSyncStatement(
+      ['ListRecords', 'UpdateRecords', 'ListDatasets']
+    ));
+
+    return {
+      PolicyDocument: policy.toString(),
+      PolicyName: this.generateAwsResourceName(
+        'BasicPolicy',
+        Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
+      ),
+      RoleName: cognitoRole.RoleName,
     };
   }
 

@@ -1129,6 +1129,13 @@ export class Instance {
   }
 
   /**
+   * @returns {../Microservice/Instance}
+   */
+  get accountMicroservice() {
+    return this.microservice('deep-account');
+  }
+
+  /**
    * @returns {Microservice[]}
    */
   get microservices() {

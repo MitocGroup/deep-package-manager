@@ -24,6 +24,7 @@ export default {
       domain: Joi.string().optional().lowercase()
         .regex(/^([a-zA-Z0-9-_]+\.)+[a-zA-Z]+?$/i)
         .replace(/^www\./i, ''),
+      email: Joi.string().email().optional(),
       aws: Joi.object().keys({
         accessKeyId: JoiHelper.string().required().empty(''),
         secretAccessKey: JoiHelper.string().required().empty(''),
