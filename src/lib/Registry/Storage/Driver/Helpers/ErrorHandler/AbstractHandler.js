@@ -12,7 +12,7 @@ export class AbstractHandler extends Core.OOP.Interface {
    * @param {AbstractDriver} driver
    */
   constructor(driver) {
-    super('mapError');
+    super(['mapError']);
 
     this._driver = driver;
   }
