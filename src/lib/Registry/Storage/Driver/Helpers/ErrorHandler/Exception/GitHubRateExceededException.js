@@ -7,7 +7,7 @@
 import {RegistryException} from '../../../../../Exception/RegistryException';
 import os from 'os';
 
-export class GitHubRateExceededException extends RegistryException {
+export class GitHubApiRateExceededException extends RegistryException {
   constructor() {
     super(
       'GitHub: Api Rate Limit exceeded.' +

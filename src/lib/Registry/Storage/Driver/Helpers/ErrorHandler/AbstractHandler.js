@@ -4,22 +4,24 @@
 
 'use strict';
 
+import Core from 'deep-core';
 import {ComplexDriver} from '../../ComplexDriver';
-import {GitHubRateExceededException} from './Exception/GitHubRateExceededException';
 
-export class GitHubErrorHandler {
+export class AbstractHandler extends Core.OOP.Interface {
   /**
    * @param {AbstractDriver} driver
    */
   constructor(driver) {
+    super('mapError');
+
     this._driver = driver;
   }
 
   /**
-   * @returns {GitHubErrorHandler}
+   * @returns {AbstractHandler}
    */
   extend() {
-    GitHubErrorHandler.METHODS.forEach(method => {
+    AbstractHandler.METHODS.forEach(method => {
       let originalMethod = this._driver[method];
 
       this._driver[method] = (...args) => {
@@ -31,7 +33,7 @@ export class GitHubErrorHandler {
             return;
           }
 
-          originalCallback(this._mapError(error), response);
+          originalCallback(this.mapError(error), response);
         });
       }
     });
@@ -40,21 +42,10 @@ export class GitHubErrorHandler {
   }
 
   /**
-   * @param {Object} error
-   * @returns {Object}
-   * @private
+   * @returns {AbstractDriver}
    */
-  _mapError(error) {
-    let errorHeaders = error.response.headers;
-
-    if (
-      errorHeaders.hasOwnProperty('x-ratelimit-remaining') &&
-      parseInt(errorHeaders['x-ratelimit-remaining']) === 0
-    ) {
-      return new GitHubRateExceededException();
-    }
-
-    return error;
+  get driver() {
+    return this._driver;
   }
 
   /**
