@@ -56,7 +56,17 @@ export class HttpDriver extends AbstractReadonlyDriver {
 
     request(this._createPayload(objUrl, 'HEAD'))
       .then(response => {
-        cb(null, response.ok);
+        if (!response.ok) {
+          if (response.status === 404) {
+            cb(null, false);
+          } else {
+            cb(response._error, null);
+          }
+
+          return;
+        }
+
+        cb(null, true);
       })
       .catch(e => cb(e, null));
   }
