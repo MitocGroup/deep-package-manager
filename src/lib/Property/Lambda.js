@@ -556,7 +556,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    * @param {Boolean} update
    * @returns {AwsRequestSyncStack|WaitFor|*}
    */
-  upload(update = false) {
+  upload(update = false, retryLevel = 0) {
     console.debug(`Start uploading lambda ${this._identifier}`);
 
     let lambda = this._property.provisioning.lambda;
@@ -593,10 +593,6 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
 
       console.debug(`Lambda ${this._identifier} uploaded`);
 
-      let params = {
-        FunctionName: this.functionName,
-      };
-
       if (update && this._wasPreviouslyDeployed) {
         request = lambda.updateFunctionCode({
           S3Bucket: tmpBucket,
@@ -618,6 +614,8 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
           MemorySize: this._memorySize,
           Timeout: this._timeout,
         });
+
+        this._fixLambdaCreateIssue(request);
 
         if (securityGroupId && subnetIds && Array.isArray(subnetIds) && subnetIds.length > 0) {
           request.VpcConfig = {
@@ -690,6 +688,22 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
     );
 
     return this;
+  }
+
+  /**
+   * @see: https://github.com/awslabs/chalice/blob/0.0.1/chalice/deployer.py#L286
+   * @param {AWS.Request} request
+   * @private
+   */
+  _fixLambdaCreateIssue(request) {
+    request.on('retry', response => {
+      if (response.error.code === 'InvalidParameterValueException') {
+        console.warn('Lambda upload failed. Retrying...');
+
+        response.error.retryable = true;
+        response.error.rertyCount = 5000; // wait 5 seconds
+      }
+    });
   }
 
   /**
