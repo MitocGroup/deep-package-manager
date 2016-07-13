@@ -5,9 +5,9 @@
 'use strict';
 
 import {AbstractService} from './AbstractService';
-import {CognitoIdentityService} from './CognitoIdentityService';
+import {LambdaService} from './LambdaService';
 import {FailedToCreateCognitoUserPoolException} from './Exception/FailedToCreateCognitoUserPoolException';
-import {FailedToUpdateIdentityPoolException} from './Exception/FailedToUpdateIdentityPoolException';
+import {FailedToUpdateUserPoolException} from './Exception/FailedToUpdateUserPoolException';
 import Core from 'deep-core';
 
 export class CognitoIdentityProviderService extends AbstractService {
@@ -37,6 +37,7 @@ export class CognitoIdentityProviderService extends AbstractService {
     if (this.isCognitoPoolEnabled && !oldPool) {
       this._createUserPool(userPool => {
         this._config.UserPool = userPool;
+        this._config.ProviderName = this._generateCognitoProviderName(userPool);
 
         this._createUserPoolClient(userPool, userPoolClient => {
           this._config.UserPoolClient = userPoolClient;
@@ -73,19 +74,13 @@ export class CognitoIdentityProviderService extends AbstractService {
    * @returns {CognitoIdentityProviderService}
    */
   _postDeployProvision(services) {
-    let cognitoIdentity = services.find(CognitoIdentityService);
-    let cognitoConfig = cognitoIdentity.config();
-    let identityPool = cognitoConfig.identityPool;
-
-    if (!this.isCognitoPoolEnabled || this._isUpdate && identityPool.CognitoIdentityProviders) {
+    // @todo: implement!
+    if (this._isUpdate) {
       this._ready = true;
-
       return this;
     }
 
-    this._linkUserPoolWithIdentityPool(identityPool, updatedIdentity => {
-      cognitoConfig.identityPool = updatedIdentity;
-
+    this._registerUserPoolTriggers(() => {
       this._ready = true;
     });
 
@@ -122,6 +117,8 @@ export class CognitoIdentityProviderService extends AbstractService {
     let cognitoIdentityServiceProvider = this.provisioning.cognitoIdentityServiceProvider;
     let payload = {
       UserPoolId: userPool.Id,
+      // JavaScript SDK doesn't support apps that have a client secret, 
+      // http://docs.aws.amazon.com/cognito/latest/developerguide/setting-up-the-javascript-sdk.html
       GenerateSecret: false,
       ClientName: userPoolMetadata.clientName,
     };
@@ -132,32 +129,6 @@ export class CognitoIdentityProviderService extends AbstractService {
       }
 
       cb(data.UserPoolClient);
-    });
-  }
-
-  /**
-   * @param {Object} identityPool
-   * @param {Function} cb
-   * @private
-   */
-  _linkUserPoolWithIdentityPool(identityPool, cb) {
-    let userPool = this._config.UserPool;
-    let userPoolClient = this._config.UserPoolClient;
-    let cognitoIdentity = this.provisioning.cognitoIdentity;
-
-    identityPool.CognitoIdentityProviders = [
-      {
-        ClientId: userPoolClient.ClientId,
-        ProviderName: this._generateCognitoProviderName(userPool),
-      },
-    ];
-
-    cognitoIdentity.updateIdentityPool(identityPool, (error, updatedIdentity) => {
-      if (error) {
-        throw new FailedToUpdateIdentityPoolException(identityPool.IdentityPoolName, error);
-      }
-
-      cb(updatedIdentity);
     });
   }
 
@@ -183,6 +154,68 @@ export class CognitoIdentityProviderService extends AbstractService {
     }
 
     return this._userPoolMetadata;
+  }
+
+  /**
+   * @param {Function} cb
+   * @private
+   */
+  _registerUserPoolTriggers(cb) {
+    let userPool = this._config.UserPool;
+    let cognitoIdentityServiceProvider = this.provisioning.cognitoIdentityServiceProvider;
+    let triggers = this._extractUserPoolTriggers();
+
+    if (Object.keys(triggers).length === 0) {
+      cb();
+      return;
+    }
+
+    let payload = {
+      UserPoolId: userPool.Id,
+      LambdaConfig: triggers,
+    };
+
+    cognitoIdentityServiceProvider.updateUserPool(payload, error => {
+      if (error) {
+        throw new FailedToUpdateUserPoolException(userPool.Name, error);
+      }
+
+      userPool.LambdaConfig = triggers;
+      cb();
+    });
+  }
+
+  /**
+   * @see: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CognitoIdentityServiceProvider.html#createUserPool-property, LambdaConfig
+   * @returns {Object}
+   * @private
+   */
+  _extractUserPoolTriggers() {
+    let globalConfig = this.property.config.globals;
+    let lambdaService = this.provisioning.services.find(LambdaService);
+    let triggers = ((globalConfig.security || {}).userPool || {}).triggers || {};
+    let normalizedTriggers = {};
+
+    for (let triggerName in triggers) {
+      if (!triggers.hasOwnProperty(triggerName)) {
+        continue;
+      }
+
+      let deepResourceName = triggers[triggerName];
+      let lambdaArn = lambdaService.resolveDeepResourceName(deepResourceName);
+
+      if (lambdaArn) {
+        normalizedTriggers[triggerName] = lambdaArn;
+      } else {
+        //@todo: Throw error here?
+        console.warn(
+          `Unknown deep resource name: "${deepResourceName}". ` +
+          `Skipping setting cognito user pool "${triggerName}" trigger...`
+        );
+      }
+    }
+
+    return triggers;
   }
 
   /**
@@ -222,7 +255,9 @@ export class CognitoIdentityProviderService extends AbstractService {
    */
   static get AVAILABLE_REGIONS() {
     return [
-      Core.AWS.Region.ANY,
+      Core.AWS.Region.US_EAST_N_VIRGINIA,
+      Core.AWS.Region.EU_IRELAND,
+      Core.AWS.Region.ASIA_PACIFIC_TOKYO,
     ];
   }
 }

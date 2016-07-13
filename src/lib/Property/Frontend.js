@@ -88,6 +88,16 @@ export class Frontend {
       config.identityPoolId = cognitoConfig.identityPool.IdentityPoolId;
       config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders || {};
 
+      let cognitoIdps = cognitoConfig.identityPool.CognitoIdentityProviders;
+
+      if (cognitoIdps && cognitoIdps.length > 0) {
+        config.identityProviders = Object.assign(config.identityProviders, cognitoIdps.reduce((idpsObj, idpObj) => {
+          idpsObj[idpObj.ProviderName] = idpObj.ClientId;
+
+          return idpsObj;
+        }, {}));
+      }
+
       // add Auth0 OIDC provider
       if (iamConfig.identityProvider && iamConfig.identityProvider.domain) {
         config.identityProviders[iamConfig.identityProvider.domain] = iamConfig.identityProvider.clientID;

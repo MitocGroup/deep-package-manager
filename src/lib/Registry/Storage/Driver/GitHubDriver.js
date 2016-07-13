@@ -5,12 +5,14 @@
 'use strict';
 
 import {HttpDriver} from './HttpDriver';
+import {GitHubHandler} from './Helpers/ErrorHandler/GitHubHandler';
 import request from 'fetchy-request';
 
 export class GitHubDriver extends HttpDriver {
   constructor() {
     super();
     this._authHeaders = {};
+    this._errorHandler = new GitHubHandler(this).extend();
   }
 
   /**
