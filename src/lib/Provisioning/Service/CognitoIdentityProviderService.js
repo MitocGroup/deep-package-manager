@@ -5,7 +5,9 @@
 'use strict';
 
 import {AbstractService} from './AbstractService';
+import {LambdaService} from './LambdaService';
 import {FailedToCreateCognitoUserPoolException} from './Exception/FailedToCreateCognitoUserPoolException';
+import {FailedToUpdateUserPoolException} from './Exception/FailedToUpdateUserPoolException';
 import Core from 'deep-core';
 import PwGen from 'pwgen/lib/pwgen_module';
 
@@ -83,6 +85,10 @@ export class CognitoIdentityProviderService extends AbstractService {
       this._ready = true;
       return this;
     }
+
+    this._registerUserPoolTriggers(() => {
+      this._ready = true;
+    });
 
     this._createAdminUser();
 
@@ -212,6 +218,68 @@ export class CognitoIdentityProviderService extends AbstractService {
     }
 
     return this._userPoolMetadata;
+  }
+
+  /**
+   * @param {Function} cb
+   * @private
+   */
+  _registerUserPoolTriggers(cb) {
+    let userPool = this._config.UserPool;
+    let cognitoIdentityServiceProvider = this.provisioning.cognitoIdentityServiceProvider;
+    let triggers = this._extractUserPoolTriggers();
+
+    if (Object.keys(triggers).length === 0) {
+      cb();
+      return;
+    }
+
+    let payload = {
+      UserPoolId: userPool.Id,
+      LambdaConfig: triggers,
+    };
+
+    cognitoIdentityServiceProvider.updateUserPool(payload, error => {
+      if (error) {
+        throw new FailedToUpdateUserPoolException(userPool.Name, error);
+      }
+
+      userPool.LambdaConfig = triggers;
+      cb();
+    });
+  }
+
+  /**
+   * @see: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CognitoIdentityServiceProvider.html#createUserPool-property, LambdaConfig
+   * @returns {Object}
+   * @private
+   */
+  _extractUserPoolTriggers() {
+    let globalConfig = this.property.config.globals;
+    let lambdaService = this.provisioning.services.find(LambdaService);
+    let triggers = ((globalConfig.security || {}).userPool || {}).triggers || {};
+    let normalizedTriggers = {};
+
+    for (let triggerName in triggers) {
+      if (!triggers.hasOwnProperty(triggerName)) {
+        continue;
+      }
+
+      let deepResourceName = triggers[triggerName];
+      let lambdaArn = lambdaService.resolveDeepResourceName(deepResourceName);
+
+      if (lambdaArn) {
+        normalizedTriggers[triggerName] = lambdaArn;
+      } else {
+        //@todo: Throw error here?
+        console.warn(
+          `Unknown deep resource name: "${deepResourceName}". ` +
+          `Skipping setting cognito user pool "${triggerName}" trigger...`
+        );
+      }
+    }
+
+    return triggers;
   }
 
   /**

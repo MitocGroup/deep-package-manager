@@ -394,6 +394,28 @@ export class LambdaService extends AbstractService {
   }
 
   /**
+   * Resolve DeepRN into ARN
+   * @example: @deep-account:user:create -> DeepDevUserCreate075234e258d
+   * @param resourceName
+   */
+  resolveDeepResourceName(resourceName) {
+    let parts = resourceName.match(/^@([^:]+):([^:]+):([^:]+)$/);
+    let names = this._config.names;
+
+    if (!parts) {
+      return null;
+    }
+
+    let microserviceIdentifier = parts[1];
+    let actionIdentifier = `${parts[2]}-${parts[3]}`;
+    let functionName = (names[microserviceIdentifier] || {})[actionIdentifier];
+
+    return functionName ?
+      this._generateLambdaArn(functionName) :
+      null;
+  }
+
+  /**
    * Adds inline policies to lambdas execution roles
    *
    * @param {Array} buckets
