@@ -8,7 +8,6 @@ import {PolicyTranslator} from '../../../../Helpers/PolicyTranslator';
 import {CognitoIdentityService} from '../../CognitoIdentityService';
 import {AbstractProvider} from './AbstractProvider';
 import {MissingAccountMicroserviceException} from '../../Exception/MissingAccountMicroserviceException';
-import {LambdaService} from '../../LambdaService';
 import Core from 'deep-core';
 import path from 'path';
 import fs from 'fs';
@@ -77,13 +76,6 @@ export class SecuredProvider extends AbstractProvider {
    */
   _rolePath(roleName) {
     return path.join(this.accountMicroservice.autoload.roles, `${roleName}.json`);
-  }
-
-  /**
-   * @returns {LambdaService}
-   */
-  get lambdaService() {
-    return this.provisioning.services.find(LambdaService);
   }
 
   /**

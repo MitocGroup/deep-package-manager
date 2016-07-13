@@ -34,16 +34,22 @@ export class CognitoIdentityProviderService extends AbstractService {
     let oldPool = this._config.UserPool;
 
     if (this.isCognitoPoolEnabled && !oldPool) {
-      this._createUserPool(userPool => {
-        this._config.UserPool = userPool;
-        this._config.ProviderName = this._generateCognitoProviderName(userPool);
+      this
+        ._createUserPool()
+        .then(userPool => {
+          this._config.UserPool = userPool;
+          this._config.ProviderName = this._generateCognitoProviderName(userPool);
 
-        this._createUserPoolClient(userPool, userPoolClient => {
+          return this._createUserPoolClient(userPool);
+        })
+        .then(userPoolClient => {
           this._config.UserPoolClient = userPoolClient;
 
+          return this._createAdminUser();
+        })
+        .then(() => {
           this._ready = true;
         });
-      });
 
       return this;
     }
@@ -72,35 +78,50 @@ export class CognitoIdentityProviderService extends AbstractService {
    * @params {Object} services
    * @returns {CognitoIdentityProviderService}
    */
-  _postDeployProvision(services) {
+  _postDeployProvision(/* services */) {
     if (this._isUpdate || !this.isCognitoPoolEnabled) {
       this._ready = true;
       return this;
     }
 
-    this._createAdminUser()
+    this._createAdminUser();
 
     return this;
   }
 
   /**
-   * @param {Function} cb
+   * @returns {Promise}
    * @private
    */
-  _createAdminUser(cb) {
-    let payload = {
-      ClientId: this._config.UserPoolClient.Id,
+  _createAdminUser() {
+    let clientId = this._config.UserPoolClient.ClientId;
+    let userPoolId = this._config.UserPool.Id;
+    let cognitoIdentityServiceProvider = this.provisioning.cognitoIdentityServiceProvider;
+    let userPayload = {
+      ClientId: clientId,
       Password: this._generatePseudoRandomPassword(),
       Username: CognitoIdentityProviderService.ADMIN_USERNAME,
     };
 
-    cognitoIdentityServiceProvider.signUp(payload, (error, response) => {
-      if (error) {
-        throw new Error(`Error while generating admin user: ${error}`);
-      }
+    return cognitoIdentityServiceProvider
+      .signUp(userPayload)
+      .promise()
+      .then(() => {
+        let confirmPayload = {
+          UserPoolId: userPoolId,
+          Username: userPayload.Username,
+        };
 
-      cb(response.user);
-    });
+        return cognitoIdentityServiceProvider
+          .adminConfirmSignUp(confirmPayload)
+          .promise();
+      })
+      .catch(e => {
+        // @todo: Sorry guys :/, Promise suppresses any kind of synchronous errors.
+        setImmediate(() => {
+          throw new Error(`Error while generating admin user: ${e}`);
+        });
+      });
   }
 
   /**
@@ -117,32 +138,36 @@ export class CognitoIdentityProviderService extends AbstractService {
   }
 
   /**
-   * @param {Function} cb
+   * @returns {Promise}
    * @private
    */
-  _createUserPool(cb) {
+  _createUserPool() {
     let cognitoIdentityServiceProvider = this.provisioning.cognitoIdentityServiceProvider;
     let userPoolMetadata = this.userPoolMetadata;
     let payload = {
       PoolName: userPoolMetadata.poolName,
-      PasswordPolicy: userPoolMetadata.passwordPolicy,
+      Policies: {
+        PasswordPolicy: userPoolMetadata.passwordPolicy,
+      },
     };
 
-    cognitoIdentityServiceProvider.createUserPool(payload, (error, data) => {
-      if (error) {
-        throw new FailedToCreateCognitoUserPoolException(userPoolMetadata.poolName, error);
-      }
-
-      cb(data.UserPool);
-    });
+    return cognitoIdentityServiceProvider
+      .createUserPool(payload)
+      .promise()
+      .then(data => data.UserPool)
+      .catch(e => {
+        setImmediate(() => {
+          throw new FailedToCreateCognitoUserPoolException(userPoolMetadata.poolName, e);
+        });
+      });
   }
 
   /**
    * @param {Object} userPool
-   * @param {Function} cb
+   * @returns {Promise}
    * @private
    */
-  _createUserPoolClient(userPool, cb) {
+  _createUserPoolClient(userPool) {
     let userPoolMetadata = this.userPoolMetadata;
     let cognitoIdentityServiceProvider = this.provisioning.cognitoIdentityServiceProvider;
     let payload = {
@@ -153,13 +178,15 @@ export class CognitoIdentityProviderService extends AbstractService {
       ClientName: userPoolMetadata.clientName,
     };
 
-    cognitoIdentityServiceProvider.createUserPoolClient(payload, (error, data) => {
-      if (error) {
-        throw new FailedToCreateCognitoUserPoolException(userPoolMetadata.poolName, error);
-      }
-
-      cb(data.UserPoolClient);
-    });
+    return cognitoIdentityServiceProvider
+      .createUserPoolClient(payload)
+      .promise()
+      .then(data => data.UserPoolClient)
+      .catch(e => {
+        setImmediate(() => {
+          throw new FailedToCreateCognitoUserPoolException(userPoolMetadata.poolName, e);
+        });
+      });
   }
 
   /**

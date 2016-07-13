@@ -5,9 +5,7 @@
 'use strict';
 
 import Core from 'deep-core';
-import {CognitoIdentityService} from '../../CognitoIdentityService';
-import {APIGatewayService} from '../../APIGatewayService';
-import {SQSService} from '../../SQSService';
+import {LambdaService} from '../../LambdaService';
 
 export class AbstractProvider extends Core.OOP.Interface {
   /**
@@ -36,6 +34,18 @@ export class AbstractProvider extends Core.OOP.Interface {
   }
 
   /**
+   * @returns {*}
+   */
+  getAdminPolicy() {
+    let policy = new Core.AWS.IAM.Policy();
+    let lambdaService = this.lambdaService;
+
+    policy.statement.add(lambdaService.generateAllowActionsStatement());
+
+    return policy;
+  }
+
+  /**
    * @param {Provisioning/Instance} provisioning
    */
   static create(provisioning) {
@@ -52,5 +62,12 @@ export class AbstractProvider extends Core.OOP.Interface {
    */
   get provisioning() {
     return this._provisioning;
+  }
+
+  /**
+   * @returns {LambdaService}
+   */
+  get lambdaService() {
+    return this.provisioning.services.find(LambdaService);
   }
 }

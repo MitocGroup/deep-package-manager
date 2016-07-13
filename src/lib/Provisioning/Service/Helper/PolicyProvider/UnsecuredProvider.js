@@ -5,7 +5,6 @@
 'use strict';
 
 import {AbstractProvider} from './AbstractProvider';
-import {LambdaService} from '../../LambdaService';
 import Core from 'deep-core';
 
 export class UnsecuredProvider extends AbstractProvider {
@@ -46,12 +45,5 @@ export class UnsecuredProvider extends AbstractProvider {
     }
     
     return policy;
-  }
-
-  /**
-   * @returns {LambdaService}
-   */
-  get lambdaService() {
-    return this.provisioning.services.find(LambdaService);
   }
 }
