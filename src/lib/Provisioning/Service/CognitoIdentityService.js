@@ -135,8 +135,8 @@ export class CognitoIdentityService extends AbstractService {
     if (cognitoIdpService.isCognitoPoolEnabled) {
       changeSet.CognitoIdentityProviders = [
         {
-          ProviderName: cognitoIdpConfig.ProviderName,
-          ClientId: cognitoIdpConfig.UserPoolClient.ClientId,
+          ProviderName: cognitoIdpConfig.providerName,
+          ClientId: cognitoIdpConfig.userPoolClient.ClientId,
         },
       ];
     }
@@ -293,10 +293,6 @@ export class CognitoIdentityService extends AbstractService {
    * @returns {*}
    */
   _getAssumeRolePolicy(identityPool, roleType) {
-    let cognitoIdpService = this.provisioning.services.find(CognitoIdentityProviderService);
-    // @todo: allow all user pool users to assume admin role temporary, see line 331
-    let userPoolProvider = cognitoIdpService.config().ProviderName;
-
     if (CognitoIdentityService.ROLE_TYPES.indexOf(roleType) === -1) {
       throw new Exception(`Unknown role type ${roleType}.`);
     }
@@ -318,10 +314,7 @@ export class CognitoIdentityService extends AbstractService {
         'cognito-identity.amazonaws.com:aud': identityPool.IdentityPoolId,
       },
       'ForAnyValue:StringLike': {
-        'cognito-identity.amazonaws.com:amr': (
-          // @todo: add "cognito-identity.amazonaws.com:sub" for admin user, when cognito-aws-sdk gets 'getAuthenticatedDetails' method
-          roleType !== CognitoIdentityService.ROLE_ADMIN ? roleType : userPoolProvider
-        ),
+        'cognito-identity.amazonaws.com:amr': roleType,
       },
     };
 
@@ -346,7 +339,7 @@ export class CognitoIdentityService extends AbstractService {
       }
 
       let cognitoRole = cognitoRoles[cognitoRoleType];
-      // getAuthenticatedPolicy, getUnauthenticatedPolicy, getAdminPolicy
+      // getAuthenticatedPolicy, getUnauthenticatedPolicy
       let policyProviderMethod = `get${Inflector.capitalizeFirst(cognitoRoleType)}Policy`;
       let policy = this._policyProvider[policyProviderMethod]();
       let authPolicyPayload = {

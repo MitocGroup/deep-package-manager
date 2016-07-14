@@ -23,7 +23,9 @@ export class SecuredProvider extends AbstractProvider {
 
     super(provisioning);
 
-    this._translator = new PolicyTranslator(provisioning.property);
+    this._translator = new PolicyTranslator(
+      provisioning.property.config
+    );
   }
 
   /**

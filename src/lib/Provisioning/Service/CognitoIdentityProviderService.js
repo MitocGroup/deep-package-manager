@@ -8,6 +8,7 @@ import {AbstractService} from './AbstractService';
 import {LambdaService} from './LambdaService';
 import {FailedToCreateCognitoUserPoolException} from './Exception/FailedToCreateCognitoUserPoolException';
 import {FailedToUpdateUserPoolException} from './Exception/FailedToUpdateUserPoolException';
+import {FailedToCreateAdminUserException} from './Exception/FailedToCreateAdminUserException';
 import Core from 'deep-core';
 import PwGen from 'pwgen/lib/pwgen_module';
 
@@ -33,23 +34,25 @@ export class CognitoIdentityProviderService extends AbstractService {
    * @private
    */
   _setup() {
-    let oldPool = this._config.UserPool;
+    let oldPool = this._config.userPool;
 
     if (this.isCognitoPoolEnabled && !oldPool) {
       this
         ._createUserPool()
         .then(userPool => {
-          this._config.UserPool = userPool;
-          this._config.ProviderName = this._generateCognitoProviderName(userPool);
+          this._config.userPool = userPool;
+          this._config.providerName = this._generateCognitoProviderName(userPool);
 
           return this._createUserPoolClient(userPool);
         })
         .then(userPoolClient => {
-          this._config.UserPoolClient = userPoolClient;
+          this._config.userPoolClient = userPoolClient;
 
           return this._createAdminUser();
         })
-        .then(() => {
+        .then(adminUser => {
+          this._config.adminUser = adminUser;
+
           this._ready = true;
         });
 
@@ -86,11 +89,9 @@ export class CognitoIdentityProviderService extends AbstractService {
       return this;
     }
 
-    this._registerUserPoolTriggers(() => {
+    this._registerUserPoolTriggers().then(() => {
       this._ready = true;
     });
-
-    this._createAdminUser();
 
     return this;
   }
@@ -100,47 +101,35 @@ export class CognitoIdentityProviderService extends AbstractService {
    * @private
    */
   _createAdminUser() {
-    let clientId = this._config.UserPoolClient.ClientId;
-    let userPoolId = this._config.UserPool.Id;
+    let clientId = this._config.userPoolClient.ClientId;
+    let userPoolId = this._config.userPool.Id;
     let cognitoIdentityServiceProvider = this.provisioning.cognitoIdentityServiceProvider;
-    let userPayload = {
+    let adminUser = {
       ClientId: clientId,
       Password: this._generatePseudoRandomPassword(),
       Username: CognitoIdentityProviderService.ADMIN_USERNAME,
     };
 
     return cognitoIdentityServiceProvider
-      .signUp(userPayload)
+      .signUp(adminUser)
       .promise()
       .then(() => {
         let confirmPayload = {
           UserPoolId: userPoolId,
-          Username: userPayload.Username,
+          Username: adminUser.Username,
         };
 
         return cognitoIdentityServiceProvider
           .adminConfirmSignUp(confirmPayload)
           .promise();
       })
+      .then(() => adminUser)
       .catch(e => {
         // @todo: Sorry guys :/, Promise suppresses any kind of synchronous errors.
         setImmediate(() => {
-          throw new Error(`Error while generating admin user: ${e}`);
+          throw new FailedToCreateAdminUserException(e);
         });
       });
-  }
-
-  /**
-   * @returns {String}
-   * @private
-   */
-  _generatePseudoRandomPassword() {
-    let pwGen = new PwGen();
-
-    pwGen.includeCapitalLetter = true;
-    pwGen.includeNumber = true;
-
-    return pwGen.generate();
   }
 
   /**
@@ -221,17 +210,15 @@ export class CognitoIdentityProviderService extends AbstractService {
   }
 
   /**
-   * @param {Function} cb
    * @private
    */
-  _registerUserPoolTriggers(cb) {
-    let userPool = this._config.UserPool;
+  _registerUserPoolTriggers() {
+    let userPool = this._config.userPool;
     let cognitoIdentityServiceProvider = this.provisioning.cognitoIdentityServiceProvider;
     let triggers = this._extractUserPoolTriggers();
 
     if (Object.keys(triggers).length === 0) {
-      cb();
-      return;
+      return Promise.resolve(userPool);
     }
 
     let payload = {
@@ -239,14 +226,19 @@ export class CognitoIdentityProviderService extends AbstractService {
       LambdaConfig: triggers,
     };
 
-    cognitoIdentityServiceProvider.updateUserPool(payload, error => {
-      if (error) {
-        throw new FailedToUpdateUserPoolException(userPool.Name, error);
-      }
+    return cognitoIdentityServiceProvider
+      .updateUserPool(payload)
+      .promise()
+      .then(()=> {
+        userPool.LambdaConfig = triggers;
 
-      userPool.LambdaConfig = triggers;
-      cb();
-    });
+        return userPool;
+      })
+      .catch(e => {
+        setImmediate(() => {
+          throw new FailedToUpdateUserPoolException(userPool.Name, e);
+        });
+      });
   }
 
   /**
@@ -280,6 +272,19 @@ export class CognitoIdentityProviderService extends AbstractService {
     }
 
     return triggers;
+  }
+
+  /**
+   * @returns {String}
+   * @private
+   */
+  _generatePseudoRandomPassword() {
+    let pwGen = new PwGen();
+
+    pwGen.includeCapitalLetter = true;
+    pwGen.includeNumber = true;
+
+    return pwGen.generate();
   }
 
   /**

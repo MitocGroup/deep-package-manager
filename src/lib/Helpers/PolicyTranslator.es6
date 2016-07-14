@@ -5,18 +5,16 @@
 'use strict';
 
 import {Helpers_Hash} from 'deep-package-manager';
-import {LambdaService} from '../Provisioning/Service/LambdaService';
+import {AbstractService} from '../Provisioning/Service/AbstractService';
 import {Inflector} from './Inflector';
 import Core from 'deep-core';
 
 export class PolicyTranslator {
   /**
-   * @param {Property/Instance} property
-   * @param {Object} backendConfig
+   * @param {Object} appConfig
    */
-  constructor(property, backendConfig = null) {
-    this._property = property;
-    this._backendConfig = backendConfig || property.config;
+  constructor(appConfig) {
+    this._appConfig = appConfig;
   }
 
   /**
@@ -35,8 +33,8 @@ export class PolicyTranslator {
       rawDeepStmt.Action.map(this._resolveDeepAction.bind(this)).forEach(functionName => {
         iamStmt.resource.add(
           Core.AWS.Service.LAMBDA,
-          this._backendConfig.awsRegion,
-          this._backendConfig.awsAccountId,
+          this._appConfig.awsRegion,
+          this._appConfig.awsAccountId,
           `function:${functionName}`
         );
       });
@@ -58,10 +56,8 @@ export class PolicyTranslator {
       throw new TypeError(`Invalid action parameter type. Expected string got ${typeof action}`);
     }
 
-    let lambdaService = this._property.provisioning.services.find(LambdaService);
-
     if (action === PolicyTranslator.ANY) {
-      return lambdaService._getGlobalResourceMask();
+      return this.generateAwsResourceName('*');
     }
 
     let actionParts = action.split(':');
@@ -82,9 +78,8 @@ export class PolicyTranslator {
 
     lambdaFunctionName = lambdaFunctionName.replace(/\*+/g, '*');
 
-    return lambdaService.generateAwsResourceName(
+    return this.generateAwsResourceName(
       lambdaFunctionName,
-      Core.AWS.Service.LAMBDA,
       microserviceIdentifier
     );
   }
@@ -95,7 +90,7 @@ export class PolicyTranslator {
    * @private
    */
   _actionsExists(parts) {
-    let microservices = this._backendConfig.microservices;
+    let microservices = this._appConfig.microservices;
 
     return microservices.hasOwnProperty(parts[0]) &&
       (
@@ -106,6 +101,22 @@ export class PolicyTranslator {
         parts[2] === PolicyTranslator.ANY ||
         microservices[parts[0]].resources[parts[1]].hasOwnProperty(parts[2])
       );
+  }
+
+  /**
+   * @param {String} resourceName
+   * @param {String} msIdentifier
+   * @returns {String}
+   */
+  generateAwsResourceName(resourceName, msIdentifier = '') {
+    return AbstractService.generateAwsResourceName(
+      resourceName,
+      Core.AWS.Service.LAMBDA,
+      this._appConfig.awsAccountId,
+      this._appConfig.appIdentifier,
+      this._appConfig.env,
+      msIdentifier
+    );
   }
 
   /**

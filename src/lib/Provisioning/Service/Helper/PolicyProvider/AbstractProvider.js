@@ -12,7 +12,10 @@ export class AbstractProvider extends Core.OOP.Interface {
    * @param {Provisioning/Instance} provisioning
    */
   constructor(provisioning) {
-    super(['_getAuthenticatedPolicy', '_getUnauthenticatedPolicy']);
+    super([
+      '_getAuthenticatedPolicy', 
+      '_getUnauthenticatedPolicy',
+    ]);
 
     this._provisioning = provisioning;
   }
