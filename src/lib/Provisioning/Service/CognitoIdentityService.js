@@ -49,18 +49,10 @@ export class CognitoIdentityService extends AbstractService {
   }
 
   /**
-   * @returns {String}
-   */
-  static get ROLE_ADMIN() {
-    return 'admin';
-  }
-
-  /**
    * @returns {Array}
    */
   static get ROLE_TYPES() {
     return [
-      CognitoIdentityService.ROLE_ADMIN,
       CognitoIdentityService.ROLE_AUTH,
       CognitoIdentityService.ROLE_UNAUTH,
     ];
@@ -367,11 +359,12 @@ export class CognitoIdentityService extends AbstractService {
   }
 
   /**
-   * @param {Object} cognitoRole
+   * Method is also used in deep-account::account-lib::iam::roleManager
+   * 
    * @returns {Object}
    * @private
    */
-  _createBasicPolicyPayload(cognitoRole) {
+  _createBasicPolicyPayload(role) {
     let policy = new Core.AWS.IAM.Policy();
     let apiGateway = this.provisioning.services.find(APIGatewayService);
     let sqsService = this.provisioning.services.find(SQSService);
@@ -389,7 +382,7 @@ export class CognitoIdentityService extends AbstractService {
         'BasicPolicy',
         Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
       ),
-      RoleName: cognitoRole.RoleName,
+      RoleName: role.RoleName,
     };
   }
 
