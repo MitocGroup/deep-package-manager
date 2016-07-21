@@ -56,7 +56,8 @@ rules:
   # Best Practices
   accessor-pairs: 2
   block-scoped-var: 0
-  complexity: [1, 18]
+  # no even warning due to codeclimate shows it as error
+  complexity: [0, 18]
   consistent-return: 0
   curly: 2
   default-case: 0
@@ -66,7 +67,8 @@ rules:
   guard-for-in: 2
   no-alert: 2
   no-caller: 2
-  no-case-declarations: 1
+  # no even warning due to codeclimate shows it as error
+  no-case-declarations: 0
   no-div-regex: 2
   no-else-return: 0
   no-empty-label: 0
@@ -83,7 +85,8 @@ rules:
   no-iterator: 2
   no-labels: 0
   no-lone-blocks: 2
-  no-loop-func: 1
+  # no even warning due to codeclimate shows it as error
+  no-loop-func: 0
   no-magic-number: 0
   no-multi-spaces: 0
   no-multi-str: 0
@@ -100,13 +103,15 @@ rules:
   no-self-compare: 2
   no-sequences: 0
   no-throw-literal: 0
-  no-unused-expressions: 1
+  # no even warning due to codeclimate shows it as error
+  no-unused-expressions: 0
   no-useless-call: 2
   no-useless-concat: 2
   no-void: 2
   no-warning-comments: 0
   no-with: 2
-  radix: [1, "always"]
+  # no even warning due to codeclimate shows it as error
+  radix: [0, "always"]
   vars-on-top: 0
   wrap-iife: 2
   yoda: 0
@@ -116,7 +121,8 @@ rules:
 
   # Variables
   init-declarations: 0
-  no-catch-shadow: 1
+  # no even warning due to codeclimate shows it as error
+  no-catch-shadow: 0
   no-delete-var: 2
   no-label-var: 2
   no-shadow-restricted-names: 2
@@ -128,7 +134,8 @@ rules:
   no-use-before-define: 2
 
   # Node.js and CommonJS
-  callback-return: 1
+  # no even warning due to codeclimate shows it as error
+  callback-return: 0
   global-require: 0
   handle-callback-err: 2
   no-mixed-requires: 0

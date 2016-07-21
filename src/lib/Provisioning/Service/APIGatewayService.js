@@ -2,7 +2,7 @@
  * Created by mgoria on 9/11/15.
  */
 
-/*eslint max-len: 0, no-unused-vars: 1*/
+/*eslint max-len: 0, no-unused-vars: 0*/
 
 'use strict';
 

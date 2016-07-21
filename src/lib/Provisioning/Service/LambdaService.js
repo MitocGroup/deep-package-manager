@@ -2,7 +2,7 @@
  * Created by AlexanderC on 5/27/15.
  */
 
-/*eslint  max-statements: 1*/
+/*eslint  max-statements: 0*/
 
 'use strict';
 
