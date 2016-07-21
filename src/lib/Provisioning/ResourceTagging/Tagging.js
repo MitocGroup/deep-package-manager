@@ -19,6 +19,7 @@ export class Tagging {
   /**
    * @param {Property|Instance|*} property
    * @param {String|null} applicationName
+   * @returns {Tagging}
    */
   static create(property, applicationName = null) {
     applicationName = applicationName || property.name;

@@ -759,47 +759,47 @@ export class APIGatewayService extends AbstractService {
         let methodParams = [];
 
         switch (method) {
-        case 'putMethod':
-          methodParams.push({
-            authorizationType: resourceMethod === 'OPTIONS' ? 'NONE' : 'AWS_IAM',
-            requestModels: this.jsonEmptyModel,
-            requestParameters: this._getMethodRequestParameters(
+          case 'putMethod':
+            methodParams.push({
+              authorizationType: resourceMethod === 'OPTIONS' ? 'NONE' : 'AWS_IAM',
+              requestModels: this.jsonEmptyModel,
+              requestParameters: this._getMethodRequestParameters(
                 resourceMethod, resourceMethods[resourceMethod]
               ),
-          });
-          break;
-        case 'putMethodResponse':
-          this.methodStatusCodes(resourceMethod).forEach((statusCode) => {
-            methodParams.push({
-              statusCode: `${statusCode}`,
-              responseModels: this.jsonEmptyModel,
-              responseParameters: this._getMethodResponseParameters(resourceMethod),
             });
-          });
-          break;
-        case 'putIntegration':
-          let params = resourceMethods[resourceMethod];
+            break;
+          case 'putMethodResponse':
+            this.methodStatusCodes(resourceMethod).forEach((statusCode) => {
+              methodParams.push({
+                statusCode: `${statusCode}`,
+                responseModels: this.jsonEmptyModel,
+                responseParameters: this._getMethodResponseParameters(resourceMethod),
+              });
+            });
+            break;
+          case 'putIntegration':
+            let params = resourceMethods[resourceMethod];
 
             //params.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
             // @todo - find a smarter way to enable "Invoke with caller credentials" option
-          params.credentials = resourceMethod === 'OPTIONS' ?
+            params.credentials = resourceMethod === 'OPTIONS' ?
               null :
               this._decideMethodIntegrationCredentials(params);
 
-          methodParams.push(params);
-          break;
-        case 'putIntegrationResponse':
-          this.methodStatusCodes(resourceMethod).forEach((statusCode) => {
-            methodParams.push({
-              statusCode: `${statusCode}`,
-              responseTemplates: this.getJsonResponseTemplate(resourceMethod),
-              responseParameters: this._getMethodResponseParameters(resourceMethod, Object.keys(resourceMethods)),
-              selectionPattern: this._getSelectionPattern(statusCode),
+            methodParams.push(params);
+            break;
+          case 'putIntegrationResponse':
+            this.methodStatusCodes(resourceMethod).forEach((statusCode) => {
+              methodParams.push({
+                statusCode: `${statusCode}`,
+                responseTemplates: this.getJsonResponseTemplate(resourceMethod),
+                responseParameters: this._getMethodResponseParameters(resourceMethod, Object.keys(resourceMethods)),
+                selectionPattern: this._getSelectionPattern(statusCode),
+              });
             });
-          });
-          break;
-        default:
-          throw new Exception(`Unknown api method ${method}.`);
+            break;
+          default:
+            throw new Exception(`Unknown api method ${method}.`);
         }
 
         methodParams.forEach((params) => {
@@ -845,14 +845,14 @@ export class APIGatewayService extends AbstractService {
     let pattern = null;
 
     switch (parseInt(statusCode)) {
-    case 200:
-      pattern = '-';
-      break;
-    case 500:
-      pattern = `.*\\"${this.deepStatusCodeKey}\\":${statusCode}.*|Process exited before completing request`;
-      break;
-    default:
-      pattern = `.*\\"${this.deepStatusCodeKey}\\":${statusCode}.*`;
+      case 200:
+        pattern = '-';
+        break;
+      case 500:
+        pattern = `.*\\"${this.deepStatusCodeKey}\\":${statusCode}.*|Process exited before completing request`;
+        break;
+      default:
+        pattern = `.*\\"${this.deepStatusCodeKey}\\":${statusCode}.*`;
     }
 
     return pattern;
@@ -1033,31 +1033,31 @@ export class APIGatewayService extends AbstractService {
           integrationParams[resourceApiPath] = {};
 
           switch (action.type) {
-          case Action.LAMBDA:
-            let uri = this._composeLambdaIntegrationUri(
+            case Action.LAMBDA:
+              let uri = this._composeLambdaIntegrationUri(
                 microservice.lambdas[action.identifier].arn
               );
 
-            action.methods.forEach((httpMethod) => {
-              integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams(
+              action.methods.forEach((httpMethod) => {
+                integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams(
                   'AWS', httpMethod, uri, action.cacheEnabled
                 );
-            });
+              });
 
-            break;
-          case Action.EXTERNAL:
-            action.methods.forEach((httpMethod) => {
-              integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams(
+              break;
+            case Action.EXTERNAL:
+              action.methods.forEach((httpMethod) => {
+                integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams(
                   'HTTP',
                   httpMethod,
                   action.source,
                   action.cacheEnabled
                 );
-            });
+              });
 
-            break;
-          default:
-            throw new Exception(
+              break;
+            default:
+              throw new Exception(
                 `Unknown action type "${action.type}". Allowed types "${Action.TYPES.join(', ')}"`
               );
           }

@@ -12,7 +12,7 @@ import fse from 'fs-extra';
 
 export class OptimisticStrategy extends AbstractStrategy {
   /**
-   * @param path
+   * @param {String} path
    */
   constructor(path) {
     super();

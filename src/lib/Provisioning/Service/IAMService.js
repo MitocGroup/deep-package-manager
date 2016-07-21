@@ -39,6 +39,7 @@ export class IAMService extends AbstractService {
   }
 
   /**
+   * @param {String} baseHash
    * @returns {String}
    */
   static getDeepAppOIDCAudience(baseHash) {
@@ -65,7 +66,7 @@ export class IAMService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {IAMService}
    */
   _setup(services) {
@@ -119,7 +120,7 @@ export class IAMService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {IAMService}
    */
   _postProvision(services) {
@@ -135,7 +136,7 @@ export class IAMService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {IAMService}
    */
   _postDeployProvision(services) {

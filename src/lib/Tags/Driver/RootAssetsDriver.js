@@ -84,10 +84,10 @@ export class RootAssetsDriver extends AbstractDriver {
     let matches = file.match(RootAssetsDriver.ASSET_REGEXP);
 
     switch(matches[1]) {
-    case 'js':
-      return `<script type="text/javascript" src="${file}"></script>`;
-    case 'css':
-      return `<link rel="stylesheet" href="${file}"/>`;
+      case 'js':
+        return `<script type="text/javascript" src="${file}"></script>`;
+      case 'css':
+        return `<link rel="stylesheet" href="${file}"/>`;
     }
 
     throw new UnknownAssetException(file);

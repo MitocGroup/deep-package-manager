@@ -58,6 +58,7 @@ export class ResourceCollection {
   /**
    * @param {String} backendPath
    * @param {Boolean} strict
+   * @returns {ResourceCollection}
    */
   static create(backendPath, strict = false) {
     backendPath = path.normalize(backendPath);

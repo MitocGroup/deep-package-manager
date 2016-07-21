@@ -5,12 +5,13 @@
 'use strict';
 
 import Core from 'deep-core';
-import {AbstractService} from '../Service/AbstractService';
 import {WaitFor} from '../../Helpers/WaitFor';
 
 export class AbstractDriver extends Core.OOP.Interface {
   /**
+   *
    * @param {Object} awsService
+   * @param {String} baseHash
    * @param {Boolean} debug
    */
   constructor(awsService, baseHash, debug = false) {

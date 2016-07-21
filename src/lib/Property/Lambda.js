@@ -713,18 +713,18 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
     let handler = null;
 
     switch(this._runtime) {
-    case 'nodejs':
-    case 'nodejs4.3':
-      handler = 'bootstrap.handler';
-      break;
-    case 'java8':
-      handler = 'bootstrap.handler::handle';
-      break;
-    case 'python2.7':
-      handler = 'bootstrap.handler';
-      break;
-    default:
-      throw new Error(`The Lambda runtime ${this._runtime} is not supported yet`);
+      case 'nodejs':
+      case 'nodejs4.3':
+        handler = 'bootstrap.handler';
+        break;
+      case 'java8':
+        handler = 'bootstrap.handler::handle';
+        break;
+      case 'python2.7':
+        handler = 'bootstrap.handler';
+        break;
+      default:
+        throw new Error(`The Lambda runtime ${this._runtime} is not supported yet`);
     }
 
     return handler;

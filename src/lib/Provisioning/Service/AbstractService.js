@@ -282,31 +282,31 @@ export class AbstractService extends Core.OOP.Interface {
     let appendMatcher = msIdentifier ? '' : '*';
 
     switch (delimiter) {
-    case AbstractService.DELIMITER_UPPER_CASE:
-      mask = AbstractService.capitalizeFirst(AbstractService.AWS_RESOURCES_PREFIX) +
+      case AbstractService.DELIMITER_UPPER_CASE:
+        mask = AbstractService.capitalizeFirst(AbstractService.AWS_RESOURCES_PREFIX) +
           AbstractService.capitalizeFirst(this.env) +
           '*' +
           uniqueHash +
           appendMatcher;
-      break;
-    case AbstractService.DELIMITER_DOT:
-      mask = `${AbstractService.AWS_RESOURCES_PREFIX}.${this.env}.*.${uniqueHash}${appendMatcher}`;
-      break;
-    case AbstractService.DELIMITER_UNDERSCORE:
-      mask = `${AbstractService.AWS_RESOURCES_PREFIX}_${this.env}_*_${uniqueHash}${appendMatcher}`;
-      break;
-    case AbstractService.DELIMITER_HYPHEN_LOWER_CASE:
-      let lowerAwsResourcesPrefix = AbstractService.AWS_RESOURCES_PREFIX.toLowerCase();
-      let lowerEnv = this.env.toLowerCase();
-      let lowerUniqueHash = uniqueHash.toLowerCase();
+        break;
+      case AbstractService.DELIMITER_DOT:
+        mask = `${AbstractService.AWS_RESOURCES_PREFIX}.${this.env}.*.${uniqueHash}${appendMatcher}`;
+        break;
+      case AbstractService.DELIMITER_UNDERSCORE:
+        mask = `${AbstractService.AWS_RESOURCES_PREFIX}_${this.env}_*_${uniqueHash}${appendMatcher}`;
+        break;
+      case AbstractService.DELIMITER_HYPHEN_LOWER_CASE:
+        let lowerAwsResourcesPrefix = AbstractService.AWS_RESOURCES_PREFIX.toLowerCase();
+        let lowerEnv = this.env.toLowerCase();
+        let lowerUniqueHash = uniqueHash.toLowerCase();
 
-      mask = `${lowerAwsResourcesPrefix}-${lowerEnv}-*-${lowerUniqueHash}${appendMatcher}`;
-      break;
-    case AbstractService.DELIMITER_HYPHEN:
-      mask = `${AbstractService.AWS_RESOURCES_PREFIX}-${this.env}-*-${uniqueHash}${appendMatcher}`;
-      break;
-    default:
-      throw new Exception(`Undefined aws resource name delimiter ${delimiter}.`);
+        mask = `${lowerAwsResourcesPrefix}-${lowerEnv}-*-${lowerUniqueHash}${appendMatcher}`;
+        break;
+      case AbstractService.DELIMITER_HYPHEN:
+        mask = `${AbstractService.AWS_RESOURCES_PREFIX}-${this.env}-*-${uniqueHash}${appendMatcher}`;
+        break;
+      default:
+        throw new Exception(`Undefined aws resource name delimiter ${delimiter}.`);
     }
 
     return mask;
@@ -354,50 +354,50 @@ export class AbstractService extends Core.OOP.Interface {
     let nameTplLength = (AbstractService.AWS_RESOURCES_PREFIX + env + uniqueHash).length;
 
     switch (delimiter) {
-    case AbstractService.DELIMITER_UPPER_CASE:
-      resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
+      case AbstractService.DELIMITER_UPPER_CASE:
+        resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
 
-      name = AbstractService.capitalizeFirst(AbstractService.AWS_RESOURCES_PREFIX) +
+        name = AbstractService.capitalizeFirst(AbstractService.AWS_RESOURCES_PREFIX) +
           AbstractService.capitalizeFirst(env) +
           AbstractService.capitalizeFirst(resourceName) +
           uniqueHash;
 
-      break;
-    case AbstractService.DELIMITER_DOT:
-      nameTplLength += 3; // adding 3 dot delimiters
-      resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
+        break;
+      case AbstractService.DELIMITER_DOT:
+        nameTplLength += 3; // adding 3 dot delimiters
+        resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
 
-      name = `${AbstractService.AWS_RESOURCES_PREFIX}.${env}.${resourceName}.${uniqueHash}`;
+        name = `${AbstractService.AWS_RESOURCES_PREFIX}.${env}.${resourceName}.${uniqueHash}`;
 
-      break;
-    case AbstractService.DELIMITER_UNDERSCORE:
-      nameTplLength += 3; // adding 3 underscore delimiters
-      resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
+        break;
+      case AbstractService.DELIMITER_UNDERSCORE:
+        nameTplLength += 3; // adding 3 underscore delimiters
+        resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
 
-      name = `${AbstractService.AWS_RESOURCES_PREFIX}_${env}_${resourceName}_${uniqueHash}`;
+        name = `${AbstractService.AWS_RESOURCES_PREFIX}_${env}_${resourceName}_${uniqueHash}`;
 
-      break;
-    case AbstractService.DELIMITER_HYPHEN_LOWER_CASE:
-      nameTplLength += 3; // adding 3 hyphen delimiters
-      resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
+        break;
+      case AbstractService.DELIMITER_HYPHEN_LOWER_CASE:
+        nameTplLength += 3; // adding 3 hyphen delimiters
+        resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
 
-      let lowerAwsResourcesPrefix = AbstractService.AWS_RESOURCES_PREFIX.toLowerCase();
-      let lowerEnv = env.toLowerCase();
-      let lowerResourceName = resourceName.toLowerCase();
-      let lowerUniqueHash = uniqueHash.toLowerCase();
+        let lowerAwsResourcesPrefix = AbstractService.AWS_RESOURCES_PREFIX.toLowerCase();
+        let lowerEnv = env.toLowerCase();
+        let lowerResourceName = resourceName.toLowerCase();
+        let lowerUniqueHash = uniqueHash.toLowerCase();
 
-      name = `${lowerAwsResourcesPrefix}-${lowerEnv}-${lowerResourceName}-${lowerUniqueHash}`;
+        name = `${lowerAwsResourcesPrefix}-${lowerEnv}-${lowerResourceName}-${lowerUniqueHash}`;
 
-      break;
-    case AbstractService.DELIMITER_HYPHEN:
-      nameTplLength += 3; // adding 3 hyphen delimiters
-      resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
+        break;
+      case AbstractService.DELIMITER_HYPHEN:
+        nameTplLength += 3; // adding 3 hyphen delimiters
+        resourceName = AbstractService.sliceNameToAwsLimits(resourceName, awsService, nameTplLength);
 
-      name = `${AbstractService.AWS_RESOURCES_PREFIX}-${env}-${resourceName}-${uniqueHash}`;
+        name = `${AbstractService.AWS_RESOURCES_PREFIX}-${env}-${resourceName}-${uniqueHash}`;
 
-      break;
-    default:
-      throw new Exception(`Undefined aws resource name delimiter ${delimiter}.`);
+        break;
+      default:
+        throw new Exception(`Undefined aws resource name delimiter ${delimiter}.`);
     }
 
     return name;
@@ -454,39 +454,39 @@ export class AbstractService extends Core.OOP.Interface {
     let awsServiceLimit = null;
 
     switch (awsService) {
-    case Core.AWS.Service.ELASTIC_CACHE:
-      awsServiceLimit = 20;
-      break;
+      case Core.AWS.Service.ELASTIC_CACHE:
+        awsServiceLimit = 20;
+        break;
 
-    case Core.AWS.Service.CLOUD_SEARCH:
-    case Core.AWS.Service.ELASTIC_SEARCH:
-      awsServiceLimit = 28;
-      break;
+      case Core.AWS.Service.CLOUD_SEARCH:
+      case Core.AWS.Service.ELASTIC_SEARCH:
+        awsServiceLimit = 28;
+        break;
 
-    case Core.AWS.Service.SIMPLE_STORAGE_SERVICE:
-      awsServiceLimit = 63;
-      break;
+      case Core.AWS.Service.SIMPLE_STORAGE_SERVICE:
+        awsServiceLimit = 63;
+        break;
 
-    case Core.AWS.Service.LAMBDA:
-    case Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT:
-      awsServiceLimit = 64;
-      break;
-    case Core.AWS.Service.COGNITO_IDENTITY_PROVIDER:
-    case Core.AWS.Service.COGNITO_IDENTITY:
-    case Core.AWS.Service.API_GATEWAY:
-      awsServiceLimit = 128;
-      break;
+      case Core.AWS.Service.LAMBDA:
+      case Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT:
+        awsServiceLimit = 64;
+        break;
+      case Core.AWS.Service.COGNITO_IDENTITY_PROVIDER:
+      case Core.AWS.Service.COGNITO_IDENTITY:
+      case Core.AWS.Service.API_GATEWAY:
+        awsServiceLimit = 128;
+        break;
 
-    case Core.AWS.Service.DYNAMO_DB:
-      awsServiceLimit = 255;
-      break;
+      case Core.AWS.Service.DYNAMO_DB:
+        awsServiceLimit = 255;
+        break;
 
-    case Core.AWS.Service.SIMPLE_QUEUE_SERVICE:
-      awsServiceLimit = 80;
-      break;
+      case Core.AWS.Service.SIMPLE_QUEUE_SERVICE:
+        awsServiceLimit = 80;
+        break;
 
-    default:
-      throw new Exception(`Naming limits for aws service ${awsService} are not defined.`);
+      default:
+        throw new Exception(`Naming limits for aws service ${awsService} are not defined.`);
     }
 
     if (totalLength > awsServiceLimit) {

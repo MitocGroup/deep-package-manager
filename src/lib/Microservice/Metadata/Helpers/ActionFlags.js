@@ -72,13 +72,13 @@ export class ActionFlags {
     let state = null;
 
     switch (stateString.toLowerCase()) {
-    case ActionFlags.PUBLIC_STR:
-      state = ActionFlags.PUBLIC;
-      break;
-    case ActionFlags.PROTECTED_STR:
-      state = ActionFlags.PROTECTED;
-      break;
-    default: state = ActionFlags.PRIVATE;
+      case ActionFlags.PUBLIC_STR:
+        state = ActionFlags.PUBLIC;
+        break;
+      case ActionFlags.PROTECTED_STR:
+        state = ActionFlags.PROTECTED;
+        break;
+      default: state = ActionFlags.PRIVATE;
     }
 
     return state;

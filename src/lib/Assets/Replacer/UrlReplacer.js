@@ -26,13 +26,13 @@ export class UrlReplacer extends AbstractReplacer {
     let uriMap = {};
 
     switch (extension) {
-    case 'html':
-      uriMap = UrlReplacer._parseHtml(content);
-      break;
-    case 'css':
-      uriMap = UrlReplacer._parseCss(content);
-      break;
-    default: throw new Error(`Unsupported UrlReplacer content *.${extension}`);
+      case 'html':
+        uriMap = UrlReplacer._parseHtml(content);
+        break;
+      case 'css':
+        uriMap = UrlReplacer._parseCss(content);
+        break;
+      default: throw new Error(`Unsupported UrlReplacer content *.${extension}`);
     }
 
     let versionedMap = this._versionedReplacementsMap(uriMap);

@@ -62,6 +62,8 @@ export class DeployIdInjector {
   }
 
   /**
+   * @param {Boolean} useIgnore
+   * @returns {FileWalker}
    * @private
    */
   static _fileWalker(useIgnore = false) {

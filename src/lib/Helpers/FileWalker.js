@@ -2,6 +2,8 @@
  * Created by AlexanderC on 6/1/15.
  */
 
+/*eslint no-undefined: 0*/
+
 'use strict';
 
 import FileSystem from 'graceful-fs';
@@ -106,6 +108,7 @@ export class FileWalker {
   /**
    * @param {String} dir
    * @param {Function} filter
+   * @param {Array} _readDirsCache
    * @returns {Array}
    */
   walk(dir, filter = () => true, _readDirsCache = []) {

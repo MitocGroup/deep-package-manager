@@ -61,7 +61,7 @@ export class SQSService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {SQSService}
    */
   _setup(services) {
@@ -130,7 +130,7 @@ export class SQSService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {SQSService}
    */
   _postProvision(services) {
@@ -145,7 +145,7 @@ export class SQSService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {SQSService}
    */
   _postDeployProvision(services) {
@@ -160,7 +160,7 @@ export class SQSService extends AbstractService {
   }
 
   /**
-   * @private
+   * @returns {Object}
    */
   getDBOffloadConfig() {
     return {
@@ -170,7 +170,7 @@ export class SQSService extends AbstractService {
 
   /**
    * Gets RUM config from global
-   * @private
+   * @returns {Object}
    */
   getRumConfig() {
     let globalsConfig = this.property.config.globals;

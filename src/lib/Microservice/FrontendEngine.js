@@ -18,6 +18,7 @@ export class FrontendEngine {
 
   /**
    * @param {Object} microservice
+   * @returns {FrontendEngine}
    */
   static create(microservice) {
     return new FrontendEngine(...microservice.config.frontendEngine);
