@@ -44,6 +44,6 @@ export class VersionDriver extends AbstractDriver {
    * @returns {String}
    */
   static get SCRIPT_TPL() {
-    return `<meta name="version" content="{version}"/>`;
+    return '<meta name="version" content="{version}"/>';
   }
 }

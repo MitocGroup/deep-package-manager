@@ -16,14 +16,12 @@ import {Frontend} from './Frontend';
 import Core from 'deep-core';
 import JsonFile from 'jsonfile';
 import {S3Service} from '../Provisioning/Service/S3Service';
-import {SQSService} from '../Provisioning/Service/SQSService';
 import {AbstractService} from '../Provisioning/Service/AbstractService';
 import Mime from 'mime';
 import FileSystemExtra from 'fs-extra';
 import {InvalidConfigException} from './Exception/InvalidConfigException';
 import {Exception} from '../Exception/Exception';
 import {DeepConfigDriver} from '../Tags/Driver/DeepConfigDriver';
-import {Action} from '../Microservice/Metadata/Action';
 
 /**
  * Lambda instance
@@ -105,7 +103,8 @@ export class Lambda {
 
     if (propertyConfig.provisioning) {
       let sqsQueues = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_QUEUE_SERVICE].queues;
-      let sqsDbOffloadQueuesMapping = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_QUEUE_SERVICE].dbOffloadQueues;
+      let sqsDbOffloadQueuesMapping = propertyConfig
+        .provisioning[Core.AWS.Service.SIMPLE_QUEUE_SERVICE].dbOffloadQueues;
       config.dbOffloadQueues = {};
 
       for (let queueName in sqsDbOffloadQueuesMapping) {
@@ -468,6 +467,7 @@ export class Lambda {
   }
 
   /**
+   * @param {*} runtime
    * @private
    */
   _injectDeepConfigIntoBootstrap(runtime) {
@@ -713,18 +713,18 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
     let handler = null;
 
     switch(this._runtime) {
-      case 'nodejs':
-      case 'nodejs4.3':
-        handler = 'bootstrap.handler';
-        break;
-      case 'java8':
-        handler = 'bootstrap.handler::handle';
-        break;
-      case 'python2.7':
-        handler = 'bootstrap.handler';
-        break;
-      default:
-        throw new Error(`The Lambda runtime ${this._runtime} is not supported yet`);
+    case 'nodejs':
+    case 'nodejs4.3':
+      handler = 'bootstrap.handler';
+      break;
+    case 'java8':
+      handler = 'bootstrap.handler::handle';
+      break;
+    case 'python2.7':
+      handler = 'bootstrap.handler';
+      break;
+    default:
+      throw new Error(`The Lambda runtime ${this._runtime} is not supported yet`);
     }
 
     return handler;
@@ -794,6 +794,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
 
   /**
    * @param {String} runtime
+   * @returns {boolean}
    */
   static isNodeRuntime(runtime) {
     return ['nodejs4.3', 'nodejs'].indexOf(runtime) !== -1;

@@ -15,7 +15,7 @@ export class FailedToCreateElasticacheClusterException extends Exception {
      * @param {String} clusterId
      * @param {String} error
      */
-    constructor(clusterId, error) {
-        super(`Error on creating cache cluster "${clusterId}". ${error}`);
-    }
+  constructor(clusterId, error) {
+    super(`Error on creating cache cluster "${clusterId}". ${error}`);
+  }
 }

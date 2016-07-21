@@ -160,16 +160,16 @@ export class Prompt {
       char = char.toString();
 
       switch (char) {
-        case "\n":
-        case "\r":
-        case "\u0004":
-          stdin.pause();
-          break;
-        default:
-          process.stdout.write(
+      case '\n':
+      case '\r':
+      case '\u0004':
+        stdin.pause();
+        break;
+      default:
+        process.stdout.write(
             `${Prompt._oct(33)}[2K${Prompt._oct(33)}[200D${text}${new Array(rl.line.length + 1).join('*')}`
           );
-          break;
+        break;
       }
     });
 

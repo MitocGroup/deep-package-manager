@@ -2,11 +2,12 @@
  * Created by mgoria on 9/11/15.
  */
 
+/*eslint max-len: 0, no-unused-vars: 1*/
+
 'use strict';
 
 import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
-import {WaitFor} from '../../Helpers/WaitFor';
 import {Exception} from '../../Exception/Exception';
 import {FailedToCreateApiGatewayException} from './Exception/FailedToCreateApiGatewayException';
 import {FailedToCreateApiResourceException} from './Exception/FailedToCreateApiResourceException';
@@ -171,8 +172,9 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {APIGatewayService}
+   * @private
    *
    * @todo: remove config.api key and put object to the root
    */
@@ -215,8 +217,9 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {APIGatewayService}
+   * @private
    */
   _postProvision(services) {
     // @todo: implement!
@@ -231,8 +234,9 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {APIGatewayService}
+   * @private
    */
   _postDeployProvision(services) {
     if (!this._config.api.hasOwnProperty('id')) {
@@ -351,6 +355,7 @@ export class APIGatewayService extends AbstractService {
    * @param {Object} apiResources
    * @param {Object} apiRole
    * @param {Object} integrationParams
+   * @returns {Function}
    * @private
    */
   _putApiIntegrations(apiId, apiResources, apiRole, integrationParams) {
@@ -754,47 +759,47 @@ export class APIGatewayService extends AbstractService {
         let methodParams = [];
 
         switch (method) {
-          case 'putMethod':
-            methodParams.push({
-              authorizationType: resourceMethod === 'OPTIONS' ? 'NONE' : 'AWS_IAM',
-              requestModels: this.jsonEmptyModel,
-              requestParameters: this._getMethodRequestParameters(
+        case 'putMethod':
+          methodParams.push({
+            authorizationType: resourceMethod === 'OPTIONS' ? 'NONE' : 'AWS_IAM',
+            requestModels: this.jsonEmptyModel,
+            requestParameters: this._getMethodRequestParameters(
                 resourceMethod, resourceMethods[resourceMethod]
               ),
+          });
+          break;
+        case 'putMethodResponse':
+          this.methodStatusCodes(resourceMethod).forEach((statusCode) => {
+            methodParams.push({
+              statusCode: `${statusCode}`,
+              responseModels: this.jsonEmptyModel,
+              responseParameters: this._getMethodResponseParameters(resourceMethod),
             });
-            break;
-          case 'putMethodResponse':
-            this.methodStatusCodes(resourceMethod).forEach((statusCode) => {
-              methodParams.push({
-                statusCode: `${statusCode}`,
-                responseModels: this.jsonEmptyModel,
-                responseParameters: this._getMethodResponseParameters(resourceMethod),
-              });
-            });
-            break;
-          case 'putIntegration':
-            let params = resourceMethods[resourceMethod];
+          });
+          break;
+        case 'putIntegration':
+          let params = resourceMethods[resourceMethod];
 
             //params.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
             // @todo - find a smarter way to enable "Invoke with caller credentials" option
-            params.credentials = resourceMethod === 'OPTIONS' ?
+          params.credentials = resourceMethod === 'OPTIONS' ?
               null :
               this._decideMethodIntegrationCredentials(params);
 
-            methodParams.push(params);
-            break;
-          case 'putIntegrationResponse':
-            this.methodStatusCodes(resourceMethod).forEach((statusCode) => {
-              methodParams.push({
-                statusCode: `${statusCode}`,
-                responseTemplates: this.getJsonResponseTemplate(resourceMethod),
-                responseParameters: this._getMethodResponseParameters(resourceMethod, Object.keys(resourceMethods)),
-                selectionPattern: this._getSelectionPattern(statusCode),
-              });
+          methodParams.push(params);
+          break;
+        case 'putIntegrationResponse':
+          this.methodStatusCodes(resourceMethod).forEach((statusCode) => {
+            methodParams.push({
+              statusCode: `${statusCode}`,
+              responseTemplates: this.getJsonResponseTemplate(resourceMethod),
+              responseParameters: this._getMethodResponseParameters(resourceMethod, Object.keys(resourceMethods)),
+              selectionPattern: this._getSelectionPattern(statusCode),
             });
-            break;
-          default:
-            throw new Exception(`Unknown api method ${method}.`);
+          });
+          break;
+        default:
+          throw new Exception(`Unknown api method ${method}.`);
         }
 
         methodParams.forEach((params) => {
@@ -840,14 +845,14 @@ export class APIGatewayService extends AbstractService {
     let pattern = null;
 
     switch (parseInt(statusCode)) {
-      case 200:
-        pattern = '-';
-        break;
-      case 500:
-        pattern = `.*\\"${this.deepStatusCodeKey}\\":${statusCode}.*|Process exited before completing request`;
-        break;
-      default:
-        pattern = `.*\\"${this.deepStatusCodeKey}\\":${statusCode}.*`;
+    case 200:
+      pattern = '-';
+      break;
+    case 500:
+      pattern = `.*\\"${this.deepStatusCodeKey}\\":${statusCode}.*|Process exited before completing request`;
+      break;
+    default:
+      pattern = `.*\\"${this.deepStatusCodeKey}\\":${statusCode}.*`;
     }
 
     return pattern;
@@ -1028,31 +1033,31 @@ export class APIGatewayService extends AbstractService {
           integrationParams[resourceApiPath] = {};
 
           switch (action.type) {
-            case Action.LAMBDA:
-              let uri = this._composeLambdaIntegrationUri(
+          case Action.LAMBDA:
+            let uri = this._composeLambdaIntegrationUri(
                 microservice.lambdas[action.identifier].arn
               );
 
-              action.methods.forEach((httpMethod) => {
-                integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams(
+            action.methods.forEach((httpMethod) => {
+              integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams(
                   'AWS', httpMethod, uri, action.cacheEnabled
                 );
-              });
+            });
 
-              break;
-            case Action.EXTERNAL:
-              action.methods.forEach((httpMethod) => {
-                integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams(
+            break;
+          case Action.EXTERNAL:
+            action.methods.forEach((httpMethod) => {
+              integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams(
                   'HTTP',
                   httpMethod,
                   action.source,
                   action.cacheEnabled
                 );
-              });
+            });
 
-              break;
-            default:
-              throw new Exception(
+            break;
+          default:
+            throw new Exception(
                 `Unknown action type "${action.type}". Allowed types "${Action.TYPES.join(', ')}"`
               );
           }
@@ -1175,7 +1180,9 @@ export class APIGatewayService extends AbstractService {
    * @returns {String}
    */
   get qsToMapObjectMappingTpl() {
-    return '#set($keys = []) #foreach($key in $input.params().querystring.keySet()) #if ($key != "_deepQsHash") #set($result = $keys.add($key)) #end #end { #foreach($key in $keys) "$key": "$util.escapeJavaScript($input.params($key))" #if($foreach.hasNext),#end #end }';
+    return '#set($keys = []) #foreach($key in $input.params().querystring.keySet()) #if ($key != "_deepQsHash") ' +
+      '#set($result = $keys.add($key)) #end #end { #foreach($key in $keys) ' +
+      '"$key": "$util.escapeJavaScript($input.params($key))" #if($foreach.hasNext),#end #end }';
   }
 
   /**
@@ -1243,7 +1250,7 @@ export class APIGatewayService extends AbstractService {
   _getMethodCorsHeaders(prefix, httpMethod, resourceMethods = null) {
     let headers = {};
 
-    headers[`${prefix}.Access-Control-Allow-Origin`] = resourceMethods ? "'*'" : true;
+    headers[`${prefix}.Access-Control-Allow-Origin`] = resourceMethods ? '\'*\'' : true;
 
     if (httpMethod === 'OPTIONS') {
       headers[`${prefix}.Access-Control-Allow-Headers`] = resourceMethods ?
@@ -1256,7 +1263,7 @@ export class APIGatewayService extends AbstractService {
         `'${APIGatewayService.ALLOWED_EXPOSED_HEADERS.join(',')}'` : true;
 
       headers[`${prefix}.${APIGatewayService.ORIGINAL_REQUEST_ID_HEADER}`] = resourceMethods ?
-        "integration.response.header.x-amzn-RequestId" : true;
+        'integration.response.header.x-amzn-RequestId' : true;
     }
 
     return headers;
@@ -1270,10 +1277,11 @@ export class APIGatewayService extends AbstractService {
   getAllEndpointsArn() {
     let apiId = this._config.api.id;
     let apiRegion = this.apiGatewayClient.config.region;
-    let resourcesPaths = this._config.api.hasOwnProperty('resources') ? Object.keys(this._config.api.resources) : [];
     let arns = [];
 
     // @todo - waiting for http://docs.aws.amazon.com/apigateway/latest/developerguide/permissions.html to allow access to specific api resources
+    //let resourcesPaths = this._config.api.hasOwnProperty('resources') ? Object.keys(this._config.api.resources) : [];
+    //
     //resourcesPaths.forEach((resourcePath) => {
     //  // add only resource action (e.g. /hello-world-example/sample/say-hello)
     //  if (resourcePath.split('/').length >= 4) {

@@ -13,6 +13,75 @@ import OS from 'os';
 import FileSystem from 'fs';
 import {DeployConfig} from './DeployConfig';
 
+/**
+ * @returns {Object}
+ */
+function guessAwsSdkConfig() {
+  return new SharedAwsConfig().choose(); // @todo: replace with guess()?
+}
+
+/**
+ * @param {String} appId
+ * @returns {*}
+ */
+function buildAppNameFromId(appId) {
+  return `My Custom Web App ${appId}`;
+}
+
+/**
+ * @returns {*}
+ */
+function buildAppId() {
+  let result = new Exec(
+    process.platform === 'darwin'
+      ? 'echo `uname -a``ifconfig``date` | md5'
+      : 'echo `uname -a``ifconfig``date` | md5sum | awk "{print $1}"'
+  ).runSync();
+
+  return result.succeed
+    ? result.result.replace(/[^a-z0-9_\.-]+/gi, '')
+    : `unique-app-id-${new Date().getTime()}`;
+}
+
+/**
+ * @param {Object} awsCredentials
+ * @returns {*}
+ */
+function guessAwsAccountId(awsCredentials) {
+  let defaultUserId = 123456789012;
+
+  if (awsCredentials.accessKeyId && awsCredentials.secretAccessKey) {
+    let credentialsFile = Tmp.tmpNameSync();
+
+    let credentials = `[profile deep]${OS.EOL}`;
+    credentials += `aws_access_key_id=${awsCredentials.accessKeyId}${OS.EOL}`;
+    credentials += `aws_secret_access_key=${awsCredentials.secretAccessKey}${OS.EOL}`;
+
+    FileSystem.writeFileSync(credentialsFile, credentials);
+
+    let getUserCommand = `export AWS_CONFIG_FILE=${credentialsFile}; `;
+    getUserCommand += 'aws --profile deep iam get-user 2>/dev/null';
+
+    let userInfoResult = new Exec(getUserCommand).runSync();
+
+    if (userInfoResult.failed) {
+      return defaultUserId;
+    }
+
+    try {
+      let userInfo = JSON.parse(userInfoResult.result);
+
+      if (userInfo) {
+        return userInfo.User.Arn.replace(/^.*:(\d+):(root|(user\/.*))$/i, '$1') || defaultUserId;
+      }
+    } catch (e) {
+      console.error('Unable to parse userInfoResult: ', e);
+    }
+  }
+
+  return defaultUserId;
+}
+
 export default {
   validation: () => {
     return Joi.object().keys({
@@ -52,57 +121,3 @@ export default {
     })
   }
 };
-
-function buildAppNameFromId(appId) {
-  return `My Custom Web App ${appId}`;
-}
-
-function buildAppId() {
-  let result = new Exec(
-    process.platform === 'darwin'
-      ? 'echo `uname -a``ifconfig``date` | md5'
-      : 'echo `uname -a``ifconfig``date` | md5sum | awk "{print $1}"'
-  ).runSync();
-
-  return result.succeed
-    ? result.result.replace(/[^a-z0-9_\.-]+/gi, '')
-    : `unique-app-id-${new Date().getTime()}`;
-}
-
-function guessAwsAccountId(awsCredentials) {
-  let defaultUserId = 123456789012;
-
-  if (awsCredentials.accessKeyId && awsCredentials.secretAccessKey) {
-    let credentialsFile = Tmp.tmpNameSync();
-
-    let credentials = `[profile deep]${OS.EOL}`;
-    credentials += `aws_access_key_id=${awsCredentials.accessKeyId}${OS.EOL}`;
-    credentials += `aws_secret_access_key=${awsCredentials.secretAccessKey}${OS.EOL}`;
-
-    FileSystem.writeFileSync(credentialsFile, credentials);
-
-    let getUserCommand = `export AWS_CONFIG_FILE=${credentialsFile}; `;
-    getUserCommand += `aws --profile deep iam get-user 2>/dev/null`;
-
-    let userInfoResult = new Exec(getUserCommand).runSync();
-
-    if (userInfoResult.failed) {
-      return defaultUserId;
-    }
-
-    try {
-      let userInfo = JSON.parse(userInfoResult.result);
-
-      if (userInfo) {
-        return userInfo.User.Arn.replace(/^.*:(\d+):(root|(user\/.*))$/i, '$1') || defaultUserId;
-      }
-    } catch (e) {
-    }
-  }
-
-  return defaultUserId;
-}
-
-function guessAwsSdkConfig() {
-  return new SharedAwsConfig().choose(); // @todo: replace with guess()?
-}

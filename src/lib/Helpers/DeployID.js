@@ -27,12 +27,11 @@ export class DeployID {
    */
   toString(algo = 'crc32') {
     switch(algo) {
-      case 'md5':
-      case 'sha1':
-      case 'crc32':
-        return Hash[algo](this._rawId);
-        break;
-      default: throw new Error('Unknown deployId generation algorithm');
+    case 'md5':
+    case 'sha1':
+    case 'crc32':
+      return Hash[algo](this._rawId);
+    default: throw new Error('Unknown deployId generation algorithm');
     }
   }
 

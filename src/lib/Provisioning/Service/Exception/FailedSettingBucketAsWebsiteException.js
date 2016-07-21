@@ -2,7 +2,7 @@
  * Created by mgoria on 6/8/15.
  */
 
-"use strict";
+'use strict';
 
 import {Exception} from '../../../Exception/Exception';
 
@@ -14,7 +14,7 @@ export class FailedSettingBucketAsWebsiteException extends Exception {
      * @param {String} bucketName
      * @param {String} error
      */
-    constructor(bucketName, error) {
-        super(`Error on setting bucket "${bucketName}" as static website hosting. ${error}`);
-    }
+  constructor(bucketName, error) {
+    super(`Error on setting bucket "${bucketName}" as static website hosting. ${error}`);
+  }
 }

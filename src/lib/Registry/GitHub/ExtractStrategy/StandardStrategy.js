@@ -62,7 +62,7 @@ export class StandardStrategy extends AbstractStrategy {
    * @returns {Boolean}
    * @private
    */
- _haveToDump(filePath) {
+  _haveToDump(filePath) {
     return /^\/?src\/[A-Z][^\/]+\//.test(filePath) ||
       (this._advancedMatcher && this._advancedMatcher(filePath));
   }

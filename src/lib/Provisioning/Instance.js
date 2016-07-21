@@ -280,26 +280,26 @@ export class Instance {
    */
   getAwsServiceByName(name) {
     switch (name) {
-      case 'IAM':
-      case 'SNS':
-      case 'SQS':
-      case 'ACM':
-        name = name.toLowerCase();
-        break;
-      case 'APIGateway':
-        name = 'apiGateway';
-        break;
-      case 'ElastiCache':
-        name = 'elasticCache';
-        break;
-      case 'ES':
-        name = 'elasticSearch';
-        break;
-      case 'CognitoIdentityProvider':
-        name = 'cognitoIdentityServiceProvider';
-        break;
-      default:
-        name = AbstractService.lowerCaseFirst(name);
+    case 'IAM':
+    case 'SNS':
+    case 'SQS':
+    case 'ACM':
+      name = name.toLowerCase();
+      break;
+    case 'APIGateway':
+      name = 'apiGateway';
+      break;
+    case 'ElastiCache':
+      name = 'elasticCache';
+      break;
+    case 'ES':
+      name = 'elasticSearch';
+      break;
+    case 'CognitoIdentityProvider':
+      name = 'cognitoIdentityServiceProvider';
+      break;
+    default:
+      name = AbstractService.lowerCaseFirst(name);
     }
 
     return this[name];

@@ -2,7 +2,7 @@
  * Created by AlexanderC on 6/8/15.
  */
 
-"use strict";
+'use strict';
 
 import {Exception} from '../../../Exception/Exception';
 
@@ -11,11 +11,11 @@ import {Exception} from '../../../Exception/Exception';
  */
 export class FailedAttachingPolicyToRoleException extends Exception {
     /**
-     * @param policyName
-     * @param roleName
-     * @param error
+     * @param {String} policyName
+     * @param {String} roleName
+     * @param {Error} error
      */
-    constructor(policyName, roleName, error) {
-        super(`Error on attaching "${policyName}" to "${roleName}" iam role. ${error}`);
-    }
+  constructor(policyName, roleName, error) {
+    super(`Error on attaching "${policyName}" to "${roleName}" iam role. ${error}`);
+  }
 }

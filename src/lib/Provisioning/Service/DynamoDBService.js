@@ -38,8 +38,9 @@ export class DynamoDBService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {DynamoDBService}
+   * @private
    */
   _setup(services) {
     this._createDbTables(
@@ -55,8 +56,9 @@ export class DynamoDBService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {DynamoDBService}
+   * @private
    */
   _postProvision(services) {
     // @todo: implement!
@@ -71,8 +73,9 @@ export class DynamoDBService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {DynamoDBService}
+   * @private
    */
   _postDeployProvision(services) {
     /*this._attachEventualConsistencyAlarms(() => {
@@ -93,8 +96,10 @@ export class DynamoDBService extends AbstractService {
     return globalsConfig.storage.eventualConsistency.offloaderEndpoint;
   }
 
+
   /**
    * @param {Function} cb
+   * @returns {*}
    * @private
    * @deprecated
    */
@@ -148,7 +153,9 @@ export class DynamoDBService extends AbstractService {
           .then((...args) => {
             console.debug('Ensure eventual consistency offload backend subscribed to SNS topics');
 
-            this._ensureLambdasSubscribedToEventualConsistencyTopics(offloadingBackendArn, offloadingBackendName, offloadQueuesNames, ...args)
+            this._ensureLambdasSubscribedToEventualConsistencyTopics(
+              offloadingBackendArn, offloadingBackendName, offloadQueuesNames, ...args
+            )
               .then(cb)
               .catch(error => {
                 console.warn(error);
@@ -171,7 +178,9 @@ export class DynamoDBService extends AbstractService {
    * @param {Object} snsTopicsMapping
    * @returns {Promise|*}
    */
-  _ensureLambdasSubscribedToEventualConsistencyTopics(offloadingBackendArn, offloadingBackendName, offloadQueuesNames, snsTopicsMapping) {
+  _ensureLambdasSubscribedToEventualConsistencyTopics(
+    offloadingBackendArn, offloadingBackendName, offloadQueuesNames, snsTopicsMapping
+  ) {
     return new Promise((resolve, reject) => {
       let sns = this.provisioning.sns;
       let lambda = this.provisioning.lambda;
@@ -264,9 +273,9 @@ export class DynamoDBService extends AbstractService {
             );
           });
 
-          Promise.all(premises).then(() => {
-            resolve(snsTopicsMapping);
-          });
+        Promise.all(premises).then(() => {
+          resolve(snsTopicsMapping);
+        });
       });
     });
   }
@@ -357,9 +366,13 @@ export class DynamoDBService extends AbstractService {
     });
   }
 
+
   /**
+   *
+   * @param {Object} lambda
    * @param {String} functionId
-   * @returns {String}
+   * @returns {*}
+   * @private
    */
   _generateLambdaArn(lambda, functionId) {
     return `arn:aws:lambda:${lambda.config.region}:${this.awsAccountId}:function:${functionId}`;
