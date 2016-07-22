@@ -301,4 +301,41 @@ export class IAMService extends AbstractService {
 
     return rolePolicy;
   }
+
+  /**
+   * @returns {Core.AWS.IAM.Statement}
+   */
+  generateAllowAlterIamStatement() {
+    let policy = new Core.AWS.IAM.Policy();
+    let statement = policy.statement.add();
+
+    IAMService.IAM_ALTER_ACTIONS.forEach(actionName => {
+      statement.action.add(Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT, actionName);
+    });
+
+    ['policy', 'role'].forEach(resourceType => {
+      statement.resource.add(
+        Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
+        '', // IAM service doesn't have regions
+        this.awsAccountId,
+        `${resourceType}/${this._getGlobalResourceMask()}`
+      );
+    });
+
+    return statement;
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get IAM_ALTER_ACTIONS() {
+    return [
+      'createRole',
+      'deleteRole',
+      'deleteRolePolicy',
+      'getRole',
+      'putRolePolicy',
+      'updateAssumeRolePolicy'
+    ];
+  }
 }

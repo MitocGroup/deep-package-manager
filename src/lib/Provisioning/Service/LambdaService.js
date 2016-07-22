@@ -583,6 +583,11 @@ export class LambdaService extends AbstractService {
     dynamoDbECStatement.action.add(Core.AWS.Service.CLOUD_WATCH, 'setAlarmState');
     dynamoDbECStatement.resource.add().any();
 
+    if (this._allowAlterIamService(microserviceIdentifier)) {
+      let iamService = this.provisioning.services.find(IAMService);
+      policy.statement.add(iamService.generateAllowAlterIamStatement());
+    }
+
     return policy;
   }
 
@@ -594,6 +599,17 @@ export class LambdaService extends AbstractService {
     let region = this.provisioning.lambda.config.region;
 
     return `arn:aws:lambda:${region}:${this.awsAccountId}:function:${functionIdentifier}`;
+  }
+  
+  /**
+   * @param {String} microserviceIdentifier
+   * @returns {Boolean}
+   * @private
+   */
+  _allowAlterIamService(microserviceIdentifier) {
+    let accountMicroservice = this.provisioning.property.accountMicroservice;
+
+    return accountMicroservice && accountMicroservice.identifier === microserviceIdentifier;
   }
 
   /**
