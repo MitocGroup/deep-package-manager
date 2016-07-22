@@ -6,7 +6,7 @@
 
 import {AbstractStrategy} from './AbstractStrategy';
 import {Instance as Microservice} from '../../../Microservice/Instance';
-import {ModuleInstance} from '../../ModuleInstance';
+import {ModuleInstance} from '../../Module/ModuleInstance';
 
 export class StdStrategy extends AbstractStrategy {
   constructor() {
