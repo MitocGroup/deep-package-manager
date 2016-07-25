@@ -104,12 +104,12 @@ export class LambdaProxyHandler extends Core.AWS.Lambda.Runtime {
         this._cache.get(cacheKey, (error, rawData) => {
           try {
             cb(null, this._matchModuleOperation(moduleName, JSON.parse(rawData)));
-          } catch (exception) {
+          } catch (error) {
 
             // invalidate it async
             this._cache.invalidate(cacheKey);
 
-            cb(exception, null);
+            cb(error, null);
           }
         });
       } else {
@@ -124,7 +124,7 @@ export class LambdaProxyHandler extends Core.AWS.Lambda.Runtime {
           try {
             // persist it async
             this._cache.set(cacheKey, JSON.stringify(principalEntries), LambdaProxyHandler.CACHE_TTL);
-          } catch (exception) {
+          } catch (error) {
             console.log('Unable to set cache: ', error);
           }
 

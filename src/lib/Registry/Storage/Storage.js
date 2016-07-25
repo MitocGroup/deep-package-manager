@@ -44,8 +44,8 @@ export class Storage {
 
       try {
         cb(null, ModuleInstance.create(moduleContext, rawContent, this));
-      } catch (exception) {
-        cb(exception, null);
+      } catch (error) {
+        cb(error, null);
       } finally {
         return;
       }
@@ -93,8 +93,8 @@ export class Storage {
 
       try {
         cb(null, new ModuleConfig(moduleContext, rawContent, this));
-      } catch (exception) {
-        cb(exception, null);
+      } catch (error) {
+        cb(error, null);
       } finally {
         return;
       }
@@ -142,8 +142,8 @@ export class Storage {
 
       try {
         cb(null, ModuleDB.createFromRawConfig(moduleContext, this, rawContent));
-      } catch (exception) {
-        cb(exception, null);
+      } catch (error) {
+        cb(error, null);
       } finally {
         return;
       }

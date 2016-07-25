@@ -232,7 +232,7 @@ export class ApiDriver extends AbstractDriver {
     try {
       return JSON.parse(data);
     } catch (e) {
-      console.error('Unable to parse: ', e);
+      console.log('Unable to parse: ', e);
     }
 
     return {};
@@ -258,7 +258,7 @@ export class ApiDriver extends AbstractDriver {
 
       errorMsg = errorObj.errorMessage || `An unknown error occurred (${rawErrorData})`;
     } catch (error) {
-      console.error('Unable to parse: ', error);
+      console.log('Unable to parse: ', error);
     }
 
     return new Error(errorMsg);
