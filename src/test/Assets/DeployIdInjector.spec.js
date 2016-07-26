@@ -58,40 +58,41 @@ suite('Assets/DeployIdInjector', () => {
     chai.expect(deployIdInjector._findAssets()).to.eql(expectedResult);
   });
 
-  test('Check prepare() executes successfully', () => {
-    //arrange
-    let spyCallback = sinon.spy();
+  //test('Check prepare() executes successfully', () => {
+  //  //arrange
+  //  let spyCallback = sinon.spy();
+  //
+  //  let expectedCssResult = fsExtra.readFileSync('./test/testMaterials/assets/expectedResults/dataWithDeployId.css', 'utf8');
+  //  let expectedHtmlResult = fsExtra.readFileSync('./test/testMaterials/assets/expectedResults/dataWithDeployId.html', 'utf8');
+  //
+  //  //act
+  //  deployIdInjector.prepare(spyCallback);
+  //
+  //  //asserts
+  //  let actualCssResult = fsExtra.readFileSync(testCssFilePath, 'utf8');
+  //  let actualHtmlResult = fsExtra.readFileSync(testHtmlFilePath, 'utf8');
+  //
+  //  chai.expect(spyCallback).to.have.been.calledWithExactly(null);
+  //  chai.expect(actualCssResult).to.eql(expectedCssResult);
+  //  chai.expect(actualHtmlResult).to.eql(expectedHtmlResult);
+  //});
+  //
+  //test('Check prepare() executes with error', () => {
+  //  let spyCallback = sinon.spy();
+  //  let invalidFilePath = './test/testMaterials/assets/testFiles/test.xhtml';
+  //
+  //  fsExtra.createFileSync(invalidFilePath);
+  //
+  //  let actualResult = deployIdInjector.prepare(spyCallback);
+  //
+  //  chai.expect(spyCallback).to.have.been.calledWith();
+  //
+  //  let error = spyCallback.args[0][0];
+  //
+  //  chai.expect(error).to.equal(null);
+  //});
 
-    let expectedCssResult = fsExtra.readFileSync('./test/testMaterials/assets/expectedResults/dataWithDeployId.css', 'utf8');
-    let expectedHtmlResult = fsExtra.readFileSync('./test/testMaterials/assets/expectedResults/dataWithDeployId.html', 'utf8');
-
-    //act
-    deployIdInjector.prepare(spyCallback);
-
-    //asserts
-    let actualCssResult = fsExtra.readFileSync(testCssFilePath, 'utf8');
-    let actualHtmlResult = fsExtra.readFileSync(testHtmlFilePath, 'utf8');
-
-    chai.expect(spyCallback).to.have.been.calledWithExactly(null);
-    chai.expect(actualCssResult).to.eql(expectedCssResult);
-    chai.expect(actualHtmlResult).to.eql(expectedHtmlResult);
-
-
-  });
-
-  test('Check prepare() executes with error', () => {
-    let spyCallback = sinon.spy();
-    let invalidFilePath = './test/testMaterials/assets/testFiles/test.xhtml';
-
-    fsExtra.createFileSync(invalidFilePath);
-
-    let actualResult = deployIdInjector.prepare(spyCallback);
-
-    chai.expect(spyCallback).to.have.been.calledWith();
-
-    let error = spyCallback.args[0][0];
-
-    chai.expect(error).to.equal(null);
+  suiteTeardown(()=> {
 
     //remove temp test files
     fsExtra.removeSync('./test/testMaterials/assets/testFiles');
