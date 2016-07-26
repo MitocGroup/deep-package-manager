@@ -215,7 +215,7 @@ export class CognitoIdentityProviderService extends AbstractService {
       }
     }
 
-    return triggers;
+    return normalizedTriggers;
   }
 
   /**
