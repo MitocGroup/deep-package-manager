@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 __SCRIPT_PATH=$(cd $(dirname $0); pwd -P)
+__COVERAGE_PATH="${__SCRIPT_PATH}/../coverages/local/${TRAVIS_REPO_SLUG}/${TRAVIS_BRANCH}/summary-report"
 __RES_PATH="${__SCRIPT_PATH}/../resources"
 
 __ROOT_PATH="${__SCRIPT_PATH}/../../"
