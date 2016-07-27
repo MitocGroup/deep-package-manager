@@ -83,19 +83,17 @@ export class Frontend {
 
     if (propertyConfig.provisioning) {
       let cognitoConfig = propertyConfig.provisioning[Core.AWS.Service.COGNITO_IDENTITY];
+      let cognitoIdpConfig = propertyConfig.provisioning[Core.AWS.Service.COGNITO_IDENTITY_PROVIDER];
       let iamConfig = propertyConfig.provisioning[Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT];
 
       config.identityPoolId = cognitoConfig.identityPool.IdentityPoolId;
       config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders || {};
 
-      let cognitoIdps = cognitoConfig.identityPool.CognitoIdentityProviders;
-
-      if (cognitoIdps && cognitoIdps.length > 0) {
-        config.identityProviders = Object.assign(config.identityProviders, cognitoIdps.reduce((idpsObj, idpObj) => {
-          idpsObj[idpObj.ProviderName] = idpObj.ClientId;
-
-          return idpsObj;
-        }, {}));
+      if (cognitoIdpConfig.UserPool && cognitoIdpConfig.UserPoolClient) {
+        config.identityProviders[cognitoIdpConfig.ProviderName] = {
+          UserPoolId: cognitoIdpConfig.UserPool.Id,
+          ClientId: cognitoIdpConfig.UserPoolClient.ClientId,
+        };
       }
 
       // add Auth0 OIDC provider
