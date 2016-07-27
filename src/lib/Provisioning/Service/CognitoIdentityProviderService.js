@@ -104,26 +104,33 @@ export class CognitoIdentityProviderService extends AbstractService {
     let clientId = this._config.userPoolClient.ClientId;
     let userPoolId = this._config.userPool.Id;
     let cognitoIdentityServiceProvider = this.provisioning.cognitoIdentityServiceProvider;
-    let adminUser = {
+    let adminMetadata = this.property.config.globals.security.admin;
+    let adminUserPayload = {
       ClientId: clientId,
       Password: this._generatePseudoRandomPassword(),
-      Username: CognitoIdentityProviderService.ADMIN_USERNAME,
+      Username: adminMetadata.username,
+      UserAttributes: [
+        {
+          Name: 'email',
+          Value: adminMetadata.email,
+        },
+      ],
     };
 
     return cognitoIdentityServiceProvider
-      .signUp(adminUser)
+      .signUp(adminUserPayload)
       .promise()
       .then(() => {
         let confirmPayload = {
           UserPoolId: userPoolId,
-          Username: adminUser.Username,
+          Username: adminUserPayload.Username,
         };
 
         return cognitoIdentityServiceProvider
           .adminConfirmSignUp(confirmPayload)
           .promise();
       })
-      .then(() => adminUser)
+      .then(() => adminUserPayload)
       .catch(e => {
         // @todo: Sorry guys :/, Promise suppresses any kind of synchronous errors.
         setImmediate(() => {
@@ -317,14 +324,6 @@ export class CognitoIdentityProviderService extends AbstractService {
    */
   static get USER_POOL_CLIENT_NAME() {
     return 'UserPoolClient';
-  }
-
-  /**
-   * @todo: move into config
-   * @returns {String}
-   */
-  static get ADMIN_USERNAME() {
-    return 'admin';
   }
 
   /**
