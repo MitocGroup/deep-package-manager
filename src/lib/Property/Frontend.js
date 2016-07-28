@@ -368,8 +368,7 @@ export class Frontend {
    * @param {Function} callback
    * @return {*}
    */
-  build(propertyConfig, callback = () => {
-  }) {
+  build(propertyConfig, callback = () => {}) {
     if (!(propertyConfig instanceof Object)) {
       throw new InvalidArgumentException(propertyConfig, 'Object');
     }
