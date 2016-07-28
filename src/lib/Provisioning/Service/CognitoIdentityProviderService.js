@@ -232,7 +232,7 @@ export class CognitoIdentityProviderService extends AbstractService {
 
     statement.resource.add(
       Core.AWS.Service.COGNITO_IDENTITY_PROVIDER,
-      this.provisioning.elasticSearch.config.region,
+      this.provisioning.cognitoIdentityServiceProvider.config.region,
       this.awsAccountId,
       this._config.UserPool.Id
     );
