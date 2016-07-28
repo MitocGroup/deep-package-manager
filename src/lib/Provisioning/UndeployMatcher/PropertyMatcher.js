@@ -47,6 +47,6 @@ export class PropertyMatcher extends AbstractMatcher {
     let baseHash = AbstractService.extractBaseHashFromResourceName(resourceId);
     let env = AbstractService.extractEnvFromResourceName(resourceId);
 
-    return baseHash === this.baseHash && env == this.env;
+    return baseHash === this.baseHash && env === this.env;
   }
 }

@@ -30,6 +30,7 @@ export class Injector {
    * @param {Object|null} pageLoader
    * @param {String|null} version
    * @param {String|null} favicon
+   * @param {Onject|null} workingMicroserviceConfig
    */
   static fileInjectAll(
     htmlFile,
@@ -96,7 +97,8 @@ export class Injector {
   }
 
   /**
-   * @param {AbstractDriver|GTMDriver|*} drivers
+   * @param {AbstractDriver[]|GTMDriver[]|*} drivers
+   * @returns {String|*}
    */
   inject(...drivers) {
     let htmlContent = this._htmlContent;

@@ -2,7 +2,7 @@
  * Created by mgoria on 6/9/15.
  */
 
-"use strict";
+'use strict';
 
 import {Exception} from '../../Exception/Exception';
 
@@ -15,7 +15,7 @@ export class FailedUploadingFileToS3Exception extends Exception {
      * @param {String} bucketName
      * @param {String} error
      */
-    constructor(fileName, bucketName, error) {
-        super(`Error uploading "${fileName}" file to "${bucketName}" bucket. ${error}`);
-    }
+  constructor(fileName, bucketName, error) {
+    super(`Error uploading "${fileName}" file to "${bucketName}" bucket. ${error}`);
+  }
 }

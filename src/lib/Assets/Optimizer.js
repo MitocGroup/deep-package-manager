@@ -18,7 +18,6 @@ export class Optimizer {
 
   /**
    * @param {Function} callback
-   * @returns {Optimizer}
    */
   optimize(callback = () => {}) {
     console.debug(`Optimize frontend in '${this._path}' by compressing it`);

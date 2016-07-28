@@ -80,6 +80,8 @@ export class Hash {
   }
 
   /**
+   *
+   * @param {String} obj
    * @returns {String}
    */
   static pseudoRandomId(obj = null) {

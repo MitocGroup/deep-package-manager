@@ -2,10 +2,9 @@
  * Created by AlexanderC on 5/25/15.
  */
 
-"use strict";
+'use strict';
 
 import Joi from 'joi';
-import semver from 'semver';
 
 /**
  * Abstraction on Joi validation expressions

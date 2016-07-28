@@ -2,7 +2,7 @@
  * Created by AlexanderC on 5/25/15.
  */
 
-"use strict";
+'use strict';
 
 import {Exception} from '../../Exception/Exception';
 
@@ -14,9 +14,9 @@ export class FailedLambdaUploadException extends Exception {
      * @param {Lambda} lambda
      * @param {String} error
      */
-    constructor(lambda, error) {
-        let identifier = lambda.identifier;
+  constructor(lambda, error) {
+    let identifier = lambda.identifier;
 
-        super(`Failed to upload lambda ${identifier}: ${error}`);
-    }
+    super(`Failed to upload lambda ${identifier}: ${error}`);
+  }
 }

@@ -8,7 +8,6 @@ import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {FailedToCreateElasticacheClusterException} from './Exception/FailedToCreateElasticacheClusterException';
-import {Hash} from '../../Helpers/Hash';
 import {FailedToRetrieveDefaultSecurityGroupException} from './Exception/FailedToRetrieveDefaultSecurityGroupException';
 import {FailedToRetrieveLambdaSubnetGroupException} from './Exception/FailedToRetrieveLambdaSubnetGroupException';
 
@@ -40,7 +39,7 @@ export class ElasticacheService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {ElasticacheService}
    */
   _setup(services) {
@@ -74,7 +73,7 @@ export class ElasticacheService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {ElasticacheService}
    */
   _postProvision(services) {
@@ -90,7 +89,7 @@ export class ElasticacheService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {ElasticacheService}
    */
   _postDeployProvision(services) {

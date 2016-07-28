@@ -2,11 +2,12 @@
  * Created by mgoria on 9/11/15.
  */
 
+/*eslint max-len: 0, no-unused-vars: 0*/
+
 'use strict';
 
 import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
-import {WaitFor} from '../../Helpers/WaitFor';
 import {Exception} from '../../Exception/Exception';
 import {FailedToCreateApiGatewayException} from './Exception/FailedToCreateApiGatewayException';
 import {FailedToCreateApiResourceException} from './Exception/FailedToCreateApiResourceException';
@@ -171,8 +172,9 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {APIGatewayService}
+   * @private
    *
    * @todo: remove config.api key and put object to the root
    */
@@ -215,8 +217,9 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {APIGatewayService}
+   * @private
    */
   _postProvision(services) {
     // @todo: implement!
@@ -231,8 +234,9 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {APIGatewayService}
+   * @private
    */
   _postDeployProvision(services) {
     if (!this._config.api.hasOwnProperty('id')) {
@@ -351,6 +355,7 @@ export class APIGatewayService extends AbstractService {
    * @param {Object} apiResources
    * @param {Object} apiRole
    * @param {Object} integrationParams
+   * @returns {Function}
    * @private
    */
   _putApiIntegrations(apiId, apiResources, apiRole, integrationParams) {
@@ -1175,7 +1180,9 @@ export class APIGatewayService extends AbstractService {
    * @returns {String}
    */
   get qsToMapObjectMappingTpl() {
-    return '#set($keys = []) #foreach($key in $input.params().querystring.keySet()) #if ($key != "_deepQsHash") #set($result = $keys.add($key)) #end #end { #foreach($key in $keys) "$key": "$util.escapeJavaScript($input.params($key))" #if($foreach.hasNext),#end #end }';
+    return '#set($keys = []) #foreach($key in $input.params().querystring.keySet()) #if ($key != "_deepQsHash") ' +
+      '#set($result = $keys.add($key)) #end #end { #foreach($key in $keys) ' +
+      '"$key": "$util.escapeJavaScript($input.params($key))" #if($foreach.hasNext),#end #end }';
   }
 
   /**
@@ -1243,7 +1250,7 @@ export class APIGatewayService extends AbstractService {
   _getMethodCorsHeaders(prefix, httpMethod, resourceMethods = null) {
     let headers = {};
 
-    headers[`${prefix}.Access-Control-Allow-Origin`] = resourceMethods ? "'*'" : true;
+    headers[`${prefix}.Access-Control-Allow-Origin`] = resourceMethods ? '\'*\'' : true;
 
     if (httpMethod === 'OPTIONS') {
       headers[`${prefix}.Access-Control-Allow-Headers`] = resourceMethods ?
@@ -1256,7 +1263,7 @@ export class APIGatewayService extends AbstractService {
         `'${APIGatewayService.ALLOWED_EXPOSED_HEADERS.join(',')}'` : true;
 
       headers[`${prefix}.${APIGatewayService.ORIGINAL_REQUEST_ID_HEADER}`] = resourceMethods ?
-        "integration.response.header.x-amzn-RequestId" : true;
+        'integration.response.header.x-amzn-RequestId' : true;
     }
 
     return headers;
@@ -1270,10 +1277,11 @@ export class APIGatewayService extends AbstractService {
   getAllEndpointsArn() {
     let apiId = this._config.api.id;
     let apiRegion = this.apiGatewayClient.config.region;
-    let resourcesPaths = this._config.api.hasOwnProperty('resources') ? Object.keys(this._config.api.resources) : [];
     let arns = [];
 
     // @todo - waiting for http://docs.aws.amazon.com/apigateway/latest/developerguide/permissions.html to allow access to specific api resources
+    //let resourcesPaths = this._config.api.hasOwnProperty('resources') ? Object.keys(this._config.api.resources) : [];
+    //
     //resourcesPaths.forEach((resourcePath) => {
     //  // add only resource action (e.g. /hello-world-example/sample/say-hello)
     //  if (resourcePath.split('/').length >= 4) {

@@ -2,11 +2,12 @@
  * Created by AlexanderC on 5/27/15.
  */
 
+/*eslint max-statements: [2, 62], no-unused-vars: 0*/
+
 'use strict';
 
 import AWS from 'aws-sdk';
 import FileSystem from 'fs';
-import FileSystemExtra from 'fs-extra';
 import Path from 'path';
 import Core from 'deep-core';
 import {Instance as Provisioning} from '../Provisioning/Instance';
@@ -30,7 +31,6 @@ import {AbstractService} from '../Provisioning/Service/AbstractService';
 import {S3Service} from '../Provisioning/Service/S3Service';
 import {ESService} from '../Provisioning/Service/ESService';
 import {Config} from './Config';
-import {Hash} from '../Helpers/Hash';
 import {FrontendEngine} from '../Microservice/FrontendEngine';
 import objectMerge from 'object-merge';
 import {Listing} from '../Provisioning/Listing';
@@ -61,7 +61,7 @@ export class Instance {
       // @todo: get rid of this?
       if (error instanceof InvalidConfigException) {
         console.error(error.message);
-        console.info(`The configuration structure may be have changed.` +
+        console.info('The configuration structure may be have changed.' +
         ` Try to delete '${Config.DEFAULT_FILENAME}' and rerun the command in order to get it regenerated.`);
         process.exit(1);
       }
@@ -90,6 +90,7 @@ export class Instance {
 
   /**
    * @param {String} path
+   * @returns {Instance}
    */
   static create(path) {
     let strategy = AbstractStrategy.create(path);
@@ -444,11 +445,11 @@ export class Instance {
         this._config
           .microservices[microserviceIdentifier]
           .lambdas[lambdaIdentifier] = {
-          arn: lambdaInstance.arnGeneralized,
-          name: lambdaInstance.functionName,
-          region: lambdaInstance.region,
-          localPath: Path.join(lambdaInstance.path, 'bootstrap.js'),
-        };
+            arn: lambdaInstance.arnGeneralized,
+            name: lambdaInstance.functionName,
+            region: lambdaInstance.region,
+            localPath: Path.join(lambdaInstance.path, 'bootstrap.js'),
+          };
 
         // inject symlinks
         lambdaInstance.injectValidationSchemas(this._config.validationSchemas, true);
@@ -508,7 +509,7 @@ export class Instance {
 
     let isUpdate = this._isUpdate;
 
-    console.debug(`Start building application`);
+    console.debug('Start building application');
 
     let microservicesConfig = isUpdate ? this._config.microservices : {};
     let microservices = this.microservices;
@@ -597,7 +598,7 @@ export class Instance {
       this.provisioning.create((config) => {
         this._config.provisioning = config;
 
-        console.info(`Application resources have been provisioned`);
+        console.info('Application resources have been provisioned');
 
         callback();
       }, isUpdate);
@@ -617,7 +618,7 @@ export class Instance {
       throw new InvalidArgumentException(callback, 'Function');
     }
 
-    console.debug(`Start deploying backend`);
+    console.debug('Start deploying backend');
 
     let lambdas = [];
     let lambdaExecRoles = this._config.provisioning.lambda.executionRoles;
@@ -705,6 +706,9 @@ export class Instance {
 
     let hasNextBatch = !!asyncLambdaActions.length;
 
+    /**
+     *
+     */
     function processAsyncLambdaBatch() {
       if (asyncLambdaActions.length) {
         let stack = asyncLambdaActions.splice(0, concurrentCount);
@@ -749,7 +753,7 @@ export class Instance {
         if (isUpdate && this._localDeploy) {
           callback();
         } else {
-          console.debug(`Start deploying frontend`);
+          console.debug('Start deploying frontend');
 
           frontend.deploy(this._aws, publicBucket).ready(callback);
         }
@@ -864,7 +868,6 @@ export class Instance {
 
   /**
    * @param {Function} callback
-   * @returns {Instance}
    * @private
    */
   _runPostDeployMsHooks(callback) {
@@ -873,8 +876,6 @@ export class Instance {
 
   /**
    * @param {Function} callback
-   * @returns {Instance}
-   * @private
    */
   runInitMsHooks(callback) {
     this._runHook(InitHook, callback);
@@ -966,7 +967,9 @@ export class Instance {
     }
 
     if (!this._isUpdate) {
-      console.debug(`Checking possible provisioning collisions for application #${this.identifier}/${this._config.env}`);
+      console.debug(
+        `Checking possible provisioning collisions for application #${this.identifier}/${this._config.env}`
+      );
 
       this.verifyProvisioningCollisions(() => {
         console.debug(`Start installing application #${this.identifier}/${this._config.env}`);

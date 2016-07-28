@@ -2,7 +2,7 @@
  * Created by mgoria on 7/9/15.
  */
 
-"use strict";
+'use strict';
 
 import {Exception} from '../../Exception/Exception';
 
@@ -15,7 +15,7 @@ export class FailedUploadingLambdaToS3Exception extends Exception {
      * @param {String} bucketName
      * @param {String} error
      */
-    constructor(lambdaName, bucketName, error) {
-        super(`Error uploading "${lambdaName}" lambda to "${bucketName}" bucket. ${error}`);
-    }
+  constructor(lambdaName, bucketName, error) {
+    super(`Error uploading "${lambdaName}" lambda to "${bucketName}" bucket. ${error}`);
+  }
 }

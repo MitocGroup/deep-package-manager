@@ -115,5 +115,6 @@ lib.compiled/*
 lib.compiled
 /tests/*
 coverage/*
+coverages/*
 .parameters.json
-**/test/bin/helper/*.js
+**/test/bin/**/*.js

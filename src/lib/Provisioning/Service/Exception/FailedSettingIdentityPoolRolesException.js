@@ -2,7 +2,7 @@
  * Created by mgoria on 6/8/15.
  */
 
-"use strict";
+'use strict';
 
 import {Exception} from '../../../Exception/Exception';
 
@@ -14,7 +14,7 @@ export class FailedSettingIdentityPoolRolesException extends Exception {
      * @param {String} identityPoolName
      * @param {String} error
      */
-    constructor(identityPoolName, error) {
-        super(`Error on setting auth and unauth roles to "${identityPoolName}" identity pool. ${error}`);
-    }
+  constructor(identityPoolName, error) {
+    super(`Error on setting auth and unauth roles to "${identityPoolName}" identity pool. ${error}`);
+  }
 }

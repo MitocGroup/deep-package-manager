@@ -69,6 +69,7 @@ export class S3Service extends AbstractService {
 
   /**
    * @returns {String[]}
+   * @constructor
    */
   static get FS_BUCKETS_SUFFIX_NO_TMP_AND_SHARED() {
     return [
@@ -121,8 +122,9 @@ export class S3Service extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {S3Service}
+   * @private
    */
   _setup(services) {
     // @todo: implement!
@@ -151,8 +153,9 @@ export class S3Service extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {S3Service}
+   * @private
    */
   _postProvision(services) {
     // @todo: implement!
@@ -180,8 +183,9 @@ export class S3Service extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {S3Service}
+   * @private
    */
   _postDeployProvision(services) {
     // @todo: implement!
@@ -455,18 +459,18 @@ export class S3Service extends AbstractService {
    * @returns {*}
    */
   static getRoutingRules(hostname) {
-      return  [
-        {
-          Redirect: {
-            Protocol: 'https',
-            HostName: hostname,
-            ReplaceKeyPrefixWith: '#/',
-          },
-          Condition: {
-            HttpErrorCodeReturnedEquals: '404',
-          },
+    return  [
+      {
+        Redirect: {
+          Protocol: 'https',
+          HostName: hostname,
+          ReplaceKeyPrefixWith: '#/',
         },
-      ];
+        Condition: {
+          HttpErrorCodeReturnedEquals: '404',
+        },
+      },
+    ];
   }
 
   /**

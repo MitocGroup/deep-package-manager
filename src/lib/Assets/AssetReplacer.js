@@ -4,7 +4,6 @@
 
 'use strict';
 
-import Core from 'deep-core';
 import fs from 'fs';
 import path from 'path';
 
@@ -36,6 +35,7 @@ export class AssetReplacer {
   /**
    * @param {String} version
    * @param {String|AbstractReplacer|*} replacers
+   * @returns {AssetReplacer}
    */
   static create(version, ...replacers) {
     let self = new AssetReplacer(version);
