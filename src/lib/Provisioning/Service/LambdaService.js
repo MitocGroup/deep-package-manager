@@ -25,7 +25,7 @@ import {ActionFlags} from '../../Microservice/Metadata/Helpers/ActionFlags';
 import {ESService} from './ESService';
 import {FailedToCreateScheduledEventException} from './Exception/FailedToCreateScheduledEventException';
 import {FailedToAttachScheduledEventException} from './Exception/FailedToAttachScheduledEventException';
-import {CognitoIdentityProviderService} from "./CognitoIdentityProviderService";
+import {CognitoIdentityProviderService} from './CognitoIdentityProviderService';
 
 /**
  * Lambda service
