@@ -32,7 +32,7 @@ export class CloudWatchLogsService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {CloudWatchLogsService}
    */
   _setup(services) {
@@ -48,7 +48,7 @@ export class CloudWatchLogsService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {CloudWatchLogsService}
    */
   _postProvision(services) {
@@ -64,7 +64,7 @@ export class CloudWatchLogsService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {CloudWatchLogsService}
    */
   _postDeployProvision(services) {

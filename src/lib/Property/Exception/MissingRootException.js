@@ -2,7 +2,7 @@
  * Created by AlexanderC on 5/25/15.
  */
 
-"use strict";
+'use strict';
 
 import {Exception} from '../../Exception/Exception';
 
@@ -10,7 +10,7 @@ import {Exception} from '../../Exception/Exception';
  * throws when missing property root
  */
 export class MissingRootException extends Exception {
-    constructor() {
-        super('Missing application root');
-    }
+  constructor() {
+    super('Missing application root');
+  }
 }

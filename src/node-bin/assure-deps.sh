@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# TODO: find a smarter fix
+# todo: find a smarter fix
 # Fixing "spawn sh ENOENT" issue
 cd /
 

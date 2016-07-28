@@ -128,6 +128,7 @@ export class Parameters {
    * Read microservice configuration from json file
    *
    * @param {String} file
+   * @returns {Parameters}
    */
   static createFromJsonFile(file) {
     let rawParameters = {

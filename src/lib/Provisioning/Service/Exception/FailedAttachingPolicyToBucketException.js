@@ -2,7 +2,7 @@
  * Created by AlexanderC on 5/25/15.
  */
 
-"use strict";
+'use strict';
 
 import {Exception} from '../../../Exception/Exception';
 
@@ -14,7 +14,7 @@ export class FailedAttachingPolicyToBucketException extends Exception {
      * @param {String} bucketName
      * @param {String} error
      */
-    constructor(bucketName, error) {
-        super(`Error on attaching policy to "${bucketName}" bucket. ${error}`);
-    }
+  constructor(bucketName, error) {
+    super(`Error on attaching policy to "${bucketName}" bucket. ${error}`);
+  }
 }

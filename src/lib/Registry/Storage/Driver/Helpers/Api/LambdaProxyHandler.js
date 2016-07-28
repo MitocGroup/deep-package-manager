@@ -22,8 +22,6 @@ export class LambdaProxyHandler extends Core.AWS.Lambda.Runtime {
   /**
    * @todo override it in lambda handler
    * @example putObj,readObj,hasObj,deleteObj
-   *
-   * @returns {String}
    */
   get _storageMethod() {
     throw new Error(`You should override _storageMethod getter in your implementation
@@ -127,6 +125,7 @@ export class LambdaProxyHandler extends Core.AWS.Lambda.Runtime {
             // persist it async
             this._cache.set(cacheKey, JSON.stringify(principalEntries), LambdaProxyHandler.CACHE_TTL);
           } catch (error) {
+            console.log('Unable to set cache: ', error);
           }
 
           cb(null, this._matchModuleOperation(moduleName, principalEntries));

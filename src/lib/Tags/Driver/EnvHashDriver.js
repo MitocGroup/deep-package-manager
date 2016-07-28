@@ -20,6 +20,7 @@ export class EnvHashDriver extends AbstractDriver {
 
   /**
    * @param {String} htmlContent
+   * @returns {String}
    */
   inject(htmlContent) {
     return this.replaceTags(

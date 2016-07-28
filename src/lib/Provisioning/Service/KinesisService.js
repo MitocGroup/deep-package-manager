@@ -2,7 +2,7 @@
  * Created by AlexanderC on 5/27/15.
  */
 
-"use strict";
+'use strict';
 
 import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
@@ -43,8 +43,9 @@ export class KinesisService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {KinesisService}
+   * @private
    */
   _setup(services) {
     // @todo: implement!
@@ -59,8 +60,9 @@ export class KinesisService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {KinesisService}
+   * @private
    */
   _postProvision(services) {
     // @todo: implement!
@@ -75,8 +77,9 @@ export class KinesisService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {KinesisService}
+   * @private
    */
   _postDeployProvision(services) {
     // @todo: implement!

@@ -17,6 +17,8 @@ export class FailedToExecuteApiGatewayMethodException extends Exception {
    * @param {String} error
    */
   constructor(method, resourcePath, httpMethod, error) {
-    super(`Error on executing API Gateway "${method}" with "${httpMethod}" method and "${resourcePath}" resource. ${error}`);
+    super(
+      `Error on executing API Gateway "${method}" with "${httpMethod}" method and "${resourcePath}" resource. ${error}`
+    );
   }
 }

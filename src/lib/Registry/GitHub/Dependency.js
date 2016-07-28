@@ -292,7 +292,8 @@ export class Dependency {
     if (!matchedVersion) {
       return [
         new Error(
-          `No suitable version found for '${this.shortDependencyName}@${this._dependencyVersion}' (${versions.join(', ')})`
+          `No suitable version found for '${this.shortDependencyName}@${this._dependencyVersion}'
+          (${versions.join(', ')})`
         ),
         null
       ];

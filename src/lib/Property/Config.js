@@ -83,6 +83,7 @@ export class Config {
    * Read app configuration from json file
    *
    * @param {String} file
+   * @returns {Config}
    */
   static createFromJsonFile(file) {
     let rawConfig = JsonFile.readFileSync(file);

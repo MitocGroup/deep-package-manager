@@ -5,7 +5,6 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
-import {WaitFor} from '../../Helpers/WaitFor';
 import {IAMDriver as IAMListingDriver} from '../ListingDriver/IAMDriver';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {IAMService} from '../Service/IAMService';

@@ -62,7 +62,7 @@ export class ESService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {ESService}
    */
   _setup(services) {
@@ -95,7 +95,7 @@ export class ESService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {ESService}
    */
   _postProvision(services) {
@@ -111,7 +111,7 @@ export class ESService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {ESService}
    */
   _postDeployProvision(services) {
@@ -238,9 +238,10 @@ export class ESService extends AbstractService {
 
   /**
    * @params {String[]|Array|*} actions
-   * @param {Boolean} safeActionsOnly
+   * @params {Boolean} safeActionsOnly
    * @returns {Core.AWS.IAM.Statement}
    */
+
   generateAllowActionsStatement(actions, safeActionsOnly = false) {
     let policy = new Core.AWS.IAM.Policy();
     let statement = policy.statement.add();

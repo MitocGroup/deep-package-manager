@@ -5,7 +5,6 @@
 'use strict';
 
 import Core from 'deep-core';
-import {DeployIdInjector} from '../DeployIdInjector';
 
 export class AbstractReplacer extends Core.OOP.Interface {
   /**

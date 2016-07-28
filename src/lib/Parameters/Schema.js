@@ -97,6 +97,7 @@ export class Schema {
 
   /**
    * @param {Function} cb
+   * @returns {*}
    * @private
    */
   static _confirmInteractiveMode(cb) {

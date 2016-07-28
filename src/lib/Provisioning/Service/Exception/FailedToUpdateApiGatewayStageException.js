@@ -12,6 +12,7 @@ import {Exception} from '../../../Exception/Exception';
 export class FailedToUpdateApiGatewayStageException extends Exception {
   /**
    * @param {String} apiId
+   * @param {String} stageName
    * @param {String} error
    */
   constructor(apiId, stageName, error) {

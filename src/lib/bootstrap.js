@@ -8,7 +8,6 @@
 
 import {FileWalker} from './Helpers/FileWalker';
 import path from 'path';
-import os from 'os';
 
 let walker = new FileWalker(FileWalker.RECURSIVE);
 

@@ -1,0 +1,40 @@
+bin/**/*
+test/**/*
+**/test
+**/vendor
+tmp/**/*
+**.spec.js
+**.min.js
+**.min.css
+
+# third party js file
+*.min.js
+
+
+## Directory-based project format:
+.idea/
+
+# Generated folders and files
+**/.log
+**/.sass-cache
+**/.tmp
+**/coverage
+**/coverages
+**/design.doc.json
+**/dist
+**/node_modules
+**/npm-debug.log
+**/packages
+**/quality
+**/reports
+
+# Dependency directory
+# https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git-
+**/node_modules
+
+# Debug log from npm
+npm-debug.log
+
+# Compiled libraries
+**/compile/
+**/lib.compiled/

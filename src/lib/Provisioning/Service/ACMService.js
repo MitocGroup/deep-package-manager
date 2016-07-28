@@ -6,9 +6,9 @@
 
 import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
-import {FailedToRequestCloudFrontDistributionCertificateException} from './Exception/FailedToRequestCloudFrontDistributionCertificateException';
+import {FailedToRequestCloudFrontDistributionCertificateException} from
+  './Exception/FailedToRequestCloudFrontDistributionCertificateException';
 import {Hash} from '../../Helpers/Hash';
-import {CloudFrontService} from './CloudFrontService';
 import {ACMDriver as ACMListing} from '../ListingDriver/ACMDriver';
 
 /**
@@ -130,7 +130,7 @@ export class ACMService extends AbstractService {
    * @private
    */
   static _escapeRegExp(str) {
-    return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+    return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
   }
 
   /**

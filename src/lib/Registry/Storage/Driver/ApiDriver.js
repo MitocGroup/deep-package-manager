@@ -6,7 +6,6 @@
 
 import {AbstractDriver} from './AbstractDriver';
 import request from 'fetchy-request';
-import {Hash} from '../../../Helpers/Hash';
 import util from '../../../Helpers/util';
 import {RegistryAutoDiscovery} from './Helpers/Api/RegistryAutoDiscovery';
 import path from 'path';
@@ -29,19 +28,18 @@ export class ApiDriver extends AbstractDriver {
    * @param {Boolean} cached
    */
   static autoDiscover(baseHost, cb, cached = false) {
-    (new RegistryAutoDiscovery(baseHost))
-      [cached ? 'discoverCached' : 'discover']((error, registryConfig) => {
-        if (error) {
-          cb(error, null);
-          return;
-        }
+    (new RegistryAutoDiscovery(baseHost))[cached ? 'discoverCached' : 'discover']((error, registryConfig) => {
+      if (error) {
+        cb(error, null);
+        return;
+      }
 
-        try {
-          cb(null, new ApiDriver(registryConfig));
-        } catch (error) {
-          cb(error, null);
-        }
-      });
+      try {
+        cb(null, new ApiDriver(registryConfig));
+      } catch (exception) {
+        cb(exception, null);
+      }
+    });
   }
 
   /**
@@ -234,6 +232,7 @@ export class ApiDriver extends AbstractDriver {
     try {
       return JSON.parse(data);
     } catch (e) {
+      console.log('Unable to parse: ', e);
     }
 
     return {};
@@ -259,6 +258,7 @@ export class ApiDriver extends AbstractDriver {
 
       errorMsg = errorObj.errorMessage || `An unknown error occurred (${rawErrorData})`;
     } catch (error) {
+      console.log('Unable to parse: ', error);
     }
 
     return new Error(errorMsg);

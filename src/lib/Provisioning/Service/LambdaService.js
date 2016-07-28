@@ -2,19 +2,18 @@
  * Created by AlexanderC on 5/27/15.
  */
 
+/*eslint  max-statements: 0*/
+
 'use strict';
 
 import {AbstractService} from './AbstractService';
 import {S3Service} from './S3Service';
-import {APIGatewayService} from './APIGatewayService';
 import Core from 'deep-core';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {Inflector} from '../../Helpers/Inflector';
-import {WaitFor} from '../../Helpers/WaitFor';
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
 import {Action} from '../../Microservice/Metadata/Action';
-import {Lambda} from '../../Property/Lambda';
 import {IAMService} from './IAMService';
 import objectMerge from 'object-merge';
 import {_extend as extend} from 'util';
@@ -93,7 +92,7 @@ export class LambdaService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {LambdaService}
    */
   _setup(services) {
@@ -119,7 +118,7 @@ export class LambdaService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {LambdaService}
    */
   _postProvision(services) {
@@ -140,7 +139,7 @@ export class LambdaService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {LambdaService}
    */
   _postDeployProvision(services) {
@@ -396,8 +395,10 @@ export class LambdaService extends AbstractService {
 
   /**
    * Resolve DeepRN into ARN
+   *
    * @example: @deep-account:user:create -> DeepDevUserCreate075234e258d
-   * @param resourceName
+   * @param {String} resourceName
+   * @returns {*}
    */
   resolveDeepResourceName(resourceName) {
     let parts = resourceName.match(/^@([^:]+):([^:]+):([^:]+)$/);

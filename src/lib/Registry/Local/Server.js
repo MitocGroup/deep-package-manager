@@ -68,7 +68,7 @@ export class Server {
       if (error) {
         this.logger.error(`Error starting registry server: ${error}`);
       } else {
-        this.logger.log(`Registry server has successfully started`);
+        this.logger.log('Registry server has successfully started');
       }
 
       cb(error);
@@ -167,7 +167,7 @@ export class Server {
       let uri = urlParts.pathname;
 
       if (Server._matchAutoDiscoveryRequest(uri)) {
-        this.logger.log(`<--- [SUCCEED] Sending auto discovery config`);
+        this.logger.log('<--- [SUCCEED] Sending auto discovery config');
 
         Server._sendRaw(response, {
           hasObj: `${this.baseUrl}/hasObj`,
@@ -192,7 +192,7 @@ export class Server {
         Server._send(this.logger, response, error.message);
 
         // @todo: remove it?
-        this.logger.error(error.message, "\n", error.stack);
+        this.logger.error(error.message, '\n', error.stack);
       }).run();
   }
 
@@ -268,6 +268,7 @@ export class Server {
         try {
           parsedData = JSON.parse(rawData);
         } catch (error) {
+          console.log('Unable to parse: ', error);
         }
 
         cb(parsedData);

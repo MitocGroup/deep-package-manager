@@ -48,6 +48,6 @@ export class DeployIdDriver extends AbstractDriver {
    * @returns {String}
    */
   static get SCRIPT_TPL() {
-    return `<meta name="deep-deploy-id" content="{deployId}"/>`;
+    return '<meta name="deep-deploy-id" content="{deployId}"/>';
   }
 }

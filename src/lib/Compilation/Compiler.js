@@ -31,7 +31,7 @@ export class Compiler {
   }
 
   /**
-   * @param microservice
+   * @param {Object} microservice
    * @returns {Object}
    */
   static buildLambdas(microservice)

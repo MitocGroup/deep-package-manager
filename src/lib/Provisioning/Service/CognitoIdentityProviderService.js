@@ -55,6 +55,7 @@ export class CognitoIdentityProviderService extends AbstractService {
   }
 
   /**
+   * @returns {CognitoIdentityProviderService}
    * @private
    */
   _postProvision() {
@@ -70,8 +71,9 @@ export class CognitoIdentityProviderService extends AbstractService {
   }
 
   /**
-   * @params {Object} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {CognitoIdentityProviderService}
+   * @private
    */
   _postDeployProvision(services) {
     // @todo: implement!

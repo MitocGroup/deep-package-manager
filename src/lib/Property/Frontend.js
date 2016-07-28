@@ -14,15 +14,12 @@ import JsonFile from 'jsonfile';
 import {MissingRootIndexException} from './Exception/MissingRootIndexException';
 import {FailedUploadingFileToS3Exception} from './Exception/FailedUploadingFileToS3Exception';
 import {AwsRequestSyncStack} from '../Helpers/AwsRequestSyncStack';
-import {WaitFor} from '../Helpers/WaitFor';
 import {Action} from '../Microservice/Metadata/Action';
 import Core from 'deep-core';
 import Tmp from 'tmp';
 import OS from 'os';
-import ZLib from 'zlib';
 import {APIGatewayService} from '../Provisioning/Service/APIGatewayService';
 import {SQSService} from '../Provisioning/Service/SQSService';
-import {ESService} from '../Provisioning/Service/ESService';
 import {DeployIdInjector} from '../Assets/DeployIdInjector';
 import {Optimizer} from '../Assets/Optimizer';
 import {Injector as TagsInjector} from '../Tags/Injector';
@@ -166,7 +163,9 @@ export class Frontend {
           let apiEndpoint = null;
 
           if (ActionFlags.isApi(action.scope)) {
-            apiEndpoint = apiGatewayBaseUrl + APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName);
+            apiEndpoint = apiGatewayBaseUrl + APIGatewayService.pathify(
+                microserviceIdentifier, resourceName, actionName
+              );
           }
 
           microserviceConfig.resources[resourceName][action.name] = {
@@ -207,8 +206,8 @@ export class Frontend {
   }
 
   /**
-   * @param AWS
-   * @param bucketName
+   * @param {Object} AWS
+   * @param {String} bucketName
    * @returns {WaitFor}
    */
   deploy(AWS, bucketName) {
@@ -280,10 +279,12 @@ export class Frontend {
     return syncStack.join();
   }
 
+
   /**
    * @param {String} credentialsFile
    * @param {String} bucketName
    * @param {String} bucketRegion
+   * @returns {Exec}
    * @private
    */
   _getSyncCommandNoHtml(credentialsFile, bucketName, bucketRegion) {
@@ -305,6 +306,7 @@ export class Frontend {
    * @param {String} credentialsFile
    * @param {String} bucketName
    * @param {String} bucketRegion
+   * @returns {Exec}
    * @private
    */
   _getSyncCommandHtmlOnly(credentialsFile, bucketName, bucketRegion) {
@@ -362,6 +364,7 @@ export class Frontend {
   /**
    * @param {Object} propertyConfig
    * @param {Function} callback
+   * @return {*}
    */
   build(propertyConfig, callback = () => {}) {
     if (!(propertyConfig instanceof Object)) {
@@ -432,7 +435,9 @@ export class Frontend {
           FileSystemExtra.copySync(indexFile, mainIndexFile);
           workingMicroserviceConfig = config;
         }
-      } catch (e) {   }
+      } catch (e) {
+        console.log('Unable to copy file: ', e);
+      }
     }
 
     Frontend.dumpValidationSchemas(this._property.config, this.path);

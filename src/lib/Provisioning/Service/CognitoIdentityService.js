@@ -73,8 +73,9 @@ export class CognitoIdentityService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {CognitoIdentityService}
+   * @private
    */
   _setup(services) {
     // @todo: implement!
@@ -98,8 +99,9 @@ export class CognitoIdentityService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {CognitoIdentityService}
+   * @private
    */
   _postProvision(services) {
     // @todo: implement!
@@ -142,8 +144,9 @@ export class CognitoIdentityService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {CognitoIdentityService}
+   * @private
    */
   _postDeployProvision(services) {
     let apiGatewayInstance = services.find(APIGatewayService);
@@ -199,7 +202,6 @@ export class CognitoIdentityService extends AbstractService {
    * @param {Object} identityPool
    * @param {Object} changeSet
    * @param {Function} callback
-   * @returns {Function}
    * @private
    */
   _updateIdentityPool(identityPool, changeSet, callback) {
@@ -280,8 +282,8 @@ export class CognitoIdentityService extends AbstractService {
   /**
    * IAM role that is assumed by created Cognito identity pool
    *
-   * @param identityPool
-   * @param roleType
+   * @param {Object} identityPool
+   * @param {String} roleType
    * @returns {*}
    */
   _getAssumeRolePolicy(identityPool, roleType) {
@@ -381,7 +383,9 @@ export class CognitoIdentityService extends AbstractService {
    *
    * @returns {Core.AWS.IAM.Statement}
    */
-  generateAllowCognitoSyncStatement(allowedActions = [Core.AWS.IAM.Policy.ANY], targetService = CognitoIdentityService) {
+  generateAllowCognitoSyncStatement(
+    allowedActions = [Core.AWS.IAM.Policy.ANY], targetService = CognitoIdentityService
+  ) {
     let policy = new Core.AWS.IAM.Policy();
 
     let statement = policy.statement.add();
@@ -435,7 +439,7 @@ export class CognitoIdentityService extends AbstractService {
     //condition.StringEquals["cognito-identity.amazonaws.com:aud"] = this._config.identityPool.IdentityPoolId;
 
     if (targetService === CognitoIdentityService) {
-      condition.StringEquals["cognito-identity.amazonaws.com:sub"] = ["${cognito-identity.amazonaws.com:sub}"];
+      condition.StringEquals['cognito-identity.amazonaws.com:sub'] = ['${cognito-identity.amazonaws.com:sub}'];
     }
 
     if (Object.keys(condition.StringEquals).length > 0) {

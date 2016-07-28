@@ -160,9 +160,9 @@ export class Prompt {
       char = char.toString();
 
       switch (char) {
-        case "\n":
-        case "\r":
-        case "\u0004":
+        case '\n':
+        case '\r':
+        case '\u0004':
           stdin.pause();
           break;
         default:
