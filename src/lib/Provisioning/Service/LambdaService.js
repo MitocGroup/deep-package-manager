@@ -26,6 +26,7 @@ import {ActionFlags} from '../../Microservice/Metadata/Helpers/ActionFlags';
 import {ESService} from './ESService';
 import {FailedToCreateScheduledEventException} from './Exception/FailedToCreateScheduledEventException';
 import {FailedToAttachScheduledEventException} from './Exception/FailedToAttachScheduledEventException';
+import {CognitoIdentityProviderService} from "./CognitoIdentityProviderService";
 
 /**
  * Lambda service
@@ -570,6 +571,9 @@ export class LambdaService extends AbstractService {
       'ESHttpGet', 'ESHttpHead', 'ESHttpDelete', 'ESHttpPost', 'ESHttpPut',
       'DescribeElasticsearchDomain', 'DescribeElasticsearchDomains', 'ListDomainNames'
     ]));
+
+    let cognitoIdpService = this.provisioning.services.find(CognitoIdentityProviderService);
+    policy.statement.add(cognitoIdpService.generateAllowActionsStatement(['AdminGetUser']));
 
     // @todo: move it to ElastiCacheService?
     let ec2Statement = policy.statement.add();
