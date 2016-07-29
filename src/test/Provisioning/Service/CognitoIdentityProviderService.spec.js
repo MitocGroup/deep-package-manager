@@ -7,6 +7,7 @@ import Core from 'deep-core';
 import {CognitoIdentityProviderService} from '../../../lib/Provisioning/Service/CognitoIdentityProviderService';
 import {ProvisioningInstanceMock} from '../../mock/Provisioning/ProvisioningInstanceMock';
 import {PropertyInstanceMock} from '../../mock/Property/PropertyInstanceMock';
+import {Statement as IAMStatement} from 'deep-core/lib.compiled/AWS/IAM/Statement';
 
 // @todo: Add more advanced tests
 suite('Provisioning/Service/CognitoIdentityProviderService', function() {
@@ -30,6 +31,6 @@ suite('Provisioning/Service/CognitoIdentityProviderService', function() {
   test('Check "generateAllowActionsStatement" returns in instanceof Core.AWS.IAM.Statement', () => {
     let statement = cognitoIdpService.generateAllowActionsStatement(['testAction']);
 
-    chai.expect(statement).to.be.an.instanceof(Core.AWS.IAM.Statement);
+    chai.expect(statement).to.be.an.instanceof(IAMStatement);
   });
 });
