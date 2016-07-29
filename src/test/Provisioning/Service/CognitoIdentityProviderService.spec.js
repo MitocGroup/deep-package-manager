@@ -18,14 +18,17 @@ suite('Provisioning/Service/CognitoIdentityProviderService', function() {
   let provisioningInstance = new ProvisioningInstanceMock(propertyInstance);
   let cognitoIdpService = new CognitoIdentityProviderService(provisioningInstance);
 
+  cognitoIdpService.injectConfig({
+    UserPool: {
+      Id: 'us_east_1_fakeId',
+    },
+    UserPoolClient: {
+      UserPoolId: 'us_east_1_fakeId',
+    },
+  });
+
   test('Check "generateAllowActionsStatement" returns in instanceof Core.AWS.IAM.Statement', () => {
     let statement = cognitoIdpService.generateAllowActionsStatement(['testAction']);
-
-    cognitoIdpService.injectConfig({
-      UserPool: {
-        Id: 'us_east_1_fakeId',
-      },
-    });
 
     chai.expect(statement).to.be.an.instanceof(Core.AWS.IAM.Statement);
   });
