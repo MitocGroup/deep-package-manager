@@ -6,6 +6,7 @@ import chai from 'chai';
 import Core from 'deep-core';
 import {CognitoIdentityProviderService} from '../../../lib/Provisioning/Service/CognitoIdentityProviderService';
 import {ProvisioningInstanceMock} from '../../mock/Provisioning/ProvisioningInstanceMock';
+import {PropertyInstanceMock} from '../../mock/Property/PropertyInstanceMock';
 
 // @todo: Add more advanced tests
 suite('Provisioning/Service/CognitoIdentityProviderService', function() {
