@@ -574,7 +574,9 @@ export class LambdaService extends AbstractService {
     ]));
 
     let cognitoIdpService = this.provisioning.services.find(CognitoIdentityProviderService);
-    policy.statement.add(cognitoIdpService.generateAllowActionsStatement(['AdminGetUser']));
+    policy.statement.add(cognitoIdpService.generateAllowActionsStatement([
+      'AdminGetUser', 'AdminConfirmSignUp',
+    ]));
 
     // @todo: move it to ElastiCacheService?
     let ec2Statement = policy.statement.add();
