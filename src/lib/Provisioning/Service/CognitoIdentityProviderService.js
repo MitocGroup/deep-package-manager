@@ -221,6 +221,28 @@ export class CognitoIdentityProviderService extends AbstractService {
   }
 
   /**
+   * @param {String[]} actions
+   * @returns {Object}
+   */
+  generateAllowActionsStatement(actions) {
+    let policy = new Core.AWS.IAM.Policy();
+    let statement = policy.statement.add();
+
+    actions.forEach((actionName) => {
+      statement.action.add(Core.AWS.Service.COGNITO_IDENTITY_PROVIDER, actionName);
+    });
+
+    statement.resource.add(
+      Core.AWS.Service.COGNITO_IDENTITY_PROVIDER,
+      this.provisioning.cognitoIdentityServiceProvider.config.region,
+      this.awsAccountId,
+      this._config.UserPool.Id
+    );
+
+    return statement;
+  }
+
+  /**
    * @param {Object} userPool
    * @returns {String}
    * @private
