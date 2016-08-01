@@ -12,6 +12,7 @@ suite('Microservice/Metadata/Autoload', () => {
     validation: 'Data/Validation',
     fixtures: 'Data/Fixtures',
     migration: 'Data/Migration',
+    roles: 'Data/Roles',
   };
   let basePath = 'basePath';
   let configExpectedResult = {
@@ -22,6 +23,7 @@ suite('Microservice/Metadata/Autoload', () => {
     validation: `${basePath}/${configInput.validation}`,
     fixtures: `${basePath}/${configInput.fixtures}`,
     migration: `${basePath}/${configInput.migration}`,
+    roles: `${basePath}/${configInput.roles}`,
   };
 
   let autoload = new Autoload(configInput, basePath);
@@ -56,6 +58,10 @@ suite('Microservice/Metadata/Autoload', () => {
 
   test('Check migration getter returns valid value for migration', () => {
     chai.expect(autoload.migration).to.be.equal(configExpectedResult.migration);
+  });
+
+  test('Check roles getter returns valid value for migration', () => {
+    chai.expect(autoload.roles).to.be.equal(configExpectedResult.roles);
   });
 
   test('Check extract method returns valid istance of Autoload', () => {
