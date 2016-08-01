@@ -50,6 +50,7 @@ export class AbstractProvider extends Core.OOP.Interface {
 
   /**
    * @param {Provisioning/Instance} provisioning
+   * @returns {AbstractProvider}
    */
   static create(provisioning) {
     // move to import when get rid of babel transpiler

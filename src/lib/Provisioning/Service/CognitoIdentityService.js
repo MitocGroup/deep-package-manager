@@ -363,7 +363,7 @@ export class CognitoIdentityService extends AbstractService {
 
   /**
    * Method is also used in deep-account::account-lib::iam::roleManager
-   * 
+   * @param {Object} role
    * @returns {Object}
    * @private
    */

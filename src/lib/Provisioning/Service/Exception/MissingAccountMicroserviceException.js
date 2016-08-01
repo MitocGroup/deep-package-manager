@@ -8,6 +8,6 @@ import {Exception} from '../../../Exception/Exception';
 
 export class MissingAccountMicroserviceException extends Exception {
   constructor() {
-    super(`Missing 'deep-account' microservice`);
+    super('Missing "deep-account" microservice');
   }
 }

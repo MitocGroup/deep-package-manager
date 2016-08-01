@@ -219,6 +219,7 @@ export class CognitoIdentityProviderService extends AbstractService {
 
   /**
    * @private
+   * @returns {Promise}
    */
   _registerUserPoolTriggers() {
     let userPool = this._config.userPool;

@@ -36,11 +36,11 @@ export class UnsecuredProvider extends AbstractProvider {
   _generateAllowLambdaServicePolicy() {
     let policy = new Core.AWS.IAM.Policy();
     let lambdaService = this.lambdaService;
-    let denyLambdaStatement;
+    let denyLambdaStatement = lambdaService.generateDenyInvokeFunctionStatement();
 
     policy.statement.add(lambdaService.generateAllowActionsStatement());
 
-    if (denyLambdaStatement = lambdaService.generateDenyInvokeFunctionStatement()) {
+    if (denyLambdaStatement) {
       policy.statement.add(denyLambdaStatement);
     }
     
