@@ -236,7 +236,7 @@ export class CognitoIdentityProviderService extends AbstractService {
       Core.AWS.Service.COGNITO_IDENTITY_PROVIDER,
       this.provisioning.cognitoIdentityServiceProvider.config.region,
       this.awsAccountId,
-      this._config.UserPool.Id
+      `userpool/${this._config.UserPool.Id}`
     );
 
     return statement;
