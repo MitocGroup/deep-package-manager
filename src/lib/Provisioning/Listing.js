@@ -4,7 +4,6 @@
 
 'use strict';
 
-import {AbstractService} from './Service/AbstractService';
 import {WaitFor} from '../Helpers/WaitFor';
 
 export class Listing {

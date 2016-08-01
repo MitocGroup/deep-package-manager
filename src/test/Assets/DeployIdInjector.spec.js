@@ -75,8 +75,6 @@ suite('Assets/DeployIdInjector', () => {
     chai.expect(spyCallback).to.have.been.calledWithExactly(null);
     chai.expect(actualCssResult).to.eql(expectedCssResult);
     chai.expect(actualHtmlResult).to.eql(expectedHtmlResult);
-
-
   });
 
   test('Check prepare() executes with error', () => {
@@ -92,6 +90,15 @@ suite('Assets/DeployIdInjector', () => {
     let error = spyCallback.args[0][0];
 
     chai.expect(error).to.equal(null);
+  });
+
+  suiteSetup(()=> {
+
+    //add console debug
+    console.debug = console.debug || console.log;
+  });
+
+  suiteTeardown(()=> {
 
     //remove temp test files
     fsExtra.removeSync('./test/testMaterials/assets/testFiles');

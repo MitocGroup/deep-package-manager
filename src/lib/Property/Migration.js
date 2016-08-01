@@ -56,7 +56,7 @@ export class Migration {
   }
 
   /**
-   * @param directories
+   * @param {Array} directories
    * @returns {Model[]}
    */
   static create(...directories) {

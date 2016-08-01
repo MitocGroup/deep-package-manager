@@ -101,6 +101,7 @@ export class AbstractService extends Core.OOP.Interface {
 
   /**
    * @param {Core.Generic.ObjectStorage} services
+   * @returns {WaitFor}
    */
   setup(services) {
     let wait = new WaitFor();
@@ -121,6 +122,7 @@ export class AbstractService extends Core.OOP.Interface {
 
   /**
    * @param {Core.Generic.ObjectStorage} services
+   * @returns {WaitFor}
    */
   postProvision(services) {
     let wait = new WaitFor();
@@ -141,6 +143,7 @@ export class AbstractService extends Core.OOP.Interface {
 
   /**
    * @param {Core.Generic.ObjectStorage} services
+   * @returns {WaitFor}
    */
   postDeployProvision(services) {
     let wait = new WaitFor();
@@ -318,7 +321,9 @@ export class AbstractService extends Core.OOP.Interface {
    * @param {String} delimiter
    * @returns {String}
    */
-  generateAwsResourceName(resourceName, awsService, msIdentifier = '', delimiter = AbstractService.DELIMITER_UPPER_CASE) {
+  generateAwsResourceName(
+    resourceName, awsService, msIdentifier = '', delimiter = AbstractService.DELIMITER_UPPER_CASE
+  ) {
     return AbstractService.generateAwsResourceName(
       resourceName,
       awsService,
@@ -441,6 +446,7 @@ export class AbstractService extends Core.OOP.Interface {
    * @param {String} resourceName
    * @param {String} awsService
    * @param {Number} nameTplLength
+   * @returns {*}
    */
   static sliceNameToAwsLimits(resourceName, awsService, nameTplLength) {
     let slicedName = resourceName;

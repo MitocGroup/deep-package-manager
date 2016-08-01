@@ -20,6 +20,7 @@ export class MigrationsRegistry {
 
   /**
    * @param {Property|*} property
+   * @returns {MigrationsRegistry}
    */
   static create(property) {
     return new MigrationsRegistry(MigrationsRegistry._createRegistry(property));

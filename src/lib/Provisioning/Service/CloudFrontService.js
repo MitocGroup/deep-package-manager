@@ -8,9 +8,8 @@ import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
 import {S3Service} from './S3Service';
 import {ACMService} from './ACMService';
-import {FailedToCreateCloudFrontDistributionException} from './Exception/FailedToCreateCloudFrontDistributionException';
-import {FailedToRequestCloudFrontDistributionCertificateException} from './Exception/FailedToRequestCloudFrontDistributionCertificateException';
-import {Hash} from '../../Helpers/Hash';
+import {FailedToCreateCloudFrontDistributionException}
+  from './Exception/FailedToCreateCloudFrontDistributionException';
 import {WaitFor} from '../../Helpers/WaitFor';
 import objectMerge from 'object-merge';
 
@@ -175,8 +174,6 @@ export class CloudFrontService extends AbstractService {
    */
   _createDistribution(services, cb) {
     let cf = this.provisioning.cloudFront;
-
-    let idPrefix = `${this.awsAccountId}-${this.env}-`;
 
     let bucketConfig = services.find(S3Service).config().buckets[S3Service.PUBLIC_BUCKET];
     let bucketWebsite = bucketConfig.website;

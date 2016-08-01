@@ -84,6 +84,7 @@ export class Instance {
 
   /**
    * @param {String} basePath
+   * @returns {Instance}
    */
   static create(basePath) {
     basePath = path.normalize(basePath);

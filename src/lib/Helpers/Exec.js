@@ -9,7 +9,6 @@ import {spawn} from 'spawn-cmd';
 import syncExec from 'sync-exec';
 import {EventEmitter} from 'events';
 import {Env} from './Env';
-import os from 'os';
 import fs from 'fs';
 
 export class Exec {
@@ -383,6 +382,7 @@ export class Exec {
 
   /**
    * Returns command in Windows format
+   * @param {Sting} cmd
    * @returns {String}
    */
   static winCmd(cmd) {

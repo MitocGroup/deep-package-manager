@@ -35,7 +35,7 @@ export class SNSService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {SNSService}
    */
   _setup(services) {
@@ -51,7 +51,7 @@ export class SNSService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {SNSService}
    */
   _postProvision(services) {
@@ -67,7 +67,7 @@ export class SNSService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {SNSService}
    */
   _postDeployProvision(services) {

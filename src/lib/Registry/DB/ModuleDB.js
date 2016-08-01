@@ -53,11 +53,11 @@ export class ModuleDB extends AbstractModuleDB {
     this._storage.dumpModuleDb(this, cb);
   }
 
-  /** 
+  /**
    * @param {String} moduleContext
    * @param {Storage} storage
    * @param {Object} configObj
-   * @returns {null|GitHubDB, ModuleDB}
+   * @returns {DBProto}
    */
   static create(moduleContext, storage, configObj) {
     let DBProto = moduleContext instanceof GitHubContext ? GitHubDB : ModuleDB;

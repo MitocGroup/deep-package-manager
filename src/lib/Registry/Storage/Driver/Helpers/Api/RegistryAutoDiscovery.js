@@ -110,6 +110,7 @@ export class RegistryAutoDiscovery {
   }
 
   /**
+   * @param {String} baseHost
    * @returns {String}
    * @private
    */
