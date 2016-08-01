@@ -55,6 +55,7 @@ export class CognitoIdentityProviderService extends AbstractService {
   }
 
   /**
+   * @returns {CognitoIdentityProviderService}
    * @private
    */
   _postProvision() {
@@ -70,8 +71,9 @@ export class CognitoIdentityProviderService extends AbstractService {
   }
 
   /**
-   * @params {Object} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {CognitoIdentityProviderService}
+   * @private
    */
   _postDeployProvision(services) {
     // @todo: implement!
@@ -215,7 +217,29 @@ export class CognitoIdentityProviderService extends AbstractService {
       }
     }
 
-    return triggers;
+    return normalizedTriggers;
+  }
+
+  /**
+   * @param {String[]} actions
+   * @returns {Object}
+   */
+  generateAllowActionsStatement(actions) {
+    let policy = new Core.AWS.IAM.Policy();
+    let statement = policy.statement.add();
+
+    actions.forEach((actionName) => {
+      statement.action.add(Core.AWS.Service.COGNITO_IDENTITY_PROVIDER, actionName);
+    });
+
+    statement.resource.add(
+      Core.AWS.Service.COGNITO_IDENTITY_PROVIDER,
+      this.provisioning.cognitoIdentityServiceProvider.config.region,
+      this.awsAccountId,
+      `userpool/${this._config.UserPool.Id}`
+    );
+
+    return statement;
   }
 
   /**

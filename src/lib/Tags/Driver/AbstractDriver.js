@@ -16,6 +16,7 @@ export class AbstractDriver extends Core.OOP.Interface {
    * @param {String} tagSuffix
    * @param {String} replacement
    * @param {String} tagPrefix
+   * @returns {String}
    */
   replaceTags(htmlContent, tagSuffix, replacement, tagPrefix = AbstractDriver.TAG_PREFIX) {
     return htmlContent.replace(

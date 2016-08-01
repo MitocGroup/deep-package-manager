@@ -4,7 +4,6 @@
 
 'use strict';
 
-import {FSDriver} from './Driver/FSDriver';
 import {WaitFor} from '../../Helpers/WaitFor';
 import {DuplicateModulesException} from './Exception/DuplicateModulesException';
 

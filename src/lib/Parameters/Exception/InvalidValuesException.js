@@ -22,7 +22,8 @@ export class InvalidValuesException extends Exception {
   }
 
   /**
-   * @returns {String}
+   * @param {Object} validationErrors
+   * @returns {*}
    * @private
    */
   static _buildPlainError(validationErrors) {
@@ -39,7 +40,8 @@ export class InvalidValuesException extends Exception {
         continue;
       }
 
-      plainError += `- Invalid value '${errorObject.value}' for key '${errorObject.key}': failed on rule '${errorObject.rule}' with attribute '${errorObject.attr}'${OS.EOL}`;
+      plainError += `- Invalid value '${errorObject.value}' for key
+      '${errorObject.key}': failed on rule '${errorObject.rule}' with attribute '${errorObject.attr}'${OS.EOL}`;
     }
 
     return plainError;

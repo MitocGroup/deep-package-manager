@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "1.8.26",
+  "version": "1.8.33",
   "description": "DEEP Package Manager",
   "keywords": [
     "Digital Enterprise End-To-End Platform",
@@ -64,7 +64,7 @@
     "deep-fs": "^1.x.x",
     "fetchy-request": "^0.8.x",
     "find-assets": "^0.3.x",
-    "fs-extra": "^0.30.x",
+    "fs-extra": "^0.27.x",
     "fstream": "^1.0.x",
     "graceful-fs": "^4.1.x",
     "gunzip-maybe": "^1.3.1",

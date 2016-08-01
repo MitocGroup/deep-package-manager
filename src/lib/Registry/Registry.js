@@ -91,8 +91,10 @@ export class Registry {
     }, cached);
   }
 
+
   /**
    * @param {String} storagePath
+   * @returns {Registry}
    */
   static createRegistry(storagePath) {
     let driver = new ComplexDriver(
@@ -109,6 +111,7 @@ export class Registry {
    * @param {AWS.S3|*} s3
    * @param {String} bucket
    * @param {String} prefix
+   * @returns {Registry}
    */
   static createS3Registry(s3, bucket, prefix = '') {
     let storage = new Storage(new S3Driver(s3, bucket, prefix));
@@ -182,7 +185,7 @@ export class Registry {
    * @param {Function} cb
    */
   publishModule(modulePath, cb) {
-    let moduleConfig = ModuleConfig.createFromModulePath(this._storage, modulePath, (error, moduleConfig) => {
+    ModuleConfig.createFromModulePath(this._storage, modulePath, (error, moduleConfig) => {
       if (error) {
         cb(error);
         return;

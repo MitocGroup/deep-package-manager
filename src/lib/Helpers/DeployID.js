@@ -31,7 +31,6 @@ export class DeployID {
       case 'sha1':
       case 'crc32':
         return Hash[algo](this._rawId);
-        break;
       default: throw new Error('Unknown deployId generation algorithm');
     }
   }

@@ -4,7 +4,6 @@
 
 'use strict';
 
-import {AbstractService} from './Service/AbstractService';
 import {AbstractDriver} from './UndeployDriver/AbstractDriver';
 import {WaitFor} from '../Helpers/WaitFor';
 import {Listing} from './Listing';

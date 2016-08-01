@@ -2,19 +2,18 @@
  * Created by AlexanderC on 5/27/15.
  */
 
+/*eslint  max-statements: 0*/
+
 'use strict';
 
 import {AbstractService} from './AbstractService';
 import {S3Service} from './S3Service';
-import {APIGatewayService} from './APIGatewayService';
 import Core from 'deep-core';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {Inflector} from '../../Helpers/Inflector';
-import {WaitFor} from '../../Helpers/WaitFor';
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
 import {Action} from '../../Microservice/Metadata/Action';
-import {Lambda} from '../../Property/Lambda';
 import {IAMService} from './IAMService';
 import objectMerge from 'object-merge';
 import {_extend as extend} from 'util';
@@ -26,6 +25,7 @@ import {ActionFlags} from '../../Microservice/Metadata/Helpers/ActionFlags';
 import {ESService} from './ESService';
 import {FailedToCreateScheduledEventException} from './Exception/FailedToCreateScheduledEventException';
 import {FailedToAttachScheduledEventException} from './Exception/FailedToAttachScheduledEventException';
+import {CognitoIdentityProviderService} from './CognitoIdentityProviderService';
 
 /**
  * Lambda service
@@ -92,7 +92,7 @@ export class LambdaService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {LambdaService}
    */
   _setup(services) {
@@ -118,7 +118,7 @@ export class LambdaService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {LambdaService}
    */
   _postProvision(services) {
@@ -139,7 +139,7 @@ export class LambdaService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {LambdaService}
    */
   _postDeployProvision(services) {
@@ -395,8 +395,10 @@ export class LambdaService extends AbstractService {
 
   /**
    * Resolve DeepRN into ARN
+   *
    * @example: @deep-account:user:create -> DeepDevUserCreate075234e258d
-   * @param resourceName
+   * @param {String} resourceName
+   * @returns {*}
    */
   resolveDeepResourceName(resourceName) {
     let parts = resourceName.match(/^@([^:]+):([^:]+):([^:]+)$/);
@@ -570,6 +572,14 @@ export class LambdaService extends AbstractService {
       'ESHttpGet', 'ESHttpHead', 'ESHttpDelete', 'ESHttpPost', 'ESHttpPut',
       'DescribeElasticsearchDomain', 'DescribeElasticsearchDomains', 'ListDomainNames'
     ]));
+
+    let cognitoIdpService = this.provisioning.services.find(CognitoIdentityProviderService);
+
+    if (cognitoIdpService.isCognitoPoolEnabled) {
+      policy.statement.add(cognitoIdpService.generateAllowActionsStatement([
+        'AdminGetUser', 'AdminConfirmSignUp',
+      ]));
+    }
 
     // @todo: move it to ElastiCacheService?
     let ec2Statement = policy.statement.add();

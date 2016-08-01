@@ -2,13 +2,12 @@
  * Created by AlexanderC on 11/26/15.
  */
 
+/*eslint  max-statements: 0*/
+
 'use strict';
 
 import {AbstractMatcher} from './AbstractMatcher';
-import fs from 'fs';
 import fse from 'fs-extra';
-import path from 'path';
-import Core from 'deep-core';
 import {MissingProvisioningConfig} from './Exception/MissingProvisioningConfig';
 import {Undeploy} from '../Undeploy';
 import {CloudWatchLogsDriver} from '../ListingDriver/CloudWatchLogsDriver';

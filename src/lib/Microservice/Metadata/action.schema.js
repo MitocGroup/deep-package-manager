@@ -11,6 +11,19 @@ import {JoiHelper} from '../../Helpers/JoiHelper';
 import {Lambda} from '../../Property/Lambda';
 import {ActionFlags} from './Helpers/ActionFlags';
 
+/**
+ * @param {Object} joiObject
+ * @returns {*}
+ */
+function assureTypeLambda(joiObject) {
+  joiObject.when('type', {
+    is: Action.LAMBDA, // @todo - this condition doesn't work, default engine settings are applied for external resources also
+    otherwise: Joi.forbidden(),
+  });
+
+  return joiObject;
+}
+
 export default Joi.object().keys({
   description: JoiHelper.maybeString(),
   type: JoiHelper.stringEnum([Action.LAMBDA, Action.EXTERNAL]),
@@ -42,12 +55,3 @@ export default Joi.object().keys({
     runtime: Lambda.DEFAULT_RUNTIME,
   })),
 });
-
-function assureTypeLambda(joiObject) {
-  joiObject.when('type', {
-    is: Action.LAMBDA, // @todo - this condition doesn't work, default engine settings are applied for external resources also
-    otherwise: Joi.forbidden(),
-  });
-
-  return joiObject;
-}

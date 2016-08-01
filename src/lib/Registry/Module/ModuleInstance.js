@@ -14,7 +14,6 @@ import {GitHubModuleInstance} from './GitHubModuleInstance';
 import {AbstractModuleInstance} from './AbstractModuleInstance';
 import path from 'path';
 import fs from 'fs';
-import stream from 'stream';
 
 export class ModuleInstance extends AbstractModuleInstance {
   /**

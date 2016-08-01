@@ -31,10 +31,10 @@ export class WaitFor {
   }
 
   /**
+   *
    * @param {Function} executor
    * @param {Function} cb
    * @param {Array[]} series
-   * @returns {WaitFor}
    */
   static waterfall(executor, cb, ...series) {
     let wait = new WaitFor();

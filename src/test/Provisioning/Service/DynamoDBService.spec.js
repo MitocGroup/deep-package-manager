@@ -112,19 +112,4 @@ suite('Provisioning/Service/DynamoDBService', () => {
     //todo -  AssertionError: expected [TypeError: Cannot read property 'dynamoDB' of undefined] to equal null
     //chai.expect(e).to.be.equal(null);
   });
-
-  test('Check _removeMissingTables() method', () => {
-    let e = null;
-    let actualResult = null;
-    let missingTablesNames = ['table1', 'table2'];
-    let spyCallback = sinon.spy();
-
-    try {
-      actualResult = dynamoDBService._removeMissingTables(missingTablesNames, spyCallback);
-    } catch (exception) {
-      e = exception;
-    }
-
-    chai.expect(e).to.be.equal(null);
-  });
 });

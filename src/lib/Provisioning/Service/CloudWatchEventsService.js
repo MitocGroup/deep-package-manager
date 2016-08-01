@@ -35,7 +35,7 @@ export class CloudWatchEventsService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {CloudWatchEventsService}
    */
   _setup(services) {
@@ -51,7 +51,7 @@ export class CloudWatchEventsService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {CloudWatchEventsService}
    */
   _postProvision(services) {
@@ -67,7 +67,7 @@ export class CloudWatchEventsService extends AbstractService {
   }
 
   /**
-   * @parameter {Core.Generic.ObjectStorage} services
+   * @param {Core.Generic.ObjectStorage} services
    * @returns {CloudWatchEventsService}
    */
   _postDeployProvision(services) {
