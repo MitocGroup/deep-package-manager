@@ -86,10 +86,10 @@ export class Frontend {
       config.identityPoolId = cognitoConfig.identityPool.IdentityPoolId;
       config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders || {};
 
-      if (cognitoIdpConfig.UserPool && cognitoIdpConfig.UserPoolClient) {
+      if (cognitoIdpConfig.userPool && cognitoIdpConfig.userPoolClient) {
         config.identityProviders[cognitoIdpConfig.ProviderName] = {
-          UserPoolId: cognitoIdpConfig.UserPool.Id,
-          ClientId: cognitoIdpConfig.UserPoolClient.ClientId,
+          UserPoolId: cognitoIdpConfig.userPool.Id,
+          ClientId: cognitoIdpConfig.userPoolClient.ClientId,
         };
       }
 

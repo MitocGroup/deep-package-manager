@@ -7,6 +7,7 @@
 import {Helpers_Hash} from 'deep-package-manager';
 import {AbstractService} from '../Provisioning/Service/AbstractService';
 import {Inflector} from './Inflector';
+import {Exception} from '../Exception/Exception';
 import Core from 'deep-core';
 
 export class PolicyTranslator {
@@ -66,7 +67,7 @@ export class PolicyTranslator {
     actionParts[2] = actionParts[2] || PolicyTranslator.ANY;
 
     if (!this._actionsExists(actionParts)) {
-      throw new Error(`'${action}' deep action doesn't exists`);
+      throw new Exception(`'${action}' deep action doesn't exists`);
     }
 
     let microserviceIdentifier = actionParts.shift();
