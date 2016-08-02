@@ -132,13 +132,13 @@ suite('Provisioning/Service/CognitoIdentityService', () => {
 
     let apiGateway = provisioningInstance.services.find(APIGatewayService);
 
-    apiGateway.updateConfig({
+    apiGateway.injectConfig({
       api: {
         id: 'us-east-1_fakeId',
       },
     });
 
-    cognitoIdentityServiceInstance.updateConfig({
+    cognitoIdentityServiceInstance.injectConfig({
       identityPool: {
         IdentityPoolId: 'test_IdentityPoolId',
       },
