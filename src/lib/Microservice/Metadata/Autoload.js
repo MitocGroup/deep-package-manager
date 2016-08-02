@@ -159,6 +159,7 @@ export class Autoload {
       validation: this._validation,
       fixtures: this._fixtures,
       migration: this._migration,
+      roles: this._roles,
     };
   }
 
