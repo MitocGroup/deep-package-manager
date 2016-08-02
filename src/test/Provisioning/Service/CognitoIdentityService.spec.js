@@ -131,6 +131,7 @@ suite('Provisioning/Service/CognitoIdentityService', () => {
     };
 
     let apiGateway = provisioningInstance.services.find(APIGatewayService);
+    let cognitoIdentityService = provisioningInstance.services.find(CognitoIdentityService);
 
     apiGateway.injectConfig({
       api: {
@@ -138,14 +139,14 @@ suite('Provisioning/Service/CognitoIdentityService', () => {
       },
     });
 
-    try {
-      cognitoIdentityServiceInstance._config = {
-        identityPool: {
-          IdentityPoolId: 'test_IdentityPoolId',
-        },
-      };
+    cognitoIdentityService.injectConfig({
+      identityPool: {
+        IdentityPoolId: 'test_IdentityPoolId',
+      },
+    });
 
-      actualResult = cognitoIdentityServiceInstance._updateCognitoRolesPolicy(roles);
+    try {
+      actualResult = cognitoIdentityService._updateCognitoRolesPolicy(roles);
     } catch (exception) {
       e = exception;
     }
