@@ -22,6 +22,7 @@ suite('Microservice/Config', () => {
       validation: 'Data/Validation',
       fixtures: 'Data/Fixtures',
       migration: 'Data/Migration',
+      roles: 'Data/Roles',
     },
   };
 
