@@ -408,6 +408,8 @@ export class CognitoIdentityService extends AbstractService {
       statement.action.add(Core.AWS.Service.COGNITO_SYNC, actionName);
     });
 
+    console.log('this._config', this._config)
+
     let identityPoolId = this._config.identityPool.IdentityPoolId;
     let resourceIdentifier = 'identitypool/' + identityPoolId + '/identity/${cognito-identity.amazonaws.com:sub}/*';
 
