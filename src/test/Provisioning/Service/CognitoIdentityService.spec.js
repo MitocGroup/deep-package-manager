@@ -138,13 +138,13 @@ suite('Provisioning/Service/CognitoIdentityService', () => {
       },
     });
 
-    cognitoIdentityServiceInstance.injectConfig({
-      identityPool: {
-        IdentityPoolId: 'test_IdentityPoolId',
-      },
-    });
-
     try {
+      cognitoIdentityServiceInstance._config = {
+        identityPool: {
+          IdentityPoolId: 'test_IdentityPoolId',
+        },
+      };
+
       actualResult = cognitoIdentityServiceInstance._updateCognitoRolesPolicy(roles);
     } catch (exception) {
       e = exception;
