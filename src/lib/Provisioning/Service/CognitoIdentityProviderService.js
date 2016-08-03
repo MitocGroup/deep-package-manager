@@ -14,7 +14,7 @@ import Core from 'deep-core';
 import PwGen from 'pwgen/lib/pwgen_module';
 import AWS from 'aws-sdk';
 
-global.AWS = AWS; // todo: s***ty solution for s***ty implementation
+global.AWS = AWS; // amazon cognito js need AWS object to be set globally
 require('amazon-cognito-js');
 
 export class CognitoIdentityProviderService extends AbstractService {
