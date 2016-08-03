@@ -75,7 +75,7 @@ function guessAwsAccountId(awsCredentials) {
         return userInfo.User.Arn.replace(/^.*:(\d+):(root|(user\/.*))$/i, '$1') || defaultUserId;
       }
     } catch (e) {
-      console.log('Unable to parse userInfoResult: ', e);
+      console.debug('Unable to parse userInfoResult: ', e);
     }
   }
 

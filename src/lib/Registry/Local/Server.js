@@ -268,7 +268,7 @@ export class Server {
         try {
           parsedData = JSON.parse(rawData);
         } catch (error) {
-          console.log('Unable to parse: ', error);
+          console.debug('Unable to parse: ', error);
         }
 
         cb(parsedData);
