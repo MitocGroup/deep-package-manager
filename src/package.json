@@ -54,7 +54,7 @@
     "prepublish": "bash node-bin/assure-deps.sh && bash node-bin/compile.sh && bash node-bin/obfuscate-compiled.sh"
   },
   "dependencies": {
-    "amazon-cognito-js": "justinlatimer/amazon-cognito-js",
+    "amazon-cognito-js": "MitocGroup/amazon-cognito-js",
     "archiver": "^0.21.x",
     "crc": "^3.4.x",
     "crypto": "^0.0.x",
