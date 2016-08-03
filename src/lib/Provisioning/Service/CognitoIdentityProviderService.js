@@ -102,10 +102,16 @@ export class CognitoIdentityProviderService extends AbstractService {
    * @private
    */
   _createAdminUser() {
+    let globals = this.property.config.globals;
+    let adminMetadata = (globals.security || {}).admin;
+
+    if (!adminMetadata) {
+      return Promise.resolve({});
+    }
+
     let clientId = this._config.userPoolClient.ClientId;
     let userPoolId = this._config.userPool.Id;
     let cognitoIdentityServiceProvider = this.provisioning.cognitoIdentityServiceProvider;
-    let adminMetadata = this.property.config.globals.security.admin;
     let adminUserPayload = {
       ClientId: clientId,
       Password: this._generatePseudoRandomPassword(),
