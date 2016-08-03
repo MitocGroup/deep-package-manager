@@ -9,8 +9,13 @@ import {LambdaService} from './LambdaService';
 import {FailedToCreateCognitoUserPoolException} from './Exception/FailedToCreateCognitoUserPoolException';
 import {FailedToUpdateUserPoolException} from './Exception/FailedToUpdateUserPoolException';
 import {FailedToCreateAdminUserException} from './Exception/FailedToCreateAdminUserException';
+import {CognitoIdentityService} from './CognitoIdentityService';
 import Core from 'deep-core';
 import PwGen from 'pwgen/lib/pwgen_module';
+import AWS from 'aws-sdk';
+
+global.AWS = AWS; // todo: s***ty solution for s***ty implementation
+require('amazon-cognito-js');
 
 export class CognitoIdentityProviderService extends AbstractService {
   /**
@@ -47,11 +52,6 @@ export class CognitoIdentityProviderService extends AbstractService {
         })
         .then(userPoolClient => {
           this._config.userPoolClient = userPoolClient;
-
-          return this._createAdminUser();
-        })
-        .then(adminUser => {
-          this._config.adminUser = adminUser;
 
           this._ready = true;
         });
@@ -90,9 +90,14 @@ export class CognitoIdentityProviderService extends AbstractService {
       return this;
     }
 
-    this._registerUserPoolTriggers().then(() => {
-      this._ready = true;
-    });
+    this
+      ._registerUserPoolTriggers()
+      .then(() => this._createAdminUser())
+      .then(adminUser => {
+        this._config.adminUser = adminUser;
+
+        this._ready = true;
+      });
 
     return this;
   }
@@ -137,12 +142,65 @@ export class CognitoIdentityProviderService extends AbstractService {
           .adminConfirmSignUp(confirmPayload)
           .promise();
       })
-      .then(() => adminUserPayload)
+      .then(() => this._authenticateAdminUser(adminUserPayload))
+      .then(identityId => {
+        adminUserPayload.identityId = identityId;
+
+        return adminUserPayload;
+      })
       .catch(e => {
         // @todo: Sorry guys :/, Promise suppresses any kind of synchronous errors.
         setImmediate(() => {
           throw new FailedToCreateAdminUserException(e);
         });
+      });
+  }
+
+  /**
+   * @param {Object} adminUser
+   * @returns {Promise}
+   * @private
+   */
+  _authenticateAdminUser(adminUser) {
+    let cognitoIdentityServiceProvider = this.provisioning.cognitoIdentityServiceProvider;
+    let userPoolClient = this._config.userPoolClient;
+    let userPool = this._config.userPool;
+
+    let authPayload = {
+      AuthFlow: 'ADMIN_NO_SRP_AUTH',
+      UserPoolId: userPool.Id,
+      ClientId: userPoolClient.ClientId,
+      AuthParameters: {
+        USERNAME: adminUser.Username,
+        PASSWORD: adminUser.Password,
+      },
+    };
+
+    return cognitoIdentityServiceProvider
+      .adminInitiateAuth(authPayload)
+      .promise()
+      .then(authResponse => {
+        let cognitoConfig = this.provisioning.services.find(CognitoIdentityService).config();
+        let cognitoParams = {
+          IdentityPoolId: cognitoConfig.identityPool.IdentityPoolId,
+          Logins: {},
+        };
+
+        cognitoParams.Logins[this._config.providerName] = authResponse.AuthenticationResult.IdToken;
+
+        let credentials = new AWS.CognitoIdentityCredentials(cognitoParams);
+
+        return new Promise(
+          (resolve, reject) => {
+            credentials.refresh(error => {
+              if (error) {
+                return reject(error);
+              }
+
+              resolve(credentials.identityId);
+            });
+          }
+        );
       });
   }
 
@@ -185,6 +243,9 @@ export class CognitoIdentityProviderService extends AbstractService {
       // http://docs.aws.amazon.com/cognito/latest/developerguide/setting-up-the-javascript-sdk.html
       GenerateSecret: false,
       ClientName: userPoolMetadata.clientName,
+      ExplicitAuthFlows: [
+        'ADMIN_NO_SRP_AUTH',
+      ],
     };
 
     return cognitoIdentityServiceProvider
