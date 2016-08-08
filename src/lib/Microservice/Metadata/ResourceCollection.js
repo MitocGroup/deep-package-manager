@@ -12,6 +12,7 @@ import deepActionSchema from './action.schema';
 import {InvalidConfigException} from '../Exception/InvalidConfigException';
 import {InvalidArgumentException} from '../../Exception/InvalidArgumentException';
 import JsonFile from 'jsonfile';
+import {DeployIgnore} from '../../Property/DeployIgnore';
 
 /**
  * Resource loader for microservice
@@ -19,14 +20,18 @@ import JsonFile from 'jsonfile';
 export class ResourceCollection {
   /**
    * @param {Object} rawResources
+   * @param {String} msIdentifier
+   * @param {DeployIgnore} deployIgnore
    */
-  constructor(rawResources) {
+  constructor(rawResources, msIdentifier, deployIgnore) {
     if (!(rawResources instanceof Object)) {
       throw new InvalidArgumentException(rawResources, 'Object');
     }
 
     this._actions = [];
     this._rawResources = rawResources;
+    this._deployIgnore = deployIgnore;
+    this._msIdentifier = msIdentifier;
 
     for (let resourceName in rawResources) {
       if (!rawResources.hasOwnProperty(resourceName)) {
@@ -50,21 +55,23 @@ export class ResourceCollection {
           );
         }
 
-        this._actions.push(new Action(resourceName, actionName, configObject.value));
+        let resourceIdentifier = `${msIdentifier}:${resourceName}:${actionName}`;
+
+        if (this._deployIgnore.keep(DeployIgnore.RESOURCE, resourceIdentifier)) {
+          this._actions.push(new Action(resourceName, actionName, configObject.value));
+        }
       }
     }
   }
 
   /**
-   * @param {String} backendPath
+   * @param {Microservice/Instance} microservice
    * @param {Boolean} strict
    * @returns {ResourceCollection}
    */
-  static create(backendPath, strict = false) {
-    backendPath = path.normalize(backendPath);
-
+  static create(microservice, strict = false) {
+    let backendPath = microservice.autoload.backend;
     let resourcesFile = path.join(backendPath, Microservice.RESOURCES_FILE);
-
     let rawResources = {};
 
     // @todo: do we have to enable strict mode?
@@ -76,7 +83,11 @@ export class ResourceCollection {
       }
     }
 
-    return new ResourceCollection(rawResources);
+    return new ResourceCollection(
+      rawResources, 
+      microservice.identifier, 
+      microservice.property.deployIgnore
+    );
   }
 
   /**
@@ -96,7 +107,11 @@ export class ResourceCollection {
         resources[resourceAction.resourceName] = {};
       }
 
-      resources[resourceAction.resourceName][resourceAction.name] = resourceAction.extract();
+      let resourceIdentifier = `${this._msIdentifier}:${resourceAction.resourceName}:${resourceAction.name}`;
+
+      if (this._deployIgnore.keep(DeployIgnore.RESOURCE, resourceIdentifier)) {
+        resources[resourceAction.resourceName][resourceAction.name] = resourceAction.extract();
+      }
     }
 
     return resources;
