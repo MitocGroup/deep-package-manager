@@ -125,7 +125,7 @@ export class LambdaProxyHandler extends Core.AWS.Lambda.Runtime {
             // persist it async
             this._cache.set(cacheKey, JSON.stringify(principalEntries), LambdaProxyHandler.CACHE_TTL);
           } catch (error) {
-            console.log('Unable to set cache: ', error);
+            console.debug('Unable to set cache: ', error);
           }
 
           cb(null, this._matchModuleOperation(moduleName, principalEntries));
