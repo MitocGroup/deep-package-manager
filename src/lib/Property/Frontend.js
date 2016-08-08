@@ -436,7 +436,7 @@ export class Frontend {
           workingMicroserviceConfig = config;
         }
       } catch (e) {
-        console.log('Unable to copy file: ', e);
+        console.debug('Unable to copy file: ', e);
       }
     }
 
