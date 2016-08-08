@@ -44,6 +44,7 @@ import {DeployConfig} from './DeployConfig';
 import {InvalidConfigException} from './Exception/InvalidConfigException';
 import {AbstractStrategy} from './ExtractStrategy/AbstractStrategy';
 import {OptimisticStrategy} from './ExtractStrategy/OptimisticStrategy';
+import {DeployIgnore} from './DeployIgnore';
 
 /**
  * Property instance
@@ -78,6 +79,7 @@ export class Instance {
     this._microservices = null;
     this._localDeploy = false;
     this._provisioning = new Provisioning(this);
+    this._deployIgnore = DeployIgnore.create(path);
     this._isUpdate = false;
     this._strategy = null;
 
@@ -113,6 +115,13 @@ export class Instance {
    */
   set strategy(strategy) {
     this._strategy = strategy;
+  }
+
+  /**
+   * @returns {DeployIgnore}
+   */
+  get deployIgnore() {
+    return this._deployIgnore;
   }
 
   /**

@@ -197,7 +197,7 @@ export class Instance {
    */
   get resources() {
     if (this._resources === null) {
-      this._resources = ResourceCollection.create(this._autoload.backend);
+      this._resources = ResourceCollection.create(this);
     }
 
     return this._resources;
