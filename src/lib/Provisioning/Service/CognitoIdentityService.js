@@ -8,7 +8,6 @@ import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
 import {FailedToCreateIdentityPoolException} from './Exception/FailedToCreateIdentityPoolException';
 import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
-import {Inflector} from '../../Helpers/Inflector';
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
 import {FailedSettingIdentityPoolRolesException} from './Exception/FailedSettingIdentityPoolRolesException';
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
@@ -346,7 +345,6 @@ export class CognitoIdentityService extends AbstractService {
           break;
         default:
           throw new MissingPolicyProviderMethodException(cognitoRoleType);
-          break;
       }
 
       let authPolicyPayload = {
