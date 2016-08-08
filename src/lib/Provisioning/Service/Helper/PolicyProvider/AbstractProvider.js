@@ -37,18 +37,6 @@ export class AbstractProvider extends Core.OOP.Interface {
   }
 
   /**
-   * @returns {*}
-   */
-  getAdminPolicy() {
-    let policy = new Core.AWS.IAM.Policy();
-    let lambdaService = this.lambdaService;
-
-    policy.statement.add(lambdaService.generateAllowActionsStatement());
-
-    return policy;
-  }
-
-  /**
    * @param {Provisioning/Instance} provisioning
    * @returns {AbstractProvider}
    */

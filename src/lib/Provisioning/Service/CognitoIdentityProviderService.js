@@ -111,7 +111,7 @@ export class CognitoIdentityProviderService extends AbstractService {
     let adminMetadata = (globals.security || {}).admin;
 
     if (!adminMetadata) {
-      return Promise.resolve({});
+      return Promise.resolve(null);
     }
 
     let clientId = this._config.userPoolClient.ClientId;

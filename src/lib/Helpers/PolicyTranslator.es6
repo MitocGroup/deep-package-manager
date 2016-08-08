@@ -92,15 +92,18 @@ export class PolicyTranslator {
    */
   _actionsExists(parts) {
     let microservices = this._appConfig.microservices;
+    let microservice = parts[0];
+    let resource = parts[1];
+    let action = parts[2];
 
-    return microservices.hasOwnProperty(parts[0]) &&
+    return microservices.hasOwnProperty(microservice) &&
       (
-        parts[1] === PolicyTranslator.ANY ||
-        microservices[parts[0]].resources.hasOwnProperty(parts[1])
+        resource === PolicyTranslator.ANY ||
+        microservices[microservice].resources.hasOwnProperty(resource)
       ) &&
       (
-        parts[2] === PolicyTranslator.ANY ||
-        microservices[parts[0]].resources[parts[1]].hasOwnProperty(parts[2])
+        action === PolicyTranslator.ANY ||
+        microservices[microservice].resources[resource].hasOwnProperty(action)
       );
   }
 

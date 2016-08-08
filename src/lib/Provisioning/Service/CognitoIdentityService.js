@@ -20,6 +20,7 @@ import {IAMService} from './IAMService';
 import {AbstractProvider} from './Helper/PolicyProvider/AbstractProvider';
 import {SQSService} from './SQSService';
 import {APIGatewayService} from './APIGatewayService';
+import {MissingPolicyProviderMethodException} from './Exception/MissingPolicyProviderMethodException';
 
 /**
  * Cognito service
@@ -334,16 +335,27 @@ export class CognitoIdentityService extends AbstractService {
       }
 
       let cognitoRole = cognitoRoles[cognitoRoleType];
-      // getAuthenticatedPolicy, getUnauthenticatedPolicy
-      let policyProviderMethod = `get${Inflector.capitalizeFirst(cognitoRoleType)}Policy`;
-      let policy = this._policyProvider[policyProviderMethod]();
+      let policy;
+
+      switch (cognitoRoleType) {
+        case CognitoIdentityService.ROLE_AUTH:
+          policy = this._policyProvider.getAuthenticatedPolicy();
+          break;
+        case CognitoIdentityService.ROLE_UNAUTH:
+          policy = this._policyProvider.getUnauthenticatedPolicy();
+          break;
+        default:
+          throw new MissingPolicyProviderMethodException(cognitoRoleType);
+          break;
+      }
+
       let authPolicyPayload = {
         PolicyDocument: policy.toString(),
         PolicyName: cognitoRole.RoleName, // Security `policyName` should be same `roleName` for deep-account
         RoleName: cognitoRole.RoleName,
       };
 
-      [authPolicyPayload, this._createBasicPolicyPayload(cognitoRole)].forEach(params => {
+      [authPolicyPayload, this._createSystemPolicyPayload(cognitoRole)].forEach(params => {
         syncStack.push(iam.putRolePolicy(params), (error) => {
           if (error) {
             throw new FailedAttachingPolicyToRoleException(params.PolicyName, params.RoleName, error);
@@ -367,7 +379,7 @@ export class CognitoIdentityService extends AbstractService {
    * @returns {Object}
    * @private
    */
-  _createBasicPolicyPayload(role) {
+  _createSystemPolicyPayload(role) {
     let policy = new Core.AWS.IAM.Policy();
     let apiGateway = this.provisioning.services.find(APIGatewayService);
     let sqsService = this.provisioning.services.find(SQSService);
@@ -382,7 +394,7 @@ export class CognitoIdentityService extends AbstractService {
     return {
       PolicyDocument: policy.toString(),
       PolicyName: this.generateAwsResourceName(
-        'BasicPolicy',
+        'SystemPolicy',
         Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
       ),
       RoleName: role.RoleName,
