@@ -20,10 +20,10 @@ suite('Provisioning/Service/CognitoIdentityProviderService', function() {
   let cognitoIdpService = new CognitoIdentityProviderService(provisioningInstance);
 
   cognitoIdpService.injectConfig({
-    UserPool: {
+    userPool: {
       Id: 'us_east_1_fakeId',
     },
-    UserPoolClient: {
+    userPoolClient: {
       UserPoolId: 'us_east_1_fakeId',
     },
   });

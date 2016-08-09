@@ -1141,6 +1141,14 @@ export class Instance {
   }
 
   /**
+   * @todo: add advanced criteria for account microservice
+   * @returns {Microservice/Instance}
+   */
+  get accountMicroservice() {
+    return this.microservice('deep-account');
+  }
+
+  /**
    * @returns {Microservice[]}
    */
   get microservices() {

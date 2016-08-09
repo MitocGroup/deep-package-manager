@@ -19,6 +19,7 @@ export const MODELS = path.join(DATA_BASE_DIR, 'models');
 export const VALIDATION = path.join(DATA_BASE_DIR, 'validation');
 export const FIXTURES = path.join(DATA_BASE_DIR, 'fixtures');
 export const MIGRATION = path.join(DATA_BASE_DIR, 'migration');
+export const ROLES = path.join(DATA_BASE_DIR, 'roles');
 
 export default Joi.object().keys({
   identifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/),
@@ -45,6 +46,7 @@ export default Joi.object().keys({
     validation: JoiHelper.maybeString().default(VALIDATION).replace(/\//gi, path.sep),
     fixtures:JoiHelper.maybeString().default(FIXTURES).replace(/\//gi, path.sep),
     migration: JoiHelper.maybeString().default(MIGRATION).replace(/\//gi, path.sep),
+    roles: JoiHelper.maybeString().default(ROLES).replace(/\//gi, path.sep),
   }).default({
     frontend: FRONTEND,
     backend: BACKEND,
@@ -53,6 +55,7 @@ export default Joi.object().keys({
     validation: VALIDATION,
     fixtures: FIXTURES,
     migration: MIGRATION,
+    roles: ROLES,
   }),
   frontendEngine: Joi.array()
     .unique()
