@@ -61,6 +61,7 @@ export class DeployIgnore {
     let regExpStr = matches[2];
 
     regExpStr = regExpStr.replace(/[-\/\\^$+?.()|[\]{}]/g, '\\$&'); // escape all characters except '*'
+    regExpStr = '^' + regExpStr + (regExpStr.slice(-1) !== '*' ? '$' : '');
     regExpStr = regExpStr.replace(/\*/g, '[a-zA-Z\\d+\\-_\\.]+');
 
     let regExp = new RegExp(regExpStr);
