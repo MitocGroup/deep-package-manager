@@ -101,11 +101,11 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
       }
 
       if (deployProvisioning['cognito-idp'] &&
-        deployProvisioning['cognito-idp'].UserPool &&
-        deployProvisioning['cognito-idp'].UserPool.Id) {
+        deployProvisioning['cognito-idp'].userPool &&
+        deployProvisioning['cognito-idp'].userPool.Id) {
 
         this._deployConfig.CognitoIdentityProvider.push(
-          deployProvisioning['cognito-idp'].UserPool.Id
+          deployProvisioning['cognito-idp'].userPool.Id
         );
       }
 

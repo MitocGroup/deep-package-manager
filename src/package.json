@@ -54,6 +54,7 @@
     "prepublish": "bash node-bin/assure-deps.sh && bash node-bin/compile.sh && bash node-bin/obfuscate-compiled.sh"
   },
   "dependencies": {
+    "amazon-cognito-js": "MitocGroup/amazon-cognito-js",
     "archiver": "^0.21.x",
     "crc": "^3.4.x",
     "crypto": "^0.0.x",
@@ -76,6 +77,7 @@
     "mkdirp": "^0.5.x",
     "moment": "^2.14.x",
     "object-merge": "^2.5.x",
+    "pwgen": "^0.1.6",
     "raml-sanitize": "^1.1.x",
     "raml-validate": "^1.0.x",
     "readline-sync": "^1.4.x",

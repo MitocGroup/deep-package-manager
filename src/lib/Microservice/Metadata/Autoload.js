@@ -23,15 +23,16 @@ export class Autoload {
     let validation = path.normalize(rawConfig.validation);
     let fixtures = path.normalize(rawConfig.fixtures);
     let migration = path.normalize(rawConfig.migration);
+    let roles = path.normalize(rawConfig.roles);
 
     this._frontend = this._getBuildAwareFrontendPath(path.join(basePath, frontend));
     this._backend = path.join(basePath, backend);
-    this._sharedBackend = this._getSharedBackendPath();
     this._docs = path.join(basePath, docs);
     this._models = path.join(basePath, models);
     this._validation = path.join(basePath, validation);
     this._fixtures = path.join(basePath, fixtures);
     this._migration = path.join(basePath, migration);
+    this._roles = path.join(basePath, roles);
   }
 
   /**
@@ -41,20 +42,6 @@ export class Autoload {
    */
   static _skipBuild() {
     Autoload.__skipBuild = true;
-  }
-
-  /**
-   * @returns {String|null}
-   * @private
-   */
-  _getSharedBackendPath() {
-    let sharedLib = path.join(this._backend, Autoload.SHARED_BACKEND_FOLDER);
-
-    if (FileSystem.existsSync(sharedLib) && FileSystem.lstatSync(sharedLib).isDirectory()) {
-      return sharedLib;
-    }
-
-    return null;
   }
 
   /**
@@ -154,10 +141,10 @@ export class Autoload {
   }
 
   /**
-   * @returns {String|null}
+   * @returns {String}
    */
-  get sharedBackend() {
-    return this._sharedBackend;
+  get roles() {
+    return this._roles;
   }
 
   /**
@@ -172,6 +159,7 @@ export class Autoload {
       validation: this._validation,
       fixtures: this._fixtures,
       migration: this._migration,
+      roles: this._roles,
     };
   }
 
@@ -180,13 +168,6 @@ export class Autoload {
    */
   static get BUILD_FOLDER() {
     return '_build';
-  }
-
-  /**
-   * @returns {String}
-   */
-  static get SHARED_BACKEND_FOLDER() {
-    return 'shared-lib';
   }
 }
 
