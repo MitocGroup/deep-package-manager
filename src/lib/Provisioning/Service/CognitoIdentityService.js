@@ -71,6 +71,7 @@ export class CognitoIdentityService extends AbstractService {
   static get AVAILABLE_REGIONS() {
     return [
       Core.AWS.Region.US_EAST_N_VIRGINIA,
+      Core.AWS.Region.US_WEST_OREGON,
       Core.AWS.Region.EU_IRELAND,
       Core.AWS.Region.ASIA_PACIFIC_TOKYO,
     ];
