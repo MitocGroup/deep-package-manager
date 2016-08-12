@@ -1,6 +1,7 @@
 /**
  * Created by AlexanderC on 6/4/15.
  */
+/*eslint max-statements: [2, 100]*/
 
 'use strict';
 
@@ -90,6 +91,14 @@ export class Frontend {
         config.identityProviders[cognitoIdpConfig.providerName] = {
           UserPoolId: cognitoIdpConfig.userPool.Id,
           ClientId: cognitoIdpConfig.userPoolClient.ClientId,
+        };
+      }
+
+      if (backendTarget) {
+        let cloudFrontConfig = propertyConfig.provisioning[Core.AWS.Service.CLOUD_FRONT];
+
+        config.website = {
+          cloudfront: cloudFrontConfig.domain,
         };
       }
 
