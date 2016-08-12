@@ -1,6 +1,7 @@
 /**
  * Created by AlexanderC on 6/4/15.
  */
+/*eslint max-statements: [2, 100]*/
 
 'use strict';
 
