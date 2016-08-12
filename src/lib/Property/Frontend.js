@@ -93,6 +93,14 @@ export class Frontend {
         };
       }
 
+      if (backendTarget) {
+        let cloudFrontConfig = propertyConfig.provisioning[Core.AWS.Service.CLOUD_FRONT];
+
+        config.website = {
+          cloudfront: cloudFrontConfig.domain,
+        };
+      }
+
       // add Auth0 OIDC provider
       if (iamConfig.identityProvider && iamConfig.identityProvider.domain) {
         config.identityProviders[iamConfig.identityProvider.domain] = iamConfig.identityProvider.clientID;
