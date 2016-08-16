@@ -2,6 +2,7 @@
 
 import chai from 'chai';
 import {CognitoIdentityService} from '../../../lib/Provisioning/Service/CognitoIdentityService';
+import {APIGatewayService} from '../../../lib/Provisioning/Service/APIGatewayService';
 import Core from 'deep-core';
 import {ObjectStorage} from 'deep-core/lib.compiled/Generic/ObjectStorage';
 import {PropertyInstanceMock} from '../../mock/Property/PropertyInstanceMock';
@@ -42,7 +43,7 @@ suite('Provisioning/Service/CognitoIdentityService', () => {
 
   test('Check AVAILABLE_REGIONS() static method returns array of available regions', () => {
     chai.expect(CognitoIdentityService.AVAILABLE_REGIONS).to.be.an('array');
-    chai.expect(CognitoIdentityService.AVAILABLE_REGIONS.length).to.be.equal(3);
+    chai.expect(CognitoIdentityService.AVAILABLE_REGIONS.length).to.be.equal(4);
     chai.expect(CognitoIdentityService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.US_EAST_N_VIRGINIA);
     chai.expect(CognitoIdentityService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.EU_IRELAND);
     chai.expect(CognitoIdentityService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.ASIA_PACIFIC_TOKYO);
@@ -129,22 +130,23 @@ suite('Provisioning/Service/CognitoIdentityService', () => {
       },
     };
 
-    let lambdaARNs = ['arn:aws:lambda:us-west-2:test_awsAccountId:function:testFunctionName1',
-      'arn:aws:lambda:us-west-2:test_awsAccountId:function:testFunctionName2',];
+    let apiGateway = provisioningInstance.services.find(APIGatewayService);
+    let cognitoIdentityService = provisioningInstance.services.find(CognitoIdentityService);
 
-    let endpointsARNs = {
-      endpointArnKey1: 'arn:aws:lambda:us-west-2:test_awsAccountId:function:testFunctionName1',
-      endpointArnKey2: 'arn:aws:lambda:us-west-2:test_awsAccountId:function:testFunctionName2',
-    };
+    apiGateway.injectConfig({
+      api: {
+        id: 'us-east-1_fakeId',
+      },
+    });
+
+    cognitoIdentityService.injectConfig({
+      identityPool: {
+        IdentityPoolId: 'test_IdentityPoolId',
+      },
+    });
+
     try {
-      // @todo - replace it with a more smarter way (simulate service config generation on provision time)
-      cognitoIdentityServiceInstance._config = {
-        identityPool: {
-          IdentityPoolId: 'test_IdentityPoolId',
-        },
-      };
-
-      actualResult =  cognitoIdentityServiceInstance._updateCognitoRolesPolicy(roles, lambdaARNs, endpointsARNs);
+      actualResult = cognitoIdentityService._updateCognitoRolesPolicy(roles);
     } catch (exception) {
       e = exception;
     }

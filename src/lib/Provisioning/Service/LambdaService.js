@@ -593,6 +593,11 @@ export class LambdaService extends AbstractService {
     dynamoDbECStatement.action.add(Core.AWS.Service.CLOUD_WATCH, 'setAlarmState');
     dynamoDbECStatement.resource.add().any();
 
+    if (this._allowAlterIamService(microserviceIdentifier)) {
+      let iamService = this.provisioning.services.find(IAMService);
+      policy.statement.add(iamService.generateAllowAlterIamStatement());
+    }
+
     return policy;
   }
 
@@ -604,6 +609,17 @@ export class LambdaService extends AbstractService {
     let region = this.provisioning.lambda.config.region;
 
     return `arn:aws:lambda:${region}:${this.awsAccountId}:function:${functionIdentifier}`;
+  }
+  
+  /**
+   * @param {String} microserviceIdentifier
+   * @returns {Boolean}
+   * @private
+   */
+  _allowAlterIamService(microserviceIdentifier) {
+    let accountMicroservice = this.provisioning.property.accountMicroservice;
+
+    return accountMicroservice && accountMicroservice.identifier === microserviceIdentifier;
   }
 
   /**
@@ -659,16 +675,17 @@ export class LambdaService extends AbstractService {
   /**
    * Deny Cognito and ApiGateway users to invoke these lambdas
    *
+   * @param {Function} filter
    * @returns {Core.AWS.IAM.Statement|null}
    */
-  generateDenyInvokeFunctionStatement() {
+  generateDenyInvokeFunctionStatement(filter = ActionFlags.NON_DIRECT_ACTION_FILTER) {
     let policy = new Core.AWS.IAM.Policy();
 
     let statement = policy.statement.add();
     statement.effect = statement.constructor.DENY;
     statement.action.add(Core.AWS.Service.LAMBDA, 'InvokeFunction');
 
-    let lambdaArns = this.extractFunctionIdentifiers(ActionFlags.NON_DIRECT_ACTION_FILTER);
+    let lambdaArns = this.extractFunctionIdentifiers(filter);
 
     if (lambdaArns.length <= 0) {
       return null;

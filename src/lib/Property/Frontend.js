@@ -1,6 +1,7 @@
 /**
  * Created by AlexanderC on 6/4/15.
  */
+/*eslint max-statements: [2, 100]*/
 
 'use strict';
 
@@ -86,10 +87,18 @@ export class Frontend {
       config.identityPoolId = cognitoConfig.identityPool.IdentityPoolId;
       config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders || {};
 
-      if (cognitoIdpConfig.UserPool && cognitoIdpConfig.UserPoolClient) {
-        config.identityProviders[cognitoIdpConfig.ProviderName] = {
-          UserPoolId: cognitoIdpConfig.UserPool.Id,
-          ClientId: cognitoIdpConfig.UserPoolClient.ClientId,
+      if (cognitoIdpConfig.userPool && cognitoIdpConfig.userPoolClient) {
+        config.identityProviders[cognitoIdpConfig.providerName] = {
+          UserPoolId: cognitoIdpConfig.userPool.Id,
+          ClientId: cognitoIdpConfig.userPoolClient.ClientId,
+        };
+      }
+
+      if (backendTarget) {
+        let cloudFrontConfig = propertyConfig.provisioning[Core.AWS.Service.CLOUD_FRONT];
+
+        config.website = {
+          cloudfront: cloudFrontConfig.domain,
         };
       }
 
@@ -436,7 +445,7 @@ export class Frontend {
           workingMicroserviceConfig = config;
         }
       } catch (e) {
-        console.log('Unable to copy file: ', e);
+        console.debug('Unable to copy file: ', e);
       }
     }
 
