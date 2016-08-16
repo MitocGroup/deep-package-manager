@@ -30,6 +30,7 @@ import objectMerge from 'object-merge';
 import nodePath from 'path';
 import jsonPointer from 'json-pointer';
 import {ActionFlags} from '../../Microservice/Metadata/Helpers/ActionFlags';
+import {SQSService} from './SQSService';
 
 /**
  * APIGateway service
@@ -65,7 +66,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {Number}
    */
   static get MAX_RETRIES() {
-    return 3;
+    return 5;
   }
 
   /**
@@ -74,7 +75,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {Number}
    */
   static get RETRY_INTERVAL() {
-    return 600;
+    return 1200;
   }
 
   /**
@@ -290,6 +291,21 @@ export class APIGatewayService extends AbstractService {
         },
       },
     };
+
+    let sqsService = this.provisioning.services.find(SQSService);
+
+    if (sqsService.getRumConfig().enabled) {
+      console.debug('Enabling CloudWatch logs for API Gateway.');
+      
+      config.cloudWatch = {
+        metrics: true,
+        logging: {
+          enabled: true,
+          logLevel: 'INFO',
+          dataTrace: true,
+        },
+      };
+    }
 
     let globalsConfig = this.property.config.globals;
     if (globalsConfig && globalsConfig.hasOwnProperty('api')) {
