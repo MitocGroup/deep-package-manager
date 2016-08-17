@@ -96,9 +96,11 @@ export class Frontend {
 
       if (backendTarget) {
         let cloudFrontConfig = propertyConfig.provisioning[Core.AWS.Service.CLOUD_FRONT];
+        let apiGatewayConfig = propertyConfig.provisioning[Core.AWS.Service.API_GATEWAY];
 
         config.website = {
           cloudfront: cloudFrontConfig.domain,
+          apigateway: apiGatewayConfig.api.baseUrl,
         };
       }
 
