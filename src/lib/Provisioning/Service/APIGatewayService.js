@@ -66,7 +66,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {Number}
    */
   static get MAX_RETRIES() {
-    return 5;
+    return 3;
   }
 
   /**
@@ -75,7 +75,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {Number}
    */
   static get RETRY_INTERVAL() {
-    return 1200;
+    return 600;
   }
 
   /**
@@ -291,21 +291,6 @@ export class APIGatewayService extends AbstractService {
         },
       },
     };
-
-    let sqsService = this.provisioning.services.find(SQSService);
-
-    if (sqsService.getRumConfig().enabled) {
-      console.debug('Enabling CloudWatch logs for API Gateway.');
-      
-      config.cloudWatch = {
-        metrics: true,
-        logging: {
-          enabled: true,
-          logLevel: 'INFO',
-          dataTrace: true,
-        },
-      };
-    }
 
     let globalsConfig = this.property.config.globals;
     if (globalsConfig && globalsConfig.hasOwnProperty('api')) {
