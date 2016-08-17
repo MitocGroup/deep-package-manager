@@ -30,7 +30,6 @@ import objectMerge from 'object-merge';
 import nodePath from 'path';
 import jsonPointer from 'json-pointer';
 import {ActionFlags} from '../../Microservice/Metadata/Helpers/ActionFlags';
-import {SQSService} from './SQSService';
 
 /**
  * APIGateway service
