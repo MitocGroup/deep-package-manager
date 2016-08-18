@@ -26,6 +26,7 @@ import {ESService} from './Service/ESService';
 import {Instance as PropertyInstance} from '../Property/Instance';
 import {WaitFor} from '../Helpers/WaitFor';
 import {Tagging} from './ResourceTagging/Tagging';
+import {SESService} from './Service/SESService';
 
 /**
  * Provisioning instance
@@ -77,6 +78,9 @@ export class Instance {
     });
     this._elasticsearch = new property.AWS.ES({
       region: this.getAwsServiceRegion(ESService, property.config.awsRegion),
+    });
+    this._ses = new property.AWS.SES({
+      region: this.getAwsServiceRegion(SESService, property.config.awsRegion),
     });
 
     // set region for services that depend on other services region
@@ -268,6 +272,13 @@ export class Instance {
   }
 
   /**
+   * @returns {AWS.SES|*}
+   */
+  get ses() {
+    return this._ses;
+  }
+
+  /**
    * @returns {AWS.ES|*}
    */
   get elasticSearch() {
@@ -317,6 +328,7 @@ export class Instance {
         new DynamoDBService(this),
         new KinesisService(this),
         new SNSService(this),
+        new SESService(this),
         new IAMService(this),
         new CognitoIdentityService(this),
         new CognitoIdentityProviderService(this),
