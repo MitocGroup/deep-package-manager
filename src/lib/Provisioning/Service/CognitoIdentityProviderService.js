@@ -85,14 +85,14 @@ export class CognitoIdentityProviderService extends AbstractService {
    * @private
    */
   _postDeployProvision(/* services */) {
-    if (this._isUpdate || !this.isCognitoPoolEnabled) {
+    if (!this.isCognitoPoolEnabled) {
       this._ready = true;
       return this;
     }
 
     this
       ._registerUserPoolTriggers()
-      .then(() => this._createAdminUser())
+      .then(() => this._config.adminUser || this._createAdminUser())
       .then(adminUser => {
         this._config.adminUser = adminUser;
 
