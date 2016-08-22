@@ -330,6 +330,10 @@ export class CognitoIdentityProviderService extends AbstractService {
         return Promise.all(promises);
       })
       .catch(e => {
+        if (e.code === 'ResourceConflictException') {
+          return Promise.resolve(userPool);
+        }
+
         setImmediate(() => {
           throw new FailedToUpdateUserPoolException(userPool.Name, e);
         });
