@@ -56,7 +56,7 @@ suite('Provisioning/Service/CognitoIdentityProviderService', function() {
     let triggers = cognitoIdpService._extractUserPoolTriggers();
 
     chai.expect(triggers).to.deep.equal({
-      PreSignUp: 'TestFunctionName',
+      PreSignUp: 'arn:aws:lambda:us-west-2:123456789012:function:TestFunctionName',
     });
   });
 
