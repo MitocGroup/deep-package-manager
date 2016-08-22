@@ -5,6 +5,7 @@
 import chai from 'chai';
 import Core from 'deep-core';
 import {CognitoIdentityProviderService} from '../../../lib/Provisioning/Service/CognitoIdentityProviderService';
+import {LambdaService} from '../../../lib/Provisioning/Service/LambdaService';
 import {ProvisioningInstanceMock} from '../../mock/Provisioning/ProvisioningInstanceMock';
 import {PropertyInstanceMock} from '../../mock/Property/PropertyInstanceMock';
 import {Statement as IAMStatement} from 'deep-core/lib.compiled/AWS/IAM/Statement';
@@ -32,5 +33,36 @@ suite('Provisioning/Service/CognitoIdentityProviderService', function() {
     let statement = cognitoIdpService.generateAllowActionsStatement(['testAction']);
 
     chai.expect(statement).to.be.an.instanceof(IAMStatement);
+  });
+
+  test('Check "_extractUserPoolTriggers" method', () => {
+    cognitoIdpService.property._config.globals = {
+      security: {
+        userPool: {
+          triggers: {
+            PreSignUp: '@test-ms:test-resource:test-action',
+          },
+        },
+      },
+    };
+
+    let lambdaService = cognitoIdpService.provisioning.services.find(LambdaService);
+    lambdaService._config.names = {
+      'test-ms': {
+        'test-resource-test-action': 'TestFunctionName',
+      },
+    };
+
+    let triggers = cognitoIdpService._extractUserPoolTriggers();
+
+    chai.expect(triggers).to.deep.equal({
+      PreSignUp: 'arn:aws:lambda:us-west-2:123456789012:function:TestFunctionName',
+    });
+  });
+
+  test('Check "_generateCognitoIdpArn" method', () => {
+    let cognitoIdpArn = cognitoIdpService._generateCognitoIdpArn();
+
+    chai.expect(cognitoIdpArn).to.be.a('string');
   });
 });
