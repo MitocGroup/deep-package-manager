@@ -305,10 +305,29 @@ export class CognitoIdentityProviderService extends AbstractService {
     return cognitoIdentityServiceProvider
       .updateUserPool(payload)
       .promise()
-      .then(()=> {
+      .then(() => {
         userPool.LambdaConfig = triggers;
 
         return userPool;
+      })
+      .then(() => { //@todo: move permissions provision into LambdaService?
+        let lambda = this.provisioning.lambda;
+        let userPoolId = this._config.userPool.Id;
+        let cognitoIdpArn = this._generateCognitoIdpArn();
+        let promises = Object.keys(triggers).map(triggerName => {
+          let lambdaArn = triggers[triggerName];
+          let payload =  {
+            Action: 'lambda:InvokeFunction',
+            Principal: Core.AWS.Service.identifier(this.name()),
+            FunctionName: lambdaArn,
+            StatementId: `${triggerName}_${userPoolId}`,
+            SourceArn: cognitoIdpArn,
+          };
+
+          return lambda.addPermission(payload).promise();
+        });
+
+        return Promise.all(promises);
       })
       .catch(e => {
         setImmediate(() => {
@@ -370,6 +389,17 @@ export class CognitoIdentityProviderService extends AbstractService {
     );
 
     return statement;
+  }
+
+  /**
+   * @returns {String}
+   * @private
+   */
+  _generateCognitoIdpArn() {
+    let userPool = this._config.userPool;
+    let region = this.provisioning.cognitoIdentityServiceProvider.config.region;
+
+    return `arn:aws:${this.name()}:${region}:${this.awsAccountId}:userpool/${userPool.Id}`;
   }
 
   /**
