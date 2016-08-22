@@ -36,7 +36,7 @@ suite('Provisioning/Service/CognitoIdentityProviderService', function() {
   });
 
   test('Check "_extractUserPoolTriggers" method', () => {
-    propertyInstance.config.globals.security = {
+    propertyInstance._config.globals.security = {
       userPool: {
         triggers: {
           PreSignUp: '@test-ms:test-resource:test-action',
