@@ -88,7 +88,7 @@ suite('Provisioning/Service/S3Service', () => {
   });
 
   test('Check "fakeBucketsConfig" static method', () => {
-    let fakeBucketsConfig = s3Service.fakeBucketsConfig('fakeAppIdentifier', '/fake/source/path');
+    let fakeBucketsConfig = S3Service.fakeBucketsConfig('fakeAppIdentifier', '/fake/source/path');
 
     chai.expect(fakeBucketsConfig).to.be.an('object');
   });
