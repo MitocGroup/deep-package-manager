@@ -80,9 +80,10 @@ export class S3Service extends AbstractService {
 
   /**
    * @param {String} appIdentifier
+   * @param {String} frontendSourcePath
    * @returns {Object}
    */
-  static fakeBucketsConfig(appIdentifier) {
+  static fakeBucketsConfig(appIdentifier, frontendSourcePath) {
     let config = {};
     let propertyHash = Hash.md5(appIdentifier.toString());
 
@@ -92,6 +93,7 @@ export class S3Service extends AbstractService {
 
     config[S3Service.PUBLIC_BUCKET] = {
       name: `${propertyHash}-${S3Service.PUBLIC_BUCKET}`,
+      sourcePath: frontendSourcePath,
     };
 
     config[S3Service.PRIVATE_BUCKET] = {

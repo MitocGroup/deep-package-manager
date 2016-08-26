@@ -90,13 +90,14 @@ export class Lambda {
    */
   createConfig(propertyConfig, localRuntime = false) {
     let config = Frontend.createConfig(propertyConfig, localRuntime, true);
+    let microservice = this._property.microservice(this._microserviceIdentifier);
 
     config.forceUserIdentity = this._forceUserIdentity;
     config.microserviceIdentifier = this.microserviceIdentifier;
     config.awsAccountId = propertyConfig.awsAccountId;
     config.appIdentifier = propertyConfig.appIdentifier;
     config.timestamp = (new Date()).getTime();
-    config.buckets = S3Service.fakeBucketsConfig(propertyConfig.appIdentifier);
+    config.buckets = S3Service.fakeBucketsConfig(propertyConfig.appIdentifier, microservice.autoload.frontend);
     config.tablesNames = {};
 
     config.cacheDsn = '';

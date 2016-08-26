@@ -86,4 +86,10 @@ suite('Provisioning/Service/S3Service', () => {
     let actualResult = s3Service._postDeployProvision('service');
     chai.expect(actualResult._ready).to.be.equal(true);
   });
+
+  test('Check "fakeBucketsConfig" static method', () => {
+    let fakeBucketsConfig = S3Service.fakeBucketsConfig('fakeAppIdentifier', '/fake/source/path');
+
+    chai.expect(fakeBucketsConfig).to.be.an('object');
+  });
 });
