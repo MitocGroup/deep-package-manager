@@ -89,6 +89,7 @@ export class LambdaService extends AbstractService {
       Core.AWS.Region.EU_IRELAND,
       Core.AWS.Region.EU_FRANKFURT,
       Core.AWS.Region.ASIA_PACIFIC_TOKYO,
+      Core.AWS.Region.ASIA_PACIFIC_SEOUL,
     ];
   }
 
