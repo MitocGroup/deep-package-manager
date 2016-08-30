@@ -15,6 +15,7 @@ import {PreDeployHook} from './PreDeployHook';
 import {InitHook} from './InitHook';
 import {FrontendEngine} from './FrontendEngine';
 import path from 'path';
+import {PostRootFetchHook} from './PostRootFetchHook';
 
 /**
  * Microservice instance
@@ -43,6 +44,7 @@ export class Instance {
     this._preDeployHook = new PreDeployHook(this);
     this._postDeployHook = new PostDeployHook(this);
     this._initHook = new InitHook(this);
+    this._postRootFetchHook = new PostRootFetchHook(this);
 
     this._property = null;
   }
@@ -190,6 +192,13 @@ export class Instance {
    */
   get postDeployHook() {
     return this._postDeployHook.getHook();
+  }
+
+  /**
+   * @returns {Function}
+   */
+  get postRootFetchHook() {
+    return this._postRootFetchHook.getHook();
   }
 
   /**
