@@ -45,6 +45,7 @@ import {InvalidConfigException} from './Exception/InvalidConfigException';
 import {AbstractStrategy} from './ExtractStrategy/AbstractStrategy';
 import {OptimisticStrategy} from './ExtractStrategy/OptimisticStrategy';
 import {DeployIgnore} from './DeployIgnore';
+import {PostRootFetchHook} from '../Microservice/PostRootFetchHook';
 
 /**
  * Property instance
@@ -884,6 +885,14 @@ export class Instance {
   }
 
   /**
+   * @param {String} callback
+   * @private
+   */
+  _runPostRootFetchHooks(callback) {
+    this._runHook(PostRootFetchHook, callback);
+  }
+
+  /**
    * @param {Function} callback
    */
   runInitMsHooks(callback) {
@@ -1045,6 +1054,9 @@ export class Instance {
 
         // reset in order to get refreshed microservices
         this._microservices = null;
+        this._runPostRootFetchHooks(callback);
+
+        return;
       }
 
       callback(error);
