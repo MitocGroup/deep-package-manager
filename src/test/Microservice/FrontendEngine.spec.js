@@ -8,6 +8,7 @@ suite('Microservice/FrontendEngine', () => {
   let enginesNew = ['engine2', 'engine3'];
   let frontendEngine = new FrontendEngine(engines);
   let angularEngineResult = `deep-root-angular`;
+  let angular2EngineResult = 'deep-root-angular2';
   let aureliaEngineResult = `deep-root-aurelia`;
   let reactEngineResult = `deep-root-react`;
   let vanillaEngineResult = `deep-root-vanilla`;
@@ -34,7 +35,7 @@ suite('Microservice/FrontendEngine', () => {
 
   test('Check findSuitable() method for default engine returns \'angular\'', () => {
     let frontendEmptyEngine = new FrontendEngine();
-    chai.expect(frontendEmptyEngine.engines).to.be.eql([angularEngineResult, vanillaEngineResult]);
+    chai.expect(frontendEmptyEngine.engines).to.be.eql([angular2EngineResult, angularEngineResult, vanillaEngineResult]);
     chai.expect(frontendEmptyEngine.findSuitable()).to.be.equal('angular');
   });
 
