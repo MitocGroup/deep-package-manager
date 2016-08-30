@@ -67,11 +67,7 @@ export class FrontendEngine {
    */
   findSuitable(...microservices) {
     let engines = microservices.map((microservice) => microservice.frontendEngine);
-    let plainEnginesBatch = [];
-
-    engines.forEach((engineObj) => {
-      plainEnginesBatch = plainEnginesBatch.concat(engineObj.engines);
-    });
+    let plainEnginesBatch = engines.map(engine => engine.rawEngines);
 
     plainEngineLoop: for (let i in this._rawEngines) {
       if (!this._rawEngines.hasOwnProperty(i)) {
@@ -120,6 +116,7 @@ export class FrontendEngine {
   static get engines() {
     return [
       FrontendEngine.ANGULAR_ENGINE,
+      FrontendEngine.ANGULAR2_ENGINE,
       FrontendEngine.VANILLA_ENGINE,
     ];
   }
@@ -129,6 +126,13 @@ export class FrontendEngine {
    */
   static get ANGULAR_ENGINE() {
     return 'angular';
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get ANGULAR2_ENGINE() {
+    return 'angular2';
   }
 
   /**
