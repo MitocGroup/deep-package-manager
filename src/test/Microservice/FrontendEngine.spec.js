@@ -35,7 +35,7 @@ suite('Microservice/FrontendEngine', () => {
 
   test('Check findSuitable() method for default engine returns \'angular\'', () => {
     let frontendEmptyEngine = new FrontendEngine();
-    chai.expect(frontendEmptyEngine.engines).to.be.eql([angular2EngineResult, angularEngineResult, vanillaEngineResult]);
+    chai.expect(frontendEmptyEngine.engines).to.be.eql([angularEngineResult, angular2EngineResult, vanillaEngineResult]);
     chai.expect(frontendEmptyEngine.findSuitable()).to.be.equal('angular');
   });
 
