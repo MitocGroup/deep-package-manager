@@ -12,7 +12,9 @@ export class PostRootFetchHook extends InitHook {
    */
   constructor(...args) {
     super(...args);
-  }/**
+  }
+
+  /**
    * @param {Function} hook
    * @returns {Function}
    * @private
