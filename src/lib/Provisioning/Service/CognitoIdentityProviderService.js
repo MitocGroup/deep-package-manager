@@ -85,14 +85,14 @@ export class CognitoIdentityProviderService extends AbstractService {
    * @private
    */
   _postDeployProvision(/* services */) {
-    if (this._isUpdate || !this.isCognitoPoolEnabled) {
+    if (!this.isCognitoPoolEnabled) {
       this._ready = true;
       return this;
     }
 
     this
       ._registerUserPoolTriggers()
-      .then(() => this._createAdminUser())
+      .then(() => this._config.adminUser || this._createAdminUser())
       .then(adminUser => {
         this._config.adminUser = adminUser;
 
@@ -305,12 +305,35 @@ export class CognitoIdentityProviderService extends AbstractService {
     return cognitoIdentityServiceProvider
       .updateUserPool(payload)
       .promise()
-      .then(()=> {
+      .then(() => {
         userPool.LambdaConfig = triggers;
 
         return userPool;
       })
+      .then(() => { //@todo: move permissions provision into LambdaService?
+        let lambda = this.provisioning.lambda;
+        let userPoolId = this._config.userPool.Id;
+        let cognitoIdpArn = this._generateCognitoIdpArn();
+        let promises = Object.keys(triggers).map(triggerName => {
+          let lambdaArn = triggers[triggerName];
+          let payload =  {
+            Action: 'lambda:InvokeFunction',
+            Principal: Core.AWS.Service.identifier(this.name()),
+            FunctionName: lambdaArn,
+            StatementId: `${triggerName}_${userPoolId}`,
+            SourceArn: cognitoIdpArn,
+          };
+
+          return lambda.addPermission(payload).promise();
+        });
+
+        return Promise.all(promises);
+      })
       .catch(e => {
+        if (e.code === 'ResourceConflictException') {
+          return Promise.resolve(userPool);
+        }
+
         setImmediate(() => {
           throw new FailedToUpdateUserPoolException(userPool.Name, e);
         });
@@ -370,6 +393,17 @@ export class CognitoIdentityProviderService extends AbstractService {
     );
 
     return statement;
+  }
+
+  /**
+   * @returns {String}
+   * @private
+   */
+  _generateCognitoIdpArn() {
+    let userPool = this._config.userPool;
+    let region = this.provisioning.cognitoIdentityServiceProvider.config.region;
+
+    return `arn:aws:${this.name()}:${region}:${this.awsAccountId}:userpool/${userPool.Id}`;
   }
 
   /**

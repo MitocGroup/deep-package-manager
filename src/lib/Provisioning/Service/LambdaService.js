@@ -26,6 +26,7 @@ import {ESService} from './ESService';
 import {FailedToCreateScheduledEventException} from './Exception/FailedToCreateScheduledEventException';
 import {FailedToAttachScheduledEventException} from './Exception/FailedToAttachScheduledEventException';
 import {CognitoIdentityProviderService} from './CognitoIdentityProviderService';
+import {SESService} from './SESService';
 
 /**
  * Lambda service
@@ -88,6 +89,7 @@ export class LambdaService extends AbstractService {
       Core.AWS.Region.EU_IRELAND,
       Core.AWS.Region.EU_FRANKFURT,
       Core.AWS.Region.ASIA_PACIFIC_TOKYO,
+      Core.AWS.Region.ASIA_PACIFIC_SEOUL,
     ];
   }
 
@@ -577,6 +579,7 @@ export class LambdaService extends AbstractService {
 
     if (cognitoIdpService.isCognitoPoolEnabled) {
       policy.statement.add(cognitoIdpService.generateAllowActionsStatement([
+        'AdminUpdateUserAttributes', 'AdminInitiateAuth',
         'AdminGetUser', 'AdminConfirmSignUp',
       ]));
     }
@@ -592,6 +595,9 @@ export class LambdaService extends AbstractService {
     let dynamoDbECStatement = policy.statement.add();
     dynamoDbECStatement.action.add(Core.AWS.Service.CLOUD_WATCH, 'setAlarmState');
     dynamoDbECStatement.resource.add().any();
+
+    let sesService = this.provisioning.services.find(SESService);
+    policy.statement.add(sesService.generateAllowActionsStatement());
 
     if (this._allowAlterIamService(microserviceIdentifier)) {
       let iamService = this.provisioning.services.find(IAMService);
