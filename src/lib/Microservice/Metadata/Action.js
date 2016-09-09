@@ -22,6 +22,7 @@ export class Action {
     this._type = config.type;
     this._methods = config.methods.map(m => m.toUpperCase());
     this._source = config.source;
+    this._api = config.api;
     this._engine = config.engine;
     this._cacheTtl = config.cacheTtl;
     this._forceUserIdentity = config.forceUserIdentity;
@@ -143,6 +144,13 @@ export class Action {
   /**
    * @returns {Object}
    */
+  get api() {
+    return this._api;
+  }
+
+  /**
+   * @returns {Object}
+   */
   get engine() {
     return this._engine;
   }
@@ -238,6 +246,7 @@ export class Action {
       type: this.type,
       source: this.source,
       methods: this.methods,
+      api: this.api,
       engine: this.engine,
       cacheEnabled: this.cacheEnabled,
       cacheTtl: this.cacheTtl,

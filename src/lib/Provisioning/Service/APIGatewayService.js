@@ -760,12 +760,12 @@ export class APIGatewayService extends AbstractService {
 
         switch (method) {
           case 'putMethod':
+            let params = resourceMethods[resourceMethod];
+
             methodParams.push({
-              authorizationType: resourceMethod === 'OPTIONS' ? 'NONE' : 'AWS_IAM',
+              authorizationType: params.authorizationType,
               requestModels: this.jsonEmptyModel,
-              requestParameters: this._getMethodRequestParameters(
-                resourceMethod, resourceMethods[resourceMethod]
-              ),
+              requestParameters: this._getMethodRequestParameters(resourceMethod, params),
             });
             break;
           case 'putMethodResponse':
@@ -1040,7 +1040,7 @@ export class APIGatewayService extends AbstractService {
 
               action.methods.forEach((httpMethod) => {
                 integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams(
-                  'AWS', httpMethod, uri, action.cacheEnabled
+                  'AWS', httpMethod, uri, action.api, action.cacheEnabled
                 );
               });
 
@@ -1051,6 +1051,7 @@ export class APIGatewayService extends AbstractService {
                   'HTTP',
                   httpMethod,
                   action.source,
+                  action.api,
                   action.cacheEnabled
                 );
               });
@@ -1076,16 +1077,18 @@ export class APIGatewayService extends AbstractService {
    * @returns {Object}
    * @private
    */
-  _getIntegrationTypeParams(type, httpMethod, uri, enableCache = false) {
+  _getIntegrationTypeParams(type, httpMethod, uri, apiConfig, enableCache = false) {
     let params = {
       type: 'MOCK',
       requestTemplates: this.getJsonRequestTemplate(httpMethod, type),
+      authorizationType: Action.AUTH_TYPE_NONE,
     };
 
     if (httpMethod !== 'OPTIONS') {
       params.type = type;
       params.integrationHttpMethod = (type === 'AWS') ? 'POST' : httpMethod;
       params.uri = uri;
+      params.authorizationType = apiConfig.authorization;
     }
 
     if (enableCache && httpMethod === 'GET') {
