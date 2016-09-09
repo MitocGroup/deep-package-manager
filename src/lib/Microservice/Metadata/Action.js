@@ -63,6 +63,30 @@ export class Action {
   }
 
   /**
+   * @returns {String}
+   */
+  static get AUTH_TYPE_AWS_IAM() {
+    return 'AWS_IAM';
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get AUTH_TYPE_NONE() {
+    return 'NONE';
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get API_AUTH_TYPES() {
+    return [
+      Action.AUTH_TYPE_AWS_IAM,
+      Action.AUTH_TYPE_NONE,
+    ];
+  }
+
+  /**
    * @returns {Number}
    */
   get scope() {

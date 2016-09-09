@@ -40,6 +40,13 @@ export default Joi.object().keys({
   validationSchema: JoiHelper.maybeString(),
   scope: JoiHelper.stringEnum(ActionFlags.STATES_STR_VECTOR).optional().default(ActionFlags.PUBLIC_STR),
 
+  // Api Gateway config
+  api: Joi.object().optional().keys({
+    authorization: Joi.string().optional().allow(Action.API_AUTH_TYPES).default(Action.AUTH_TYPE_AWS_IAM),
+  }).default({
+    authorization: Action.AUTH_TYPE_AWS_IAM,
+  }),
+
   // Lambda config
   engine: assureTypeLambda(Joi.object().optional().keys({
     memory: Joi.number().optional().integer()
