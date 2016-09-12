@@ -757,15 +757,14 @@ export class APIGatewayService extends AbstractService {
           resourceId: apiResource.id,
         };
         let methodParams = [];
+        let integrationParams = resourceMethods[resourceMethod];
 
         switch (method) {
           case 'putMethod':
-            let params = resourceMethods[resourceMethod];
-
             methodParams.push({
-              authorizationType: params.authorizationType,
+              authorizationType: integrationParams.authorizationType,
               requestModels: this.jsonEmptyModel,
-              requestParameters: this._getMethodRequestParameters(resourceMethod, params),
+              requestParameters: this._getMethodRequestParameters(resourceMethod, integrationParams),
             });
             break;
           case 'putMethodResponse':
@@ -778,15 +777,13 @@ export class APIGatewayService extends AbstractService {
             });
             break;
           case 'putIntegration':
-            let params = resourceMethods[resourceMethod];
-
-            //params.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
+            //integrationParams.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
             // @todo - find a smarter way to enable "Invoke with caller credentials" option
-            params.credentials = resourceMethod === 'OPTIONS' ?
+            integrationParams.credentials = resourceMethod === 'OPTIONS' ?
               null :
-              this._decideMethodIntegrationCredentials(params);
+              this._decideMethodIntegrationCredentials(integrationParams);
 
-            methodParams.push(params);
+            methodParams.push(integrationParams);
             break;
           case 'putIntegrationResponse':
             this.methodStatusCodes(resourceMethod).forEach((statusCode) => {
