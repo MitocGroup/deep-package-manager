@@ -132,7 +132,7 @@ export class Action {
     }
 
     // There's no user context for public endpoints
-    if (this.api.authorizationType === Action.AUTH_TYPE_NONE) {
+    if (this.api.authorization === Action.AUTH_TYPE_NONE) {
       return false;
     }
 
