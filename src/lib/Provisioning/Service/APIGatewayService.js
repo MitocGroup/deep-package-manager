@@ -447,7 +447,9 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _executeProvisionMethod(method, apiId, apiResources, integrationParams, callback) {
-    let methodsParams = this._methodParamsGenerator(method, apiId, apiResources, integrationParams);
+    let clonedIntegrationParams = objectMerge(integrationParams, {});
+
+    let methodsParams = this._methodParamsGenerator(method, apiId, apiResources, clonedIntegrationParams);
     let retriesMap = [];
     let dataStack = {};
 
@@ -758,13 +760,13 @@ export class APIGatewayService extends AbstractService {
         };
         let methodParams = [];
         let integrationParams = resourceMethods[resourceMethod];
-        let authorizationType = integrationParams.authorizationType;
+        let authType = integrationParams.authorizationType;
         delete integrationParams.authorizationType;
 
         switch (method) {
           case 'putMethod':
             methodParams.push({
-              authorizationType: authorizationType,
+              authorizationType: authType,
               requestModels: this.jsonEmptyModel,
               requestParameters: this._getMethodRequestParameters(resourceMethod, integrationParams),
             });
@@ -781,7 +783,7 @@ export class APIGatewayService extends AbstractService {
           case 'putIntegration':
             //integrationParams.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
             // @todo - find a smarter way to enable "Invoke with caller credentials" option
-            integrationParams.credentials = resourceMethod === 'OPTIONS' ?
+            integrationParams.credentials = resourceMethod === 'OPTIONS' || authType === Action.AUTH_TYPE_NONE ?
               null :
               this._decideMethodIntegrationCredentials(integrationParams);
 
