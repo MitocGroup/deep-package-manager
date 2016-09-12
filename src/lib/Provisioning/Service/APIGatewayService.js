@@ -758,11 +758,13 @@ export class APIGatewayService extends AbstractService {
         };
         let methodParams = [];
         let integrationParams = resourceMethods[resourceMethod];
+        let authorizationType = integrationParams.authorizationType;
+        delete integrationParams.authorizationType;
 
         switch (method) {
           case 'putMethod':
             methodParams.push({
-              authorizationType: integrationParams.authorizationType,
+              authorizationType: authorizationType,
               requestModels: this.jsonEmptyModel,
               requestParameters: this._getMethodRequestParameters(resourceMethod, integrationParams),
             });
