@@ -781,11 +781,9 @@ export class APIGatewayService extends AbstractService {
             });
             break;
           case 'putIntegration':
-            //integrationParams.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
-            // @todo - find a smarter way to enable "Invoke with caller credentials" option
-            integrationParams.credentials = resourceMethod === 'OPTIONS' || authType === Action.AUTH_TYPE_NONE ?
+            integrationParams.credentials = resourceMethod === 'OPTIONS' ?
               null :
-              this._decideMethodIntegrationCredentials(integrationParams);
+              this._decideMethodIntegrationCredentials(integrationParams, authType);
 
             methodParams.push(integrationParams);
             break;
@@ -817,10 +815,11 @@ export class APIGatewayService extends AbstractService {
    * for "non direct call" lambdas
    *
    * @param {Object} params
+   * @param {String} authType
    * @returns {String}
    * @private
    */
-  _decideMethodIntegrationCredentials(params) {
+  _decideMethodIntegrationCredentials(params, authType) {
     let credentials = 'arn:aws:iam::*:user/*';
 
     if (params.type === 'AWS' && params.uri) {
@@ -831,6 +830,11 @@ export class APIGatewayService extends AbstractService {
         if (this._nonDirectLambdaIdentifiers.indexOf(lambdaNameMatches[1]) !== -1) {
           credentials = this._config.api.role.Arn;
         }
+      }
+
+      // Allow non-authorized API Gateway endpoints to invoke lambda functions based on API Gateway exec role
+      if (authType === Action.AUTH_TYPE_NONE) {
+        credentials = this._config.api.role.Arn;
       }
     }
 
