@@ -27,6 +27,7 @@ import {FailedToCreateScheduledEventException} from './Exception/FailedToCreateS
 import {FailedToAttachScheduledEventException} from './Exception/FailedToAttachScheduledEventException';
 import {CognitoIdentityProviderService} from './CognitoIdentityProviderService';
 import {SESService} from './SESService';
+import {APIGatewayService} from './APIGatewayService';
 
 /**
  * Lambda service
@@ -494,6 +495,7 @@ export class LambdaService extends AbstractService {
     let cloudWatchEventsService = this.provisioning.services.find(CloudWatchEventsService);
     policy.statement.add(cloudWatchEventsService.generateAllowEffectEventsRulesStatement());
 
+    // @todo: move it to DynamoDBService
     let dynamoDbStatement = policy.statement.add();
     dynamoDbStatement.action.add(Core.AWS.Service.DYNAMO_DB, Core.AWS.IAM.Policy.ANY);
     dynamoDbStatement.resource.add(
@@ -503,6 +505,7 @@ export class LambdaService extends AbstractService {
       `table/${this._getGlobalResourceMask()}`
     );
 
+    // @todo: move it to S3Service
     let s3Statement = policy.statement.add();
     let s3ListBucketStatement = policy.statement.add();
     let s3ReadBucketStatement = policy.statement.add();
@@ -598,6 +601,9 @@ export class LambdaService extends AbstractService {
 
     let sesService = this.provisioning.services.find(SESService);
     policy.statement.add(sesService.generateAllowActionsStatement());
+
+    let apiGatewayService = this.provisioning.services.find(APIGatewayService);
+    policy.statement.add(apiGatewayService.manageApiGenerateAllowActionsStatement(['*']));
 
     if (this._allowAlterIamService(microserviceIdentifier)) {
       let iamService = this.provisioning.services.find(IAMService);
