@@ -22,6 +22,7 @@ export class Action {
     this._type = config.type;
     this._methods = config.methods.map(m => m.toUpperCase());
     this._source = config.source;
+    this._api = config.api;
     this._engine = config.engine;
     this._cacheTtl = config.cacheTtl;
     this._forceUserIdentity = config.forceUserIdentity;
@@ -59,6 +60,30 @@ export class Action {
     return [
       Action.LAMBDA,
       Action.EXTERNAL,
+    ];
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get AUTH_TYPE_AWS_IAM() {
+    return 'AWS_IAM';
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get AUTH_TYPE_NONE() {
+    return 'NONE';
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get API_AUTH_TYPES() {
+    return [
+      Action.AUTH_TYPE_AWS_IAM,
+      Action.AUTH_TYPE_NONE,
     ];
   }
 
@@ -106,6 +131,11 @@ export class Action {
       return false;
     }
 
+    // There's no user context for public endpoints
+    if (this.api.authorization === Action.AUTH_TYPE_NONE) {
+      return false;
+    }
+
     return this._forceUserIdentity;
   }
 
@@ -114,6 +144,13 @@ export class Action {
    */
   get cacheTtl() {
     return this._cacheTtl;
+  }
+
+  /**
+   * @returns {Object}
+   */
+  get api() {
+    return this._api;
   }
 
   /**
@@ -214,6 +251,7 @@ export class Action {
       type: this.type,
       source: this.source,
       methods: this.methods,
+      api: this.api,
       engine: this.engine,
       cacheEnabled: this.cacheEnabled,
       cacheTtl: this.cacheTtl,

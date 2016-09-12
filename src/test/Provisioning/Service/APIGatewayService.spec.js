@@ -92,17 +92,27 @@ suite('Provisioning/Service/APIGatewayService', () => {
       requestTemplates: {
         'application/json': '{"statusCode": 200}',
       },
+      authorizationType: 'NONE',
     };
+
     let type = 'testType';
     let httpMethod = 'OPTIONS';
     let uri = 'http://deep.mg';
-    chai.expect(apiGatewayService._getIntegrationTypeParams(type, httpMethod, uri)).to.be.eql(expectedResult);
+    let apiConfig = {
+      authorization: 'NONE',
+    };
+
+    chai.expect(apiGatewayService._getIntegrationTypeParams(type, httpMethod, uri, apiConfig)).to.be.eql(expectedResult);
   });
 
   test('Check _getIntegrationTypeParams getter for httpMethod !== "OPTIONS"', () => {
     let type = 'testType';
     let httpMethod = 'GET';
     let uri = 'http://deep.mg';
+    let apiConfig = {
+      authorization: 'AWS_IAM',
+    };
+
     let expectedResult = {
       type: type,
       uri: uri,
@@ -110,8 +120,9 @@ suite('Provisioning/Service/APIGatewayService', () => {
       requestTemplates: {
         'application/json': '',
       },
+      authorizationType: 'AWS_IAM',
     };
-    chai.expect(apiGatewayService._getIntegrationTypeParams(type, httpMethod, uri)).to.be.eql(expectedResult);
+    chai.expect(apiGatewayService._getIntegrationTypeParams(type, httpMethod, uri, apiConfig)).to.be.eql(expectedResult);
   });
 
   test('Check stageName getter returns valid value', () => {
@@ -383,16 +394,18 @@ suite('Provisioning/Service/APIGatewayService', () => {
     };
     let integrationParams = {
       testTesourcePath1: {
-        POST: 'src/Test/Create',
-        GET: 'src/Test/Retrieve',
-        PUT: 'src/Test/Update',
-        DELETE: 'src/Test/Delete',
+        POST: {
+          type: 'AWS',
+          requestTemplates: {},
+          authorizationType: 'AWS_IAM',
+        },
       },
       testTesourcePath2: {
-        POST: 'src/Test/Create',
-        GET: 'src/Test/Retrieve',
-        PUT: 'src/Test/Update',
-        DELETE: 'src/Test/Delete',
+        GET: {
+          type: 'AWS',
+          requestTemplates: {},
+          authorizationType: 'AWS_IAM',
+        },
       },
     };
     let apiResource = {
@@ -411,7 +424,7 @@ suite('Provisioning/Service/APIGatewayService', () => {
     }
 
     chai.expect(e).to.be.equal(null);
-    chai.expect(actualResult.length).to.be.equal(8);
+    chai.expect(actualResult.length).to.be.equal(2);
     chai.expect(actualResult).to.contains(expectedResult);
   });
 

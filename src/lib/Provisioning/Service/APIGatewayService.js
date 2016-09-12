@@ -447,7 +447,9 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _executeProvisionMethod(method, apiId, apiResources, integrationParams, callback) {
-    let methodsParams = this._methodParamsGenerator(method, apiId, apiResources, integrationParams);
+    let clonedIntegrationParams = objectMerge(integrationParams, {});
+
+    let methodsParams = this._methodParamsGenerator(method, apiId, apiResources, clonedIntegrationParams);
     let retriesMap = [];
     let dataStack = {};
 
@@ -757,15 +759,16 @@ export class APIGatewayService extends AbstractService {
           resourceId: apiResource.id,
         };
         let methodParams = [];
+        let integrationParams = resourceMethods[resourceMethod];
+        let authType = integrationParams.authorizationType;
+        delete integrationParams.authorizationType;
 
         switch (method) {
           case 'putMethod':
             methodParams.push({
-              authorizationType: resourceMethod === 'OPTIONS' ? 'NONE' : 'AWS_IAM',
+              authorizationType: authType,
               requestModels: this.jsonEmptyModel,
-              requestParameters: this._getMethodRequestParameters(
-                resourceMethod, resourceMethods[resourceMethod]
-              ),
+              requestParameters: this._getMethodRequestParameters(resourceMethod, integrationParams),
             });
             break;
           case 'putMethodResponse':
@@ -778,15 +781,11 @@ export class APIGatewayService extends AbstractService {
             });
             break;
           case 'putIntegration':
-            let params = resourceMethods[resourceMethod];
-
-            //params.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
-            // @todo - find a smarter way to enable "Invoke with caller credentials" option
-            params.credentials = resourceMethod === 'OPTIONS' ?
+            integrationParams.credentials = resourceMethod === 'OPTIONS' ?
               null :
-              this._decideMethodIntegrationCredentials(params);
+              this._decideMethodIntegrationCredentials(integrationParams, authType);
 
-            methodParams.push(params);
+            methodParams.push(integrationParams);
             break;
           case 'putIntegrationResponse':
             this.methodStatusCodes(resourceMethod).forEach((statusCode) => {
@@ -816,10 +815,11 @@ export class APIGatewayService extends AbstractService {
    * for "non direct call" lambdas
    *
    * @param {Object} params
+   * @param {String} authType
    * @returns {String}
    * @private
    */
-  _decideMethodIntegrationCredentials(params) {
+  _decideMethodIntegrationCredentials(params, authType) {
     let credentials = 'arn:aws:iam::*:user/*';
 
     if (params.type === 'AWS' && params.uri) {
@@ -830,6 +830,11 @@ export class APIGatewayService extends AbstractService {
         if (this._nonDirectLambdaIdentifiers.indexOf(lambdaNameMatches[1]) !== -1) {
           credentials = this._config.api.role.Arn;
         }
+      }
+
+      // Allow non-authorized API Gateway endpoints to invoke lambda functions based on API Gateway exec role
+      if (authType === Action.AUTH_TYPE_NONE) {
+        credentials = this._config.api.role.Arn;
       }
     }
 
@@ -1040,7 +1045,7 @@ export class APIGatewayService extends AbstractService {
 
               action.methods.forEach((httpMethod) => {
                 integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams(
-                  'AWS', httpMethod, uri, action.cacheEnabled
+                  'AWS', httpMethod, uri, action.api, action.cacheEnabled
                 );
               });
 
@@ -1051,6 +1056,7 @@ export class APIGatewayService extends AbstractService {
                   'HTTP',
                   httpMethod,
                   action.source,
+                  action.api,
                   action.cacheEnabled
                 );
               });
@@ -1072,20 +1078,23 @@ export class APIGatewayService extends AbstractService {
    * @param {String} type (AWS or HTTP)
    * @param {String} httpMethod
    * @param {String} uri
+   * @param {*} apiConfig
    * @param {Boolean} enableCache
    * @returns {Object}
    * @private
    */
-  _getIntegrationTypeParams(type, httpMethod, uri, enableCache = false) {
+  _getIntegrationTypeParams(type, httpMethod, uri, apiConfig, enableCache = false) {
     let params = {
       type: 'MOCK',
       requestTemplates: this.getJsonRequestTemplate(httpMethod, type),
+      authorizationType: Action.AUTH_TYPE_NONE,
     };
 
     if (httpMethod !== 'OPTIONS') {
       params.type = type;
       params.integrationHttpMethod = (type === 'AWS') ? 'POST' : httpMethod;
       params.uri = uri;
+      params.authorizationType = apiConfig.authorization;
     }
 
     if (enableCache && httpMethod === 'GET') {
