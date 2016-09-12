@@ -1504,4 +1504,26 @@ export class APIGatewayService extends AbstractService {
 
     getResourcesFunc();
   }
+
+  /**
+   * @param {String[]} actions
+   * @returns {Object}
+   */
+  manageApiGenerateAllowActionsStatement(actions = ['OPTIONS', 'HEAD', 'GET']) {
+    let policy = new Core.AWS.IAM.Policy();
+    let statement = policy.statement.add();
+
+    actions.forEach((actionName) => {
+      statement.action.add(Core.AWS.Service.API_GATEWAY, actionName);
+    });
+
+    statement.resource.add(
+      Core.AWS.Service.API_GATEWAY,
+      this.apiGatewayClient.config.region,
+      this.awsAccountId,
+      `restapis/${this._config.api.id}/stages/${this.stageName}`
+    );
+
+    return statement;
+  }
 }
