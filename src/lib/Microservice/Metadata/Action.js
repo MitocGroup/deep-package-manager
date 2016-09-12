@@ -131,6 +131,11 @@ export class Action {
       return false;
     }
 
+    // There's no user context for public endpoints
+    if (this.api.authorizationType === Action.AUTH_TYPE_NONE) {
+      return false;
+    }
+
     return this._forceUserIdentity;
   }
 
