@@ -24,7 +24,7 @@ suite('Microservice/Metadata/Action', () => {
       runtime: 'nodejs',
     },
     methods: ['GET', 'POST'],
-    forceUserIdentity: true,
+    forceUserIdentity: false,
   };
 
   let action = new Action(configInput.resourceName, configInput.name, configInput);
@@ -108,7 +108,7 @@ suite('Microservice/Metadata/Action', () => {
         runtime: 'nodejs',
       },
       methods: ['GET', 'POST'],
-      forceUserIdentity: true,
+      forceUserIdentity: false,
     };
 
     action = new Action(configInput.resourceName, configInput.name, configInput);

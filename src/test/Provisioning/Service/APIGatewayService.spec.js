@@ -424,7 +424,7 @@ suite('Provisioning/Service/APIGatewayService', () => {
     }
 
     chai.expect(e).to.be.equal(null);
-    chai.expect(actualResult.length).to.be.equal(8);
+    chai.expect(actualResult.length).to.be.equal(2);
     chai.expect(actualResult).to.contains(expectedResult);
   });
 
