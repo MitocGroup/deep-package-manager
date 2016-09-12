@@ -1078,6 +1078,7 @@ export class APIGatewayService extends AbstractService {
    * @param {String} type (AWS or HTTP)
    * @param {String} httpMethod
    * @param {String} uri
+   * @param {*} apiConfig
    * @param {Boolean} enableCache
    * @returns {Object}
    * @private
