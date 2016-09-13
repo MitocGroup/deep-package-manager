@@ -114,7 +114,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {String[]}
    */
   static get ALLOWED_CORS_HEADERS() {
-    return ['Content-Type', 'X-Amz-Date', 'X-Amz-Security-Token', 'Authorization'];
+    return ['Content-Type', 'X-Amz-Date', 'X-Amz-Security-Token', 'Authorization', 'x-api-key'];
   }
 
   /**
