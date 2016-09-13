@@ -43,8 +43,10 @@ export default Joi.object().keys({
   // Api Gateway config
   api: Joi.object().optional().keys({
     authorization: Joi.string().optional().allow(Action.API_AUTH_TYPES).default(Action.AUTH_TYPE_AWS_IAM),
+    keyRequired: Joi.boolean().optional().default(false),
   }).default({
     authorization: Action.AUTH_TYPE_AWS_IAM,
+    keyRequired: false,
   }),
 
   // Lambda config
