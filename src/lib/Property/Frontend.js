@@ -194,6 +194,7 @@ export class Frontend {
               api: apiEndpoint,
               original: (backendTarget || ActionFlags.isDirect(action.scope)) ? originalSource : null,
             },
+            api: action.api
           };
 
           if (localRuntime) {
