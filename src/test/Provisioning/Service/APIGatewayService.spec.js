@@ -74,7 +74,7 @@ suite('Provisioning/Service/APIGatewayService', () => {
   });
 
   test('Check ALLOWED_CORS_HEADERS static getter returns valid Array of headers', () => {
-    let corsHeaders = ['Content-Type', 'X-Amz-Date', 'X-Amz-Security-Token', 'Authorization'];
+    let corsHeaders = ['Content-Type', 'X-Amz-Date', 'X-Amz-Security-Token', 'Authorization', 'x-api-key'];
 
     chai.expect(APIGatewayService.ALLOWED_CORS_HEADERS).to.be.eql(corsHeaders);
   });
@@ -93,6 +93,7 @@ suite('Provisioning/Service/APIGatewayService', () => {
         'application/json': '{"statusCode": 200}',
       },
       authorizationType: 'NONE',
+      apiKeyRequired: false,
     };
 
     let type = 'testType';
@@ -111,6 +112,7 @@ suite('Provisioning/Service/APIGatewayService', () => {
     let uri = 'http://deep.mg';
     let apiConfig = {
       authorization: 'AWS_IAM',
+      keyRequired: true,
     };
 
     let expectedResult = {
@@ -121,6 +123,7 @@ suite('Provisioning/Service/APIGatewayService', () => {
         'application/json': '',
       },
       authorizationType: 'AWS_IAM',
+      apiKeyRequired: true,
     };
     chai.expect(apiGatewayService._getIntegrationTypeParams(type, httpMethod, uri, apiConfig)).to.be.eql(expectedResult);
   });
@@ -379,6 +382,7 @@ suite('Provisioning/Service/APIGatewayService', () => {
     let method = 'putMethod';
     let expectedResult = {
       authorizationType: 'AWS_IAM',
+      apiKeyRequired: false,
       httpMethod: 'POST',
       requestModels: {
         'application/json': 'Empty',
@@ -398,6 +402,7 @@ suite('Provisioning/Service/APIGatewayService', () => {
           type: 'AWS',
           requestTemplates: {},
           authorizationType: 'AWS_IAM',
+          apiKeyRequired: false,
         },
       },
       testTesourcePath2: {
@@ -405,6 +410,7 @@ suite('Provisioning/Service/APIGatewayService', () => {
           type: 'AWS',
           requestTemplates: {},
           authorizationType: 'AWS_IAM',
+          apiKeyRequired: false,
         },
       },
     };

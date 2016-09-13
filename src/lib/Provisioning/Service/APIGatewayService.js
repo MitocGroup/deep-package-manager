@@ -114,7 +114,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {String[]}
    */
   static get ALLOWED_CORS_HEADERS() {
-    return ['Content-Type', 'X-Amz-Date', 'X-Amz-Security-Token', 'Authorization'];
+    return ['Content-Type', 'X-Amz-Date', 'X-Amz-Security-Token', 'Authorization', 'x-api-key'];
   }
 
   /**
@@ -761,12 +761,15 @@ export class APIGatewayService extends AbstractService {
         let methodParams = [];
         let integrationParams = resourceMethods[resourceMethod];
         let authType = integrationParams.authorizationType;
+        let apiKeyRequired = integrationParams.apiKeyRequired;
         delete integrationParams.authorizationType;
+        delete integrationParams.apiKeyRequired;
 
         switch (method) {
           case 'putMethod':
             methodParams.push({
               authorizationType: authType,
+              apiKeyRequired: apiKeyRequired,
               requestModels: this.jsonEmptyModel,
               requestParameters: this._getMethodRequestParameters(resourceMethod, integrationParams),
             });
@@ -1088,6 +1091,7 @@ export class APIGatewayService extends AbstractService {
       type: 'MOCK',
       requestTemplates: this.getJsonRequestTemplate(httpMethod, type),
       authorizationType: Action.AUTH_TYPE_NONE,
+      apiKeyRequired: false,
     };
 
     if (httpMethod !== 'OPTIONS') {
@@ -1095,6 +1099,7 @@ export class APIGatewayService extends AbstractService {
       params.integrationHttpMethod = (type === 'AWS') ? 'POST' : httpMethod;
       params.uri = uri;
       params.authorizationType = apiConfig.authorization;
+      params.apiKeyRequired = apiConfig.keyRequired;
     }
 
     if (enableCache && httpMethod === 'GET') {
