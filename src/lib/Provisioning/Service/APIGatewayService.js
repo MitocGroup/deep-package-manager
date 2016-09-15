@@ -1525,7 +1525,9 @@ export class APIGatewayService extends AbstractService {
     let resources = [
       `restapis/${this._config.api.id}/stages/${this.stageName}`,
       '/usageplans',
-      '/apikeys'
+      '/usageplans/*',
+      '/apikeys',
+      '/apikeys/*'
     ];
 
     resources.forEach(resourcePath => {
