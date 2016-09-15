@@ -1522,12 +1522,20 @@ export class APIGatewayService extends AbstractService {
       statement.action.add(Core.AWS.Service.API_GATEWAY, actionName);
     });
 
-    statement.resource.add(
-      Core.AWS.Service.API_GATEWAY,
-      this.apiGatewayClient.config.region,
-      this.awsAccountId,
-      `restapis/${this._config.api.id}/stages/${this.stageName}`
-    );
+    let resources = [
+      `restapis/${this._config.api.id}/stages/${this.stageName}`,
+      '/usageplans',
+      '/apikeys'
+    ];
+
+    resources.forEach(resourcePath => {
+      statement.resource.add(
+        Core.AWS.Service.API_GATEWAY,
+        this.apiGatewayClient.config.region,
+        this.awsAccountId,
+        resourcePath
+      );
+    });
 
     return statement;
   }
