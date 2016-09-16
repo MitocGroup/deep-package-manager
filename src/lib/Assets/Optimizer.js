@@ -27,16 +27,16 @@ export class Optimizer {
 
     let pattern = '';
     excludeExtensions.forEach(extension => {
-      pattern += `${extension}\\|`;
+      pattern += ` -name "*.${extension}" -o`;
     });
 
-    pattern = pattern.slice(0, -2); // remove last chars \\|
+    pattern = pattern.slice(0, -2); // remove last chars '-o'
 
     let cmd = new Exec(
       'find', // find
       '.', // in current directory
       '-type f', // all files
-      `! -regex ".*\\(${pattern}\\)$"`, // exclude passed extensions 
+      `! \\( ${pattern} \\)`, // exclude passed extensions
       `-exec gzip -${this._compressionLevel} "{}" \\;`, // compress using desired level
       '-exec mv "{}.gz" "{}" \\;' // restore files original names
     );
