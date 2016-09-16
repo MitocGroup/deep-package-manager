@@ -312,7 +312,7 @@ export class Frontend {
     let excludesStr = '--exclude="*.html" '; // exclude *.html by default
 
     Frontend._videoAssetsExtensions.forEach(extension => {
-      excludesStr += `--exclude="${extension}" `;
+      excludesStr += `--exclude="*.${extension}" `;
     });
 
     return new Exec(
@@ -363,7 +363,7 @@ export class Frontend {
   _getSyncCommandVideoFiles(credentialsFile, bucketName, bucketRegion) {
     let includesStr = '';
     Frontend._videoAssetsExtensions.forEach(extension => {
-      includesStr += `--include="${extension}" `;
+      includesStr += `--include="*.${extension}" `;
     });
 
     return new Exec(
@@ -385,7 +385,7 @@ export class Frontend {
    * @private
    */
   static get _videoAssetsExtensions() {
-    return ['*.avi', '*.fvl', '*.mp4', '*.wmv', '*.mov'];
+    return ['avi', 'fvl', 'mp4', 'wmv', 'mov'];
   }
 
   /**
@@ -566,8 +566,10 @@ export class Frontend {
       return;
     }
 
-    new Optimizer(this.path)
-      .optimize(callback);
+    new Optimizer(this.path).optimize(
+      Frontend._videoAssetsExtensions,
+      callback
+    );
   }
 
   /**

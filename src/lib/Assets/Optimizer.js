@@ -17,16 +17,26 @@ export class Optimizer {
   }
 
   /**
+   * @param {String[]} excludeExtensions
    * @param {Function} callback
    */
-  optimize(callback = () => {}) {
+  optimize(excludeExtensions = [], callback = () => {}) {
     console.debug(`Optimize frontend in '${this._path}' by compressing it`);
+
+    excludeExtensions.push('gz'); // exclude *.gz by default
+
+    let pattern = '';
+    excludeExtensions.forEach(extension => {
+      pattern += `${extension}\\|`;
+    });
+
+    pattern = pattern.slice(0, -2); // remove last chars \\|
 
     let cmd = new Exec(
       'find', // find
       '.', // in current directory
       '-type f', // all files
-      '! -name "*.gz"', // that don't haven the .gz extension
+      `! -regex ".*\\(${pattern}\\)$"`, // exclude passed extensions 
       `-exec gzip -${this._compressionLevel} "{}" \\;`, // compress using desired level
       '-exec mv "{}.gz" "{}" \\;' // restore files original names
     );
