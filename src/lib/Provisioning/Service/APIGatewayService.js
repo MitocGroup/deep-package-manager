@@ -1534,7 +1534,7 @@ export class APIGatewayService extends AbstractService {
       statement.resource.add(
         Core.AWS.Service.API_GATEWAY,
         this.apiGatewayClient.config.region,
-        this.awsAccountId,
+        '', // @note do not add account id here, it breaks the access o_O
         resourcePath
       );
     });
