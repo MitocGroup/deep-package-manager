@@ -482,10 +482,11 @@ export class LambdaService extends AbstractService {
    * @param {String} microserviceIdentifier
    * @param {Array} buckets
    * @param {Boolean} rootLambda
+   * @param {String[]} dynamoDbLeadingKeys
    *
    * @returns {Policy}
    */
-  _getAccessPolicy(microserviceIdentifier, buckets, rootLambda = false) {
+  _getAccessPolicy(microserviceIdentifier, buckets, rootLambda = false, dynamoDbLeadingKeys = null) {
     let policy = new Core.AWS.IAM.Policy();
 
     let cloudWatchLogsService = this.provisioning.services.find(CloudWatchLogsService);
@@ -503,14 +504,28 @@ export class LambdaService extends AbstractService {
       `table/${this._getGlobalResourceMask()}`
     );
 
-    let s3Statement = policy.statement.add();
-    let s3ListBucketStatement = policy.statement.add();
-    let s3ReadBucketStatement = policy.statement.add();
+    if (dynamoDbLeadingKeys) {
+      dynamoDbStatement.condition = {
+        'ForAllValues:StringEquals': {
+          'dynamodb:LeadingKeys': dynamoDbLeadingKeys,
+        },
+      };
+    }
 
-    s3Statement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, Core.AWS.IAM.Policy.ANY);
-    s3ListBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'ListBucket');
-    s3ReadBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'GetObject');
-    s3ReadBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'HeadObject');
+    let s3Statement;
+    let s3ListBucketStatement;
+    let s3ReadBucketStatement;
+
+    if (Object.keys(buckets).length > 0) {
+      s3Statement = policy.statement.add();
+      s3ListBucketStatement = policy.statement.add();
+      s3ReadBucketStatement = policy.statement.add();
+
+      s3Statement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, Core.AWS.IAM.Policy.ANY);
+      s3ListBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'ListBucket');
+      s3ReadBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'GetObject');
+      s3ReadBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'HeadObject');
+    }
 
     for (let bucketSuffix in buckets) {
       if (!buckets.hasOwnProperty(bucketSuffix)) {
