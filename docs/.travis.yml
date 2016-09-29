@@ -3,7 +3,7 @@ sudo: false
 node_js:
   - '4.3'
   - '5.11'
-  - '6.5'
+  - '6.7'
 cache:
   directories:
   - $(npm root -g)
@@ -39,7 +39,7 @@ env:
   # CODECLIMATE_REPO_TOKEN_MASTER=[secured]
   - secure: YY2G/SsQPH3+5xGl9kmCSLMbNxB3vadodMSsG5CFZ4/0n/41nfgbmojpHfdQQmNfUy/yNHsNo75ElPyPoAOfQqxiSqzYeAPbwtx6LaZb9HgEqtX1Jja7t1khVtnyFJT0isDCme1gP9+vyrN+NQnrfkdOsu8JgnrkB0D5ppCeo5Lr2fnEWi3HVnlRk2Iud4A4zzAKq8tziuK/ADylmwYwVCZTUhY+TQEdK2slI3TTW4mkLTR6DCeAm4CvSdP7lY1OyArBKeqKVPxdbXt9IAMKkYe+AB2ONhFHnJTBZ56fmJ42/5OIw/kecPxZfEXMhXEPgIQH6ZozIDqYSiqZy6fTJDvfD1assnAzD5K4qaGhBHtQwmaSEjbnCfTug8enBr8mAbj1fACC43yQq/tB9tsRzqjymyZxIYLbiwHlW+ALIL65nM9bFkI8o5c3+0tCn+4ZodfsrffMuZrlEcld4mkH/LTZGjB+pZWjcAcqSknhTz1GY/JHGaAhjrDZw806XQNcK25PgpIM9u8u3pSrRwv9+kfcazbxd6pzXUbKXlHIoT9FbOr5jbGm+0FArhABjHdUZ6TXdyZxulw2q8s9gHEbttMoM5ypDNLaWBSk8wHqJzKV6na6p7hzBU6+qiv/MIvYUjFp/lWjheauRsnPJvuekgXNB9C/9/Pl0H79r76B40w=
 before_install:
-  - (npm list -g babel-cli --depth=0 || npm install -g babel-cli@6.x.x)
+  - (npm list -g babel-cli --depth=0 || npm install -g babel-cli@6.14.0)
   - (npm list -g browserify --depth=0 || npm install -g browserify@11.2.x)
   - (npm list -g mocha@2.5.x --depth=0 || npm install -g mocha@2.5.x)
   - (npm list -g istanbul@^1.0.0-alpha --depth=0 || npm install -g istanbul@^1.0.0-alpha)
