@@ -390,6 +390,10 @@ export class CognitoIdentityService extends AbstractService {
       ['ListRecords', 'UpdateRecords', 'ListDatasets']
     ));
 
+    this.property
+      .microservices
+      .forEach(ms => ms.overwriteRolePolicy('system', policy));
+
     return {
       PolicyDocument: policy.toString(),
       PolicyName: this.generateAwsResourceName(

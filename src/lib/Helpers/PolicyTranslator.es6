@@ -4,7 +4,6 @@
 
 'use strict';
 
-import {Helpers_Hash} from 'deep-package-manager';
 import {AbstractService} from '../Provisioning/Service/AbstractService';
 import {Inflector} from './Inflector';
 import {Exception} from '../Exception/Exception';
