@@ -454,6 +454,10 @@ export class LambdaService extends AbstractService {
           microserviceIdentifier === rootMicroservice.identifier
         );
 
+        this.property
+          .microservice(microserviceIdentifier)
+          .overwriteRolePolicy('lambda', policy);
+
         let params = {
           PolicyDocument: policy.toString(),
           PolicyName: policyName,
