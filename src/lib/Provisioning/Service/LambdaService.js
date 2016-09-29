@@ -507,9 +507,6 @@ export class LambdaService extends AbstractService {
     );
 
     // @todo: move it to S3Service
-    let s3Statement = policy.statement.add();
-    let s3ListBucketStatement = policy.statement.add();
-    let s3ReadBucketStatement = policy.statement.add();
     if (dynamoDbLeadingKeys) {
       dynamoDbStatement.condition = {
         'ForAllValues:StringEquals': {
