@@ -15,13 +15,16 @@ suite('Microservice/Metadata/Action', () => {
     source: 'src/Property/RetrieveCounts',
     validationSchema: 'Sample',
     scope: 'public',
+    api: {
+      authorization: 'NONE'
+    },
     engine: {
       memory: 120,
       timeout: 60,
       runtime: 'nodejs',
     },
     methods: ['GET', 'POST'],
-    forceUserIdentity: true,
+    forceUserIdentity: false,
   };
 
   let action = new Action(configInput.resourceName, configInput.name, configInput);
@@ -96,13 +99,16 @@ suite('Microservice/Metadata/Action', () => {
       cron: null,
       cronPayload: null,
       scope: 3,
+      api: {
+        authorization: 'NONE'
+      },
       engine: {
         memory: 120,
         timeout: 60,
         runtime: 'nodejs',
       },
       methods: ['GET', 'POST'],
-      forceUserIdentity: true,
+      forceUserIdentity: false,
     };
 
     action = new Action(configInput.resourceName, configInput.name, configInput);

@@ -1,0 +1,20 @@
+engines:
+  duplication:
+    config:
+      languages:
+        javascript:
+          mass_threshold: 650
+exclude_paths:
+  - "**/bin/"
+  - "**/test/"
+  - "**/tests/"
+  - "**/tmp/"
+  - "**/vendor/"
+  - "**/coverage"
+  - "**/dist"
+  - "**/node_modules"
+  - "**/packages"
+  - "**/.idea"
+  - "**.spec.js"
+  - "**.min.js"
+  - "**.min.css"
