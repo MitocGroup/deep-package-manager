@@ -21,6 +21,7 @@ import Tmp from 'tmp';
 import OS from 'os';
 import {APIGatewayService} from '../Provisioning/Service/APIGatewayService';
 import {SQSService} from '../Provisioning/Service/SQSService';
+import {CognitoIdentityProviderService} from '../Provisioning/Service/CognitoIdentityProviderService';
 import {DeployIdInjector} from '../Assets/DeployIdInjector';
 import {Optimizer} from '../Assets/Optimizer';
 import {Injector as TagsInjector} from '../Tags/Injector';
@@ -87,11 +88,24 @@ export class Frontend {
       config.identityPoolId = cognitoConfig.identityPool.IdentityPoolId;
       config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders || {};
 
-      if (cognitoIdpConfig.userPool && cognitoIdpConfig.userPoolClient) {
+      // @todo - map clientName to clientId
+      if (cognitoIdpConfig.userPool && cognitoIdpConfig.userPoolClients) {
         config.identityProviders[cognitoIdpConfig.providerName] = {
           UserPoolId: cognitoIdpConfig.userPool.Id,
-          ClientId: cognitoIdpConfig.userPoolClient.ClientId,
+          // @note - fallback compatibility ^_^
+          ClientId: cognitoIdpConfig.userPoolClients[CognitoIdentityProviderService.SYSTEM_CLIENT_APP].ClientId,
+          Clients: {},
         };
+
+        for (let clientName in cognitoIdpConfig.userPoolClients) {
+          if (!cognitoIdpConfig.userPoolClients.hasOwnProperty(clientName)) {
+            continue;
+          }
+
+          let client = cognitoIdpConfig.userPoolClients[clientName];
+
+          config.identityProviders[cognitoIdpConfig.providerName].Clients[clientName] = client.ClientId;
+        }
       }
 
       if (backendTarget) {

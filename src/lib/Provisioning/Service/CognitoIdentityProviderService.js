@@ -255,7 +255,14 @@ export class CognitoIdentityProviderService extends AbstractService {
 
     return Promise.all(promises)
       .then(responses => {
-        return responses.map(response => response.UserPoolClient);
+        let clientsMap = {};
+
+        responses.forEach(response => {
+          let client = response.UserPoolClient;
+          clientsMap[client.ClientName] = client;
+        });
+
+        return clientsMap;
       })
       .catch(e => {
         setImmediate(() => {
