@@ -88,7 +88,6 @@ export class Frontend {
       config.identityPoolId = cognitoConfig.identityPool.IdentityPoolId;
       config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders || {};
 
-      // @todo - map clientName to clientId
       if (cognitoIdpConfig.userPool && cognitoIdpConfig.userPoolClients) {
         config.identityProviders[cognitoIdpConfig.providerName] = {
           UserPoolId: cognitoIdpConfig.userPool.Id,
