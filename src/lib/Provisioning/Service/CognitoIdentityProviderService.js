@@ -48,10 +48,10 @@ export class CognitoIdentityProviderService extends AbstractService {
           this._config.userPool = userPool;
           this._config.providerName = this._generateCognitoProviderName(userPool);
 
-          return this._createUserPoolClient(userPool);
+          return this._createUserPoolClients(userPool);
         })
-        .then(userPoolClient => {
-          this._config.userPoolClient = userPoolClient;
+        .then(userPoolClients => {
+          this._config.userPoolClients = userPoolClients;
 
           this._ready = true;
         });
@@ -114,11 +114,11 @@ export class CognitoIdentityProviderService extends AbstractService {
       return Promise.resolve(null);
     }
 
-    let clientId = this._config.userPoolClient.ClientId;
-    let userPoolId = this._config.userPool.Id;
     let cognitoIdentityServiceProvider = this.provisioning.cognitoIdentityServiceProvider;
+    let systemClientApp = this._config.userPoolClients[CognitoIdentityProviderService.SYSTEM_CLIENT_APP];
+
     let adminUserPayload = {
-      ClientId: clientId,
+      ClientId: systemClientApp.ClientId,
       Password: this._generatePseudoRandomPassword(),
       Username: adminMetadata.username,
       UserAttributes: [
@@ -134,7 +134,7 @@ export class CognitoIdentityProviderService extends AbstractService {
       .promise()
       .then(() => {
         let confirmPayload = {
-          UserPoolId: userPoolId,
+          UserPoolId: this._config.userPool.Id,
           Username: adminUserPayload.Username,
         };
 
@@ -163,13 +163,13 @@ export class CognitoIdentityProviderService extends AbstractService {
    */
   _authenticateAdminUser(adminUser) {
     let cognitoIdentityServiceProvider = this.provisioning.cognitoIdentityServiceProvider;
-    let userPoolClient = this._config.userPoolClient;
+    let systemClientApp = this._config.userPoolClients[CognitoIdentityProviderService.SYSTEM_CLIENT_APP];
     let userPool = this._config.userPool;
 
     let authPayload = {
       AuthFlow: 'ADMIN_NO_SRP_AUTH',
       UserPoolId: userPool.Id,
-      ClientId: userPoolClient.ClientId,
+      ClientId: systemClientApp.ClientId,
       AuthParameters: {
         USERNAME: adminUser.Username,
         PASSWORD: adminUser.Password,
@@ -234,27 +234,32 @@ export class CognitoIdentityProviderService extends AbstractService {
    * @returns {Promise}
    * @private
    */
-  _createUserPoolClient(userPool) {
-    let userPoolMetadata = this.userPoolMetadata;
+  _createUserPoolClients(userPool) {
     let cognitoIdentityServiceProvider = this.provisioning.cognitoIdentityServiceProvider;
-    let payload = {
-      UserPoolId: userPool.Id,
-      // JavaScript SDK doesn't support apps that have a client secret, 
-      // http://docs.aws.amazon.com/cognito/latest/developerguide/setting-up-the-javascript-sdk.html
-      GenerateSecret: false,
-      ClientName: userPoolMetadata.clientName,
-      ExplicitAuthFlows: [
-        'ADMIN_NO_SRP_AUTH',
-      ],
-    };
+    let promises = [];
 
-    return cognitoIdentityServiceProvider
-      .createUserPoolClient(payload)
-      .promise()
-      .then(data => data.UserPoolClient)
+    this.userPoolMetadata.clients.forEach(clientName => {
+      let payload = {
+        UserPoolId: userPool.Id,
+        // JavaScript SDK doesn't support apps that have a client secret,
+        // http://docs.aws.amazon.com/cognito/latest/developerguide/setting-up-the-javascript-sdk.html
+        GenerateSecret: false,
+        ClientName: clientName,
+        ExplicitAuthFlows: [
+          'ADMIN_NO_SRP_AUTH',
+        ],
+      };
+
+      promises.push(cognitoIdentityServiceProvider.createUserPoolClient(payload).promise());
+    });
+
+    return Promise.all(promises)
+      .then(responses => {
+        return responses.map(response => response.UserPoolClient);
+      })
       .catch(e => {
         setImmediate(() => {
-          throw new FailedToCreateCognitoUserPoolException(userPoolMetadata.poolName, e);
+          throw new FailedToCreateCognitoUserPoolException(this.userPoolMetadata.poolName, e);
         });
       });
   }
@@ -266,13 +271,23 @@ export class CognitoIdentityProviderService extends AbstractService {
   get userPoolMetadata() {
     if (this._userPoolMetadata === null) {
       let globalConfig = this.property.config.globals;
+      let poolConfig = globalConfig.security && globalConfig.security.userPool ?
+        globalConfig.security.userPool :
+        {};
+
+      // @todo - remove fallback to globalConfig.userPool && globalConfig.userPool.enabled
+      // when "enabled" parameter will be consolidated into deep-account under security key
+      let enabled = poolConfig.enabled || globalConfig.userPool && globalConfig.userPool.enabled;
+      let clients = (poolConfig.clients || '').trim();
+      clients = clients ? clients.split(/[\s,]+/) : [];
+
+      if (clients.indexOf(CognitoIdentityProviderService.SYSTEM_CLIENT_APP) === -1) {
+        clients.push(CognitoIdentityProviderService.SYSTEM_CLIENT_APP);
+      }
 
       this._userPoolMetadata = {
-        enabled: globalConfig.userPool && globalConfig.userPool.enabled,
-        clientName: this.generateAwsResourceName(
-          CognitoIdentityProviderService.USER_POOL_CLIENT_NAME,
-          this.name()
-        ),
+        enabled: enabled,
+        clients: clients,
         poolName: this.generateAwsResourceName(
           CognitoIdentityProviderService.USER_POOL_NAME,
           this.name()
@@ -447,8 +462,8 @@ export class CognitoIdentityProviderService extends AbstractService {
   /**
    * @returns {String}
    */
-  static get USER_POOL_CLIENT_NAME() {
-    return 'UserPoolClient';
+  static get SYSTEM_CLIENT_APP() {
+    return 'system';
   }
 
   /**
