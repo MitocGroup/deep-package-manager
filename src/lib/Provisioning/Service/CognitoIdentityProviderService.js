@@ -11,7 +11,7 @@ import {FailedToUpdateUserPoolException} from './Exception/FailedToUpdateUserPoo
 import {FailedToCreateAdminUserException} from './Exception/FailedToCreateAdminUserException';
 import {CognitoIdentityService} from './CognitoIdentityService';
 import Core from 'deep-core';
-import PwGen from 'pwgen/lib/pwgen_module';
+import passwordGenerator from 'password-generator';
 import AWS from 'aws-sdk';
 
 global.AWS = AWS; // amazon cognito js need AWS object to be set globally
@@ -433,12 +433,60 @@ export class CognitoIdentityProviderService extends AbstractService {
    * @private
    */
   _generatePseudoRandomPassword() {
-    let pwGen = new PwGen();
+    const policy = CognitoIdentityProviderService.DEFAULT_PASSWORD_POLICY;
 
-    pwGen.includeCapitalLetter = true;
-    pwGen.includeNumber = true;
+    let minLength = policy.MinimumLength;
+    let maxLength = minLength + 8;
+    let uppercaseMinCount = 2;
+    let lowercaseMinCount = 2;
+    let numberMinCount = 2;
+    let specialMinCount = 2;
+    let UPPERCASE_RE = /([A-Z])/g;
+    let LOWERCASE_RE = /([a-z])/g;
+    let NUMBER_RE = /([\d])/g;
+    let SPECIAL_CHAR_RE = /([\?\-])/g;
 
-    return pwGen.generate();
+    let isStrongEnough = (password) => {
+      let uc = password.match(UPPERCASE_RE);
+      let lc = password.match(LOWERCASE_RE);
+      let n = password.match(NUMBER_RE);
+      let sc = password.match(SPECIAL_CHAR_RE);
+
+      if (password.length < minLength) {
+        return false;
+      }
+
+      if (policy.RequireUppercase && !uc || uc.length < uppercaseMinCount) {
+        return false;
+      }
+
+      if (policy.RequireLowercase && !lc || lc.length < lowercaseMinCount) {
+        return false;
+      }
+
+      if (policy.RequireNumbers && !n || n.length < numberMinCount) {
+        return false;
+      }
+
+      if (policy.RequireSymbols && !sc || sc.length < specialMinCount) {
+        return false;
+      }
+
+      return true;
+    };
+
+    let customPassword = () => {
+      let password = '';
+      let randomLength = Math.floor(Math.random() * (maxLength - minLength)) + minLength;
+
+      while (!isStrongEnough(password)) {
+        password = passwordGenerator(randomLength, false, /[\w\d\?\-]/);
+      }
+
+      return password;
+    };
+
+    return customPassword();
   }
 
   /**
