@@ -530,7 +530,7 @@ export class CognitoIdentityProviderService extends AbstractService {
       RequireUppercase: true,
       RequireLowercase: true,
       RequireNumbers: true,
-      RequireSymbols: true,
+      RequireSymbols: false,
     }
   }
 
