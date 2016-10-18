@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "1.8.52",
+  "version": "1.8.54",
   "description": "DEEP Package Manager",
   "keywords": [
     "Digital Enterprise End-To-End Platform",
@@ -77,7 +77,7 @@
     "mkdirp": "^0.5.x",
     "moment": "^2.14.x",
     "object-merge": "^2.5.x",
-    "pwgen": "^0.1.6",
+    "password-generator": "^2.0.2",
     "raml-sanitize": "^1.1.x",
     "raml-validate": "^1.0.x",
     "readline-sync": "^1.4.x",
