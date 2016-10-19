@@ -218,6 +218,13 @@ export class CognitoIdentityProviderService extends AbstractService {
       },
     };
 
+    let emailVerifications = userPoolMetadata.verifications.email;
+
+    // @todo - find a smarter way to enable email verification (open an aws support ticket? )
+    if (emailVerifications && emailVerifications.enabled) {
+      payload.EmailVerificationSubject = 'Your verification code';
+    }
+
     return cognitoIdentityServiceProvider
       .createUserPool(payload)
       .promise()
@@ -295,6 +302,7 @@ export class CognitoIdentityProviderService extends AbstractService {
       this._userPoolMetadata = {
         enabled: enabled,
         clients: clients,
+        verifications: poolConfig.verifications,
         poolName: this.generateAwsResourceName(
           CognitoIdentityProviderService.USER_POOL_NAME,
           this.name()
