@@ -220,9 +220,8 @@ export class CognitoIdentityProviderService extends AbstractService {
 
     let emailVerifications = userPoolMetadata.verifications.email;
 
-    // @todo - find a smarter way to enable email verification (open an aws support ticket? )
     if (emailVerifications && emailVerifications.enabled) {
-      payload.EmailVerificationSubject = 'Your verification code';
+      payload.AutoVerifiedAttributes = ['email'];
     }
 
     return cognitoIdentityServiceProvider
