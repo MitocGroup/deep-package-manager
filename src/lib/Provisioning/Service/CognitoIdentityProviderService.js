@@ -463,19 +463,19 @@ export class CognitoIdentityProviderService extends AbstractService {
         return false;
       }
 
-      if (policy.RequireUppercase && !uc || uc.length < uppercaseMinCount) {
+      if (policy.RequireUppercase && !uc || (uc && uc.length < uppercaseMinCount)) {
         return false;
       }
 
-      if (policy.RequireLowercase && !lc || lc.length < lowercaseMinCount) {
+      if (policy.RequireLowercase && !lc || (lc && lc.length < lowercaseMinCount)) {
         return false;
       }
 
-      if (policy.RequireNumbers && !n || n.length < numberMinCount) {
+      if (policy.RequireNumbers && !n || (n && n.length < numberMinCount)) {
         return false;
       }
 
-      if (policy.RequireSymbols && !sc || sc.length < specialMinCount) {
+      if (policy.RequireSymbols && !sc || (sc && sc.length < specialMinCount)) {
         return false;
       }
 

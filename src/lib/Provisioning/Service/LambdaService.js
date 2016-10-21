@@ -327,11 +327,7 @@ export class LambdaService extends AbstractService {
       }, false);
 
       if (doUploadMicroserviceExecRole) {
-        let roleName = this.generateAwsResourceName(
-          Inflector.pascalCase(microservice.identifier) + 'LambdaExec',
-          Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
-          microservice.identifier
-        );
+        let roleName = this._generateLambdaRoleName(microservice.identifier);
 
         let params = {
           AssumeRolePolicyDocument: execRolePolicy.toString(),
@@ -355,6 +351,19 @@ export class LambdaService extends AbstractService {
         callback(execRoles);
       });
     };
+  }
+
+  /**
+   * @param {String} msIdentifier
+   * @returns {String}
+   * @private
+   */
+  _generateLambdaRoleName(msIdentifier) {
+    return this.generateAwsResourceName(
+      Inflector.pascalCase(msIdentifier) + 'LambdaExec',
+      Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
+      msIdentifier
+    );
   }
 
   /**
