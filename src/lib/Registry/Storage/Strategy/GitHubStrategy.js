@@ -14,7 +14,8 @@ export class GitHubStrategy extends AbstractStrategy {
    * @returns {String}
    */
   getModuleLocation(moduleContext) {
-    return `https://codeload.github.com/${moduleContext.repository}/legacy.tar.gz/v${moduleContext.version}`;
+    return `https://codeload.github.com/${moduleContext.repository}` +
+      `/legacy.tar.gz/${this._gitVersion(moduleContext.version)}`;
   }
 
   /**
@@ -29,6 +30,15 @@ export class GitHubStrategy extends AbstractStrategy {
   }
 
   /**
+   * @param {String} version
+   * @returns {String}
+   * @private
+   */
+  _gitVersion(version) {
+    return /^\s*[\d\.]+\s*$/.test(version) ? `v${version}` : version;
+  }
+
+  /**
    * @param {GitHubContext} moduleContext
    * @returns {String}
    */
@@ -37,7 +47,7 @@ export class GitHubStrategy extends AbstractStrategy {
     let version = moduleContext.version;
     let name = moduleContext.name;
 
-    return `https://raw.githubusercontent.com/${repoName}/v${version}/src/${name}`;
+    return `https://raw.githubusercontent.com/${repoName}/${this._gitVersion(version)}/src/${name}`;
   }
 
 
