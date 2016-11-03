@@ -133,14 +133,19 @@ export class CognitoIdentityProviderService extends AbstractService {
       .signUp(adminUserPayload)
       .promise()
       .then(() => {
-        let confirmPayload = {
+        let payload = {
           UserPoolId: this._config.userPool.Id,
           Username: adminUserPayload.Username,
         };
 
         return cognitoIdentityServiceProvider
-          .adminConfirmSignUp(confirmPayload)
-          .promise();
+          .adminGetUser(payload)
+          .promise()
+          .then(response => {
+            return response.UserStatus === CognitoIdentityProviderService.CONFIRMED_STATUS ?
+              Promise.resolve(null) :
+              cognitoIdentityServiceProvider.adminConfirmSignUp(payload).promise();
+          });
       })
       .then(() => this._authenticateAdminUser(adminUserPayload))
       .then(identityId => {
@@ -512,6 +517,13 @@ export class CognitoIdentityProviderService extends AbstractService {
    */
   get isCognitoPoolEnabled() {
     return this.userPoolMetadata.enabled;
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get CONFIRMED_STATUS() {
+    return 'CONFIRMED';
   }
 
   /**
