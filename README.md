@@ -74,7 +74,7 @@ Having questions related to deep-package-manager?
 
 - Ask questions: https://stackoverflow.com/questions/tagged/deep-framework
 - Chat with us: https://mitocgroup.slack.com/messages/general
-- Send an email: feedback@deep.mg
+- Send an email: feedback@mitocgroup.com
 
 Interested in contributing to deep-package-manager?
 
