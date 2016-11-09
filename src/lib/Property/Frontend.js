@@ -21,6 +21,7 @@ import Tmp from 'tmp';
 import OS from 'os';
 import {APIGatewayService} from '../Provisioning/Service/APIGatewayService';
 import {SQSService} from '../Provisioning/Service/SQSService';
+import {CognitoIdentityProviderService} from '../Provisioning/Service/CognitoIdentityProviderService';
 import {DeployIdInjector} from '../Assets/DeployIdInjector';
 import {Optimizer} from '../Assets/Optimizer';
 import {Injector as TagsInjector} from '../Tags/Injector';
@@ -87,11 +88,23 @@ export class Frontend {
       config.identityPoolId = cognitoConfig.identityPool.IdentityPoolId;
       config.identityProviders = cognitoConfig.identityPool.SupportedLoginProviders || {};
 
-      if (cognitoIdpConfig.userPool && cognitoIdpConfig.userPoolClient) {
+      if (cognitoIdpConfig.userPool && cognitoIdpConfig.userPoolClients) {
         config.identityProviders[cognitoIdpConfig.providerName] = {
           UserPoolId: cognitoIdpConfig.userPool.Id,
-          ClientId: cognitoIdpConfig.userPoolClient.ClientId,
+          // @note - fallback compatibility ^_^
+          ClientId: cognitoIdpConfig.userPoolClients[CognitoIdentityProviderService.SYSTEM_CLIENT_APP].ClientId,
+          Clients: {},
         };
+
+        for (let clientName in cognitoIdpConfig.userPoolClients) {
+          if (!cognitoIdpConfig.userPoolClients.hasOwnProperty(clientName)) {
+            continue;
+          }
+
+          let client = cognitoIdpConfig.userPoolClients[clientName];
+
+          config.identityProviders[cognitoIdpConfig.providerName].Clients[clientName] = client.ClientId;
+        }
       }
 
       if (backendTarget) {
@@ -194,6 +207,7 @@ export class Frontend {
               api: apiEndpoint,
               original: (backendTarget || ActionFlags.isDirect(action.scope)) ? originalSource : null,
             },
+            api: action.api
           };
 
           if (localRuntime) {
@@ -262,6 +276,16 @@ export class Frontend {
       throw new FailedUploadingFileToS3Exception('*', bucketName, syncResultHtml.error);
     }
 
+    console.debug(`Syncing ${this.path} with ${bucketName} (Video only, TTL=86400)`);
+
+    let syncResultVideos = this
+      ._getSyncCommandVideoFiles(credentialsFile, bucketName, bucketRegion)
+      .runSync();
+
+    if (syncResultVideos.failed) {
+      throw new FailedUploadingFileToS3Exception('*', bucketName, syncResultVideos.error);
+    }
+
     FileSystem.unlinkSync(credentialsFile);
 
     // @todo: improve this by using directory upload
@@ -290,7 +314,6 @@ export class Frontend {
     return syncStack.join();
   }
 
-
   /**
    * @param {String} credentialsFile
    * @param {String} bucketName
@@ -299,6 +322,12 @@ export class Frontend {
    * @private
    */
   _getSyncCommandNoHtml(credentialsFile, bucketName, bucketRegion) {
+    let excludesStr = '--exclude="*.html" '; // exclude *.html by default
+
+    Frontend._videoAssetsExtensions.forEach(extension => {
+      excludesStr += `--exclude="*.${extension}" `;
+    });
+
     return new Exec(
       `export AWS_CONFIG_FILE=${credentialsFile};`,
       'aws s3 sync',
@@ -307,7 +336,8 @@ export class Frontend {
       '--storage-class=REDUCED_REDUNDANCY',
       Frontend._contentEncodingExecOption,
       '--cache-control="max-age=86400"',
-      '--exclude="*.html"',
+      '--include="*"',
+      excludesStr,
       `'${this.path}'`,
       `'s3://${bucketName}'`
     );
@@ -334,6 +364,41 @@ export class Frontend {
       `'${this.path}'`,
       `'s3://${bucketName}'`
     );
+  }
+
+  /**
+   * @param {String} credentialsFile
+   * @param {String} bucketName
+   * @param {String} bucketRegion
+   * @returns {Exec}
+   * @private
+   */
+  _getSyncCommandVideoFiles(credentialsFile, bucketName, bucketRegion) {
+    let includesStr = '';
+    Frontend._videoAssetsExtensions.forEach(extension => {
+      includesStr += `--include="*.${extension}" `;
+    });
+
+    return new Exec(
+      `export AWS_CONFIG_FILE=${credentialsFile};`,
+      'aws s3 sync',
+      '--profile=deep',
+      `--region=${bucketRegion}`,
+      '--storage-class=REDUCED_REDUNDANCY',
+      '--cache-control="max-age=86400"',
+      '--exclude="*"',
+      includesStr,
+      `'${this.path}'`,
+      `'s3://${bucketName}'`
+    );
+  }
+
+  /**
+   * @returns {String[]}
+   * @private
+   */
+  static get _videoAssetsExtensions() {
+    return ['avi', 'fvl', 'mp4', 'wmv', 'mov'];
   }
 
   /**
@@ -514,8 +579,10 @@ export class Frontend {
       return;
     }
 
-    new Optimizer(this.path)
-      .optimize(callback);
+    new Optimizer(this.path).optimize(
+      Frontend._videoAssetsExtensions,
+      callback
+    );
   }
 
   /**

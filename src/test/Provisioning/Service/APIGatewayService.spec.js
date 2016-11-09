@@ -44,7 +44,6 @@ suite('Provisioning/Service/APIGatewayService', () => {
   });
 
   test('Check AVAILABLE_REGIONS() static method returns array of available regions', () => {
-    chai.expect(APIGatewayService.AVAILABLE_REGIONS.length).to.be.equal(6);
     chai.expect(APIGatewayService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.US_EAST_N_VIRGINIA);
     chai.expect(APIGatewayService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.US_WEST_OREGON);
     chai.expect(APIGatewayService.AVAILABLE_REGIONS).to.be.include(Core.AWS.Region.EU_IRELAND);
@@ -74,7 +73,7 @@ suite('Provisioning/Service/APIGatewayService', () => {
   });
 
   test('Check ALLOWED_CORS_HEADERS static getter returns valid Array of headers', () => {
-    let corsHeaders = ['Content-Type', 'X-Amz-Date', 'X-Amz-Security-Token', 'Authorization'];
+    let corsHeaders = ['Content-Type', 'X-Amz-Date', 'X-Amz-Security-Token', 'Authorization', 'x-api-key'];
 
     chai.expect(APIGatewayService.ALLOWED_CORS_HEADERS).to.be.eql(corsHeaders);
   });
@@ -92,17 +91,29 @@ suite('Provisioning/Service/APIGatewayService', () => {
       requestTemplates: {
         'application/json': '{"statusCode": 200}',
       },
+      authorizationType: 'NONE',
+      apiKeyRequired: false,
     };
+
     let type = 'testType';
     let httpMethod = 'OPTIONS';
     let uri = 'http://deep.mg';
-    chai.expect(apiGatewayService._getIntegrationTypeParams(type, httpMethod, uri)).to.be.eql(expectedResult);
+    let apiConfig = {
+      authorization: 'NONE',
+    };
+
+    chai.expect(apiGatewayService._getIntegrationTypeParams(type, httpMethod, uri, apiConfig)).to.be.eql(expectedResult);
   });
 
   test('Check _getIntegrationTypeParams getter for httpMethod !== "OPTIONS"', () => {
     let type = 'testType';
     let httpMethod = 'GET';
     let uri = 'http://deep.mg';
+    let apiConfig = {
+      authorization: 'AWS_IAM',
+      keyRequired: true,
+    };
+
     let expectedResult = {
       type: type,
       uri: uri,
@@ -110,8 +121,10 @@ suite('Provisioning/Service/APIGatewayService', () => {
       requestTemplates: {
         'application/json': '',
       },
+      authorizationType: 'AWS_IAM',
+      apiKeyRequired: true,
     };
-    chai.expect(apiGatewayService._getIntegrationTypeParams(type, httpMethod, uri)).to.be.eql(expectedResult);
+    chai.expect(apiGatewayService._getIntegrationTypeParams(type, httpMethod, uri, apiConfig)).to.be.eql(expectedResult);
   });
 
   test('Check stageName getter returns valid value', () => {
@@ -368,6 +381,7 @@ suite('Provisioning/Service/APIGatewayService', () => {
     let method = 'putMethod';
     let expectedResult = {
       authorizationType: 'AWS_IAM',
+      apiKeyRequired: false,
       httpMethod: 'POST',
       requestModels: {
         'application/json': 'Empty',
@@ -383,16 +397,20 @@ suite('Provisioning/Service/APIGatewayService', () => {
     };
     let integrationParams = {
       testTesourcePath1: {
-        POST: 'src/Test/Create',
-        GET: 'src/Test/Retrieve',
-        PUT: 'src/Test/Update',
-        DELETE: 'src/Test/Delete',
+        POST: {
+          type: 'AWS',
+          requestTemplates: {},
+          authorizationType: 'AWS_IAM',
+          apiKeyRequired: false,
+        },
       },
       testTesourcePath2: {
-        POST: 'src/Test/Create',
-        GET: 'src/Test/Retrieve',
-        PUT: 'src/Test/Update',
-        DELETE: 'src/Test/Delete',
+        GET: {
+          type: 'AWS',
+          requestTemplates: {},
+          authorizationType: 'AWS_IAM',
+          apiKeyRequired: false,
+        },
       },
     };
     let apiResource = {
@@ -411,7 +429,7 @@ suite('Provisioning/Service/APIGatewayService', () => {
     }
 
     chai.expect(e).to.be.equal(null);
-    chai.expect(actualResult.length).to.be.equal(8);
+    chai.expect(actualResult.length).to.be.equal(2);
     chai.expect(actualResult).to.contains(expectedResult);
   });
 

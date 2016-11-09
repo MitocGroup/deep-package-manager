@@ -19,6 +19,7 @@ import {ModuleInstance} from './Module/ModuleInstance';
 import {ModuleConfig} from './ModuleConfig';
 import {Server} from './Local/Server';
 import {Context} from './Context/Context';
+import {OptimisticStrategy} from './Resolver/Strategy/OptimisticStrategy';
 
 export class Registry {
   /**
@@ -254,7 +255,7 @@ export class Registry {
 
     DependenciesResolver.createUsingRawVersion(
       this._storage,
-      null,
+      new OptimisticStrategy(),
       moduleContext,
       (error, dependenciesResolver) => {
         if (error) {

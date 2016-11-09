@@ -49,7 +49,7 @@ export class GitHubContext extends Context {
    * @returns {*}
    */
   static parseGitHubVersion(version) {
-    let parts = version.match(/github:\/\/([^\/#]+\/[^\/#]+)(#[\d\.\*]+)?$/);
+    let parts = version.match(/github:\/\/([^\/#]+\/[^\/#]+)(#[\w\.\*]+)?$/);
 
     if (parts && parts.length === 3) {
       return [

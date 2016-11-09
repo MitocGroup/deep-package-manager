@@ -27,6 +27,7 @@ import {FailedToCreateScheduledEventException} from './Exception/FailedToCreateS
 import {FailedToAttachScheduledEventException} from './Exception/FailedToAttachScheduledEventException';
 import {CognitoIdentityProviderService} from './CognitoIdentityProviderService';
 import {SESService} from './SESService';
+import {APIGatewayService} from './APIGatewayService';
 
 /**
  * Lambda service
@@ -85,6 +86,7 @@ export class LambdaService extends AbstractService {
   static get AVAILABLE_REGIONS() {
     return [
       Core.AWS.Region.US_EAST_N_VIRGINIA,
+      Core.AWS.Region.US_EAST_OHIO,
       Core.AWS.Region.US_WEST_OREGON,
       Core.AWS.Region.EU_IRELAND,
       Core.AWS.Region.EU_FRANKFURT,
@@ -325,11 +327,7 @@ export class LambdaService extends AbstractService {
       }, false);
 
       if (doUploadMicroserviceExecRole) {
-        let roleName = this.generateAwsResourceName(
-          Inflector.pascalCase(microservice.identifier) + 'LambdaExec',
-          Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
-          microservice.identifier
-        );
+        let roleName = this._generateLambdaRoleName(microservice.identifier);
 
         let params = {
           AssumeRolePolicyDocument: execRolePolicy.toString(),
@@ -353,6 +351,19 @@ export class LambdaService extends AbstractService {
         callback(execRoles);
       });
     };
+  }
+
+  /**
+   * @param {String} msIdentifier
+   * @returns {String}
+   * @private
+   */
+  _generateLambdaRoleName(msIdentifier) {
+    return this.generateAwsResourceName(
+      Inflector.pascalCase(msIdentifier) + 'LambdaExec',
+      Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
+      msIdentifier
+    );
   }
 
   /**
@@ -453,6 +464,10 @@ export class LambdaService extends AbstractService {
           microserviceIdentifier === rootMicroservice.identifier
         );
 
+        this.property
+          .microservice(microserviceIdentifier)
+          .overwriteRolePolicy('lambda', policy);
+
         let params = {
           PolicyDocument: policy.toString(),
           PolicyName: policyName,
@@ -482,10 +497,11 @@ export class LambdaService extends AbstractService {
    * @param {String} microserviceIdentifier
    * @param {Array} buckets
    * @param {Boolean} rootLambda
+   * @param {String[]} dynamoDbLeadingKeys
    *
    * @returns {Policy}
    */
-  _getAccessPolicy(microserviceIdentifier, buckets, rootLambda = false) {
+  _getAccessPolicy(microserviceIdentifier, buckets, rootLambda = false, dynamoDbLeadingKeys = null) {
     let policy = new Core.AWS.IAM.Policy();
 
     let cloudWatchLogsService = this.provisioning.services.find(CloudWatchLogsService);
@@ -494,6 +510,7 @@ export class LambdaService extends AbstractService {
     let cloudWatchEventsService = this.provisioning.services.find(CloudWatchEventsService);
     policy.statement.add(cloudWatchEventsService.generateAllowEffectEventsRulesStatement());
 
+    // @todo: move it to DynamoDBService
     let dynamoDbStatement = policy.statement.add();
     dynamoDbStatement.action.add(Core.AWS.Service.DYNAMO_DB, Core.AWS.IAM.Policy.ANY);
     dynamoDbStatement.resource.add(
@@ -503,14 +520,29 @@ export class LambdaService extends AbstractService {
       `table/${this._getGlobalResourceMask()}`
     );
 
-    let s3Statement = policy.statement.add();
-    let s3ListBucketStatement = policy.statement.add();
-    let s3ReadBucketStatement = policy.statement.add();
+    // @todo: move it to S3Service
+    if (dynamoDbLeadingKeys) {
+      dynamoDbStatement.condition = {
+        'ForAllValues:StringEquals': {
+          'dynamodb:LeadingKeys': dynamoDbLeadingKeys,
+        },
+      };
+    }
 
-    s3Statement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, Core.AWS.IAM.Policy.ANY);
-    s3ListBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'ListBucket');
-    s3ReadBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'GetObject');
-    s3ReadBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'HeadObject');
+    let s3Statement;
+    let s3ListBucketStatement;
+    let s3ReadBucketStatement;
+
+    if (Object.keys(buckets).length > 0) {
+      s3Statement = policy.statement.add();
+      s3ListBucketStatement = policy.statement.add();
+      s3ReadBucketStatement = policy.statement.add();
+
+      s3Statement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, Core.AWS.IAM.Policy.ANY);
+      s3ListBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'ListBucket');
+      s3ReadBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'GetObject');
+      s3ReadBucketStatement.action.add(Core.AWS.Service.SIMPLE_STORAGE_SERVICE, 'HeadObject');
+    }
 
     for (let bucketSuffix in buckets) {
       if (!buckets.hasOwnProperty(bucketSuffix)) {
@@ -598,6 +630,9 @@ export class LambdaService extends AbstractService {
 
     let sesService = this.provisioning.services.find(SESService);
     policy.statement.add(sesService.generateAllowActionsStatement());
+
+    let apiGatewayService = this.provisioning.services.find(APIGatewayService);
+    policy.statement.add(apiGatewayService.manageApiGenerateAllowActionsStatement(['*']));
 
     if (this._allowAlterIamService(microserviceIdentifier)) {
       let iamService = this.provisioning.services.find(IAMService);

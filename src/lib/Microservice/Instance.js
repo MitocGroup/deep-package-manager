@@ -41,12 +41,33 @@ export class Instance {
     this._autoload = new Autoload(this._config.autoload, this._basePath);
     this._resources = null;
 
+    this._overwriteRolePolicy = (type, policy) => {};
+
     this._preDeployHook = new PreDeployHook(this);
     this._postDeployHook = new PostDeployHook(this);
     this._initHook = new InitHook(this);
     this._postRootFetchHook = new PostRootFetchHook(this);
 
     this._property = null;
+  }
+
+  /**
+   * @param   {Function} cb
+   *
+   * @returns {Instance|*}
+   */
+  overwriteRolePolicyCb(cb) {
+    this._overwriteRolePolicy = cb;
+
+    return this;
+  }
+
+  /**
+   * @param {String} type
+   * @param {Policy|*} policy
+   */
+  overwriteRolePolicy(type, policy) {
+    this._overwriteRolePolicy(type, policy);
   }
 
   /**

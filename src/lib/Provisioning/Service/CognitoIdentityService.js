@@ -128,12 +128,20 @@ export class CognitoIdentityService extends AbstractService {
     }
 
     if (cognitoIdpService.isCognitoPoolEnabled) {
-      changeSet.CognitoIdentityProviders = [
-        {
+      changeSet.CognitoIdentityProviders = [];
+
+      for (let clientName in cognitoIdpConfig.userPoolClients) {
+        if (!cognitoIdpConfig.userPoolClients.hasOwnProperty(clientName)) {
+          continue;
+        }
+
+        let client = cognitoIdpConfig.userPoolClients[clientName];
+
+        changeSet.CognitoIdentityProviders.push({
           ProviderName: cognitoIdpConfig.providerName,
-          ClientId: cognitoIdpConfig.userPoolClient.ClientId,
-        },
-      ];
+          ClientId: client.ClientId,
+        });
+      }
     }
 
     this._updateIdentityPool(this._config.identityPool, changeSet, (data) => {
@@ -389,6 +397,10 @@ export class CognitoIdentityService extends AbstractService {
     policy.statement.add(cognitoIdentity.generateAllowCognitoSyncStatement(
       ['ListRecords', 'UpdateRecords', 'ListDatasets']
     ));
+
+    this.property
+      .microservices
+      .forEach(ms => ms.overwriteRolePolicy('system', policy));
 
     return {
       PolicyDocument: policy.toString(),

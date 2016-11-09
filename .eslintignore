@@ -1,15 +1,22 @@
 bin/**/*
 test/**/*
-**/test
+**/tests
 **/vendor
 tmp/**/*
 **.spec.js
 **.min.js
 **.min.css
 
+# third party css files
+**/font-awesome.css
+**/materialdesignicons.css
+
 # third party js file
 *.min.js
 
+# DeepFramework
+DeepFramework.js
+deep-framework.js
 
 ## Directory-based project format:
 .idea/
@@ -38,3 +45,29 @@ npm-debug.log
 # Compiled libraries
 **/compile/
 **/lib.compiled/
+
+# App specific files
+.parameters.json
+deeploy.json*
+deeploy.*.json
+
+*_config.json*
+*.provisioning.json*
+
+# Backend files
+**/backend/src/**/*.js
+**/backend/src/**/*.zip
+**/backend/src/**/*.sfv
+**/backend/src/**/_config.json
+
+# Frontend dependencies
+**/frontend/_build/
+
+# Jspm config file
+config.core.js
+config.system.js
+config.test.js
+
+# Custom ignore files
+**/test
+

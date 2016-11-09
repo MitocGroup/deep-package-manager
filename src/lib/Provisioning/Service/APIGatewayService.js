@@ -114,7 +114,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {String[]}
    */
   static get ALLOWED_CORS_HEADERS() {
-    return ['Content-Type', 'X-Amz-Date', 'X-Amz-Security-Token', 'Authorization'];
+    return ['Content-Type', 'X-Amz-Date', 'X-Amz-Security-Token', 'Authorization', 'x-api-key'];
   }
 
   /**
@@ -163,6 +163,7 @@ export class APIGatewayService extends AbstractService {
   static get AVAILABLE_REGIONS() {
     return [
       Core.AWS.Region.US_EAST_N_VIRGINIA,
+      Core.AWS.Region.US_EAST_OHIO,
       Core.AWS.Region.US_WEST_OREGON,
       Core.AWS.Region.EU_IRELAND,
       Core.AWS.Region.EU_FRANKFURT,
@@ -447,7 +448,9 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _executeProvisionMethod(method, apiId, apiResources, integrationParams, callback) {
-    let methodsParams = this._methodParamsGenerator(method, apiId, apiResources, integrationParams);
+    let clonedIntegrationParams = objectMerge(integrationParams, {});
+
+    let methodsParams = this._methodParamsGenerator(method, apiId, apiResources, clonedIntegrationParams);
     let retriesMap = [];
     let dataStack = {};
 
@@ -757,15 +760,19 @@ export class APIGatewayService extends AbstractService {
           resourceId: apiResource.id,
         };
         let methodParams = [];
+        let integrationParams = resourceMethods[resourceMethod];
+        let authType = integrationParams.authorizationType;
+        let apiKeyRequired = integrationParams.apiKeyRequired;
+        delete integrationParams.authorizationType;
+        delete integrationParams.apiKeyRequired;
 
         switch (method) {
           case 'putMethod':
             methodParams.push({
-              authorizationType: resourceMethod === 'OPTIONS' ? 'NONE' : 'AWS_IAM',
+              authorizationType: authType,
+              apiKeyRequired: apiKeyRequired,
               requestModels: this.jsonEmptyModel,
-              requestParameters: this._getMethodRequestParameters(
-                resourceMethod, resourceMethods[resourceMethod]
-              ),
+              requestParameters: this._getMethodRequestParameters(resourceMethod, integrationParams),
             });
             break;
           case 'putMethodResponse':
@@ -778,15 +785,11 @@ export class APIGatewayService extends AbstractService {
             });
             break;
           case 'putIntegration':
-            let params = resourceMethods[resourceMethod];
-
-            //params.credentials = apiRole.Arn; // allow APIGateway to invoke all provisioned lambdas
-            // @todo - find a smarter way to enable "Invoke with caller credentials" option
-            params.credentials = resourceMethod === 'OPTIONS' ?
+            integrationParams.credentials = resourceMethod === 'OPTIONS' ?
               null :
-              this._decideMethodIntegrationCredentials(params);
+              this._decideMethodIntegrationCredentials(integrationParams, authType);
 
-            methodParams.push(params);
+            methodParams.push(integrationParams);
             break;
           case 'putIntegrationResponse':
             this.methodStatusCodes(resourceMethod).forEach((statusCode) => {
@@ -816,10 +819,11 @@ export class APIGatewayService extends AbstractService {
    * for "non direct call" lambdas
    *
    * @param {Object} params
+   * @param {String} authType
    * @returns {String}
    * @private
    */
-  _decideMethodIntegrationCredentials(params) {
+  _decideMethodIntegrationCredentials(params, authType) {
     let credentials = 'arn:aws:iam::*:user/*';
 
     if (params.type === 'AWS' && params.uri) {
@@ -830,6 +834,11 @@ export class APIGatewayService extends AbstractService {
         if (this._nonDirectLambdaIdentifiers.indexOf(lambdaNameMatches[1]) !== -1) {
           credentials = this._config.api.role.Arn;
         }
+      }
+
+      // Allow non-authorized API Gateway endpoints to invoke lambda functions based on API Gateway exec role
+      if (authType === Action.AUTH_TYPE_NONE) {
+        credentials = this._config.api.role.Arn;
       }
     }
 
@@ -1040,7 +1049,7 @@ export class APIGatewayService extends AbstractService {
 
               action.methods.forEach((httpMethod) => {
                 integrationParams[resourceApiPath][httpMethod] = this._getIntegrationTypeParams(
-                  'AWS', httpMethod, uri, action.cacheEnabled
+                  'AWS', httpMethod, uri, action.api, action.cacheEnabled
                 );
               });
 
@@ -1051,6 +1060,7 @@ export class APIGatewayService extends AbstractService {
                   'HTTP',
                   httpMethod,
                   action.source,
+                  action.api,
                   action.cacheEnabled
                 );
               });
@@ -1072,20 +1082,25 @@ export class APIGatewayService extends AbstractService {
    * @param {String} type (AWS or HTTP)
    * @param {String} httpMethod
    * @param {String} uri
+   * @param {*} apiConfig
    * @param {Boolean} enableCache
    * @returns {Object}
    * @private
    */
-  _getIntegrationTypeParams(type, httpMethod, uri, enableCache = false) {
+  _getIntegrationTypeParams(type, httpMethod, uri, apiConfig, enableCache = false) {
     let params = {
       type: 'MOCK',
       requestTemplates: this.getJsonRequestTemplate(httpMethod, type),
+      authorizationType: Action.AUTH_TYPE_NONE,
+      apiKeyRequired: false,
     };
 
     if (httpMethod !== 'OPTIONS') {
       params.type = type;
       params.integrationHttpMethod = (type === 'AWS') ? 'POST' : httpMethod;
       params.uri = uri;
+      params.authorizationType = apiConfig.authorization;
+      params.apiKeyRequired = apiConfig.keyRequired;
     }
 
     if (enableCache && httpMethod === 'GET') {
@@ -1494,5 +1509,37 @@ export class APIGatewayService extends AbstractService {
     };
 
     getResourcesFunc();
+  }
+
+  /**
+   * @param {String[]} actions
+   * @returns {Object}
+   */
+  manageApiGenerateAllowActionsStatement(actions = ['OPTIONS', 'HEAD', 'GET']) {
+    let policy = new Core.AWS.IAM.Policy();
+    let statement = policy.statement.add();
+
+    actions.forEach((actionName) => {
+      statement.action.add(Core.AWS.Service.API_GATEWAY, actionName);
+    });
+
+    let resources = [
+      `restapis/${this._config.api.id}/stages/${this.stageName}`,
+      '/usageplans',
+      '/usageplans/*',
+      '/apikeys',
+      '/apikeys/*'
+    ];
+
+    resources.forEach(resourcePath => {
+      statement.resource.add(
+        Core.AWS.Service.API_GATEWAY,
+        this.apiGatewayClient.config.region,
+        '', // @note do not add account id here, it breaks the access o_O
+        resourcePath
+      );
+    });
+
+    return statement;
   }
 }

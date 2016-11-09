@@ -405,7 +405,7 @@ export class DynamoDBService extends AbstractService {
         .filter((x) => tablesNamesVector.indexOf(x) < 0);
     }
 
-    let deepDb = new DB(models, tablesNames);
+    let deepDb = new DB(models, tablesNames, !!this.property.accountMicroservice);
 
     // @todo waiting for https://github.com/aws/aws-sdk-js/issues/710 to be fixed
     deepDb._setVogelsDriver(this.provisioning.dynamoDB);
