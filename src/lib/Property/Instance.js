@@ -84,6 +84,7 @@ export class Instance {
     this._isUpdate = false;
     this._strategy = null;
 
+    this._deployFlags = Instance.DEPLOY_BACKEND | Instance.DEPLOY_FRONTEND;
     this._microservicesToUpdate = [];
 
     this._config.deployId = new DeployID(this).toString();
@@ -119,10 +120,51 @@ export class Instance {
   }
 
   /**
+   * @param {Number} deployFlags
+   */
+  set deployFlags(deployFlags) {
+    this._deployFlags = deployFlags;
+  }
+
+  /**
    * @returns {DeployIgnore}
    */
   get deployIgnore() {
     return this._deployIgnore;
+  }
+
+  /**
+   * @returns {number}
+   */
+  get deployFrontend() {
+    return this._deployFlags & Instance.DEPLOY_FRONTEND;
+  }
+
+  /**
+   * @returns {number}
+   */
+  get deployBackend() {
+    return this._deployFlags & Instance.DEPLOY_BACKEND;
+  }
+
+  /**
+   * @param {Number} flag
+   * @returns {Instance}
+   */
+  addDeployFlag(flag) {
+    this._deployFlags |= flag;
+
+    return this;
+  }
+
+  /**
+   * @param {Number} flag
+   * @returns {Instance}
+   */
+  removeDeployFlag(flag){ 
+    this._deployFlags ^= flag;
+    
+    return this;
   }
 
   /**
@@ -685,7 +727,7 @@ export class Instance {
     let remaining = 0;
 
     // @todo: setup lambda defaults (memory size, timeout etc.)
-    let asyncLambdaActions = lambdas.map((lambda) => {
+    let asyncLambdaActions = (this.deployBackend ? lambdas : []).map((lambda) => {
       return () => {
         let deployedLambdasConfig = this._config.microservices[lambda.microserviceIdentifier].deployedServices.lambdas;
 
@@ -751,6 +793,10 @@ export class Instance {
     });
 
     wait.ready(() => {
+      if (!this.deployFrontend) {
+        return callback();
+      }
+
       this.buildFrontend(this._path, (frontend, error) => {
         if (error) {
           console.error(
@@ -1192,5 +1238,19 @@ export class Instance {
     }
 
     return this._microservices;
+  }
+
+  /**
+   * @returns {number}
+   */
+  static get DEPLOY_FRONTEND() {
+    return 0x001;
+  }
+
+  /**
+   * @returns {number}
+   */
+  static get DEPLOY_BACKEND() {
+    return 0x002;
   }
 }
