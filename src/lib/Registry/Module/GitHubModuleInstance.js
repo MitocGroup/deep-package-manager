@@ -58,7 +58,7 @@ export class GitHubModuleInstance extends ModuleInstance {
 
     unTarStream.on('entry', (header, stream, next) => {
       if (header.type === 'directory') {
-        next();
+        stream.resume().on('end', next);
         return;
       }
 
@@ -80,7 +80,7 @@ export class GitHubModuleInstance extends ModuleInstance {
       }
 
       filesToExtract--;
-      next();
+      stream.resume().on('end', next);
     });
 
     unTarStream.on('finish', () => {
