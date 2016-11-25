@@ -120,7 +120,7 @@ export class CognitoIdentityProviderService extends AbstractService {
     let adminUserPayload = {
       ClientId: systemClientApp.ClientId,
       Password: this._generatePseudoRandomPassword(),
-      Username: adminMetadata.username,
+      Username: adminMetadata.email,
       UserAttributes: [
         {
           Name: 'email',
