@@ -336,7 +336,8 @@ export class IAMService extends AbstractService {
       'deleteRolePolicy',
       'getRole',
       'putRolePolicy',
-      'updateAssumeRolePolicy'
+      'updateAssumeRolePolicy',
+      'listRolePolicies',
     ];
   }
 }
