@@ -120,7 +120,7 @@ export class CognitoIdentityProviderService extends AbstractService {
     let adminUserPayload = {
       ClientId: systemClientApp.ClientId,
       Password: this._generatePseudoRandomPassword(),
-      Username: adminMetadata.username,
+      Username: adminMetadata.email,
       UserAttributes: [
         {
           Name: 'email',
@@ -331,19 +331,20 @@ export class CognitoIdentityProviderService extends AbstractService {
       return Promise.resolve(userPool);
     }
 
-    let payload = {
+    userPool.LambdaConfig = triggers;
+
+    let payload = Object.assign({
       UserPoolId: userPool.Id,
-      LambdaConfig: triggers,
-    };
+    }, userPool);
+
+    // cleanup payload from `UnexpectedParameters`, to avoid UnexpectedParameterException
+    ['Id', 'Name', 'LastModifiedDate', 'CreationDate', 'SchemaAttributes', 'EstimatedNumberOfUsers'].forEach(key => {
+      delete payload[key];
+    });
 
     return cognitoIdentityServiceProvider
       .updateUserPool(payload)
       .promise()
-      .then(() => {
-        userPool.LambdaConfig = triggers;
-
-        return userPool;
-      })
       .then(() => { //@todo: move permissions provision into LambdaService?
         let lambda = this.provisioning.lambda;
         let userPoolId = this._config.userPool.Id;

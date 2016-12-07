@@ -160,7 +160,7 @@ export class Dependency {
 
     unTarStream.on('entry', (header, stream, next) => {
       if (header.type === 'directory') {
-        next();
+        stream.resume().on('end', next);
         return;
       }
 
