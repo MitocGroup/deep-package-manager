@@ -45,7 +45,7 @@ export class StandardStrategy extends AbstractStrategy {
    */
   extract(filePath, stream, cb) {
     if (!this._haveToDump(filePath)) {
-      cb();
+      stream.resume().on('end', cb);
       return;
     }
 
