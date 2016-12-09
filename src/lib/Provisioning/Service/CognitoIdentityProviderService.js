@@ -306,7 +306,7 @@ export class CognitoIdentityProviderService extends AbstractService {
       this._userPoolMetadata = {
         enabled: enabled,
         clients: clients,
-        verifications: poolConfig.verifications,
+        verifications: poolConfig.verifications || {},
         poolName: this.generateAwsResourceName(
           CognitoIdentityProviderService.USER_POOL_NAME,
           this.name()
