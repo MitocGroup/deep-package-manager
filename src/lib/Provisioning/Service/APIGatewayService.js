@@ -1361,7 +1361,7 @@ export class APIGatewayService extends AbstractService {
       };
 
       this.apiGatewayClient.deleteResource(params, (error, data) => {
-        if (error) {
+        if (error && !this._isFalseNegativeException(error)) {
           throw new FailedToDeleteApiResourceException(resource.path, error);
         }
 
@@ -1541,5 +1541,16 @@ export class APIGatewayService extends AbstractService {
     });
 
     return statement;
+  }
+
+  /**
+   * @param {Error} error
+   * @returns {boolean}
+   * @private
+   */
+  _isFalseNegativeException(error) {
+    return [
+      'NotFoundException',
+    ].indexOf(error.name) !== -1;
   }
 }
