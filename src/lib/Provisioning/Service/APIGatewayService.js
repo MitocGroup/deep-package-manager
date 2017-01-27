@@ -22,6 +22,7 @@ import {InvalidApiLogLevelException} from './Exception/InvalidApiLogLevelExcepti
 import {FailedToUpdateApiGatewayStageException} from './Exception/FailedToUpdateApiGatewayStageException';
 import {FailedToUpdateApiGatewayAccountException} from './Exception/FailedToUpdateApiGatewayAccountException';
 import {FailedToDeleteApiException} from './Exception/FailedToDeleteApiException';
+import {FailedToCreateApiAuthorizerException} from './Exception/FailedToCreateApiAuthorizerException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
@@ -201,7 +202,7 @@ export class APIGatewayService extends AbstractService {
     this._provisionApiResources(
       this.apiMetadata,
       resourcePaths
-    )((api, resources, role) => {
+    )((api, resources, role, authorizer) => {
       // @todo: remove this hook
       this._config.api = this._config.api || {};
 
@@ -210,6 +211,7 @@ export class APIGatewayService extends AbstractService {
       this._config.api.baseUrl = api.baseUrl;
       this._config.api.role = role;
       this._config.api.resources = objectMerge(this._config.api.resources, resources);
+      this._config.api.authorizer = authorizer;
 
       this._ready = true;
     });
@@ -290,6 +292,7 @@ export class APIGatewayService extends AbstractService {
           dataTrace: false,
         },
       },
+      authorizer: null
     };
 
     let globalsConfig = this.property.config.globals;
@@ -344,7 +347,10 @@ export class APIGatewayService extends AbstractService {
           this._createApiIamRole((role) => {
             restApiIamRole = role;
 
-            callback(restApi, this._extractApiResourcesMetadata(restResources), restApiIamRole);
+            this._createApiAuthorizer(this.apiConfig.authorizer || null, restApi, (authorizer) => {
+
+              callback(restApi, this._extractApiResourcesMetadata(restResources), restApiIamRole, authorizer);
+            });
           });
         });
       });
@@ -411,6 +417,42 @@ export class APIGatewayService extends AbstractService {
       api.baseUrl = this._generateApiBaseUrl(api.id, this.apiGatewayClient.config.region, this.stageName);
 
       callback(api);
+    });
+  }
+
+  /**
+   * @param {*|null} config
+   * @param {String} apiId
+   * @param {Function} callback
+   * @private
+   */
+  _createApiAuthorizer(config, apiId, callback) {
+    if (!config) {
+      callback(null);
+      return;
+    }
+
+    let name = this.generateAwsResourceName(
+      `${APIGatewayService.API_NAME_PREFIX}Authorizer`,
+      Core.AWS.Service.API_GATEWAY
+    );
+
+    let params = {
+      name: name,
+      restApiId: apiId,
+      identitySource: config.identitySource,
+      type: config.type,
+      authorizerResultTtlInSeconds: config.authorizerResultTtlInSeconds,
+      authorizerUri: config.authorizerUri, // @todo: deep resource id to aws required one
+      // authorizerCredentials: '', // @todo: to be updated after ApiAuthorizer lambda will be implemented
+    };
+
+    this.apiGatewayClient.createAuthorizer(params, (error, data) => {
+      if (error) {
+        throw new FailedToCreateApiAuthorizerException(params.name, error);
+      }
+
+      callback(data);
     });
   }
 
