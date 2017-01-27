@@ -347,6 +347,7 @@ export class APIGatewayService extends AbstractService {
           this._createApiIamRole((role) => {
             restApiIamRole = role;
 
+            //@todo: move Authorizer creation into postDeploy due to authorizer lambda ARN
             this._createApiAuthorizer(this.apiConfig.authorizer || null, restApi, (authorizer) => {
 
               callback(restApi, this._extractApiResourcesMetadata(restResources), restApiIamRole, authorizer);
@@ -443,9 +444,13 @@ export class APIGatewayService extends AbstractService {
       identitySource: config.identitySource,
       type: config.type,
       authorizerResultTtlInSeconds: config.authorizerResultTtlInSeconds,
-      authorizerUri: config.authorizerUri, // @todo: deep resource id to aws required one
+      authorizerUri: config.authorizerUri,
       // authorizerCredentials: '', // @todo: to be updated after ApiAuthorizer lambda will be implemented
     };
+
+    if (params.type === 'TOKEN') {
+      params.authorizerUri = this._deepResourceToAuthorizerUri(params.authorizerUri);
+    }
 
     this.apiGatewayClient.createAuthorizer(params, (error, data) => {
       if (error) {
@@ -885,6 +890,35 @@ export class APIGatewayService extends AbstractService {
     }
 
     return credentials;
+  }
+
+  /**
+   * @param {String} deepResourceId
+   * @returns {String}
+   * @private
+   */
+  _deepResourceToAuthorizerUri(deepResourceId) {
+    // @todo: move this method into Property class as helper method
+    let deepResourceParts = deepResourceId.split(':');
+
+    // deepResourceFormat: msId:resourceName:actionName
+    if (deepResourceParts.length !== 3) {
+      throw new Error(`Invalid deep resource identifier ${deepResourceId}.`);
+    }
+
+    let msId = deepResourceParts[0];
+    let resourceName = deepResourceParts[1];
+    let actionName = deepResourceParts[2];
+
+    let microservicesConfig = this.property.config.microservices;
+
+    let ms = microservicesConfig[msId];
+    let resourceActions = ms.resources[resourceName];
+    let action = resourceActions[actionName];
+
+    let lambdaArn = ms.lambdas[action.identifier].arn;
+
+    return this._composeLambdaIntegrationUri(lambdaArn);
   }
 
   /**
