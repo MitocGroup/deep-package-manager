@@ -428,6 +428,11 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _createApiAuthorizer(config, apiId, callback) {
+    if (this.isUpdate) {
+      callback(this._config.api.authorizer);
+      return;
+    }
+
     if (!config) {
       callback(null);
       return;
