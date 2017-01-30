@@ -78,12 +78,20 @@ export class Action {
   }
 
   /**
+   * @returns {String}
+   */
+  static get AUTH_TYPE_CUSTOM() {
+    return 'CUSTOM';
+  }
+
+  /**
    * @returns {String[]}
    */
   static get API_AUTH_TYPES() {
     return [
       Action.AUTH_TYPE_AWS_IAM,
       Action.AUTH_TYPE_NONE,
+      Action.AUTH_TYPE_CUSTOM,
     ];
   }
 

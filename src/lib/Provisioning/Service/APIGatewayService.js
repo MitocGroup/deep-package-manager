@@ -249,13 +249,10 @@ export class APIGatewayService extends AbstractService {
     this._nonDirectLambdaIdentifiers = this.provisioning.services.find(LambdaService)
       .extractFunctionIdentifiers(ActionFlags.NON_DIRECT_ACTION_FILTER);
 
-    let integrationParams = this.getResourcesIntegrationParams(this.property.config.microservices);
-
     this._putApiIntegrations(
       this._config.api.id,
       this._config.api.resources,
-      this._config.api.role,
-      integrationParams
+      this._config.api.role
     )((methods, integrations, rolePolicy, deployedApi, authorizer) => {
       this._config.api.methods = methods;
       this._config.api.integrations = integrations;
@@ -358,21 +355,23 @@ export class APIGatewayService extends AbstractService {
    * @param {String} apiId
    * @param {Object} apiResources
    * @param {Object} apiRole
-   * @param {Object} integrationParams
    * @returns {Function}
    * @private
    */
-  _putApiIntegrations(apiId, apiResources, apiRole, integrationParams) {
+  _putApiIntegrations(apiId, apiResources, apiRole) {
     var authorizer = null;
     var methods = null;
     var methodsResponse = null;
     var integrations = null;
     var integrationsResponse = null;
     var rolePolicy = null;
+    var integrationParams = null;
 
     return (callback) => {
       this._createApiAuthorizer(this.apiConfig.authorizer || null, apiId, (data) => {
         authorizer = data;
+
+        integrationParams = this.getResourcesIntegrationParams(this.property.config.microservices, authorizer);
 
         this._executeProvisionMethod('putMethod', apiId, apiResources, integrationParams, (data) => {
           methods = data;
@@ -811,17 +810,25 @@ export class APIGatewayService extends AbstractService {
         let integrationParams = resourceMethods[resourceMethod];
         let authType = integrationParams.authorizationType;
         let apiKeyRequired = integrationParams.apiKeyRequired;
+        let authorizerId = integrationParams.authorizerId;
         delete integrationParams.authorizationType;
         delete integrationParams.apiKeyRequired;
+        delete integrationParams.authorizerId;
 
         switch (method) {
           case 'putMethod':
-            methodParams.push({
+            let putMethodParams = {
               authorizationType: authType,
               apiKeyRequired: apiKeyRequired,
               requestModels: this.jsonEmptyModel,
               requestParameters: this._getMethodRequestParameters(resourceMethod, integrationParams),
-            });
+            };
+
+            if (authType === Action.AUTH_TYPE_CUSTOM) {
+              putMethodParams.authorizerId = authorizerId;
+            }
+
+            methodParams.push(putMethodParams);
             break;
           case 'putMethodResponse':
             this.methodStatusCodes(resourceMethod).forEach((statusCode) => {
@@ -1074,9 +1081,10 @@ export class APIGatewayService extends AbstractService {
    * Collect and compose microservice resources integration URIs
    *
    * @param {Object} microservicesConfig
+   * @param {Object} authorizer
    * @returns {Object}
    */
-  getResourcesIntegrationParams(microservicesConfig) {
+  getResourcesIntegrationParams(microservicesConfig, authorizer) {
     let integrationParams = {};
 
     for (let microserviceIdentifier in microservicesConfig) {
@@ -1100,6 +1108,11 @@ export class APIGatewayService extends AbstractService {
 
           let action = resourceActions[actionName];
           action.methods.unshift('OPTIONS'); // adding OPTIONS method for CORS
+
+          // adding default authorizer to all actions defined with CUSTOM authorizer
+          if (action.api.authorization === Action.AUTH_TYPE_CUSTOM && authorizer) {
+            action.api.authorizerId = authorizer.Id;
+          }
 
           let resourceApiPath = APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName);
           integrationParams[resourceApiPath] = {};
@@ -1164,6 +1177,7 @@ export class APIGatewayService extends AbstractService {
       params.uri = uri;
       params.authorizationType = apiConfig.authorization;
       params.apiKeyRequired = apiConfig.keyRequired;
+      params.authorizerId = apiConfig.authorizerId || null;
     }
 
     if (enableCache && httpMethod === 'GET') {
