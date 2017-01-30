@@ -519,7 +519,7 @@ export class APIGatewayService extends AbstractService {
 
       let params = methodsParams[methodIndex];
       let retries = retriesMap[methodIndex] || (retriesMap[methodIndex] = 0);
-      let resourcePath = params.resourcePath;
+      var resourcePath = params.resourcePath;
       delete params.resourcePath;
 
       this.apiGatewayClient[method](params, (error, data) => {
@@ -897,7 +897,7 @@ export class APIGatewayService extends AbstractService {
       }
 
       // Allow non-authorized API Gateway endpoints to invoke lambda functions based on API Gateway exec role
-      if (authType === Action.AUTH_TYPE_NONE) {
+      if ([Action.AUTH_TYPE_NONE, Action.AUTH_TYPE_CUSTOM].indexOf(authType) !== -1) {
         credentials = this._config.api.role.Arn;
       }
     }
