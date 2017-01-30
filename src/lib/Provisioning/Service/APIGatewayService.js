@@ -1111,7 +1111,7 @@ export class APIGatewayService extends AbstractService {
 
           // adding default authorizer to all actions defined with CUSTOM authorizer
           if (action.api.authorization === Action.AUTH_TYPE_CUSTOM && authorizer) {
-            action.api.authorizerId = authorizer.Id;
+            action.api.authorizerId = authorizer.id;
           }
 
           let resourceApiPath = APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName);
