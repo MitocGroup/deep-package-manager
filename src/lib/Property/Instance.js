@@ -106,6 +106,13 @@ export class Instance {
   }
 
   /**
+   * @returns {RegExp}
+   */
+  static get DEEP_RESOURCE_IDENTIFIER_REGEXP() {
+    return /^@\s*([^:]+)\s*:\s*([^\s]+)\s*:\s*([^\s]+)\s*$/;
+  }
+
+  /**
    * @returns {DeployConfig}
    */
   get configObj() {
@@ -1238,6 +1245,50 @@ export class Instance {
     }
 
     return this._microservices;
+  }
+
+  /**
+   * @param {String} resourceIdentifier (e.g. @msId:resourceName:actionName)
+   * @returns {String}
+   * @private
+   */
+  getLambdaArnForDeepResourceId(resourceIdentifier) {
+    let regExp = Instance.DEEP_RESOURCE_IDENTIFIER_REGEXP;
+
+    if (typeof resourceIdentifier === 'string' && regExp.test(resourceIdentifier)) {
+      let parts = resourceIdentifier.match(regExp);
+      let msId = parts[1];
+      let resourceName = parts[2];
+      let actionName = parts[3];
+
+      let msConfig = this.config.microservices;
+
+      if (!msConfig.hasOwnProperty(msId)) {
+        return null;
+      }
+
+      let ms = msConfig[msId];
+
+      if (!ms.resources.hasOwnProperty(resourceName)) {
+        return null;
+      }
+
+      let resourceActions = ms.resources[resourceName];
+
+      if (!resourceActions.hasOwnProperty(actionName)) {
+        return null;
+      }
+
+      let action = resourceActions[actionName];
+
+      if (ms.lambdas && ms.lambdas.hasOwnProperty(action.identifier)) {
+        return ms.lambdas[action.identifier].arn || null;
+      }
+
+      return null;
+    } else {
+      throw new Error(`Invalid deep resource identifier "${resourceIdentifier}".`);
+    }
   }
 
   /**

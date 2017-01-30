@@ -202,7 +202,7 @@ export class APIGatewayService extends AbstractService {
     this._provisionApiResources(
       this.apiMetadata,
       resourcePaths
-    )((api, resources, role, authorizer) => {
+    )((api, resources, role) => {
       // @todo: remove this hook
       this._config.api = this._config.api || {};
 
@@ -211,7 +211,6 @@ export class APIGatewayService extends AbstractService {
       this._config.api.baseUrl = api.baseUrl;
       this._config.api.role = role;
       this._config.api.resources = objectMerge(this._config.api.resources, resources);
-      this._config.api.authorizer = authorizer;
 
       this._ready = true;
     });
@@ -257,11 +256,12 @@ export class APIGatewayService extends AbstractService {
       this._config.api.resources,
       this._config.api.role,
       integrationParams
-    )((methods, integrations, rolePolicy, deployedApi) => {
+    )((methods, integrations, rolePolicy, deployedApi, authorizer) => {
       this._config.api.methods = methods;
       this._config.api.integrations = integrations;
       this._config.api.rolePolicy = rolePolicy;
       this._config.api.deployedApi = deployedApi;
+      this._config.api.authorizer = authorizer;
 
       // generate cloud watch log group name for deployed API Gateway
       if (this.apiConfig.cloudWatch.logging.enabled || this.apiConfig.cloudWatch.metrics) {
@@ -347,11 +347,7 @@ export class APIGatewayService extends AbstractService {
           this._createApiIamRole((role) => {
             restApiIamRole = role;
 
-            //@todo: move Authorizer creation into postDeploy due to authorizer lambda ARN
-            this._createApiAuthorizer(this.apiConfig.authorizer || null, restApi, (authorizer) => {
-
-              callback(restApi, this._extractApiResourcesMetadata(restResources), restApiIamRole, authorizer);
-            });
+            callback(restApi, this._extractApiResourcesMetadata(restResources), restApiIamRole);
           });
         });
       });
@@ -367,6 +363,7 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _putApiIntegrations(apiId, apiResources, apiRole, integrationParams) {
+    var authorizer = null;
     var methods = null;
     var methodsResponse = null;
     var integrations = null;
@@ -374,25 +371,29 @@ export class APIGatewayService extends AbstractService {
     var rolePolicy = null;
 
     return (callback) => {
-      this._executeProvisionMethod('putMethod', apiId, apiResources, integrationParams, (data) => {
-        methods = data;
+      this._createApiAuthorizer(this.apiConfig.authorizer || null, apiId, (data) => {
+        authorizer = data;
 
-        this._executeProvisionMethod('putMethodResponse', apiId, apiResources, integrationParams, (data) => {
-          methodsResponse = data;
+        this._executeProvisionMethod('putMethod', apiId, apiResources, integrationParams, (data) => {
+          methods = data;
 
-          this._executeProvisionMethod('putIntegration', apiId, apiResources, integrationParams, (data) => {
-            integrations = data;
+          this._executeProvisionMethod('putMethodResponse', apiId, apiResources, integrationParams, (data) => {
+            methodsResponse = data;
 
-            this._executeProvisionMethod('putIntegrationResponse', apiId, apiResources, integrationParams, (data) => {
-              integrationsResponse = data;
+            this._executeProvisionMethod('putIntegration', apiId, apiResources, integrationParams, (data) => {
+              integrations = data;
 
-              this._addPolicyToApiRole(apiRole, (data) => {
-                rolePolicy = data;
+              this._executeProvisionMethod('putIntegrationResponse', apiId, apiResources, integrationParams, (data) => {
+                integrationsResponse = data;
 
-                this._deployApi(apiId, (deployedApi) => {
+                this._addPolicyToApiRole(apiRole, (data) => {
+                  rolePolicy = data;
 
-                  this._updateStage(apiId, this.stageName, apiRole, this.apiConfig, (data) => {
-                    callback(methods, integrations, rolePolicy, deployedApi);
+                  this._deployApi(apiId, (deployedApi) => {
+
+                    this._updateStage(apiId, this.stageName, apiRole, this.apiConfig, (data) => {
+                      callback(methods, integrations, rolePolicy, deployedApi, authorizer);
+                    });
                   });
                 });
               });
@@ -898,25 +899,11 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _deepResourceToAuthorizerUri(deepResourceId) {
-    // @todo: move this method into Property class as helper method
-    let deepResourceParts = deepResourceId.split(':');
+    let lambdaArn = this.property.getLambdaArnForDeepResourceId(deepResourceId);
 
-    // deepResourceFormat: msId:resourceName:actionName
-    if (deepResourceParts.length !== 3) {
-      throw new Error(`Invalid deep resource identifier ${deepResourceId}.`);
+    if (!lambdaArn) {
+      throw new Error(`Lambda ARN not found for "${deepResourceId}" resource.`);
     }
-
-    let msId = deepResourceParts[0];
-    let resourceName = deepResourceParts[1];
-    let actionName = deepResourceParts[2];
-
-    let microservicesConfig = this.property.config.microservices;
-
-    let ms = microservicesConfig[msId];
-    let resourceActions = ms.resources[resourceName];
-    let action = resourceActions[actionName];
-
-    let lambdaArn = ms.lambdas[action.identifier].arn;
 
     return this._composeLambdaIntegrationUri(lambdaArn);
   }
