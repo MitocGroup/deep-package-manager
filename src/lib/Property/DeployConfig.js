@@ -242,4 +242,11 @@ export class DeployConfig {
   static get AVAILABLE_ENV() {
     return ['dev', 'stage', 'test', 'prod'];
   }
+
+  /**
+   * @returns {String}
+   */
+  static get DEFAULT_API_VERSION() {
+    return 'v1';
+  }
 }
