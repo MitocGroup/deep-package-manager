@@ -22,6 +22,7 @@ import {InvalidApiLogLevelException} from './Exception/InvalidApiLogLevelExcepti
 import {FailedToUpdateApiGatewayStageException} from './Exception/FailedToUpdateApiGatewayStageException';
 import {FailedToUpdateApiGatewayAccountException} from './Exception/FailedToUpdateApiGatewayAccountException';
 import {FailedToDeleteApiException} from './Exception/FailedToDeleteApiException';
+import {FailedToCreateApiAuthorizerException} from './Exception/FailedToCreateApiAuthorizerException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
@@ -248,18 +249,16 @@ export class APIGatewayService extends AbstractService {
     this._nonDirectLambdaIdentifiers = this.provisioning.services.find(LambdaService)
       .extractFunctionIdentifiers(ActionFlags.NON_DIRECT_ACTION_FILTER);
 
-    let integrationParams = this.getResourcesIntegrationParams(this.property.config.microservices);
-
     this._putApiIntegrations(
       this._config.api.id,
       this._config.api.resources,
-      this._config.api.role,
-      integrationParams
-    )((methods, integrations, rolePolicy, deployedApi) => {
+      this._config.api.role
+    )((methods, integrations, rolePolicy, deployedApi, authorizer) => {
       this._config.api.methods = methods;
       this._config.api.integrations = integrations;
       this._config.api.rolePolicy = rolePolicy;
       this._config.api.deployedApi = deployedApi;
+      this._config.api.authorizer = authorizer;
 
       // generate cloud watch log group name for deployed API Gateway
       if (this.apiConfig.cloudWatch.logging.enabled || this.apiConfig.cloudWatch.metrics) {
@@ -290,6 +289,7 @@ export class APIGatewayService extends AbstractService {
           dataTrace: false,
         },
       },
+      authorizer: null
     };
 
     let globalsConfig = this.property.config.globals;
@@ -355,37 +355,44 @@ export class APIGatewayService extends AbstractService {
    * @param {String} apiId
    * @param {Object} apiResources
    * @param {Object} apiRole
-   * @param {Object} integrationParams
    * @returns {Function}
    * @private
    */
-  _putApiIntegrations(apiId, apiResources, apiRole, integrationParams) {
+  _putApiIntegrations(apiId, apiResources, apiRole) {
+    var authorizer = null;
     var methods = null;
     var methodsResponse = null;
     var integrations = null;
     var integrationsResponse = null;
     var rolePolicy = null;
+    var integrationParams = null;
 
     return (callback) => {
-      this._executeProvisionMethod('putMethod', apiId, apiResources, integrationParams, (data) => {
-        methods = data;
+      this._createApiAuthorizer(this.apiConfig.authorizer || null, apiId, apiRole, (data) => {
+        authorizer = data;
 
-        this._executeProvisionMethod('putMethodResponse', apiId, apiResources, integrationParams, (data) => {
-          methodsResponse = data;
+        integrationParams = this.getResourcesIntegrationParams(this.property.config.microservices, authorizer);
 
-          this._executeProvisionMethod('putIntegration', apiId, apiResources, integrationParams, (data) => {
-            integrations = data;
+        this._executeProvisionMethod('putMethod', apiId, apiResources, integrationParams, (data) => {
+          methods = data;
 
-            this._executeProvisionMethod('putIntegrationResponse', apiId, apiResources, integrationParams, (data) => {
-              integrationsResponse = data;
+          this._executeProvisionMethod('putMethodResponse', apiId, apiResources, integrationParams, (data) => {
+            methodsResponse = data;
 
-              this._addPolicyToApiRole(apiRole, (data) => {
-                rolePolicy = data;
+            this._executeProvisionMethod('putIntegration', apiId, apiResources, integrationParams, (data) => {
+              integrations = data;
 
-                this._deployApi(apiId, (deployedApi) => {
+              this._executeProvisionMethod('putIntegrationResponse', apiId, apiResources, integrationParams, (data) => {
+                integrationsResponse = data;
 
-                  this._updateStage(apiId, this.stageName, apiRole, this.apiConfig, (data) => {
-                    callback(methods, integrations, rolePolicy, deployedApi);
+                this._addPolicyToApiRole(apiRole, (data) => {
+                  rolePolicy = data;
+
+                  this._deployApi(apiId, (deployedApi) => {
+
+                    this._updateStage(apiId, this.stageName, apiRole, this.apiConfig, (data) => {
+                      callback(methods, integrations, rolePolicy, deployedApi, authorizer);
+                    });
                   });
                 });
               });
@@ -411,6 +418,52 @@ export class APIGatewayService extends AbstractService {
       api.baseUrl = this._generateApiBaseUrl(api.id, this.apiGatewayClient.config.region, this.stageName);
 
       callback(api);
+    });
+  }
+
+  /**
+   * @param {*|null} config
+   * @param {String} apiId
+   * @param {*} apiRole
+   * @param {Function} callback
+   * @private
+   */
+  _createApiAuthorizer(config, apiId, apiRole, callback) {
+    if (this.isUpdate) {
+      callback(this._config.api.authorizer);
+      return;
+    }
+
+    if (!config) {
+      callback(null);
+      return;
+    }
+
+    let name = this.generateAwsResourceName(
+      `${APIGatewayService.API_NAME_PREFIX}Authorizer`,
+      Core.AWS.Service.API_GATEWAY
+    );
+
+    let params = {
+      name: name,
+      restApiId: apiId,
+      identitySource: config.identitySource,
+      type: config.type,
+      authorizerResultTtlInSeconds: config.authorizerResultTtlInSeconds,
+      authorizerUri: config.authorizerUri,
+      authorizerCredentials: apiRole.Arn,
+    };
+
+    if (params.type === 'TOKEN') {
+      params.authorizerUri = this._deepResourceToAuthorizerUri(params.authorizerUri);
+    }
+
+    this.apiGatewayClient.createAuthorizer(params, (error, data) => {
+      if (error) {
+        throw new FailedToCreateApiAuthorizerException(params.name, error);
+      }
+
+      callback(data);
     });
   }
 
@@ -467,7 +520,7 @@ export class APIGatewayService extends AbstractService {
 
       let params = methodsParams[methodIndex];
       let retries = retriesMap[methodIndex] || (retriesMap[methodIndex] = 0);
-      let resourcePath = params.resourcePath;
+      var resourcePath = params.resourcePath;
       delete params.resourcePath;
 
       this.apiGatewayClient[method](params, (error, data) => {
@@ -763,17 +816,25 @@ export class APIGatewayService extends AbstractService {
         let integrationParams = resourceMethods[resourceMethod];
         let authType = integrationParams.authorizationType;
         let apiKeyRequired = integrationParams.apiKeyRequired;
+        let authorizerId = integrationParams.authorizerId;
         delete integrationParams.authorizationType;
         delete integrationParams.apiKeyRequired;
+        delete integrationParams.authorizerId;
 
         switch (method) {
           case 'putMethod':
-            methodParams.push({
+            let putMethodParams = {
               authorizationType: authType,
               apiKeyRequired: apiKeyRequired,
               requestModels: this.jsonEmptyModel,
               requestParameters: this._getMethodRequestParameters(resourceMethod, integrationParams),
-            });
+            };
+
+            if (authType === Action.AUTH_TYPE_CUSTOM) {
+              putMethodParams.authorizerId = authorizerId;
+            }
+
+            methodParams.push(putMethodParams);
             break;
           case 'putMethodResponse':
             this.methodStatusCodes(resourceMethod).forEach((statusCode) => {
@@ -837,12 +898,27 @@ export class APIGatewayService extends AbstractService {
       }
 
       // Allow non-authorized API Gateway endpoints to invoke lambda functions based on API Gateway exec role
-      if (authType === Action.AUTH_TYPE_NONE) {
+      if ([Action.AUTH_TYPE_NONE, Action.AUTH_TYPE_CUSTOM].indexOf(authType) !== -1) {
         credentials = this._config.api.role.Arn;
       }
     }
 
     return credentials;
+  }
+
+  /**
+   * @param {String} deepResourceId
+   * @returns {String}
+   * @private
+   */
+  _deepResourceToAuthorizerUri(deepResourceId) {
+    let lambdaArn = this.property.getLambdaArnForDeepResourceId(deepResourceId);
+
+    if (!lambdaArn) {
+      throw new Error(`Lambda ARN not found for "${deepResourceId}" resource.`);
+    }
+
+    return this._composeLambdaIntegrationUri(lambdaArn);
   }
 
   /**
@@ -1011,9 +1087,10 @@ export class APIGatewayService extends AbstractService {
    * Collect and compose microservice resources integration URIs
    *
    * @param {Object} microservicesConfig
+   * @param {Object} authorizer
    * @returns {Object}
    */
-  getResourcesIntegrationParams(microservicesConfig) {
+  getResourcesIntegrationParams(microservicesConfig, authorizer) {
     let integrationParams = {};
 
     for (let microserviceIdentifier in microservicesConfig) {
@@ -1037,6 +1114,11 @@ export class APIGatewayService extends AbstractService {
 
           let action = resourceActions[actionName];
           action.methods.unshift('OPTIONS'); // adding OPTIONS method for CORS
+
+          // adding default authorizer to all actions defined with CUSTOM authorizer
+          if (action.api.authorization === Action.AUTH_TYPE_CUSTOM && authorizer) {
+            action.api.authorizerId = authorizer.id;
+          }
 
           let resourceApiPath = APIGatewayService.pathify(microserviceIdentifier, resourceName, actionName);
           integrationParams[resourceApiPath] = {};
@@ -1101,6 +1183,7 @@ export class APIGatewayService extends AbstractService {
       params.uri = uri;
       params.authorizationType = apiConfig.authorization;
       params.apiKeyRequired = apiConfig.keyRequired;
+      params.authorizerId = apiConfig.authorizerId || null;
     }
 
     if (enableCache && httpMethod === 'GET') {

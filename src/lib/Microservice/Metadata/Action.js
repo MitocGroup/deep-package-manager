@@ -78,12 +78,20 @@ export class Action {
   }
 
   /**
+   * @returns {String}
+   */
+  static get AUTH_TYPE_CUSTOM() {
+    return 'CUSTOM';
+  }
+
+  /**
    * @returns {String[]}
    */
   static get API_AUTH_TYPES() {
     return [
       Action.AUTH_TYPE_AWS_IAM,
       Action.AUTH_TYPE_NONE,
+      Action.AUTH_TYPE_CUSTOM,
     ];
   }
 
@@ -131,8 +139,8 @@ export class Action {
       return false;
     }
 
-    // There's no user context for public endpoints
-    if (this.api.authorization === Action.AUTH_TYPE_NONE) {
+    // There's no user context for public endpoints or endpoints secured with CUSTOM authorizer
+    if ([Action.AUTH_TYPE_NONE, Action.AUTH_TYPE_CUSTOM].indexOf(this.api.authorization) !== -1) {
       return false;
     }
 

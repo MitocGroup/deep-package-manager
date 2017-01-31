@@ -123,6 +123,7 @@ suite('Provisioning/Service/APIGatewayService', () => {
       },
       authorizationType: 'AWS_IAM',
       apiKeyRequired: true,
+      authorizerId: null
     };
     chai.expect(apiGatewayService._getIntegrationTypeParams(type, httpMethod, uri, apiConfig)).to.be.eql(expectedResult);
   });
