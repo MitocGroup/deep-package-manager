@@ -139,8 +139,8 @@ export class Action {
       return false;
     }
 
-    // There's no user context for public endpoints
-    if (this.api.authorization === Action.AUTH_TYPE_NONE) {
+    // There's no user context for public endpoints or endpoints secured with CUSTOM authorizer
+    if ([Action.AUTH_TYPE_NONE, Action.AUTH_TYPE_CUSTOM].indexOf(this.api.authorization) !== -1) {
       return false;
     }
 
