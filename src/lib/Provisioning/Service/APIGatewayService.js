@@ -368,7 +368,7 @@ export class APIGatewayService extends AbstractService {
     var integrationParams = null;
 
     return (callback) => {
-      this._createApiAuthorizer(this.apiConfig.authorizer || null, apiId, (data) => {
+      this._createApiAuthorizer(this.apiConfig.authorizer || null, apiId, apiRole, (data) => {
         authorizer = data;
 
         integrationParams = this.getResourcesIntegrationParams(this.property.config.microservices, authorizer);
@@ -424,10 +424,11 @@ export class APIGatewayService extends AbstractService {
   /**
    * @param {*|null} config
    * @param {String} apiId
+   * @param {*} apiRole
    * @param {Function} callback
    * @private
    */
-  _createApiAuthorizer(config, apiId, callback) {
+  _createApiAuthorizer(config, apiId, apiRole, callback) {
     if (this.isUpdate) {
       callback(this._config.api.authorizer);
       return;
@@ -450,7 +451,7 @@ export class APIGatewayService extends AbstractService {
       type: config.type,
       authorizerResultTtlInSeconds: config.authorizerResultTtlInSeconds,
       authorizerUri: config.authorizerUri,
-      // authorizerCredentials: '', // @todo: to be updated after ApiAuthorizer lambda will be implemented
+      authorizerCredentials: apiRole.Arn,
     };
 
     if (params.type === 'TOKEN') {
