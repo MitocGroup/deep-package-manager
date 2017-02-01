@@ -129,7 +129,7 @@ suite('Provisioning/Service/APIGatewayService', () => {
   });
 
   test('Check stageName getter returns valid value', () => {
-    chai.expect(apiGatewayService.stageName).to.be.eql('test');
+    chai.expect(apiGatewayService.stageName).to.be.eql('v1');
   });
 
   //test('Check _updateCognitoRolesPolicy() method updates cognito roles policy', () => {
