@@ -23,6 +23,7 @@ import {FailedToUpdateApiGatewayStageException} from './Exception/FailedToUpdate
 import {FailedToUpdateApiGatewayAccountException} from './Exception/FailedToUpdateApiGatewayAccountException';
 import {FailedToDeleteApiException} from './Exception/FailedToDeleteApiException';
 import {FailedToCreateApiAuthorizerException} from './Exception/FailedToCreateApiAuthorizerException';
+import {FailedToCreateUsagePlanException} from './Exception/FailedToCreateUsagePlanException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
@@ -253,13 +254,14 @@ export class APIGatewayService extends AbstractService {
       this._config.api.id,
       this._config.api.resources,
       this._config.api.role
-    )((methods, integrations, rolePolicy, apiStage, authorizer) => {
+    )((methods, integrations, rolePolicy, apiStage, authorizer, usagePlan) => {
       this._config.api.methods = methods;
       this._config.api.integrations = integrations;
       this._config.api.rolePolicy = rolePolicy;
       this._config.api.stages = this._config.api.stages || {};
       this._config.api.stages[this.stageName] = apiStage;
       this._config.api.authorizer = authorizer;
+      this._config.api.usagePlan = usagePlan;
 
       // generate cloud watch log group name for deployed API Gateway
       if (this.apiConfig.cloudWatch.logging.enabled || this.apiConfig.cloudWatch.metrics) {
@@ -391,8 +393,12 @@ export class APIGatewayService extends AbstractService {
 
                   this._deployApi(apiId, (apiStage) => {
 
-                    this._updateStage(apiId, this.stageName, apiRole, this.apiConfig, (data) => {
-                      callback(methods, integrations, rolePolicy, apiStage, authorizer);
+                    this._createUsagePlan(apiId, this.stageName, (usagePlan) => {
+
+                      this._updateStage(apiId, this.stageName, apiRole, this.apiConfig, (data) => {
+
+                        callback(methods, integrations, rolePolicy, apiStage, authorizer, usagePlan);
+                      });
                     });
                   });
                 });
@@ -572,6 +578,47 @@ export class APIGatewayService extends AbstractService {
     this.apiGatewayClient.createDeployment(params, (error, data) => {
       if (error) {
         throw new FailedToDeployApiGatewayException(apiId, error);
+      }
+
+      callback(data);
+    });
+  }
+
+  /**
+   * @param {String} apiId
+   * @param {String} stageName
+   * @param {Function} callback
+   * @private
+   */
+  _createUsagePlan(apiId, stageName, callback) {
+    let planName = this.generateAwsResourceName(
+      `${APIGatewayService.API_NAME_PREFIX}DefaultPlan`,
+      Core.AWS.Service.API_GATEWAY
+    );
+
+    let params = {
+      name: planName,
+      apiStages: [{
+        apiId: apiId,
+        stage: stageName
+      }],
+      description: `Default usage plan created on ${new Date().toTimeString()}`
+    };
+
+    // @todo - expose and read these options into parameters
+    // quota: {
+    //   limit: 0,
+    //     offset: 0,
+    //     period: 'DAY | WEEK | MONTH'
+    // },
+    // throttle: {
+    //   burstLimit: 0,
+    //     rateLimit: 0.0
+    // }
+
+    this.apiGatewayClient.createUsagePlan(params, (error, data) => {
+      if (error) {
+        throw new FailedToCreateUsagePlanException(params.name, error);
       }
 
       callback(data);
