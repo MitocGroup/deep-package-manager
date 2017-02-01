@@ -302,6 +302,13 @@ export class Instance {
   /**
    * @returns {String}
    */
+  get apiVersion() {
+    return this._config.apiVersion;
+  }
+
+  /**
+   * @returns {String}
+   */
   get deployId() {
     return this._config.deployId;
   }

@@ -5,6 +5,7 @@
     "secretAccessKey": "to_pass_string_validation"
   },
   "env": "test",
+  "apiVersion": "v1",
   "awsAccountId": 123456789012,
   "appIdentifier": "generated",
   "appName": "sample app"

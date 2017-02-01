@@ -93,6 +93,7 @@ export default {
       domain: Joi.string().optional().lowercase()
         .regex(/^([a-zA-Z0-9-_]+\.)+[a-zA-Z]+?$/i)
         .replace(/^www\./i, ''),
+      apiVersion: JoiHelper.string().regex(/^[a-zA-Z0-9_]+$/i).required().default(DeployConfig.DEFAULT_API_VERSION),
       aws: Joi.object().keys({
         accessKeyId: JoiHelper.string().required().empty(''),
         secretAccessKey: JoiHelper.string().required().empty(''),
@@ -111,6 +112,7 @@ export default {
       appIdentifier: JoiHelper.string().regex(/^[a-zA-Z0-9_\.-]+$/).optional().default(appId),
       env: JoiHelper.stringEnum(DeployConfig.AVAILABLE_ENV).optional().default(DeployConfig.AVAILABLE_ENV[0]),
       awsAccountId: Joi.number().optional().default(guessAwsAccountId(guessedAwsCredentials)),
+      apiVersion: JoiHelper.string().regex(/^[a-zA-Z0-9_]+$/i).required().default(DeployConfig.DEFAULT_API_VERSION),
       aws: Joi.object().keys({
         accessKeyId: JoiHelper.string().required(),
         secretAccessKey: JoiHelper.string().required(),

@@ -155,7 +155,7 @@ export class APIGatewayService extends AbstractService {
    * @returns {String}
    */
   get stageName() {
-    return this.env;
+    return this.property.apiVersion;
   }
 
   /**
@@ -253,11 +253,12 @@ export class APIGatewayService extends AbstractService {
       this._config.api.id,
       this._config.api.resources,
       this._config.api.role
-    )((methods, integrations, rolePolicy, deployedApi, authorizer) => {
+    )((methods, integrations, rolePolicy, apiStage, authorizer) => {
       this._config.api.methods = methods;
       this._config.api.integrations = integrations;
       this._config.api.rolePolicy = rolePolicy;
-      this._config.api.deployedApi = deployedApi;
+      this._config.api.stages = this._config.api.stages || {};
+      this._config.api.stages[this.stageName] = apiStage;
       this._config.api.authorizer = authorizer;
 
       // generate cloud watch log group name for deployed API Gateway
@@ -388,10 +389,10 @@ export class APIGatewayService extends AbstractService {
                 this._addPolicyToApiRole(apiRole, (data) => {
                   rolePolicy = data;
 
-                  this._deployApi(apiId, (deployedApi) => {
+                  this._deployApi(apiId, (apiStage) => {
 
                     this._updateStage(apiId, this.stageName, apiRole, this.apiConfig, (data) => {
-                      callback(methods, integrations, rolePolicy, deployedApi, authorizer);
+                      callback(methods, integrations, rolePolicy, apiStage, authorizer);
                     });
                   });
                 });
@@ -564,7 +565,7 @@ export class APIGatewayService extends AbstractService {
       stageName: this.stageName,
       cacheClusterEnabled: this.apiConfig.cache.enabled,
       cacheClusterSize: this.apiConfig.cache.clusterSize,
-      stageDescription: `Stage for "${this.env}" environment`,
+      stageDescription: `Stage for "${this.env}/${this.stageName}" environment`,
       description: `Deployed on ${new Date().toTimeString()}`,
     };
 
