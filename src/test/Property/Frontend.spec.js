@@ -36,6 +36,7 @@ suite('Property/Frontend', () => {
       },
       awsAccountId: 123456789012,
       env: 'dev',
+      apiVersion: 'v1',
       appIdentifier: '59e6913c9ed3afe744b5434817ce6345',
     },
     validationSchemas: [],
