@@ -202,7 +202,7 @@ export class AbstractDriver extends Core.OOP.Interface {
     Object.defineProperty(service, AbstractDriver.CREDENTIALS_KEY, {
       value: credentials,
       enumerable: false,
-      configurable: false,
+      configurable: true,
       writable: false,
     });
   }

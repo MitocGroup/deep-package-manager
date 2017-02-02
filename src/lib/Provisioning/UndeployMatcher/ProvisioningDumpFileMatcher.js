@@ -79,9 +79,11 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
         this._deployConfig.APIGateway.push(deployProvisioning.apigateway.api.id);
 
         if (deployProvisioning.apigateway.api.role) {
-          this._deployConfig.IAM.push(
-            deployProvisioning.apigateway.api.role.RoleName
-          );
+          this._deployConfig.IAM.push(deployProvisioning.apigateway.api.role.RoleName);
+        }
+
+        if (deployProvisioning.apigateway.api.usagePlan) {
+          this._deployConfig.APIGatewayPlan.push(deployProvisioning.apigateway.api.usagePlan.id);
         }
       }
 
