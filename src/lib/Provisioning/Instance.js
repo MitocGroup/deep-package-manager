@@ -298,6 +298,7 @@ export class Instance {
         name = name.toLowerCase();
         break;
       case 'APIGateway':
+      case 'APIGatewayPlan':
         name = 'apiGateway';
         break;
       case 'ElastiCache':
