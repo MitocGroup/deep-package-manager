@@ -24,6 +24,7 @@ import {FailedToUpdateApiGatewayAccountException} from './Exception/FailedToUpda
 import {FailedToDeleteApiException} from './Exception/FailedToDeleteApiException';
 import {FailedToCreateApiAuthorizerException} from './Exception/FailedToCreateApiAuthorizerException';
 import {FailedToCreateUsagePlanException} from './Exception/FailedToCreateUsagePlanException';
+import {FailedToAddUsagePlanStageException} from './Exception/FailedToAddUsagePlanStageException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
@@ -591,34 +592,66 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _createUsagePlan(apiId, stageName, callback) {
-    let planName = this.generateAwsResourceName(
-      `${APIGatewayService.API_NAME_PREFIX}DefaultPlan`,
-      Core.AWS.Service.API_GATEWAY
-    );
+    let existentPlan = this._config.api.usagePlan;
 
+    if (this.isUpdate && existentPlan && existentPlan.id) {
+      this._addStageToUsagePlan(apiId, existentPlan.id, stageName, callback);
+    } else {
+      let planName = this.generateAwsResourceName(
+        `${APIGatewayService.API_NAME_PREFIX}DefaultPlan`,
+        Core.AWS.Service.API_GATEWAY
+      );
+
+      let params = {
+        name: planName,
+        apiStages: [{
+          apiId: apiId,
+          stage: stageName
+        }],
+        description: `Default usage plan created on ${new Date().toTimeString()}`
+      };
+
+      // @todo - expose and read these options into parameters
+      // quota: {
+      //   limit: 0,
+      //     offset: 0,
+      //     period: 'DAY | WEEK | MONTH'
+      // },
+      // throttle: {
+      //   burstLimit: 0,
+      //     rateLimit: 0.0
+      // }
+
+      this.apiGatewayClient.createUsagePlan(params, (error, data) => {
+        if (error) {
+          throw new FailedToCreateUsagePlanException(params.name, error);
+        }
+
+        callback(data);
+      });
+    }
+  }
+
+  /**
+   * @param {String} apiId
+   * @param {String} planId
+   * @param {String} stageName
+   * @param {Function} callback
+   * @private
+   */
+  _addStageToUsagePlan(apiId, planId, stageName, callback) {
     let params = {
-      name: planName,
-      apiStages: [{
-        apiId: apiId,
-        stage: stageName
-      }],
-      description: `Default usage plan created on ${new Date().toTimeString()}`
+      usagePlanId: planId,
+      patchOperations: [{
+        op: 'add',
+        path: '/apiStages',
+        value: `${apiId}:${stageName}`
+      }]
     };
 
-    // @todo - expose and read these options into parameters
-    // quota: {
-    //   limit: 0,
-    //     offset: 0,
-    //     period: 'DAY | WEEK | MONTH'
-    // },
-    // throttle: {
-    //   burstLimit: 0,
-    //     rateLimit: 0.0
-    // }
-
-    this.apiGatewayClient.createUsagePlan(params, (error, data) => {
+    this.apiGatewayClient.updateUsagePlan(params, (error, data) => {
       if (error) {
-        throw new FailedToCreateUsagePlanException(params.name, error);
+        throw new FailedToAddUsagePlanStageException(planId, stageName, error);
       }
 
       callback(data);
