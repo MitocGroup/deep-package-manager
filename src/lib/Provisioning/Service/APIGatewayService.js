@@ -293,7 +293,11 @@ export class APIGatewayService extends AbstractService {
           dataTrace: false,
         },
       },
-      authorizer: null
+      authorizer: null,
+      plan: {
+        quota: null,
+        throttle: null
+      }
     };
 
     let globalsConfig = this.property.config.globals;
@@ -394,7 +398,7 @@ export class APIGatewayService extends AbstractService {
 
                   this._deployApi(apiId, (apiStage) => {
 
-                    this._createUsagePlan(apiId, this.stageName, (usagePlan) => {
+                    this._createUsagePlan(apiId, this.stageName, this.apiConfig.plan, (usagePlan) => {
 
                       this._updateStage(apiId, this.stageName, apiRole, this.apiConfig, (data) => {
 
@@ -588,10 +592,11 @@ export class APIGatewayService extends AbstractService {
   /**
    * @param {String} apiId
    * @param {String} stageName
+   * @param {*} planConfig
    * @param {Function} callback
    * @private
    */
-  _createUsagePlan(apiId, stageName, callback) {
+  _createUsagePlan(apiId, stageName, planConfig, callback) {
     let existentPlan = this._config.api.usagePlan;
 
     if (this.isUpdate && existentPlan && existentPlan.id) {
@@ -611,16 +616,13 @@ export class APIGatewayService extends AbstractService {
         description: `Default usage plan created on ${new Date().toTimeString()}`
       };
 
-      // @todo - expose and read these options into parameters
-      // quota: {
-      //   limit: 0,
-      //     offset: 0,
-      //     period: 'DAY | WEEK | MONTH'
-      // },
-      // throttle: {
-      //   burstLimit: 0,
-      //     rateLimit: 0.0
-      // }
+      if (planConfig.quota) {
+        params.quota = planConfig.quota;
+      }
+
+      if (planConfig.throttle) {
+        params.throttle = planConfig.throttle;
+      }
 
       this.apiGatewayClient.createUsagePlan(params, (error, data) => {
         if (error) {
