@@ -23,6 +23,8 @@ import {FailedToUpdateApiGatewayStageException} from './Exception/FailedToUpdate
 import {FailedToUpdateApiGatewayAccountException} from './Exception/FailedToUpdateApiGatewayAccountException';
 import {FailedToDeleteApiException} from './Exception/FailedToDeleteApiException';
 import {FailedToCreateApiAuthorizerException} from './Exception/FailedToCreateApiAuthorizerException';
+import {FailedToCreateUsagePlanException} from './Exception/FailedToCreateUsagePlanException';
+import {FailedToAddUsagePlanStageException} from './Exception/FailedToAddUsagePlanStageException';
 import {Action} from '../../Microservice/Metadata/Action';
 import {IAMService} from './IAMService';
 import {LambdaService} from './LambdaService';
@@ -253,13 +255,14 @@ export class APIGatewayService extends AbstractService {
       this._config.api.id,
       this._config.api.resources,
       this._config.api.role
-    )((methods, integrations, rolePolicy, apiStage, authorizer) => {
+    )((methods, integrations, rolePolicy, apiStage, authorizer, usagePlan) => {
       this._config.api.methods = methods;
       this._config.api.integrations = integrations;
       this._config.api.rolePolicy = rolePolicy;
       this._config.api.stages = this._config.api.stages || {};
       this._config.api.stages[this.stageName] = apiStage;
       this._config.api.authorizer = authorizer;
+      this._config.api.usagePlan = usagePlan;
 
       // generate cloud watch log group name for deployed API Gateway
       if (this.apiConfig.cloudWatch.logging.enabled || this.apiConfig.cloudWatch.metrics) {
@@ -290,7 +293,11 @@ export class APIGatewayService extends AbstractService {
           dataTrace: false,
         },
       },
-      authorizer: null
+      authorizer: null,
+      plan: {
+        quota: null,
+        throttle: null
+      }
     };
 
     let globalsConfig = this.property.config.globals;
@@ -391,8 +398,12 @@ export class APIGatewayService extends AbstractService {
 
                   this._deployApi(apiId, (apiStage) => {
 
-                    this._updateStage(apiId, this.stageName, apiRole, this.apiConfig, (data) => {
-                      callback(methods, integrations, rolePolicy, apiStage, authorizer);
+                    this._createUsagePlan(apiId, this.stageName, this.apiConfig.plan, (usagePlan) => {
+
+                      this._updateStage(apiId, this.stageName, apiRole, this.apiConfig, (data) => {
+
+                        callback(methods, integrations, rolePolicy, apiStage, authorizer, usagePlan);
+                      });
                     });
                   });
                 });
@@ -572,6 +583,77 @@ export class APIGatewayService extends AbstractService {
     this.apiGatewayClient.createDeployment(params, (error, data) => {
       if (error) {
         throw new FailedToDeployApiGatewayException(apiId, error);
+      }
+
+      callback(data);
+    });
+  }
+
+  /**
+   * @param {String} apiId
+   * @param {String} stageName
+   * @param {*} planConfig
+   * @param {Function} callback
+   * @private
+   */
+  _createUsagePlan(apiId, stageName, planConfig, callback) {
+    let existentPlan = this._config.api.usagePlan;
+
+    if (this.isUpdate && existentPlan && existentPlan.id) {
+      this._addStageToUsagePlan(apiId, existentPlan.id, stageName, callback);
+    } else {
+      let planName = this.generateAwsResourceName(
+        `${APIGatewayService.API_NAME_PREFIX}DefaultPlan`,
+        Core.AWS.Service.API_GATEWAY
+      );
+
+      let params = {
+        name: planName,
+        apiStages: [{
+          apiId: apiId,
+          stage: stageName
+        }],
+        description: `Default usage plan created on ${new Date().toTimeString()}`
+      };
+
+      if (planConfig.quota) {
+        params.quota = planConfig.quota;
+      }
+
+      if (planConfig.throttle) {
+        params.throttle = planConfig.throttle;
+      }
+
+      this.apiGatewayClient.createUsagePlan(params, (error, data) => {
+        if (error) {
+          throw new FailedToCreateUsagePlanException(params.name, error);
+        }
+
+        callback(data);
+      });
+    }
+  }
+
+  /**
+   * @param {String} apiId
+   * @param {String} planId
+   * @param {String} stageName
+   * @param {Function} callback
+   * @private
+   */
+  _addStageToUsagePlan(apiId, planId, stageName, callback) {
+    let params = {
+      usagePlanId: planId,
+      patchOperations: [{
+        op: 'add',
+        path: '/apiStages',
+        value: `${apiId}:${stageName}`
+      }]
+    };
+
+    this.apiGatewayClient.updateUsagePlan(params, (error, data) => {
+      if (error) {
+        throw new FailedToAddUsagePlanStageException(planId, stageName, error);
       }
 
       callback(data);
