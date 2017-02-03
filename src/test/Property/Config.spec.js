@@ -11,6 +11,7 @@ suite('Property/Config', () => {
       secretAccessKey: 'to_pass_string_validation',
     },
     env: 'test',
+    apiVersion: 'v1',
     awsAccountId: 123456789012,
     appIdentifier: 'test_appId-432423-generated',
     appName: 'appName'
@@ -50,6 +51,7 @@ suite('Property/Config', () => {
         secretAccessKey: 'to_pass_string_validation',
       },
       env: 'test',
+      apiVersion: 'v1',
       awsAccountId: 123456789012,
       appIdentifier: 'generated',
       appName: 'sample app'
@@ -76,6 +78,7 @@ suite('Property/Config', () => {
   //    },
   //    awsAccountId: 123456789012,
   //    env: 'dev',
+  //    apiVersion: 'v1',
   //    appIdentifier: 'randomly generated',
   //  };
   //  chai.expect(Config.generate().awsAccountId).to.be.equal(generatedConfig.awsAccountId);

@@ -226,8 +226,12 @@ export class DeployConfig {
     // keep initial deployId
     let deployId = this._property.deployId;
 
+    // keep apiVersion from deeploy.json file
+    let apiVersion = this._property._config.apiVersion;
+
     this._property._config = propertyConfigSnapshot;
     this._property._config.deployId = deployId;
+    this._property._config.apiVersion = apiVersion;
 
     this._property._provisioning.injectConfig(
       this._property._config.provisioning
@@ -241,5 +245,12 @@ export class DeployConfig {
    */
   static get AVAILABLE_ENV() {
     return ['dev', 'stage', 'test', 'prod'];
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get DEFAULT_API_VERSION() {
+    return 'v1';
   }
 }

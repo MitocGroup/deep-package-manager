@@ -298,6 +298,7 @@ export class Instance {
         name = name.toLowerCase();
         break;
       case 'APIGateway':
+      case 'APIGatewayPlan':
         name = 'apiGateway';
         break;
       case 'ElastiCache':
@@ -373,7 +374,12 @@ export class Instance {
 
       let service = servicesVector[i];
 
+      console.debug(`Start provisioning "${service.name()}" service.`);
+
       service.setup(services).ready(() => {
+
+        console.debug(`Service "${service.name()}" provisioned.`);
+
         this._config[service.name()] = service.config();
         remaining--;
       });
@@ -395,7 +401,12 @@ export class Instance {
 
         let service = servicesVector[i];
 
+        console.debug(`Start post-provisioning for "${service.name()}" service.`);
+
         service.postProvision(services).ready(() => {
+
+          console.debug(`Post-provisioning done for "${service.name()}" service.`);
+
           // @todo: why is this resetting the object?
           //this._config[service.name()] = service.config();
           subRemaining--;
@@ -490,7 +501,12 @@ export class Instance {
 
       let service = servicesVector[i];
 
+      console.debug(`Start post-deploy-provisioning for "${service.name()}" service.`);
+
       service.postDeployProvision(services).ready(() => {
+
+        console.debug(`Post-deploy-provisioning done for "${service.name()}" service.`);
+
         // @todo: why is this resetting the object?
         //this._config[service.name()] = service.config();
         remaining--;

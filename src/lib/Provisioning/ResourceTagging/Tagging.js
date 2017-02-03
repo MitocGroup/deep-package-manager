@@ -8,6 +8,7 @@ import {WaitFor} from '../../Helpers/WaitFor';
 import {S3Driver} from './Driver/S3Driver';
 import {ESDriver} from './Driver/ESDriver';
 import {CloudFrontDriver} from './Driver/CloudFrontDriver';
+import {DynamoDBDriver} from './Driver/DynamoDBDriver';
 
 export class Tagging {
   /**
@@ -28,8 +29,9 @@ export class Tagging {
     let s3Driver = new S3Driver(property, applicationName);
     let esDriver = new ESDriver(property, applicationName);
     let cloudFrontDriver = new CloudFrontDriver(property, applicationName);
+    let dynamoDbDriver = new DynamoDBDriver(property, applicationName);
 
-    return new Tagging(s3Driver, esDriver, cloudFrontDriver);
+    return new Tagging(s3Driver, esDriver, cloudFrontDriver, dynamoDbDriver);
   }
 
   /**
