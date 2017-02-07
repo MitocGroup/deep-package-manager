@@ -16,10 +16,12 @@ export class DynamoDBDriver extends AbstractDriver {
 
   /**
    * @param {Function} cb
+   * @param {String|undefined} lastTableName
    */
-  list(cb) {
+  list(cb, lastTableName = undefined) {
     this._awsService.listTables({
       Limit: DynamoDBDriver.LIMIT,
+      ExclusiveStartTableName: lastTableName,
     }, (error, data) => {
       if (error) {
         cb(error);
@@ -34,6 +36,10 @@ export class DynamoDBDriver extends AbstractDriver {
         let tableName = data.TableNames[i];
 
         this._checkPushStack(tableName, tableName);
+      }
+
+      if (data.LastEvaluatedTableName && data.TableNames.length > 0) {
+        return this.list(cb, data.LastEvaluatedTableName);
       }
 
       cb(null);

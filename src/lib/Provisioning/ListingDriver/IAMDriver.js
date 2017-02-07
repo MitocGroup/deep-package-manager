@@ -69,11 +69,13 @@ export class IAMDriver extends AbstractDriver {
 
   /**
    * @param {Function} cb
+   * @param {String|undefined} _marker
    * @private
    */
-  _listRoles(cb) {
+  _listRoles(cb, _marker = undefined) {
     this._awsService.listRoles({
       MaxItems: IAMDriver.MAX_ITEMS,
+      Marker: _marker,
     }, (error, data) => {
       if (error) {
         cb(error);
@@ -89,6 +91,10 @@ export class IAMDriver extends AbstractDriver {
         let roleName = roleData.RoleName;
 
         this._checkPushStack(roleName, roleName, roleData);
+      }
+
+      if (data.Marker) {
+        return this._listRoles(cb, data.Marker);
       }
 
       cb(null);
