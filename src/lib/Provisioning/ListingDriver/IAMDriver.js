@@ -72,7 +72,7 @@ export class IAMDriver extends AbstractDriver {
    * @param {String|undefined} _marker
    * @private
    */
-  _listRoles(cb, _marker = undefined) {
+  _listRoles(cb, _marker) {
     this._awsService.listRoles({
       MaxItems: IAMDriver.MAX_ITEMS,
       Marker: _marker,

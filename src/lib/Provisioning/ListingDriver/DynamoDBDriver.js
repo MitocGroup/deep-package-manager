@@ -16,12 +16,12 @@ export class DynamoDBDriver extends AbstractDriver {
 
   /**
    * @param {Function} cb
-   * @param {String|undefined} lastTableName
+   * @param {String|undefined} _lastTableName
    */
-  list(cb, lastTableName = undefined) {
+  list(cb, _lastTableName) {
     this._awsService.listTables({
       Limit: DynamoDBDriver.LIMIT,
-      ExclusiveStartTableName: lastTableName,
+      ExclusiveStartTableName: _lastTableName,
     }, (error, data) => {
       if (error) {
         cb(error);

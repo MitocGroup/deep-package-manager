@@ -18,7 +18,7 @@ export class LambdaDriver extends AbstractDriver {
    * @param {Function} cb
    * @param {undefined|String} _marker
    */
-  list(cb, _marker = undefined) {
+  list(cb, _marker) {
     this._awsService.listFunctions({
       MaxItems: LambdaDriver.MAX_ITEMS,
       Marker: _marker,
