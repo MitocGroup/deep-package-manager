@@ -101,6 +101,7 @@ export class Lambda {
     config.tablesNames = {};
 
     config.cacheDsn = '';
+    config.api = {};
 
     if (propertyConfig.provisioning) {
       let sqsQueues = propertyConfig.provisioning[Core.AWS.Service.SIMPLE_QUEUE_SERVICE].queues;
@@ -124,6 +125,26 @@ export class Lambda {
       config.tablesNames = propertyConfig.provisioning[Core.AWS.Service.DYNAMO_DB].tablesNames;
 
       config.cacheDsn = propertyConfig.provisioning[Core.AWS.Service.ELASTIC_CACHE].dsn;
+
+      let apiGateway = propertyConfig.provisioning[Core.AWS.Service.API_GATEWAY].api;
+
+      if (apiGateway) {
+        config.api = {
+          id: apiGateway.id,
+          name: apiGateway.name,
+          baseUrl: apiGateway.baseUrl,
+          authorizer: apiGateway.authorizer
+        };
+
+        let usagePlan = apiGateway.usagePlan;
+
+        if (usagePlan) {
+          config.api.usagePlan = {
+            id: usagePlan.id,
+            name: usagePlan.name
+          };
+        }
+      }
     } else {
       for (let modelKey in config.models) {
         if (!config.models.hasOwnProperty(modelKey)) {
