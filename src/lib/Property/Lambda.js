@@ -141,7 +141,8 @@ export class Lambda {
         if (usagePlan) {
           config.api.usagePlan = {
             id: usagePlan.id,
-            name: usagePlan.name
+            name: usagePlan.name,
+            stages: usagePlan.apiStages
           };
         }
       }
