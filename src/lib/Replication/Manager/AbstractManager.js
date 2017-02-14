@@ -4,11 +4,15 @@
 
 'use strict';
 
-export class AbstractManager {
+import Core from 'deep-core';
+
+export class AbstractManager extends Core.OOP.Interface {
   /**
-   * @param {String} replicationInstance
+   * @param {Instance} replicationInstance
    */
   constructor(replicationInstance) {
+    super(['name']);
+
     this._replication = replicationInstance;
   }
 
@@ -20,17 +24,23 @@ export class AbstractManager {
   }
 
   /**
-   * @returns {*}
+   * @returns {Object}
    */
-  get config() {
-    return this.replication.config;
+  config() {
+    return this.replication.config.provisioning[this.name()];
   }
 
   /**
-   * @param {String} awsServiceName
    * @returns {Object}
    */
-  serviceConfig(awsServiceName) {
-    return this.config.provisioning[awsServiceName];
+  blueConfig() {
+    return this.replication.blueConfig.provisioning[this.name()];
+  }
+
+  /**
+   * @returns {Object}
+   */
+  greenConfig() {
+    return this.replication.greenConfig.provisioning[this.name()];
   }
 }
