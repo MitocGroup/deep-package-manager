@@ -27,6 +27,7 @@ import {Instance as PropertyInstance} from '../Property/Instance';
 import {WaitFor} from '../Helpers/WaitFor';
 import {Tagging} from './ResourceTagging/Tagging';
 import {SESService} from './Service/SESService';
+import objectMerge from 'object-merge';
 
 /**
  * Provisioning instance
@@ -407,8 +408,7 @@ export class Instance {
 
           console.debug(`Post-provisioning done for "${service.name()}" service.`);
 
-          // @todo: why is this resetting the object?
-          //this._config[service.name()] = service.config();
+          this._config[service.name()] = objectMerge(this._config[service.name()], service.config());
           subRemaining--;
         });
       }
@@ -507,8 +507,8 @@ export class Instance {
 
         console.debug(`Post-deploy-provisioning done for "${service.name()}" service.`);
 
-        // @todo: why is this resetting the object?
-        //this._config[service.name()] = service.config();
+        this._config[service.name()] = objectMerge(this._config[service.name()], service.config());
+
         remaining--;
       });
     }
