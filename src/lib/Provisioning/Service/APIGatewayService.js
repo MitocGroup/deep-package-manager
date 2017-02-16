@@ -398,6 +398,7 @@ export class APIGatewayService extends AbstractService {
 
                   this._deployApi(apiId, (apiStage) => {
 
+                    // @todo: create usage plan on setup step to be available to export config into lambda
                     this._createUsagePlan(apiId, this.stageName, this.apiConfig.plan, (usagePlan) => {
 
                       this._updateStage(apiId, this.stageName, apiRole, this.apiConfig, (data) => {
