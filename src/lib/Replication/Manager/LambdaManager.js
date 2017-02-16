@@ -36,11 +36,8 @@ export class LambdaManager extends AbstractManager {
    * @returns {Promise}
    */
   startTableBackFillLambda(table) {
-    let lambdaConfig = this.config();
-    let backFillFunction = lambdaConfig.names['deep-blue-green']['replication-start'];
-
     return this._lambda.invoke({
-      FunctionName: backFillFunction,
+      FunctionName: this.backFillStartFunctionName,
       InvocationType: 'Event',
       LogType: 'None',
       Payload: JSON.stringify({
@@ -133,7 +130,14 @@ export class LambdaManager extends AbstractManager {
    * @returns {String}
    */
   get replicationFunctionName() {
-    return this.config().names['deep-blue-green']['replication-stream'];
+    return this.blueConfig().names['deep-blue-green']['replication-stream'];
+  }
+
+  /**
+   * @returns {String}
+   */
+  get backFillStartFunctionName() {
+    return this.blueConfig().names['deep-blue-green']['replication-start'];
   }
 
   /**

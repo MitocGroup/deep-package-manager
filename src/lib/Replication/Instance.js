@@ -2,6 +2,8 @@
  * Created by CCristi on 2/6/17.
  */
 
+/* eslint indent:0 */
+
 'use strict';
 
 import AWS from 'aws-sdk';
@@ -11,29 +13,20 @@ import {Hash} from '../Helpers/Hash';
 
 export class Instance {
   /**
-   * @param {Object} replicationAppConfig
    * @param {Object} blueAppConfig
    * @param {Object} greenAppConfig
    */
-  constructor(replicationAppConfig, blueAppConfig, greenAppConfig) {
-    this._config = replicationAppConfig;
+  constructor(blueAppConfig, greenAppConfig) {
     this._blueConfig = blueAppConfig;
     this._greenConfig = greenAppConfig;
 
-    AWS.config.update(this._config.aws);
+    AWS.config.update(this._blueConfig.aws);
 
     this._dynamoDbManager = new DynamoDBManager(this);
     this._dynamoDbManager.dynamoDb = new AWS.DynamoDB();
 
     this._lambdaManager = new LambdaManager(this);
     this._lambdaManager.lambda = new AWS.Lambda();
-  }
-
-  /**
-   * @returns {Object}
-   */
-  get config() {
-    return this._config;
   }
 
   /**
@@ -147,7 +140,7 @@ export class Instance {
     let stopTriggersPromise = this._lambdaManager
       .stopDynamoDBStreamTriggerFunctions(tables)
       .then(() => {
-        console.debug(`Lambda replication triggers have been removed for "${tables.join(", ")}"`);
+        console.debug(`Lambda replication triggers have been removed for "${tables.join(', ')}"`);
       });
 
     let stopDynamoDBStreamsPromises = tables.map(

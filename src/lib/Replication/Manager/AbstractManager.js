@@ -26,13 +26,6 @@ export class AbstractManager extends Core.OOP.Interface {
   /**
    * @returns {Object}
    */
-  config() {
-    return this.replication.config.provisioning[this.name()];
-  }
-
-  /**
-   * @returns {Object}
-   */
   blueConfig() {
     return this.replication.blueConfig.provisioning[this.name()];
   }

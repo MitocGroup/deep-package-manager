@@ -150,7 +150,7 @@ export class DynamoDBManager extends AbstractManager {
         continue;
       }
 
-      if (name == tableName || _tableNames[name] == tableName) {
+      if (name === tableName || _tableNames[name] === tableName) {
         return _tableNames[name];
       }
     }
