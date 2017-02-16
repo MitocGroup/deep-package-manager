@@ -16,10 +16,12 @@ export class LambdaDriver extends AbstractDriver {
 
   /**
    * @param {Function} cb
+   * @param {undefined|String} _marker
    */
-  list(cb) {
+  list(cb, _marker) {
     this._awsService.listFunctions({
       MaxItems: LambdaDriver.MAX_ITEMS,
+      Marker: _marker,
     }, (error, data) => {
       if (error) {
         cb(error);
@@ -35,6 +37,10 @@ export class LambdaDriver extends AbstractDriver {
         let functionName = lambdaData.FunctionName;
 
         this._checkPushStack(functionName, functionName, lambdaData);
+      }
+
+      if (data.NextMarker && data.Functions.length > 0) {
+        return this.list(cb, data.NextMarker);
       }
 
       cb(null);
