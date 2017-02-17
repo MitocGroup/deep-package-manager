@@ -197,12 +197,10 @@ export class Lambda {
       }
     });
 
-    apiStages.push({
+    return apiStages.concat([{
       apiId: apiId,
       stage: stageName
-    });
-
-    return apiStages;
+    }]);
   }
 
   /**
