@@ -142,7 +142,7 @@ export class Lambda {
           config.api.usagePlan = {
             id: usagePlan.id,
             name: usagePlan.name,
-            stages: usagePlan.apiStages
+            stages: this._addUsagePlanStageToConfig(apiGateway.id, usagePlan.apiStages || [], apiGateway.stage)
           };
         }
       }
@@ -181,6 +181,30 @@ export class Lambda {
     }
 
     return config;
+  }
+
+  /**
+   * @param {String} apiId
+   * @param {Object[]} apiStages
+   * @param {String} stageName
+   * @returns {*}
+   * @private
+   */
+  _addUsagePlanStageToConfig(apiId, apiStages, stageName) {
+    for (let key in apiStages) {
+      if (!apiStages.hasOwnProperty(key)) {
+        continue;
+      }
+
+      if (apiStages[key].stage === stageName) {
+        return apiStages;
+      }
+    }
+
+    return apiStages.concat([{
+      apiId: apiId,
+      stage: stageName
+    }]);
   }
 
   /**

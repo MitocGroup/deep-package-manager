@@ -204,7 +204,7 @@ export class APIGatewayService extends AbstractService {
     this._provisionApiResources(
       this.apiMetadata,
       resourcePaths
-    )((api, resources, role) => {
+    )((api, resources, role, usagePlan) => {
       // @todo: remove this hook
       this._config.api = this._config.api || {};
 
@@ -213,6 +213,8 @@ export class APIGatewayService extends AbstractService {
       this._config.api.baseUrl = api.baseUrl;
       this._config.api.role = role;
       this._config.api.resources = objectMerge(this._config.api.resources, resources);
+      this._config.api.stage = this.stageName;
+      this._config.api.usagePlan = usagePlan;
 
       this._ready = true;
     });
@@ -254,15 +256,15 @@ export class APIGatewayService extends AbstractService {
     this._putApiIntegrations(
       this._config.api.id,
       this._config.api.resources,
-      this._config.api.role
-    )((methods, integrations, rolePolicy, apiStage, authorizer, usagePlan) => {
+      this._config.api.role,
+      this._config.api.usagePlan
+    )((methods, integrations, rolePolicy, apiStage, authorizer) => {
       this._config.api.methods = methods;
       this._config.api.integrations = integrations;
       this._config.api.rolePolicy = rolePolicy;
       this._config.api.stages = this._config.api.stages || {};
       this._config.api.stages[this.stageName] = apiStage;
       this._config.api.authorizer = authorizer;
-      this._config.api.usagePlan = usagePlan;
 
       // generate cloud watch log group name for deployed API Gateway
       if (this.apiConfig.cloudWatch.logging.enabled || this.apiConfig.cloudWatch.metrics) {
@@ -330,13 +332,14 @@ export class APIGatewayService extends AbstractService {
     let restApi = this.isUpdate ? this._config.api : null;
     let restApiIamRole = this.isUpdate ? this._config.api.role : null;
     let restResources = this.isUpdate ? this._config.api.resources : null;
+    let usagePlan = this.isUpdate ? this._config.api.usagePlan : null;
 
     return (callback) => {
       if (this.isUpdate) {
         // recreate all resources to make sure all changes to resources.json are applied to API Gateway endpoints
         this._removeOldResources(restApi.id, restResources, () => {
           this._createApiResources(resourcePaths, restApi.id, (resources) => {
-            callback(restApi, this._extractApiResourcesMetadata(resources), restApiIamRole);
+            callback(restApi, this._extractApiResourcesMetadata(resources), restApiIamRole, usagePlan);
           });
         });
 
@@ -352,7 +355,10 @@ export class APIGatewayService extends AbstractService {
           this._createApiIamRole((role) => {
             restApiIamRole = role;
 
-            callback(restApi, this._extractApiResourcesMetadata(restResources), restApiIamRole);
+            this._createUsagePlan(this.apiConfig.plan, (usagePlan) => {
+
+              callback(restApi, this._extractApiResourcesMetadata(restResources), restApiIamRole, usagePlan);
+            });
           });
         });
       });
@@ -363,10 +369,11 @@ export class APIGatewayService extends AbstractService {
    * @param {String} apiId
    * @param {Object} apiResources
    * @param {Object} apiRole
+   * @param {Object} usagePlan
    * @returns {Function}
    * @private
    */
-  _putApiIntegrations(apiId, apiResources, apiRole) {
+  _putApiIntegrations(apiId, apiResources, apiRole, usagePlan) {
     var authorizer = null;
     var methods = null;
     var methodsResponse = null;
@@ -398,11 +405,11 @@ export class APIGatewayService extends AbstractService {
 
                   this._deployApi(apiId, (apiStage) => {
 
-                    this._createUsagePlan(apiId, this.stageName, this.apiConfig.plan, (usagePlan) => {
+                    this._addStageToUsagePlan(apiId, usagePlan, this.stageName, () => {
 
                       this._updateStage(apiId, this.stageName, apiRole, this.apiConfig, (data) => {
 
-                        callback(methods, integrations, rolePolicy, apiStage, authorizer, usagePlan);
+                        callback(methods, integrations, rolePolicy, apiStage, authorizer);
                       });
                     });
                   });
@@ -590,58 +597,61 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
-   * @param {String} apiId
-   * @param {String} stageName
    * @param {*} planConfig
    * @param {Function} callback
    * @private
    */
-  _createUsagePlan(apiId, stageName, planConfig, callback) {
-    let existentPlan = this._config.api.usagePlan;
+  _createUsagePlan(planConfig, callback) {
+    let planName = this.generateAwsResourceName(
+      `${APIGatewayService.API_NAME_PREFIX}DefaultPlan`,
+      Core.AWS.Service.API_GATEWAY
+    );
 
-    if (this.isUpdate && existentPlan && existentPlan.id) {
-      this._addStageToUsagePlan(apiId, existentPlan.id, stageName, callback);
-    } else {
-      let planName = this.generateAwsResourceName(
-        `${APIGatewayService.API_NAME_PREFIX}DefaultPlan`,
-        Core.AWS.Service.API_GATEWAY
-      );
+    let params = {
+      name: planName,
+      apiStages: [],
+      description: `Default usage plan created on ${new Date().toTimeString()}`
+    };
 
-      let params = {
-        name: planName,
-        apiStages: [{
-          apiId: apiId,
-          stage: stageName
-        }],
-        description: `Default usage plan created on ${new Date().toTimeString()}`
-      };
-
-      if (planConfig.quota) {
-        params.quota = planConfig.quota;
-      }
-
-      if (planConfig.throttle) {
-        params.throttle = planConfig.throttle;
-      }
-
-      this.apiGatewayClient.createUsagePlan(params, (error, data) => {
-        if (error) {
-          throw new FailedToCreateUsagePlanException(params.name, error);
-        }
-
-        callback(data);
-      });
+    if (planConfig.quota) {
+      params.quota = planConfig.quota;
     }
+
+    if (planConfig.throttle) {
+      params.throttle = planConfig.throttle;
+    }
+
+    this.apiGatewayClient.createUsagePlan(params, (error, data) => {
+      if (error) {
+        throw new FailedToCreateUsagePlanException(params.name, error);
+      }
+
+      callback(data);
+    });
   }
 
   /**
    * @param {String} apiId
-   * @param {String} planId
+   * @param {Object} usagePlan
    * @param {String} stageName
    * @param {Function} callback
    * @private
    */
-  _addStageToUsagePlan(apiId, planId, stageName, callback) {
+  _addStageToUsagePlan(apiId, usagePlan, stageName, callback) {
+    let apiStages = usagePlan.apiStages || [];
+
+    for (let key in apiStages) {
+      if (!apiStages.hasOwnProperty(key)) {
+        continue;
+      }
+
+      if (apiStages[key].stage === stageName) {
+        callback(null);
+        return;
+      }
+    }
+
+    let planId = usagePlan.id;
     let params = {
       usagePlanId: planId,
       patchOperations: [{
@@ -655,6 +665,8 @@ export class APIGatewayService extends AbstractService {
       if (error) {
         throw new FailedToAddUsagePlanStageException(planId, stageName, error);
       }
+
+      usagePlan.apiStages = data.apiStages;
 
       callback(data);
     });
