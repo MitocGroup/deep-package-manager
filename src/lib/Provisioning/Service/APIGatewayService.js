@@ -204,7 +204,7 @@ export class APIGatewayService extends AbstractService {
     this._provisionApiResources(
       this.apiMetadata,
       resourcePaths
-    )((api, resources, role) => {
+    )((api, resources, role, usagePlan) => {
       // @todo: remove this hook
       this._config.api = this._config.api || {};
 
@@ -213,6 +213,7 @@ export class APIGatewayService extends AbstractService {
       this._config.api.baseUrl = api.baseUrl;
       this._config.api.role = role;
       this._config.api.resources = objectMerge(this._config.api.resources, resources);
+      this._config.api.usagePlan = usagePlan;
 
       this._ready = true;
     });
@@ -255,14 +256,13 @@ export class APIGatewayService extends AbstractService {
       this._config.api.id,
       this._config.api.resources,
       this._config.api.role
-    )((methods, integrations, rolePolicy, apiStage, authorizer, usagePlan) => {
+    )((methods, integrations, rolePolicy, apiStage, authorizer) => {
       this._config.api.methods = methods;
       this._config.api.integrations = integrations;
       this._config.api.rolePolicy = rolePolicy;
       this._config.api.stages = this._config.api.stages || {};
       this._config.api.stages[this.stageName] = apiStage;
       this._config.api.authorizer = authorizer;
-      this._config.api.usagePlan = usagePlan;
 
       // generate cloud watch log group name for deployed API Gateway
       if (this.apiConfig.cloudWatch.logging.enabled || this.apiConfig.cloudWatch.metrics) {
@@ -352,7 +352,10 @@ export class APIGatewayService extends AbstractService {
           this._createApiIamRole((role) => {
             restApiIamRole = role;
 
-            callback(restApi, this._extractApiResourcesMetadata(restResources), restApiIamRole);
+            this._createUsagePlan(restApi.id, this.stageName, this.apiConfig.plan, (usagePlan) => {
+
+              callback(restApi, this._extractApiResourcesMetadata(restResources), restApiIamRole, usagePlan);
+            });
           });
         });
       });
@@ -398,13 +401,9 @@ export class APIGatewayService extends AbstractService {
 
                   this._deployApi(apiId, (apiStage) => {
 
-                    // @todo: create usage plan on setup step to be available to export config into lambda
-                    this._createUsagePlan(apiId, this.stageName, this.apiConfig.plan, (usagePlan) => {
+                    this._updateStage(apiId, this.stageName, apiRole, this.apiConfig, (data) => {
 
-                      this._updateStage(apiId, this.stageName, apiRole, this.apiConfig, (data) => {
-
-                        callback(methods, integrations, rolePolicy, apiStage, authorizer, usagePlan);
-                      });
+                      callback(methods, integrations, rolePolicy, apiStage, authorizer);
                     });
                   });
                 });
