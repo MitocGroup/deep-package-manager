@@ -213,6 +213,7 @@ export class APIGatewayService extends AbstractService {
       this._config.api.baseUrl = api.baseUrl;
       this._config.api.role = role;
       this._config.api.resources = objectMerge(this._config.api.resources, resources);
+      this._config.api.stage = this.stageName;
       this._config.api.usagePlan = usagePlan;
 
       this._ready = true;
@@ -331,13 +332,14 @@ export class APIGatewayService extends AbstractService {
     let restApi = this.isUpdate ? this._config.api : null;
     let restApiIamRole = this.isUpdate ? this._config.api.role : null;
     let restResources = this.isUpdate ? this._config.api.resources : null;
+    let usagePlan = this.isUpdate ? this._config.api.usagePlan : null;
 
     return (callback) => {
       if (this.isUpdate) {
         // recreate all resources to make sure all changes to resources.json are applied to API Gateway endpoints
         this._removeOldResources(restApi.id, restResources, () => {
           this._createApiResources(resourcePaths, restApi.id, (resources) => {
-            callback(restApi, this._extractApiResourcesMetadata(resources), restApiIamRole);
+            callback(restApi, this._extractApiResourcesMetadata(resources), restApiIamRole, usagePlan);
           });
         });
 
@@ -637,9 +639,13 @@ export class APIGatewayService extends AbstractService {
    */
   _addStageToUsagePlan(apiId, usagePlan, stageName, callback) {
     let planId = usagePlan.id;
-    let planStages = usagePlan.apiStages.map(stageObj => {
-      return stageObj.stage;
-    });
+    let planStages = [];
+
+    if (usagePlan.apiStages && Array.isArray(usagePlan.apiStages)) {
+      planStages = usagePlan.apiStages.map(stageObj => {
+        return stageObj.stage;
+      });
+    }
 
     if (planStages.indexOf(stageName) !== -1) {
       callback(null);
