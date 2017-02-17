@@ -191,11 +191,15 @@ export class Lambda {
    * @private
    */
   _addUsagePlanStageToConfig(apiId, apiStages, stageName) {
-    apiStages.forEach(stageObj => {
-      if (stageObj.stage === stageName) {
+    for (let key in apiStages) {
+      if (!apiStages.hasOwnProperty(key)) {
+        continue;
+      }
+
+      if (apiStages[key].stage === stageName) {
         return apiStages;
       }
-    });
+    }
 
     return apiStages.concat([{
       apiId: apiId,

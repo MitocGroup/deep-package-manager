@@ -638,20 +638,20 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _addStageToUsagePlan(apiId, usagePlan, stageName, callback) {
+    let apiStages = usagePlan.apiStages || [];
+
+    for (let key in apiStages) {
+      if (!apiStages.hasOwnProperty(key)) {
+        continue;
+      }
+
+      if (apiStages[key].stage === stageName) {
+        callback(null);
+        return;
+      }
+    }
+
     let planId = usagePlan.id;
-    let planStages = [];
-
-    if (usagePlan.apiStages && Array.isArray(usagePlan.apiStages)) {
-      planStages = usagePlan.apiStages.map(stageObj => {
-        return stageObj.stage;
-      });
-    }
-
-    if (planStages.indexOf(stageName) !== -1) {
-      callback(null);
-      return;
-    }
-
     let params = {
       usagePlanId: planId,
       patchOperations: [{
@@ -665,6 +665,8 @@ export class APIGatewayService extends AbstractService {
       if (error) {
         throw new FailedToAddUsagePlanStageException(planId, stageName, error);
       }
+
+      usagePlan.apiStages = data.apiStages;
 
       callback(data);
     });
