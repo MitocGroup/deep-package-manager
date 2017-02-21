@@ -1402,7 +1402,8 @@ export class APIGatewayService extends AbstractService {
       tpl = '#set($keys = []) #foreach($key in $input.params().querystring.keySet()) #if ($key != "_deepQsHash") ' +
         '#set($result = $keys.add($key)) #end #end { #foreach($key in $keys) ' +
         '"$key": "$util.escapeJavaScript($input.params($key))", #end ' +
-        '"_deep_auth_context_": { "cognitoIdentityId" : "$context.authorizer.principalId" } }';
+        '"_deep_auth_context_": { "cognitoIdentityId" : "$context.authorizer.principalId", ' +
+        '"cognitoIdentityPoolId": "$context.authorizer.cognitoIdentityPoolId" } }';
     }
 
     return tpl;
@@ -1422,7 +1423,8 @@ export class APIGatewayService extends AbstractService {
     if (authType === Action.AUTH_TYPE_CUSTOM) {
       tpl = '#set($body = $util.parseJson("$input.json(\'$\')")) { #foreach($paramName in $body.keySet()) ' +
         '#if ($paramName != "_deep_auth_context_") "$paramName" : "$body.get($paramName)", #end #end' +
-        '"_deep_auth_context_": { "cognitoIdentityId" : "$context.authorizer.principalId" } }';
+        '"_deep_auth_context_": { "cognitoIdentityId" : "$context.authorizer.principalId", ' +
+        '"cognitoIdentityPoolId": "$context.authorizer.cognitoIdentityPoolId" } }';
     }
 
     return tpl;
