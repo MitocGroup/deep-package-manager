@@ -11,7 +11,7 @@ export class DBManager extends AbstractManager {
    * @param {Object[]} args
    */
   constructor(...args) {
-   super(...args);
+    super(...args);
   }
 
   /**

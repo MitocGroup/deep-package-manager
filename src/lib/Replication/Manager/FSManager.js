@@ -23,6 +23,7 @@ export class FSManager extends AbstractManager {
 
   /**
    * @param {{privateIgnoreGlob: String, publicIgnoreGlob: String}} ignoreGlobs
+   * @returns {Promise}
    */
   prepare(ignoreGlobs) {
     return this.lambdaService.injectEnvVarsIntoS3ReplicationLambda(ignoreGlobs).then(() => {
