@@ -1368,10 +1368,11 @@ export class APIGatewayService extends AbstractService {
         case 'PATCH':
           tplVal = this.getBodyToMapObjectMappingTpl(authType);
           break;
-        case 'OPTIONS':
-          tplVal = this.templateForMockIntegration;
-          break;
       }
+    }
+
+    if (httpMethod === 'OPTIONS') {
+      tplVal = this.templateForMockIntegration;
     }
 
     return {
