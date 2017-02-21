@@ -4,11 +4,11 @@
 
 'use strict';
 
-import {AbstractManager} from './AbstractManager';
 import Core from 'deep-core';
+import {AbstractService} from './AbstractService';
 import {NoSuchModelException} from '../Exception/NoSuchModelException';
 
-export class DynamoDBManager extends AbstractManager {
+export class DynamoDBService extends AbstractService {
   /**
    * @param {Object[]} args
    */
