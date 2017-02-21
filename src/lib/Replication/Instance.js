@@ -144,7 +144,11 @@ export class Instance {
   stop(resources) {
     return Promise.all(
       this.replicationManagers.map(manager => {
-        return manager.stop(resources[manager.name()]);
+        console.info(`Stopping blue-green replication for "${manager.name()}" resources.`);
+
+        return manager.stop(resources[manager.name()]).then(() => {
+          console.info(`Blue-green replication has been stopped for "${manager.name()} resources."`);
+        });
       })
     );
   }

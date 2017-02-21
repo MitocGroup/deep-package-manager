@@ -48,6 +48,7 @@ export class S3Service extends AbstractService {
             Events: [
               's3:ObjectCreated:Put',
               's3:ObjectCreated:Post',
+              's3:ObjectCreated:Copy',
               's3:ObjectRemoved:Delete',
             ],
             LambdaFunctionArn: lambdaService.generateLambdaArn(s3ReplicationFuncName),
@@ -56,7 +57,10 @@ export class S3Service extends AbstractService {
       },
     };
 
-    return this._s3.putBucketNotificationConfiguration(payload).promise();
+    return this._retryableRequest(
+      this._s3.putBucketNotificationConfiguration(payload),
+      ['InvalidArgument']
+    ).promise()
   }
 
   /**
@@ -70,13 +74,18 @@ export class S3Service extends AbstractService {
     return this._s3.getBucketNotificationConfiguration({
       Bucket: bucketName
     }).promise().then(configurationObj => {
-      let updatePayload = Object.assign({Bucket: bucketName,}, configurationObj);
+      configurationObj.LambdaFunctionConfigurations = configurationObj.LambdaFunctionConfigurations
+        .filter(lambdaCfg => lambdaCfg.LambdaFunctionArn !== s3ReplicationFuncArn);
+      
+      let updatePayload = {
+        Bucket: bucketName,
+        NotificationConfiguration: configurationObj,
+      };
 
-      updatePayload.LambdaFunctionConfigurations = updatePayload.LambdaFunctionConfigurations.filter(lambdaCfg => {
-        return lambdaCfg.LambdaFunctionArn !== s3ReplicationFuncArn;
-      });
-
-      return this._s3.putBucketNotificationConfiguration(updatePayload).promise();
+      return this._retryableRequest(
+        this._s3.putBucketNotificationConfiguration(updatePayload),
+        ['InvalidArgument']
+      ).promise()
     });
   }
 

@@ -63,6 +63,28 @@ export class FSManager extends AbstractManager {
   }
 
   /**
+   * @param {Object} buckets
+   * @returns {Promise}
+   * @private
+   */
+  _disableFsReplication(buckets) {
+    let disablePromises = [];
+
+    for (let type in buckets) {
+      if (!buckets.hasOwnProperty(type)) {
+        continue;
+      }
+
+      let bucketAwsName = buckets[type].name;
+      let promise = this.s3Service.removeBucketReplicationNotification(bucketAwsName);
+
+      disablePromises.push(promise);
+    }
+
+    return Promise.all(disablePromises);
+  }
+
+  /**
    * @returns {Promise}
    */
   start() {
@@ -75,6 +97,12 @@ export class FSManager extends AbstractManager {
    * @returns {Promise}
    */
   stop() {
-    return Promise.resolve();
+    let blueBuckets = this.s3Service.blueConfig().buckets;
+    let greenBuckets = this.s3Service.greenConfig().buckets;
+
+    return Promise.all([
+      this._disableFsReplication(blueBuckets),
+      this._disableFsReplication(greenBuckets),
+    ]);
   }
 }

@@ -88,7 +88,7 @@ export class DynamoDBService extends AbstractService {
           };
         }
 
-        return this._dynamoDb.updateTable(payload).promise()
+        return this._retryableRequest(this._dynamoDb.updateTable(payload)).promise()
            // recursive call to force table retrieve again
           .then(() => this.enableDynamoDBStreams(tableName));
       });

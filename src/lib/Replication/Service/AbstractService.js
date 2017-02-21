@@ -36,4 +36,48 @@ export class AbstractService extends Core.OOP.Interface {
   greenConfig() {
     return this.replication.greenConfig.provisioning[this.name()];
   }
+
+  /**
+   * @param {AWS.Request|Object} request
+   * @param {String[]} retryableCodes
+   * @returns {AWS.Request|Object}
+   */
+  _retryableRequest(request, retryableCodes = []) {
+    retryableCodes = retryableCodes
+      .filter(c => AbstractService._safeRetryableCodes.indexOf(c) === -1)
+      .concat(AbstractService._safeRetryableCodes);
+
+    request.on('retry', response => {
+      if (retryableCodes.indexOf(response.error.code) !== -1) {
+        console.warn(`"${this.name()}" resources locked. Retrying...`);
+
+        response.error.retryable = true;
+        response.error.retryDelay = AbstractService.RETRY_DELAY;
+        response.error.retryCount = AbstractService.RETRY_COUNT;
+      }
+    });
+
+    return request;
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get _safeRetryableCodes() {
+    return ['ResourceInUseException', 'Throttling'];
+  }
+
+  /**
+   * @returns {Number}
+   */
+  static get RETRY_COUNT() {
+    return 5;
+  }
+
+  /**
+   * @returns {Number}
+   */
+  static get RETRY_DELAY() {
+    return 5000;
+  }
 }
