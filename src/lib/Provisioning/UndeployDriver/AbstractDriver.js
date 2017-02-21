@@ -102,16 +102,18 @@ export class AbstractDriver extends Core.OOP.Interface {
 
       resourceIds.push(resourceId);
 
-      this._removeResourceRetryable(resourceId, resourceData, (error) => {
-        resourcesRemaining--;
+      setTimeout(() => {
+        this._removeResourceRetryable(resourceId, resourceData, (error) => {
+          resourcesRemaining--;
 
-        if (!error) {
-          this._pushStack(resourceId);
-          return;
-        }
+          if (!error) {
+            this._pushStack(resourceId);
+            return;
+          }
 
-        this._logError(`Error while removing resource #${resourceId}: ${error}`);
-      });
+          this._logError(`Error while removing resource #${resourceId}: ${error}`);
+        });
+      }, i * 200);
     }
 
     wait.ready(() => {
@@ -136,7 +138,7 @@ export class AbstractDriver extends Core.OOP.Interface {
           return;
         }
 
-        let retriesDelay = parseInt(2000 / retries);
+        let retriesDelay = parseInt(10000 / retries);
 
         this._logError(
           `Retrying undeploy on ${this.service()}:${resourceId} in ${retriesDelay} ms due to the error: ${error}`
