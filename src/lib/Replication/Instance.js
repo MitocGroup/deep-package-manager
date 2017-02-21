@@ -7,9 +7,12 @@
 'use strict';
 
 import AWS from 'aws-sdk';
-import {DynamoDBManager} from './Manager/DynamoDBManager';
-import {LambdaManager} from './Manager/LambdaManager';
 import {Hash} from '../Helpers/Hash';
+import {S3Service} from './Service/S3Service';
+import {DynamoDBService} from './Service/DynamoDBService';
+import {LambdaService} from './Service/LambdaService';
+import {DBManager} from './Manager/DBManager';
+import {FSManager} from './Manager/FSManager';
 
 export class Instance {
   /**
@@ -22,11 +25,30 @@ export class Instance {
 
     AWS.config.update(this._blueConfig.aws);
 
-    this._dynamoDbManager = new DynamoDBManager(this);
-    this._dynamoDbManager.dynamoDb = new AWS.DynamoDB();
+    this._dynamoDbService = new DynamoDBService(this);
+    this._dynamoDbService.dynamoDb = new AWS.DynamoDB();
 
-    this._lambdaManager = new LambdaManager(this);
-    this._lambdaManager.lambda = new AWS.Lambda();
+    this._lambdaService = new LambdaService(this);
+    this._lambdaService.lambda = new AWS.Lambda();
+
+    this._s3Service = new S3Service(this);
+    this._s3Service.s3 = new AWS.S3();
+
+    this._replicationManagers = null;
+  }
+
+  /**
+   * @returns {AbstractManager[]|DBManager[]}
+   */
+  get replicationManagers() {
+    if (!this._replicationManagers) {
+      this._replicationManagers = [
+        new DBManager(this),
+        new FSManager(this),
+      ];
+    }
+
+    return this._replicationManagers;
   }
 
   /**
@@ -44,17 +66,24 @@ export class Instance {
   }
 
   /** 
-   * @returns {DynamoDBManager}
+   * @returns {DynamoDBService}
    */
-  get dynamoDbManager() {
-    return this._dynamoDbManager;
+  get dynamoDbService() {
+    return this._dynamoDbService;
   }
 
   /**
-   * @returns {LambdaManager}
+   * @returns {LambdaService}
    */
-  get lambdaManager() {
-    return this._lambdaManager;
+  get lambdaService() {
+    return this._lambdaService;
+  }
+
+  /**
+   * @returns {S3Service}
+   */
+  get s3Service() {
+    return this._s3Service;
   }
 
   /**
@@ -77,96 +106,50 @@ export class Instance {
   }
 
   /**
-   * @param {String[]} tables
+   * @param {Object} resources
    * @returns {Promise}
    */
-  prepare(tables) {
+  prepare(resources) {
     return Promise.all(
-      tables
-        .map(table => this._dynamoDbManager.getAwsBlueTableName(table))
-        .map(table => {
-          console.debug(`Enabling dynamoDB streams for "${table}"`);
+      this.replicationManagers.map(manager => {
+        console.info(`Preparing replication for "${manager.name()}" resources.`);
 
-          return this._dynamoDbManager
-            .enableDynamoDBStreams(table)
-            .then(tableConfig => {
-              console.debug(`Enabling trigger function for "${tableConfig.LatestStreamArn}" stream.`);
-
-              return this._lambdaManager.createDynamoDBStreamTriggerFunction(tableConfig.LatestStreamArn);
-            })
-            .then(() => {
-              console.info(`"${table}" DynamoDB stream enabled.`);
-
-              return this._lambdaManager.startTableBackFillLambda(table)
-                .then(() => {
-                  console.debug(`"${table}" table backfill started.`);
-                });
-            });
-        })
+        return manager.prepare(resources[manager.name()]).then(() => {
+          console.info(`"${manager.name()}" resources prepared.`);
+        });
+      })
     );
   }
 
   /**
-   * @param {String[]} tables
+   * @param {Object} resources
    * @returns {Promise}
    */
-  start(tables) {
+  start(resources) {
     return Promise.all(
-      tables
-        .map(table => this._dynamoDbManager.getAwsGreenTableName(table))
-        .map(table => {
-          console.debug(`Enabling dynamoDB streams for "${table}"`);
+      this.replicationManagers.map(manager => {
+        console.info(`Starting blue-green replication for "${manager.name()}" resources.`);
 
-          return this._dynamoDbManager
-            .enableDynamoDBStreams(table)
-            .then(tableConfig => {
-              console.debug(`Enabling trigger function for "${tableConfig.LatestStreamArn}" stream.`);
-
-              return this._lambdaManager.createDynamoDBStreamTriggerFunction(tableConfig.LatestStreamArn);
-            })
-            .then(() => {
-              console.info(`"${table}" DynamoDB stream enabled.`);
-            });
-        })
+        return manager.start(resources[manager.name()]).then(() => {
+          console.info(`Blue-green replication is running for "${manager.name()} resources."`);
+        });
+      })
     );
   }
 
   /**
-   * @param {String[]} tables
+   * @param {Object} resources
    * @returns {Promise}
-   * @private
    */
-  _stopTablesReplication(tables) {
-    let stopTriggersPromise = this._lambdaManager
-      .stopDynamoDBStreamTriggerFunctions(tables)
-      .then(() => {
-        console.debug(`Lambda replication triggers have been removed for "${tables.join(', ')}"`);
-      });
+  stop(resources) {
+    return Promise.all(
+      this.replicationManagers.map(manager => {
+        console.info(`Stopping blue-green replication for "${manager.name()}" resources.`);
 
-    let stopDynamoDBStreamsPromises = tables.map(
-      table => {
-        return this._dynamoDbManager
-          .disableDynamoDBStreams(table)
-          .then(() => {
-            console.debug(`DynamoDB streams have been disabled for "${table}"`);
-          });
-      }
+        return manager.stop(resources[manager.name()]).then(() => {
+          console.info(`Blue-green replication has been stopped for "${manager.name()} resources."`);
+        });
+      })
     );
-
-    return Promise.all([
-      stopTriggersPromise,
-      Promise.all(stopDynamoDBStreamsPromises),
-    ]);
-  }
-
-  /**
-   * @param {String[]} tables
-   * @returns {Promise}
-   */
-  stop(tables) {
-    return Promise.all([
-      this._stopTablesReplication(tables.map(t => this._dynamoDbManager.getAwsBlueTableName(t))),
-      this._stopTablesReplication(tables.map(t => this._dynamoDbManager.getAwsGreenTableName(t))),
-    ]);
   }
 }

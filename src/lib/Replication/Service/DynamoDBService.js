@@ -4,11 +4,11 @@
 
 'use strict';
 
-import {AbstractManager} from './AbstractManager';
 import Core from 'deep-core';
+import {AbstractService} from './AbstractService';
 import {NoSuchModelException} from '../Exception/NoSuchModelException';
 
-export class DynamoDBManager extends AbstractManager {
+export class DynamoDBService extends AbstractService {
   /**
    * @param {Object[]} args
    */
@@ -88,7 +88,7 @@ export class DynamoDBManager extends AbstractManager {
           };
         }
 
-        return this._dynamoDb.updateTable(payload).promise()
+        return this._retryableRequest(this._dynamoDb.updateTable(payload)).promise()
            // recursive call to force table retrieve again
           .then(() => this.enableDynamoDBStreams(tableName));
       });
