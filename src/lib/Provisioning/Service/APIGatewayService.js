@@ -638,6 +638,11 @@ export class APIGatewayService extends AbstractService {
    * @private
    */
   _addStageToUsagePlan(apiId, usagePlan, stageName, callback) {
+    if (!usagePlan) {
+      callback(null);
+      return;
+    }
+
     let apiStages = usagePlan.apiStages || [];
 
     for (let key in apiStages) {
