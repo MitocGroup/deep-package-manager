@@ -27,6 +27,7 @@ import {Instance as PropertyInstance} from '../Property/Instance';
 import {WaitFor} from '../Helpers/WaitFor';
 import {Tagging} from './ResourceTagging/Tagging';
 import {SESService} from './Service/SESService';
+import objectMerge from 'object-merge';
 
 /**
  * Provisioning instance
@@ -407,8 +408,11 @@ export class Instance {
 
           console.debug(`Post-provisioning done for "${service.name()}" service.`);
 
-          // @todo: why is this resetting the object?
-          //this._config[service.name()] = service.config();
+          this._config[service.name()] = this._mergeConfigs(
+            this._config[service.name()],
+            service.config()
+          );
+
           subRemaining--;
         });
       }
@@ -429,6 +433,20 @@ export class Instance {
         }
       });
     });
+  }
+
+  /**
+   *
+   * @param {Object} oldConfig
+   * @param {Object} newConfig
+   * @returns {Object}
+   */
+  _mergeConfigs(oldConfig, newConfig) {
+    // use this hook to avoid circular reference error
+    return objectMerge(
+      JSON.parse(JSON.stringify(oldConfig)),
+      JSON.parse(JSON.stringify(newConfig))
+    );
   }
 
   /**
@@ -507,8 +525,11 @@ export class Instance {
 
         console.debug(`Post-deploy-provisioning done for "${service.name()}" service.`);
 
-        // @todo: why is this resetting the object?
-        //this._config[service.name()] = service.config();
+        this._config[service.name()] = this._mergeConfigs(
+          this._config[service.name()],
+          service.config()
+        );
+
         remaining--;
       });
     }
