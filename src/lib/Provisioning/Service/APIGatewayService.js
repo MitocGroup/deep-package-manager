@@ -1267,7 +1267,7 @@ export class APIGatewayService extends AbstractService {
   _getIntegrationTypeParams(type, httpMethod, uri, apiConfig, enableCache = false) {
     let params = {
       type: 'MOCK',
-      requestTemplates: this.getJsonRequestTemplate(httpMethod, type),
+      requestTemplates: this.getJsonRequestTemplate(httpMethod, apiConfig.authorization, type),
       authorizationType: Action.AUTH_TYPE_NONE,
       apiKeyRequired: false,
     };
@@ -1350,16 +1350,28 @@ export class APIGatewayService extends AbstractService {
 
   /**
    * @param {String} httpMethod
+   * @param {String} authType
    * @param {String|null} type
    * @returns {Object}
    */
-  getJsonRequestTemplate(httpMethod, type = null) {
+  getJsonRequestTemplate(httpMethod, authType, type = null) {
     let tplVal = ''; // enables Input passthrough
 
-    if (type === 'AWS' && ['GET', 'DELETE'].indexOf(httpMethod) !== -1) {
-      tplVal = this.qsToMapObjectMappingTpl;
-    } else if (httpMethod === 'OPTIONS') {
-      tplVal = this.templateForMockIntegration;
+    if (type === 'AWS') {
+      switch (httpMethod) {
+        case 'GET':
+        case 'DELETE':
+          tplVal = this.getQsToMapObjectMappingTpl(authType);
+          break;
+        case 'POST':
+        case 'PUT':
+        case 'PATCH':
+          tplVal = this.getBodyToMapObjectMappingTpl(authType);
+          break;
+        case 'OPTIONS':
+          tplVal = this.templateForMockIntegration;
+          break;
+      }
     }
 
     return {
@@ -1369,13 +1381,45 @@ export class APIGatewayService extends AbstractService {
 
   /**
    * Velocity template to transform query string params to a map object that is passed via POST to a lambda function
+   * and adding auth context passed by CUSTOM authorizer
+   *
+   * @param {String} authType
    *
    * @returns {String}
    */
-  get qsToMapObjectMappingTpl() {
-    return '#set($keys = []) #foreach($key in $input.params().querystring.keySet()) #if ($key != "_deepQsHash") ' +
+  getQsToMapObjectMappingTpl(authType) {
+    let tpl = '#set($keys = []) #foreach($key in $input.params().querystring.keySet()) #if ($key != "_deepQsHash") ' +
       '#set($result = $keys.add($key)) #end #end { #foreach($key in $keys) ' +
       '"$key": "$util.escapeJavaScript($input.params($key))" #if($foreach.hasNext),#end #end }';
+
+    if (authType === Action.AUTH_TYPE_CUSTOM) {
+      // @todo: add CUSTOM authorizer context
+      let tpl = '#set($keys = []) #foreach($key in $input.params().querystring.keySet()) #if ($key != "_deepQsHash") ' +
+        '#set($result = $keys.add($key)) #end #end { #foreach($key in $keys) ' +
+        '"$key": "$util.escapeJavaScript($input.params($key))" #if($foreach.hasNext),#end #end }'; // add authorizer data
+    }
+
+    return tpl;
+  }
+
+  /**
+   * Velocity template to transform request body to a map object that is passed via POST to a lambda function
+   * and adding auth context passed by CUSTOM authorizer
+   *
+   * @param {String} authType
+   *
+   * @returns {String}
+   */
+  getBodyToMapObjectMappingTpl(authType) {
+    let tpl = '';
+
+    if (authType === Action.AUTH_TYPE_CUSTOM) {
+      tpl = '#set($body = $util.parseJson("$input.json(\'$\')")) { #foreach($paramName in $body.keySet()) ' +
+        '#if ($paramName != "_deep_auth_context_") "$paramName" : "$body.get($paramName)" #end #end' +
+        '"_deep_auth_context_": { "cognitoIdentityId" : "$context.authorizer.principalId" } }';
+    }
+
+    return tpl;
   }
 
   /**
