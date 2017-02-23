@@ -32,6 +32,23 @@ export class LambdaService extends AbstractService {
   }
 
   /**
+   * @param {String} bucket
+   * @param {Date|String|Number} dateTime
+   * @returns {*}
+   */
+  startS3BackFillLambda(bucket, dateTime = Date.now()) {
+    return this._lambda.invoke({
+      FunctionName: this.s3BackFillFunctionName,
+      InvocationType: 'Event',
+      LogType: 'None',
+      Payload: JSON.stringify({
+        Bucket: bucket,
+        MaxDateTime: dateTime,
+      }),
+    }).promise();
+  }
+
+  /**
    * @param {String} table
    * @returns {Promise}
    */
@@ -84,32 +101,37 @@ export class LambdaService extends AbstractService {
    * @param {Object} ignoreGlobs
    * @returns {Promise}
    */
-  injectEnvVarsIntoS3ReplicationLambda(ignoreGlobs) {
-    return this._lambda.getFunction({
-      FunctionName: this.s3ReplicationFunctionName,
-    }).promise().then(functionMetadata => {
-      let functionCfg = functionMetadata.Configuration;
+  injectEnvVarsIntoS3ReplicationLambdas(ignoreGlobs) {
+    return Promise.all([
+      this.s3ReplicationFunctionName,
+      this.s3BackFillFunctionName,
+    ].map(functionName => {
+      return this._lambda.getFunction({
+        FunctionName: functionName,
+      }).promise().then(functionMetadata => {
+        let functionCfg = functionMetadata.Configuration;
 
-      delete functionCfg.CodeSize;
-      delete functionCfg.CodeSha256;
-      delete functionCfg.KMSKeyArn;
-      delete functionCfg.FunctionArn;
-      delete functionCfg.LastModified;
-      delete functionCfg.Version;
-      delete functionCfg.VpcConfig;
+        delete functionCfg.CodeSize;
+        delete functionCfg.CodeSha256;
+        delete functionCfg.KMSKeyArn;
+        delete functionCfg.FunctionArn;
+        delete functionCfg.LastModified;
+        delete functionCfg.Version;
+        delete functionCfg.VpcConfig;
 
-      Object.assign(functionCfg, {
-        Environment: {
-          Variables: Object.assign(
-            {},
-            ignoreGlobs,
-            this.replication.s3Service.buildBucketReplicationMap()
-          ),
-        },
+        Object.assign(functionCfg, {
+          Environment: {
+            Variables: Object.assign(
+              {},
+              ignoreGlobs,
+              this.replication.s3Service.buildBucketReplicationMap()
+            ),
+          },
+        });
+
+        return this._lambda.updateFunctionConfiguration(functionCfg).promise().then(() => functionCfg);
       });
-
-      return this._lambda.updateFunctionConfiguration(functionCfg).promise().then(() => functionCfg);
-    });
+    }));
   }
 
   /**
@@ -177,6 +199,13 @@ export class LambdaService extends AbstractService {
    */
   get s3ReplicationFunctionName() {
     return this.blueConfig().names['deep-blue-green']['replication-s3-notification'];
+  }
+
+  /**
+   * @returns {String}
+   */
+  get s3BackFillFunctionName() {
+    return this.blueConfig().names['deep-blue-green']['replication-s3-backfill'];
   }
 
   /**

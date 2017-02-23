@@ -26,41 +26,40 @@ export class FSManager extends AbstractManager {
    * @returns {Promise}
    */
   prepare(ignoreGlobs) {
-    return this.lambdaService.injectEnvVarsIntoS3ReplicationLambda(ignoreGlobs).then(() => {
-      let buckets = this.s3Service.blueConfig().buckets;
+    let buckets = this.s3Service.blueConfig().buckets;
+    let plainBuckets = this._plainifyBucketsObj(buckets);
 
-      return this._enableFsReplicationTriggers(buckets);
+    return this.lambdaService.injectEnvVarsIntoS3ReplicationLambdas(ignoreGlobs).then(() => {
+      return this._enableFsReplicationTriggers(plainBuckets);
+    }).then(() => {
+      return Promise.all(plainBuckets.map(bucket => this.lambdaService.startS3BackFillLambda(bucket)));
     });
   }
 
   /**
-   * @param {Object} buckets
+   * @param {Array} bucketsArray
    * @returns {Promise}
    * @private
    */
-  _enableFsReplicationTriggers(buckets) {
-    let preparePromises = [];
-
-    for (let type in buckets) {
-      if (!buckets.hasOwnProperty(type)) {
-        continue;
-      }
-
-      let bucketAwsName = buckets[type].name;
-      let promise = this.lambdaService
-        .addS3InvokePermission(
-          this.lambdaService.s3ReplicationFunctionName,
-          bucketAwsName
-        )
-        .then(() => this.wait(10000)) // lambda permissions are propagated slowly
-        .then(() => {
-          return this.s3Service.addReplicationLambdaNotification(bucketAwsName);
-        });
-
-      preparePromises.push(promise);
+  _enableFsReplicationTriggers(bucketsArray) {
+    if (bucketsArray.length === 0) {
+      return Promise.resolve();
     }
 
-    return Promise.all(preparePromises);
+    let bucketsClone = [].concat(bucketsArray);
+    let currentBucket = bucketsClone.shift();
+
+    return this.lambdaService
+      .addS3InvokePermission(
+        this.lambdaService.s3ReplicationFunctionName,
+        currentBucket
+      )
+      .then(() => this.wait(5000)) // lambda permissions are propagated slowly
+      .then(() => this.s3Service.addReplicationLambdaNotification(currentBucket))
+      .then(() => this._enableFsReplicationTriggers(bucketsClone))
+      .then(() => {
+        console.debug(`Replication triggers have been enabled for "${currentBucket}" bucket.`);
+      });
   }
 
   /**
@@ -91,7 +90,28 @@ export class FSManager extends AbstractManager {
   start() {
     let buckets = this.s3Service.greenConfig().buckets;
 
-    return this._enableFsReplicationTriggers(buckets);
+    return this._enableFsReplicationTriggers(this._plainifyBucketsObj(buckets));
+  }
+
+  /**
+   * @param {Object} buckets
+   * @returns {Array}
+   * @private
+   */
+  _plainifyBucketsObj(buckets) {
+    let plainBuckets = [];
+
+    for (let type in buckets) {
+      if (!buckets.hasOwnProperty(type)) {
+        continue;
+      }
+
+      let bucketAwsName = buckets[type].name;
+
+      plainBuckets.push(bucketAwsName);
+    }
+
+    return plainBuckets;
   }
 
   /**
