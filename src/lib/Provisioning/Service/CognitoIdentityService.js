@@ -277,8 +277,7 @@ export class CognitoIdentityService extends AbstractService {
    */
   _updateIdentityPool(identityPool, changeSet) {
     if (Object.keys(changeSet).length === 0) {
-      callback(identityPool);
-      return;
+      return Promise.resolve(identityPool);
     }
 
     let cognitoIdentity = this.provisioning.cognitoIdentity;
@@ -286,7 +285,7 @@ export class CognitoIdentityService extends AbstractService {
 
     return cognitoIdentity.updateIdentityPool(params)
       .promise()
-      .catch(e => {
+      .catch(error => {
         setImmediate(() => {
           throw new FailedToUpdateIdentityPoolException(params.IdentityPoolName, error);
         });
