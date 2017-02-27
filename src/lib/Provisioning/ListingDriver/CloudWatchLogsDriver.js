@@ -92,8 +92,8 @@ export class CloudWatchLogsDriver extends AbstractDriver {
         this._checkPushStack(groupName, groupName, cwlData);
       }
 
-      if (data.logGroups.nextToken) {
-        let nextBatchToken = data.logGroups.nextToken;
+      if (data.nextToken) {
+        let nextBatchToken = data.nextToken;
 
         this._listLogGroups(logGroupPrefix, cb, nextBatchToken);
       } else {
