@@ -99,6 +99,7 @@ export class Lambda {
     config.timestamp = (new Date()).getTime();
     config.buckets = S3Service.fakeBucketsConfig(propertyConfig.appIdentifier, microservice.autoload.frontend);
     config.tablesNames = {};
+    config.nonPartitionedModels = propertyConfig.globals.nonPartitionedModels || {};
 
     config.cacheDsn = '';
     config.api = {};
