@@ -33,6 +33,7 @@ import objectMerge from 'object-merge';
 import nodePath from 'path';
 import jsonPointer from 'json-pointer';
 import {ActionFlags} from '../../Microservice/Metadata/Helpers/ActionFlags';
+import {FailedToRetrieveUsagePlanException} from './Exception/FailedToRetrieveUsagePlanException';
 
 /**
  * APIGateway service
@@ -355,7 +356,7 @@ export class APIGatewayService extends AbstractService {
           this._createApiIamRole((role) => {
             restApiIamRole = role;
 
-            this._createUsagePlan(this.apiConfig.plan, (usagePlan) => {
+            this._createOrGetUsagePlan(this.apiConfig.plan, (usagePlan) => {
 
               callback(restApi, this._extractApiResourcesMetadata(restResources), restApiIamRole, usagePlan);
             });
@@ -363,6 +364,38 @@ export class APIGatewayService extends AbstractService {
         });
       });
     };
+  }
+
+  /**
+   * @param {Object} planParams
+   * @param {Function} cb
+   * @returns {*}
+   * @private
+   */
+  _createOrGetUsagePlan(planParams, cb) {
+    return (planParams.Id
+      ? this._getUsagePlan
+      : this._createUsagePlan
+    ).call(this, planParams, cb);
+  }
+
+  /**
+   * @param {Object} planParams
+   * @param {Function} cb
+   * @private
+   */
+  _getUsagePlan(planParams, cb) {
+    let payload = {
+      usagePlanId: planParams.Id,
+    };
+
+    this.apiGatewayClient.getUsagePlan(payload, (error, data) => {
+      if (error) {
+        throw new FailedToRetrieveUsagePlanException(planParams.Id, error);
+      }
+
+      cb(data);
+    });
   }
 
   /**
@@ -650,7 +683,7 @@ export class APIGatewayService extends AbstractService {
         continue;
       }
 
-      if (apiStages[key].stage === stageName) {
+      if (apiStages[key].stage === stageName && apiStages[key].apiId === apiId) {
         callback(null);
         return;
       }
