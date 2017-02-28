@@ -565,9 +565,9 @@ export class Instance {
     let nonPartitionedModels = [];
 
     if (accountMicroservice) {
-      let accountParams = accountMicroservice.parameters.extract(Parameters.BACKEND);
+      let backendParams = accountMicroservice.parameters[Parameters.BACKEND];
 
-      nonPartitionedModels = (accountParams.nonPartitionedModels || '')
+      nonPartitionedModels = (backendParams.nonPartitionedModels || '')
         .split(',')
         .map(item => item.trim())
         .filter(Boolean);
