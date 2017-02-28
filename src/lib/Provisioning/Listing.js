@@ -104,7 +104,7 @@ export class Listing {
    */
   static get SERVICES() {
     return [
-      'APIGateway', 'APIGatewayPlan', 'IAM', 'CognitoIdentity',
+      'APIGateway', 'APIGatewayPlan', 'APIGatewayKey', 'IAM', 'CognitoIdentity',
       'Lambda', 'CloudFront', 'DynamoDB', 'S3',
       'CloudWatchLogs', 'SQS', 'ElastiCache',
       'ES', 'CloudWatchEvents', 'CognitoIdentityProvider',
