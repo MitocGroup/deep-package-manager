@@ -46,6 +46,7 @@ import {AbstractStrategy} from './ExtractStrategy/AbstractStrategy';
 import {OptimisticStrategy} from './ExtractStrategy/OptimisticStrategy';
 import {DeployIgnore} from './DeployIgnore';
 import {PostRootFetchHook} from '../Microservice/PostRootFetchHook';
+import {Parameters} from '../Microservice/Parameters';
 
 /**
  * Property instance
@@ -400,23 +401,7 @@ export class Instance {
   fakeBuild() {
     let microservicesConfig = {};
     let microservices = this.microservices;
-    let rootMicroservice = null;
-
-    for (let i in microservices) {
-      if (!microservices.hasOwnProperty(i)) {
-        continue;
-      }
-
-      let microservice = microservices[i];
-
-      if (microservice.isRoot) {
-        if (rootMicroservice) {
-          throw new DuplicateRootException(rootMicroservice, microservice);
-        }
-
-        rootMicroservice = microservice;
-      }
-    }
+    let rootMicroservice = this._getRootMicroservice(microservices);
 
     if (!rootMicroservice) {
       throw new MissingRootException();
@@ -467,6 +452,7 @@ export class Instance {
 
     this._config.models = models.map(m => m.extract());
     this._config.modelsSettings = models.map(m => m.settings.extract());
+    this._config.nonPartitionedModels = this._getNonPartitionedModels(this.accountMicroservice);
     this._config.validationSchemas = validationSchemas.map((s) => {
       return {
         name: s.name,
@@ -544,6 +530,53 @@ export class Instance {
   }
 
   /**
+   * @param {*} microservices
+   * @returns {*}
+   * @private
+   */
+  _getRootMicroservice(microservices) {
+    let rootMicroservice = null;
+
+    for (let i in microservices) {
+      if (!microservices.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let microservice = microservices[i];
+
+      if (microservice.isRoot) {
+        if (rootMicroservice) {
+          throw new DuplicateRootException(rootMicroservice, microservice);
+        }
+
+        rootMicroservice = microservice;
+      }
+    }
+
+    return rootMicroservice;
+  }
+
+  /**
+   * @param {Microservice} accountMicroservice
+   * @returns {Array}
+   * @private
+   */
+  _getNonPartitionedModels(accountMicroservice) {
+    let nonPartitionedModels = [];
+
+    if (accountMicroservice) {
+      let backendParams = accountMicroservice.parameters[Parameters.BACKEND];
+
+      nonPartitionedModels = (backendParams.nonPartitionedModels || '')
+        .split(',')
+        .map(item => item.trim())
+        .filter(Boolean);
+    }
+
+    return nonPartitionedModels;
+  }
+
+  /**
    * @returns {Object}
    * @private
    */
@@ -579,23 +612,7 @@ export class Instance {
 
     let microservicesConfig = isUpdate ? this._config.microservices : {};
     let microservices = this.microservices;
-    let rootMicroservice;
-
-    for (let i in microservices) {
-      if (!microservices.hasOwnProperty(i)) {
-        continue;
-      }
-
-      let microservice = microservices[i];
-
-      if (microservice.isRoot) {
-        if (rootMicroservice) {
-          throw new DuplicateRootException(rootMicroservice, microservice);
-        }
-
-        rootMicroservice = microservice;
-      }
-    }
+    let rootMicroservice = this._getRootMicroservice(microservices);
 
     if (!rootMicroservice) {
       throw new MissingRootException();
@@ -649,6 +666,7 @@ export class Instance {
 
     this._config.models = models.map(m => m.extract());
     this._config.modelsSettings = models.map(m => m.settings.extract());
+    this._config.nonPartitionedModels = this._getNonPartitionedModels(this.accountMicroservice);
     this._config.validationSchemas = validationSchemas.map((s) => {
       return {
         name: s.name,
