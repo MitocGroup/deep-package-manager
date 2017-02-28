@@ -452,18 +452,13 @@ export class Instance {
 
     this._config.models = models.map(m => m.extract());
     this._config.modelsSettings = models.map(m => m.settings.extract());
+    this._config.nonPartitionedModels = this._getNonPartitionedModels(this.accountMicroservice);
     this._config.validationSchemas = validationSchemas.map((s) => {
       return {
         name: s.name,
         schemaPath: s.schemaPath,
       };
     });
-
-    if (this.accountMicroservice) {
-      let accountParams = this.accountMicroservice.parameters.extract(Parameters.BACKEND);
-
-      this._config.nonPartitionedModels = accountParams.nonPartitionedModels || [];
-    }
 
     let lambdaInstances = [];
 
@@ -562,6 +557,26 @@ export class Instance {
   }
 
   /**
+   * @param {Microservice} accountMicroservice
+   * @returns {Array}
+   * @private
+   */
+  _getNonPartitionedModels(accountMicroservice) {
+    let nonPartitionedModels = [];
+
+    if (accountMicroservice) {
+      let accountParams = accountMicroservice.parameters.extract(Parameters.BACKEND);
+
+      nonPartitionedModels = (accountParams.nonPartitionedModels || '')
+        .split(',')
+        .map(item => item.trim())
+        .filter(Boolean);
+    }
+
+    return nonPartitionedModels;
+  }
+
+  /**
    * @returns {Object}
    * @private
    */
@@ -651,18 +666,13 @@ export class Instance {
 
     this._config.models = models.map(m => m.extract());
     this._config.modelsSettings = models.map(m => m.settings.extract());
+    this._config.nonPartitionedModels = this._getNonPartitionedModels(this.accountMicroservice);
     this._config.validationSchemas = validationSchemas.map((s) => {
       return {
         name: s.name,
         schemaPath: s.schemaPath,
       };
     });
-
-    if (this.accountMicroservice) {
-      let accountParams = this.accountMicroservice.parameters.extract(Parameters.BACKEND);
-
-      this._config.nonPartitionedModels = accountParams.nonPartitionedModels || [];
-    }
 
     if (skipProvision) {
       callback();
