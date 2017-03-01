@@ -300,6 +300,7 @@ export class Instance {
         break;
       case 'APIGateway':
       case 'APIGatewayPlan':
+      case 'APIGatewayKey':
         name = 'apiGateway';
         break;
       case 'ElastiCache':
