@@ -645,7 +645,10 @@ export class Instance {
       };
 
       if (isUpdate) {
-        microserviceConfig.deployedServices = microservicesConfig[microservice.config.identifier].deployedServices;
+        let oldConfig = microservicesConfig[microservice.config.identifier] || {};
+        microserviceConfig.deployedServices = oldConfig.deployedServices || {
+          lambdas: {},
+        };
       }
 
       microservicesConfig[microserviceConfig.identifier] = microserviceConfig;
