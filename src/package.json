@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "1.10.9",
+  "version": "1.10.11",
   "description": "DEEP Package Manager",
   "keywords": [
     "Digital Enterprise End-To-End Platform",
@@ -79,7 +79,7 @@
     "object-merge": "^2.5.x",
     "password-generator": "^2.0.2",
     "raml-sanitize": "^1.1.x",
-    "raml-validate": "^1.0.x",
+    "raml-validate": "1.0.6",
     "readline-sync": "^1.4.x",
     "semver": "^5.2.x",
     "spawn-cmd": "^0.0.x",
