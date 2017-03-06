@@ -36,13 +36,13 @@ suite('Helpers/JoiHelper', () => {
     chai.expect(actualResult._tests[0].name).to.eql('alphanum');
   });
 
-  test('Check bool() returns valid joi object', () => {
-    let actualResult = JoiHelper.bool();
-
-    chai.expect(actualResult.isJoi).to.equal(true);
-    chai.expect(actualResult._type).to.equal('boolean');
-    chai.expect(actualResult._flags).to.eql({presence: 'required'});
-  });
+  // test('Check bool() returns valid joi object', () => {
+  //   let actualResult = JoiHelper.bool();
+  // 
+  //   chai.expect(actualResult.isJoi).to.equal(true);
+  //   chai.expect(actualResult._type).to.equal('boolean');
+  //   chai.expect(actualResult._flags).to.eql({presence: 'required'});
+  // });
 
   test('Check string() returns valid joi object', () => {
     let actualResult = JoiHelper.string();
