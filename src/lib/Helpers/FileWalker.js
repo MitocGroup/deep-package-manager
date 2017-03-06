@@ -177,7 +177,7 @@ export class FileWalker {
 
     if (FileSystem.existsSync(ignoreFile)) {
       return ignore({})
-        .addIgnoreFile(ignoreFile)
+        .add(FileSystem.readFileSync(ignoreFile).toString())
         .createFilter();
     }
 
