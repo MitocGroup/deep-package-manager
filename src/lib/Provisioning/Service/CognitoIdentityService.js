@@ -31,8 +31,19 @@ export class CognitoIdentityService extends AbstractService {
   constructor(...args) {
     super(...args);
 
-    this._policyProvider = AbstractProvider.create(this.provisioning);
+    this._policyProvider = null;
     this._securityConfig = null;
+  }
+  
+  /**
+   * @returns {AbstractProvider|*}
+   */
+  get policyProvider() {
+    if (!this._policyProvider) {
+      this._policyProvider = AbstractProvider.create(this.provisioning);
+    }
+    
+    return this._policyProvider;
   }
 
   /**
@@ -408,10 +419,10 @@ export class CognitoIdentityService extends AbstractService {
 
       switch (cognitoRoleType) {
         case CognitoIdentityService.ROLE_AUTH:
-          policy = this._policyProvider.getAuthenticatedPolicy();
+          policy = this.policyProvider.getAuthenticatedPolicy();
           break;
         case CognitoIdentityService.ROLE_UNAUTH:
-          policy = this._policyProvider.getUnauthenticatedPolicy();
+          policy = this.policyProvider.getUnauthenticatedPolicy();
           break;
         default:
           throw new MissingPolicyProviderMethodException(cognitoRoleType);
