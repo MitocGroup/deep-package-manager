@@ -96,7 +96,7 @@ export default {
       apiVersion: JoiHelper.string().regex(/^[a-zA-Z0-9_]+$/i).optional().default(DeployConfig.DEFAULT_API_VERSION),
       aws: Joi.object().keys({
         accessKeyId: JoiHelper.string().required().empty(''),
-        secretAccessKey: JoiHelper.string().required().empty(''),
+        secretAccessKey: JoiHelper.string().optional().empty(''),
         sessionToken: JoiHelper.string().optional().empty(''),
         region: JoiHelper.string().required(),
         httpOptions: Joi.object().optional(),
