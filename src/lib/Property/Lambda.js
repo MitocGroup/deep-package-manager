@@ -860,7 +860,11 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    * @returns {String[]}
    */
   static get RUNTIMES() {
-    return ['nodejs4.3', 'nodejs', 'java8', 'python2.7'];
+    return [
+      'nodejs4.3', 'nodejs', 
+      'java8', 'python2.7', 
+      'dotnetcore1.0', 'nodejs4.3-edge',
+    ];
   }
 
   /**
