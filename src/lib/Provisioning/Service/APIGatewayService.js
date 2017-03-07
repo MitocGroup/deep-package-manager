@@ -433,7 +433,7 @@ export class APIGatewayService extends AbstractService {
               this._executeProvisionMethod('putIntegrationResponse', apiId, apiResources, integrationParams, (data) => {
                 integrationsResponse = data;
 
-                this._addPolicyToApiRole(apiRole, (data) => {
+                this._ensureCloudWatchLogsSetup((data) => {
                   rolePolicy = data;
 
                   this._deployApi(apiId, (apiStage) => {
@@ -884,34 +884,64 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
-   * @param {Object} apiRole
    * @param {Function} callback
    * @private
+   *
+   * @see https://aws.amazon.com/premiumsupport/knowledge-center/api-gateway-cloudwatch-logs/
    */
-  _addPolicyToApiRole(apiRole, callback) {
-    let lambdaService = this.provisioning.services.find(LambdaService);
-    let cloudWatchService = this.provisioning.services.find(CloudWatchLogsService);
+  _ensureCloudWatchLogsSetup(callback) {
+    this._ensureCloudWatchLogsRole((apiRole) => {
+      let cloudWatchService = this.provisioning.services.find(CloudWatchLogsService);
 
+      let iam = this.provisioning.iam;
+      let policy = new Core.AWS.IAM.Policy();
+      policy.statement.add(cloudWatchService.generateAllowFullAccessStatement());
+
+      let params = {
+        PolicyDocument: policy.toString(),
+        PolicyName: apiRole.RoleName,
+        RoleName: apiRole.RoleName,
+      };
+
+      iam.putRolePolicy(params, (error, data) => {
+        if (error) {
+          throw new FailedAttachingPolicyToRoleException(params.PolicyName, params.RoleName, error);
+        }
+
+        callback(policy);
+      });
+    });
+  }
+  
+  /**
+   * @param {Function} callback
+   * @private
+   *
+   * @see https://aws.amazon.com/premiumsupport/knowledge-center/api-gateway-cloudwatch-logs/
+   */
+  _ensureCloudWatchLogsRole(callback) {
     let iam = this.provisioning.iam;
-    let policy = new Core.AWS.IAM.Policy();
-    policy.statement.add(lambdaService.generateAllowActionsStatement());
-    policy.statement.add(cloudWatchService.generateAllowFullAccessStatement());
-
+    let roleName = APIGatewayService.CLOUD_WATCH_LOGS_ROLE_NAME;
+    let policyDocument = IAMService.getAssumeRolePolicy(Core.AWS.Service.API_GATEWAY).extract();
+    policyDocument.Statement.Sid = '';
+    
     let params = {
-      PolicyDocument: policy.toString(),
-      PolicyName: this.generateAwsResourceName(
-        `${APIGatewayService.API_NAME_PREFIX}ExecAccessPolicy`,
-        Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
-      ),
-      RoleName: apiRole.RoleName,
+      AssumeRolePolicyDocument: JSON.stringify(policyDocument),
+      RoleName: roleName,
     };
 
-    iam.putRolePolicy(params, (error, data) => {
+    iam.createRole(params, (error, data) => {
       if (error) {
-        throw new FailedAttachingPolicyToRoleException(params.PolicyName, params.RoleName, error);
+        
+        // fail silently in case the role exists
+        if (error.code === 'EntityAlreadyExists') {
+          return callback({ RoleName: roleName });
+        }
+        
+        throw new FailedToCreateIamRoleException(roleName, error);
       }
 
-      callback(policy);
+      callback(data.Role);
     });
   }
 
@@ -1804,6 +1834,13 @@ export class APIGatewayService extends AbstractService {
     });
 
     return statement;
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get CLOUD_WATCH_LOGS_ROLE_NAME() {
+    return 'DeepApiCloudWatchLogs';
   }
 
   /**
