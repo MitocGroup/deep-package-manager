@@ -9,10 +9,11 @@ import {CloudFrontEvent} from './Helpers/CloudFrontEvent';
 import {MissingCloudFrontEventTypeException} from '../Exception/MissingCloudFrontEventTypeException';
 import Core from 'deep-core';
 import {CloudFrontEventAlreadyExistsException} from '../Exception/CloudFrontEventAlreadyExistsException';
-/*
 
- */
 export class CloudFrontService extends AbstractService {
+  /**
+   * @param {Object[]} args
+   */
   constructor(...args) {
     super(...args);
 
