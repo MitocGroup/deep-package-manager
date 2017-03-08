@@ -53,7 +53,7 @@ export default Joi.object().keys({
   engine: assureTypeLambda(Joi.object().optional().keys({
     memory: Joi.number().optional().integer()
       .allow(Lambda.AVAILABLE_MEMORY_VALUES)
-      .min(Lambda.DEFAULT_MEMORY_LIMIT)
+      .min(Lambda.MIN_MEMORY_LIMIT)
       .max(Lambda.MAX_MEMORY_LIMIT)
       .default(Lambda.DEFAULT_MEMORY_LIMIT),
     timeout: Joi.number().optional().integer().min(1).max(Lambda.MAX_TIMEOUT).default(Lambda.DEFAULT_TIMEOUT),
