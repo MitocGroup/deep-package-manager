@@ -205,7 +205,7 @@ export class Instance {
           this._lambdaService.generateLambdaArn(functionName),
           cfDistributionId,
           eventType
-        )
+        );
       })
       .then(() => {
         console.info(`Function "${functionName} has been attached to ${cfDistributionId} ${eventType} event.`);
