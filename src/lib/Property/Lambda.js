@@ -793,6 +793,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
     switch(this._runtime) {
       case 'nodejs':
       case 'nodejs4.3':
+      case 'nodejs4.3-edge':
         handler = 'bootstrap.handler';
         break;
       case 'java8':
@@ -801,6 +802,9 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
       case 'python2.7':
         handler = 'bootstrap.handler';
         break;
+      case 'dotnetcore1.0':
+        handler = 'DeepApp::Handler.Handler::Handle';
+        break;  
       default:
         throw new Error(`The Lambda runtime ${this._runtime} is not supported yet`);
     }
@@ -827,26 +831,36 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    */
   static get AVAILABLE_MEMORY_VALUES() {
     return [
-      128, 192, 256, 320, 384, 448,
-      512, 576, 640, 704, 768, 832,
-      896, 960, 1024, 1088, 1152,
-      1216, 1280, 1344, 1408,
-      1472, 1536
+      128, 192, 256, 320, 384, 448, 
+      512, 576, 640, 704, 768, 832, 
+      896, 960, 1024, 1088, 1152, 
+      1216, 1280, 1344, 1408, 1472,
+      1536, 
     ];
   }
 
   /**
    * @returns {Number}
+   *
+   * @todo find out most suitable default value
+   *       when deep-benchmarking ready
    */
   static get DEFAULT_MEMORY_LIMIT() {
-    return 128;
+    return 512;
+  }
+
+  /**
+   * @returns {Number}
+   */
+  static get MIN_MEMORY_LIMIT() {
+    return Lambda.AVAILABLE_MEMORY_VALUES.shift();
   }
 
   /**
    * @returns {Number}
    */
   static get MAX_MEMORY_LIMIT() {
-    return 1536;
+    return Lambda.AVAILABLE_MEMORY_VALUES.pop();
   }
 
   /**
@@ -879,6 +893,8 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    * @returns {boolean}
    */
   static isNodeRuntime(runtime) {
-    return ['nodejs4.3', 'nodejs'].indexOf(runtime) !== -1;
+    return [
+      'nodejs4.3', 'nodejs', 'nodejs4.3-edge'
+    ].indexOf(runtime) !== -1;
   }
 }
