@@ -13,6 +13,8 @@ import {DynamoDBService} from './Service/DynamoDBService';
 import {LambdaService} from './Service/LambdaService';
 import {DBManager} from './Manager/DBManager';
 import {FSManager} from './Manager/FSManager';
+import {CloudFrontEvent} from './Service/Helpers/CloudFrontEvent';
+import {CloudFrontService} from './Service/CloudFrontService';
 
 export class Instance {
   /**
@@ -33,6 +35,9 @@ export class Instance {
 
     this._s3Service = new S3Service(this);
     this._s3Service.s3 = new AWS.S3();
+
+    this._cloudFrontService = new CloudFrontService(this);
+    this._cloudFrontService.cloudFrontClient = new AWS.CloudFront();
 
     this._replicationManagers = null;
   }
@@ -151,5 +156,63 @@ export class Instance {
         });
       })
     );
+  }
+
+  /**
+   * @returns {Promise}
+   */
+  publish(greenHostname, domain, percentage) {
+    let cfDistributionId = this._cloudFrontService.blueConfig().id;
+    let lambdaVariables = {
+      'percentage': percentage,
+      'domain-name': domain,
+      'green-hostname': greenHostname,
+    };
+
+    return this._prepareCloudFrontLambda(
+      this._lambdaService.cloudFrontTrafficManagerFunctionName,
+      lambdaVariables,
+      cfDistributionId,
+      CloudFrontEvent.VIEWER_REQUEST
+    ).then(() => {
+      return this._prepareCloudFrontLambda(
+        this._lambdaService.cloudFrontResponseEnhancerFunctionName,
+        lambdaVariables,
+        cfDistributionId,
+        CloudFrontEvent.VIEWER_RESPONSE
+      );
+    });
+  }
+
+  /**
+   * @param {String} functionName
+   * @param {Object} variables
+   * @param {String} cfDistributionId
+   * @param {String} eventType
+   * @returns {Promise}
+   * @private
+   */
+  _prepareCloudFrontLambda(functionName, variables, cfDistributionId, eventType) {
+    return this._lambdaService.compileLambdaForCloudFront(functionName, variables)
+      .then(() => this.lambdaService.addLambdaEdgeInvokePermission(functionName, cfDistributionId))
+      .then(() => {
+        console.info(`Attaching "${functionName}" to ${cfDistributionId} ${eventType} event.`);
+        
+        return this._cloudFrontService.attachLambdaToDistributionEvent(
+          this._lambdaService.generateLambdaArn(functionName),
+          cfDistributionId,
+          eventType
+        )
+      })
+      .then(() => {
+        console.info(`Function "${functionName} has been attached to ${cfDistributionId} ${eventType} event.`);
+      });
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get BLUE_GREEN_MS_IDENTIFIER() {
+    return 'deep-blue-green';
   }
 }
