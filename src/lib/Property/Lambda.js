@@ -99,6 +99,7 @@ export class Lambda {
     config.timestamp = (new Date()).getTime();
     config.buckets = S3Service.fakeBucketsConfig(propertyConfig.appIdentifier, microservice.autoload.frontend);
     config.tablesNames = {};
+    config.nonPartitionedModels = propertyConfig.nonPartitionedModels;
 
     config.cacheDsn = '';
     config.api = {};
@@ -637,10 +638,22 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
       }
 
       let request = null;
+      let additionalRequest = null;
 
-      console.debug(`Lambda ${this._identifier} uploaded`);
+      console.debug(`Lambda ${this._identifier} code uploaded`);
 
       if (update && this._wasPreviouslyDeployed) {
+        
+        // update function configuration
+        additionalRequest = lambda.updateFunctionConfiguration({
+          FunctionName: this.functionName,
+          Handler: this.handler,
+          Role: this._execRole.Arn,
+          Runtime: this._runtime,
+          MemorySize: this._memorySize,
+          Timeout: this._timeout,
+        });
+        
         request = lambda.updateFunctionCode({
           S3Bucket: tmpBucket,
           S3Key: objectKey,
@@ -672,8 +685,24 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
         }
       }
 
+      if (additionalRequest) {
+        syncStack.level(1).push(additionalRequest, (error, data) => {
+          if (error) {
+            
+            // This is not critical, just warn developer
+            console.warn(
+              `Lambda ${this._identifier} failed to process configuration`,
+              error
+            );
+          } else {
+            console.debug(`Lambda ${this._identifier} configuration processed`);
+          }
+        });
+      }
+
       syncStack.level(1).push(request, (error, data) => {
         if (error) {
+          
           // @todo: remove this hook
           if (Lambda.isErrorFalsePositive(error)) {
             // @todo: get rid of this hook...
@@ -684,6 +713,8 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
 
           throw new FailedLambdaUploadException(this, error);
         }
+        
+        console.debug(`Lambda ${this._identifier} code and configuration processed`);
 
         this._uploadedLambda = data;
       });

@@ -73,14 +73,14 @@ suite('Helpers/FileWalker', () => {
     chai.expect(FileSystem.existsSync(directoryWithSubPaths)).to.be.equal(false);
   });
 
-  test('Check _buildIgnoreFilter() return true with configured ignore file', () => {
-    fileWalker.ignoreFile = '.gitignore';
-    let dirPath = path.join(__dirname, '../testMaterials/Helpers');
-
-    let actualResult = fileWalker._buildIgnoreFilter(dirPath);
-
-    chai.expect(actualResult()).to.eql(true);
-  });
+  // test('Check _buildIgnoreFilter() return true with configured ignore file', () => {
+  //   fileWalker.ignoreFile = '.gitignore';
+  //   let dirPath = path.join(__dirname, '../testMaterials/Helpers');
+  // 
+  //   let actualResult = fileWalker._buildIgnoreFilter(dirPath);
+  // 
+  //   chai.expect(actualResult()).to.eql(true);
+  // });
 
   test('Check _buildIgnoreFilter() returns true', () => {
     let actualResult = fileWalker._buildIgnoreFilter('testMaterials');
