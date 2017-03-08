@@ -5,7 +5,9 @@
 'use strict';
 
 import {AbstractService} from './AbstractService';
+import {Instance as Replication} from '../Instance';
 import Core from 'deep-core';
+import {LambdaCompiler} from './Helpers/LambdaCompiler';
 
 export class LambdaService extends AbstractService {
   /**
@@ -111,13 +113,7 @@ export class LambdaService extends AbstractService {
       }).promise().then(functionMetadata => {
         let functionCfg = functionMetadata.Configuration;
 
-        delete functionCfg.CodeSize;
-        delete functionCfg.CodeSha256;
-        delete functionCfg.KMSKeyArn;
-        delete functionCfg.FunctionArn;
-        delete functionCfg.LastModified;
-        delete functionCfg.Version;
-        delete functionCfg.VpcConfig;
+        this._deleteMetadataKeysFromLambdaConfig(functionCfg);
 
         Object.assign(functionCfg, {
           Environment: {
@@ -145,13 +141,7 @@ export class LambdaService extends AbstractService {
     }).promise().then(functionMetadata => {
       let functionCfg = functionMetadata.Configuration;
 
-      delete functionCfg.CodeSize;
-      delete functionCfg.CodeSha256;
-      delete functionCfg.KMSKeyArn;
-      delete functionCfg.FunctionArn;
-      delete functionCfg.LastModified;
-      delete functionCfg.Version;
-      delete functionCfg.VpcConfig;
+      this._deleteMetadataKeysFromLambdaConfig(functionCfg);
 
       Object.assign(functionCfg, {
         Environment: {
@@ -184,28 +174,42 @@ export class LambdaService extends AbstractService {
    * @returns {String}
    */
   get replicationFunctionName() {
-    return this.blueConfig().names['deep-blue-green']['replication-stream'];
+    return this.blueConfig().names[Replication.BLUE_GREEN_MS_IDENTIFIER]['replication-stream'];
   }
 
   /**
    * @returns {String}
    */
   get backFillStartFunctionName() {
-    return this.blueConfig().names['deep-blue-green']['replication-start'];
+    return this.blueConfig().names[Replication.BLUE_GREEN_MS_IDENTIFIER]['replication-start'];
   }
 
   /**
    * @returns {String}
    */
   get s3ReplicationFunctionName() {
-    return this.blueConfig().names['deep-blue-green']['replication-s3-notification'];
+    return this.blueConfig().names[Replication.BLUE_GREEN_MS_IDENTIFIER]['replication-s3-notification'];
   }
 
   /**
    * @returns {String}
    */
   get s3BackFillFunctionName() {
-    return this.blueConfig().names['deep-blue-green']['replication-s3-backfill'];
+    return this.blueConfig().names[Replication.BLUE_GREEN_MS_IDENTIFIER]['replication-s3-backfill'];
+  }
+
+  /**
+   * @returns {String}
+   */
+  get cloudFrontTrafficManagerFunctionName() {
+    return this.blueConfig().names[Replication.BLUE_GREEN_MS_IDENTIFIER]['cloudfront-traffic-manager'];
+  }
+
+  /**
+   * @returns {String}
+   */
+  get cloudFrontResponseEnhancerFunctionName() {
+    return this.blueConfig().names[Replication.BLUE_GREEN_MS_IDENTIFIER]['cloudfront-response-enhancer'];
   }
 
   /**
@@ -252,5 +256,89 @@ export class LambdaService extends AbstractService {
     let awsAccountId = config.awsAccountId;
 
     return `arn:aws:lambda:${region}:${awsAccountId}:function:${functionName}`;
+  }
+
+  /**
+   * @param {Object} lambdaConfig
+   * @private
+   */
+  _deleteMetadataKeysFromLambdaConfig(lambdaConfig) {
+    delete lambdaConfig.CodeSize;
+    delete lambdaConfig.CodeSha256;
+    delete lambdaConfig.KMSKeyArn;
+    delete lambdaConfig.FunctionArn;
+    delete lambdaConfig.LastModified;
+    delete lambdaConfig.Version;
+    delete lambdaConfig.VpcConfig;
+  }
+
+  /**
+   * @param {String} functionName
+   * @param {String} cloudfrontDistributionId
+   * @param {String[]} _actionStack
+   * @returns {Promise}
+   */
+  addLambdaEdgeInvokePermission(functionName, cloudfrontDistributionId, _actionStack = ['Get', 'Invoke']) {
+    if (_actionStack.length === 0) {
+      return Promise.resolve();
+    }
+
+    let actionStackClone = [].concat(_actionStack);
+    let action = actionStackClone.shift();
+
+    let payload =  {
+      Action: `${Core.AWS.Service.LAMBDA}:${action}Function`,
+      Principal: Core.AWS.Service.identifier(Core.AWS.Service.LAMBDA_EDGE),
+      FunctionName: this.generateLambdaArn(functionName),
+      StatementId: `traffic-balancer_${functionName}_${action}_${this.replication.hashCode}`,
+    };
+
+    if (action === 'Invoke') {
+      payload.SourceArn = `arn:aws:cloudfront::${this.replication.blueConfig.awsAccountId}` +
+        `:distribution/${cloudfrontDistributionId}`;
+    }
+
+    return this._lambda.addPermission(payload)
+      .promise()
+      .then(() => this.addLambdaEdgeInvokePermission(functionName, cloudfrontDistributionId, actionStackClone))
+      .catch(e => {
+        if (this._isFalsePositive(e)) {
+          return Promise.resolve({});
+        }
+
+        throw e;
+      });
+  }
+
+  /**
+   * @param {String} functionName
+   * @param {Object} variables
+   * @returns {Promise}
+   */
+  compileLambdaForCloudFront(functionName, variables) {
+    return this._lambda.getFunction({
+      FunctionName: functionName,
+    }).promise().then(functionObj => {
+      let s3Location = functionObj.Code.Location;
+
+      return LambdaCompiler.fetchFromUrl(s3Location)
+        .then(compiler => {
+          for (let key in variables) {
+            if (!variables.hasOwnProperty(key)) {
+              continue;
+            }
+
+            compiler.addVariable(key, variables[key]);
+          }
+
+          return compiler.compile();
+        })
+        .then(codeBuffer => {
+          return this._lambda.updateFunctionCode({
+            FunctionName: functionName,
+            ZipFile: codeBuffer,
+          }).promise();
+        });
+    })
   }
 }
