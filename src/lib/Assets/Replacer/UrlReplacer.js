@@ -73,7 +73,7 @@ export class UrlReplacer extends AbstractReplacer {
       replacements[node] = UrlReplacer._replaceAll(
         node,
         uri,
-        `$1${delimiter}_v=${this._version}`
+        `$1${delimiter}${UrlReplacer.VERSION_PARAM}=${this._version}`
       );
     }
 
@@ -162,5 +162,12 @@ export class UrlReplacer extends AbstractReplacer {
     }
 
     return result;
+  }
+  
+  /**
+   * @returns {String}
+   */
+  static get VERSION_PARAM() {
+    return '_v';
   }
 }
