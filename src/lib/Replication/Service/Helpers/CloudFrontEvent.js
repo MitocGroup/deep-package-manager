@@ -34,6 +34,7 @@ export class CloudFrontEvent {
   }
 
   /**
+   * @param {String} eventType
    * @returns {Boolean}
    */
   static exists(eventType) {

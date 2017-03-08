@@ -65,7 +65,7 @@ export class LambdaCompiler {
 
   /**
    * Regexp for replacing [placeholders]
-   * @param key
+   * @param {String} key
    * @returns {RegExp}
    * @private
    */

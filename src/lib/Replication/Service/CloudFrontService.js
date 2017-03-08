@@ -35,8 +35,8 @@ export class CloudFrontService extends AbstractService {
   }
 
   /**
-   * @param {String} distributionId
    * @param {String} lambdaArn
+   * @param {String} distributionId
    * @param {String} eventType
    * @returns {Promise}
    */
@@ -46,8 +46,8 @@ export class CloudFrontService extends AbstractService {
     }
 
     return this._cloudFrontClient.getDistributionConfig({
-        Id: distributionId,
-      }).promise().then(response => {
+      Id: distributionId,
+    }).promise().then(response => {
       let distributionConfig = response.DistributionConfig;
       let functionAssociations = distributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations;
 

@@ -159,6 +159,9 @@ export class Instance {
   }
 
   /**
+   * @param {String} greenHostname
+   * @param {String} domain
+   * @param {Number} percentage
    * @returns {Promise}
    */
   publish(greenHostname, domain, percentage) {
