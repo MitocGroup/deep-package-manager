@@ -97,8 +97,10 @@ export class Dumper {
     let duplicatesStack = {};
 
     depObjectsStack.forEach((dependencyObj) => {
-      depStack[dependencyObj.name] = depStack[dependencyObj.name] || [];
-      depStack[dependencyObj.name].push(dependencyObj.version);
+      let depContext = dependencyObj.context;
+
+      depStack[depContext.name] = depStack[depContext.name] || [];
+      depStack[depContext.name].push(depContext.version);
     });
 
     for (let depName in depStack) {
