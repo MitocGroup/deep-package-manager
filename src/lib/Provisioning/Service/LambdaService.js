@@ -494,7 +494,7 @@ export class LambdaService extends AbstractService {
   }
 
   /**
-   * Allows lambda function access to all microservice resources (FS s3 buckets, DynamoDD tables, etc.)
+   * Allows lambda function access to all microservice resources (FS s3 buckets, DynamoDB tables, etc.)
    *
    * @param {String} microserviceIdentifier
    * @param {Array} buckets

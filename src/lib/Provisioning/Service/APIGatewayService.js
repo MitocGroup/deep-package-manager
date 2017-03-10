@@ -432,17 +432,19 @@ export class APIGatewayService extends AbstractService {
 
               this._executeProvisionMethod('putIntegrationResponse', apiId, apiResources, integrationParams, (data) => {
                 integrationsResponse = data;
-
-                this._ensureCloudWatchLogsSetup((data) => {
+                
+                this._addPolicyToApiRole(apiRole, (data) => {
                   rolePolicy = data.policy;
+                  
+                  this._ensureCloudWatchLogsSetup((data) => {
+                    this._deployApi(apiId, (apiStage) => {
 
-                  this._deployApi(apiId, (apiStage) => {
+                      this._addStageToUsagePlan(apiId, usagePlan, this.stageName, () => {
 
-                    this._addStageToUsagePlan(apiId, usagePlan, this.stageName, () => {
+                        this._updateStage(apiId, this.stageName, data.apiRole, this.apiConfig, (data) => {
 
-                      this._updateStage(apiId, this.stageName, data.apiRole, this.apiConfig, (data) => {
-
-                        callback(methods, integrations, rolePolicy, apiStage, authorizer);
+                          callback(methods, integrations, rolePolicy, apiStage, authorizer);
+                        });
                       });
                     });
                   });
@@ -453,6 +455,38 @@ export class APIGatewayService extends AbstractService {
         });
       });
     };
+  }
+  
+  /**
+   * @param {Object} apiRole
+   * @param {Function} callback
+   * @private
+   */
+  _addPolicyToApiRole(apiRole, callback) {
+    let lambdaService = this.provisioning.services.find(LambdaService);
+    let cloudWatchService = this.provisioning.services.find(CloudWatchLogsService);
+
+    let iam = this.provisioning.iam;
+    let policy = new Core.AWS.IAM.Policy();
+    policy.statement.add(lambdaService.generateAllowActionsStatement());
+    policy.statement.add(cloudWatchService.generateAllowFullAccessStatement());
+
+    let params = {
+      PolicyDocument: policy.toString(),
+      PolicyName: this.generateAwsResourceName(
+        `${APIGatewayService.API_NAME_PREFIX}ExecAccessPolicy`,
+        Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
+      ),
+      RoleName: apiRole.RoleName,
+    };
+
+    iam.putRolePolicy(params, (error, data) => {
+      if (error) {
+        throw new FailedAttachingPolicyToRoleException(params.PolicyName, params.RoleName, error);
+      }
+
+      callback(policy);
+    });
   }
 
   /**
