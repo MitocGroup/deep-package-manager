@@ -434,13 +434,13 @@ export class APIGatewayService extends AbstractService {
                 integrationsResponse = data;
 
                 this._ensureCloudWatchLogsSetup((data) => {
-                  rolePolicy = data;
+                  rolePolicy = data.policy;
 
                   this._deployApi(apiId, (apiStage) => {
 
                     this._addStageToUsagePlan(apiId, usagePlan, this.stageName, () => {
 
-                      this._updateStage(apiId, this.stageName, apiRole, this.apiConfig, (data) => {
+                      this._updateStage(apiId, this.stageName, data.apiRole, this.apiConfig, (data) => {
 
                         callback(methods, integrations, rolePolicy, apiStage, authorizer);
                       });
@@ -908,7 +908,7 @@ export class APIGatewayService extends AbstractService {
           throw new FailedAttachingPolicyToRoleException(params.PolicyName, params.RoleName, error);
         }
 
-        callback(policy);
+        callback({ policy, apiRole });
       });
     });
   }
@@ -935,7 +935,10 @@ export class APIGatewayService extends AbstractService {
         
         // fail silently in case the role exists
         if (error.code === 'EntityAlreadyExists') {
-          return callback({ RoleName: roleName });
+          return callback({
+            RoleName: roleName, 
+            Arn: this._getRoleArnFromName(roleName),
+          });
         }
         
         throw new FailedToCreateIamRoleException(roleName, error);
@@ -943,6 +946,19 @@ export class APIGatewayService extends AbstractService {
 
       callback(data.Role);
     });
+  }
+  
+  /**
+   * @param {String} roleName
+   *
+   * @returns {String}
+   *
+   * @private
+   */
+  _getRoleArnFromName(roleName) {
+    let serviceId = Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT;
+    
+    return `arn:aws:${serviceId}::${this.awsAccountId}:role/${roleName}`;
   }
 
   /**
