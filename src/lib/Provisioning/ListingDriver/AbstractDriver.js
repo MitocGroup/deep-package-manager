@@ -76,4 +76,21 @@ export class AbstractDriver extends Core.OOP.Interface {
 
     return AbstractService.extractBaseHashFromResourceName(resource) === this.baseHash;
   }
+
+  /**
+   * @param {AWS.Request|Object} request
+   * @param {String[]} retryableCodes
+   * @param {Number} delay
+   * @returns {AWS.Request|Object}
+   */
+  _retryableRequest(request, retryableCodes = ['ResourceInUseException', 'Throttling'], delay = 5000) {
+    request.on('retry', response => {
+      if (retryableCodes.indexOf(response.error.code) !== -1) {
+        response.error.retryable = true;
+        response.error.retryDelay = delay;
+      }
+    });
+
+    return request;
+  }
 }
