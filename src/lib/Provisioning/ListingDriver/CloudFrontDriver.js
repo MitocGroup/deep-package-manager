@@ -97,6 +97,8 @@ export class CloudFrontDriver extends AbstractDriver {
       if (tags.hasOwnProperty(envNameKey) && tags.hasOwnProperty(envIdKey)) {
         let cfResourceId = `${awsResourcePrefix}.${tags[envNameKey]}.cloudfront.${tags[envIdKey]}`;
 
+        distribution.DeepResourceId = cfResourceId;
+
         this._checkPushStack(cfResourceId, distribution.Id, distribution);
       }
     });
