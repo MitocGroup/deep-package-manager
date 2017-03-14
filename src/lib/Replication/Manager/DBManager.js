@@ -136,7 +136,7 @@ export class DBManager extends AbstractManager {
       }
 
       return bCount / gCount;
-    })
+    });
   }
 
   /**
@@ -148,7 +148,9 @@ export class DBManager extends AbstractManager {
 
     return Promise.all(
       models.map(modelName => {
-        return this._checkModelStatus(modelName).then(status => statusMap[modelName] = status)
+        return this._checkModelStatus(modelName).then(status => {
+          statusMap[modelName] = status;
+        });
       })
     ).then(() => statusMap);
   }
