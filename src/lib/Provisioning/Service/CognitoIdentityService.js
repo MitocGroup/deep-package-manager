@@ -465,7 +465,12 @@ export class CognitoIdentityService extends AbstractService {
     let sqsService = this.provisioning.services.find(SQSService);
     let cognitoIdentity = this.provisioning.services.find(CognitoIdentityService);
 
-    policy.statement.add(APIGatewayService.generateAllowInvokeMethodStatement(apiGateway.getAllEndpointsArn()));
+    // allow users calling all api gateways 
+    // if account microservice not included
+    if (!this.property.accountMicroservice) {
+      policy.statement.add(APIGatewayService.generateAllowInvokeMethodStatement(apiGateway.getAllEndpointsArn()));
+    }
+    
     policy.statement.add(sqsService.generateAllowActionsStatement());
     policy.statement.add(cognitoIdentity.generateAllowCognitoSyncStatement(
       ['ListRecords', 'UpdateRecords', 'ListDatasets']
