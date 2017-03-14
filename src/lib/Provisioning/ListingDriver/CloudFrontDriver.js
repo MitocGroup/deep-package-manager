@@ -43,7 +43,11 @@ export class CloudFrontDriver extends AbstractDriver {
         return;
       }
 
-      let distCount = data.DistributionList.Items.length;
+      let distCount = (data.DistributionList.Items || []).length;
+
+      if (distCount <= 0) {
+        return cb(null);
+      }
 
       for (let i in data.DistributionList.Items) {
         if (!data.DistributionList.Items.hasOwnProperty(i)) {
@@ -88,7 +92,7 @@ export class CloudFrontDriver extends AbstractDriver {
     return this._retryableRequest(this._awsService.listTagsForResource({
       Resource: distribution.ARN,
     })).promise().then(response => {
-      let tags = response.Tags.Items.reduce((obj, tag) => {
+      let tags = (response.Tags.Items || []).reduce((obj, tag) => {
         obj[tag.Key] = tag.Value;
 
         return obj;
