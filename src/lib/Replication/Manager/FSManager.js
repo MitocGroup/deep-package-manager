@@ -126,4 +126,11 @@ export class FSManager extends AbstractManager {
       this._disableFsReplication(greenBuckets),
     ]);
   }
+
+  /**
+   * @returns {Promise}
+   */
+  checkStatus() {
+    return Promise.resolve(null);
+  }
 }

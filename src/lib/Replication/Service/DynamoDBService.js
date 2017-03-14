@@ -157,4 +157,17 @@ export class DynamoDBService extends AbstractService {
 
     throw new NoSuchModelException(tableName);
   }
+
+  /**
+   * @param {String} tableName
+   * @returns {Promise}
+   */
+  getItemCount(tableName) {
+    return this._dynamoDb
+      .describeTable({
+        TableName: tableName,
+      })
+      .promise()
+      .then(response => response.Table.ItemCount);
+  }
 }

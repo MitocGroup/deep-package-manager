@@ -11,7 +11,7 @@ export class AbstractManager extends Core.OOP.Interface {
    * @param {Instance} replicationInstance
    */
   constructor(replicationInstance) {
-    super(['prepare', 'start', 'stop', 'name']);
+    super(['prepare', 'start', 'stop', 'name', 'checkStatus']);
 
     this._replication = replicationInstance;
   }
