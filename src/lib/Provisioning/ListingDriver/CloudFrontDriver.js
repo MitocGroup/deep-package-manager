@@ -45,7 +45,7 @@ export class CloudFrontDriver extends AbstractDriver {
 
       let distCount = (data.DistributionList.Items || []).length;
 
-      if (distCount === 0) {
+      if (distCount <= 0) {
         return cb(null);
       }
 
