@@ -596,8 +596,9 @@ export class APIGatewayService extends AbstractService {
     /**
      * @param {Number} methodIndex
      * @param {Function} onCompleteCallback
+     * @param {String} _resourcePath
      */
-    function executeSingleMethod(methodIndex, onCompleteCallback) {
+    function executeSingleMethod(methodIndex, onCompleteCallback, _resourcePath = null) {
       if (!methodsParams.hasOwnProperty(methodIndex)) {
         onCompleteCallback();
 
@@ -606,7 +607,7 @@ export class APIGatewayService extends AbstractService {
 
       let params = methodsParams[methodIndex];
       let retries = retriesMap[methodIndex] || (retriesMap[methodIndex] = 0);
-      var resourcePath = params.resourcePath;
+      var resourcePath = _resourcePath || params.resourcePath;
       delete params.resourcePath;
 
       this.apiGatewayClient[method](params, (error, data) => {
@@ -618,7 +619,8 @@ export class APIGatewayService extends AbstractService {
               executeSingleMethod.bind(this),
               APIGatewayService.RETRY_INTERVAL * retriesMap[methodIndex],
               methodIndex,
-              onCompleteCallback
+              onCompleteCallback,
+              resourcePath
             );
 
             return;
