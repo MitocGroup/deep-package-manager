@@ -114,4 +114,44 @@ export class DBManager extends AbstractManager {
       this._stopTablesReplication(tables.map(t => this.dynamoDbService.getAwsGreenTableName(t))),
     ]);
   }
+
+  /**
+   * @param {String} model
+   * @returns {Promise}
+   * @private
+   */
+  _checkModelStatus(model) {
+    let blueTable = this.dynamoDbService.getAwsBlueTableName(model);
+    let greenTable = this.dynamoDbService.getAwsGreenTableName(model);
+
+    return Promise.all([
+      this.dynamoDbService.getItemCount(blueTable),
+      this.dynamoDbService.getItemCount(greenTable),
+    ]).then(results => {
+      let bCount = results[0];
+      let gCount = results[1];
+
+      if (gCount === 0 || bCount > gCount) {
+        return 1.0;
+      }
+
+      return bCount / gCount;
+    });
+  }
+
+  /**
+   * @param {String[]} models
+   * @returns {Promise}
+   */
+  checkStatus(models) {
+    let statusMap = {};
+
+    return Promise.all(
+      models.map(modelName => {
+        return this._checkModelStatus(modelName).then(status => {
+          statusMap[modelName] = status;
+        });
+      })
+    ).then(() => statusMap);
+  }
 }

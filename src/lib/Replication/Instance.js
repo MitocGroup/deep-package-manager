@@ -213,6 +213,24 @@ export class Instance {
   }
 
   /**
+   * @param {Object} resources
+   * @returns {Promise}
+   */
+  checkStatus(resources) {
+    let statusResult = {};
+
+    return Promise.all(
+      this.replicationManagers.map(replicationManger => {
+        return replicationManger.checkStatus(resources[replicationManger.name()]).then(status => {
+          if (status !== null) {
+            statusResult[replicationManger.name()] = status;
+          }
+        });
+      })
+    ).then(() => statusResult);
+  }
+
+  /**
    * @returns {String}
    */
   static get BLUE_GREEN_MS_IDENTIFIER() {
