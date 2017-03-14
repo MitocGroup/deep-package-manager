@@ -92,7 +92,7 @@ export class CloudFrontDriver extends AbstractDriver {
     return this._retryableRequest(this._awsService.listTagsForResource({
       Resource: distribution.ARN,
     })).promise().then(response => {
-      let tags = response.Tags.Items.reduce((obj, tag) => {
+      let tags = (response.Tags.Items || []).reduce((obj, tag) => {
         obj[tag.Key] = tag.Value;
 
         return obj;
