@@ -91,6 +91,8 @@ export class Instance {
     this._config.deployId = new DeployID(this).toString();
 
     this._configObj = new DeployConfig(this);
+
+    this._frontendConfig = null;
   }
 
   /**
@@ -118,6 +120,13 @@ export class Instance {
    */
   get configObj() {
     return this._configObj;
+  }
+
+  /**
+   * @returns {*}
+   */
+  get frontendConfig() {
+    return this._frontendConfig;
   }
 
   /**
@@ -862,7 +871,9 @@ export class Instance {
   buildFrontend(dumpPath = null, callback = () => {}) {
     let frontend = new Frontend(this, this._config.microservices, dumpPath || this._path, this.deployId);
 
-    frontend.build(Frontend.createConfig(this._config), callback.bind(this, frontend));
+    this._frontendConfig = Frontend.createConfig(this._config);
+
+    frontend.build(this._frontendConfig, callback.bind(this, frontend));
 
     return frontend;
   }
