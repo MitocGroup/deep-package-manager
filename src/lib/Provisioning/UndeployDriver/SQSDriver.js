@@ -40,7 +40,20 @@ export class SQSDriver extends AbstractDriver {
     this.awsService.deleteQueue({
       QueueUrl: queueUrl,
     }, (error) => {
+      if (error && this._isFalsePositive(error)) {
+        return cb(null);
+      }
+      
       cb(error);
     });
+  }
+  
+  /**
+   * @param {Error|*} error
+   * @returns {Boolean}
+   * @private
+   */
+  _isFalsePositive(error) {
+    return /NonExistentQueue/i.test(error.code);
   }
 }
