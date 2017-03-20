@@ -108,19 +108,19 @@ export class ESService extends AbstractService {
         this._ready = true;
         return;
         
-        this._updateSearchDomainVersion(
-          oldDomains[ESService.CLIENT_DOMAIN_NAME],
-          search.es.version,
-          () => {
-            console.info(
-              `ElasticSearch domain '${oldDomains[ESService.CLIENT_DOMAIN_NAME].DomainName}' ` +
-              `updated to v${search.es.version}`
-            );
-            
-            this._config.domains[ESService.CLIENT_DOMAIN_NAME].ElasticsearchVersion = search.es.version;
-            this._ready = true;
-          }
-        );
+        // this._updateSearchDomainVersion(
+        //   oldDomains[ESService.CLIENT_DOMAIN_NAME],
+        //   search.es.version,
+        //   () => {
+        //     console.info(
+        //       `ElasticSearch domain '${oldDomains[ESService.CLIENT_DOMAIN_NAME].DomainName}' ` +
+        //       `updated to v${search.es.version}`
+        //     );
+        //     
+        //     this._config.domains[ESService.CLIENT_DOMAIN_NAME].ElasticsearchVersion = search.es.version;
+        //     this._ready = true;
+        //   }
+        // );
       } else {
         this._ready = true;
       }
