@@ -50,30 +50,68 @@ export class CloudFrontService extends AbstractService {
     }).promise().then(response => {
       let distributionConfig = response.DistributionConfig;
       let functionAssociations = distributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations;
+      let payload = {
+        Id: distributionId,
+        IfMatch: response.ETag,
+        DistributionConfig: distributionConfig,
+      };
 
       functionAssociations.Items = functionAssociations.Items || [];
-      functionAssociations.Quantity += 1;
 
       for (let item of functionAssociations.Items) {
         if (item.EventType === eventType) {
           if (item.LambdaFunctionARN === lambdaArn) { // looks like it's already attached
-            return Promise.resolve();
+            // do not return Promise.resolve()
+            // functionAssociations are not reliable
+            return this._cloudFrontClient.updateDistribution(payload).promise();
           }
 
           throw new CloudFrontEventAlreadyExistsException(eventType, distributionId, item.LambdaFunctionARN);
         }
       }
 
+      functionAssociations.Quantity += 1;
       functionAssociations.Items.push({
         EventType: eventType,
         LambdaFunctionARN: lambdaArn,
       });
 
-      return this._cloudFrontClient.updateDistribution({
+      return this._cloudFrontClient.updateDistribution(payload).promise();
+    });
+  }
+
+  /**
+   * @param {String[]} events
+   * @param {String} distributionId
+   * @returns {Promise.<TResult>}
+   */
+  detachEventsFromDistribution(events, distributionId) {
+    return this._cloudFrontClient.getDistributionConfig({
+      Id: distributionId,
+    }).promise().then(response => {
+      let distributionConfig = response.DistributionConfig;
+      let functionAssociations = distributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations;
+      let payload = {
         Id: distributionId,
         IfMatch: response.ETag,
         DistributionConfig: distributionConfig,
-      }).promise();
+      };
+
+      let newFunctionAssociations = {
+        Quantity: 0,
+        Items: [],
+      };
+
+      functionAssociations.Items.forEach(item => {
+        if (events.indexOf(item.EventType) === -1) {
+          newFunctionAssociations.Items.push(item);
+          newFunctionAssociations.Quantity += 1;
+        }
+      });
+
+      distributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations = newFunctionAssociations;
+
+      return this._cloudFrontClient.updateDistribution(payload).promise();
     });
   }
 }

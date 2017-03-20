@@ -91,6 +91,10 @@ export class Instance {
     return this._s3Service;
   }
 
+  get cloudFrontService() {
+    return this._cloudFrontService;
+  }
+
   /**
    * @returns {String}
    */
@@ -155,7 +159,22 @@ export class Instance {
           console.info(`Blue-green replication has been stopped for "${manager.name()} resources."`);
         });
       })
-    );
+    ).then(() => {
+      let cfDistributionId = this._cloudFrontService.blueConfig().id;
+      let events = [
+        CloudFrontEvent.VIEWER_REQUEST,
+        CloudFrontEvent.VIEWER_RESPONSE,
+      ];
+
+      console.info(`Detaching lambda associations from "${cfDistributionId}" distribution`);
+
+      return this.cloudFrontService.detachEventsFromDistribution(
+        events,
+        cfDistributionId
+      ).then(() => {
+        console.info(`CloudFront "${events.join(', ')}" events have been detached from "${cfDistributionId}"`);
+      });
+    });
   }
 
   /**
