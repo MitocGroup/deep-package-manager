@@ -4,7 +4,6 @@
 
 'use strict';
 
-import fse from 'fs-extra';
 import createOutputStream from 'create-output-stream';
 import path from 'path';
 import {AbstractStrategy} from './AbstractStrategy';
