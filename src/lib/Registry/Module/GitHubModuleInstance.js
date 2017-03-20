@@ -11,7 +11,6 @@ import {GitHubDriver} from '../Storage/Driver/GitHubDriver';
 import tar from 'tar-stream';
 import gunzip from 'gunzip-maybe';
 import path from 'path';
-import fse from 'fs-extra';
 import createOutputStream from 'create-output-stream';
 
 export class GitHubModuleInstance extends ModuleInstance {

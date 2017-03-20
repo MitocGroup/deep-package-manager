@@ -9,6 +9,7 @@ import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {AbstractService} from './AbstractService';
 import {SQSService} from './SQSService';
 import {FailedToCreateEsDomainException} from './Exception/FailedToCreateEsDomainException';
+import {FailedToUpdateEsDomainException} from './Exception/FailedToUpdateEsDomainException';
 import objectMerge from 'object-merge';
 
 /**
@@ -81,17 +82,81 @@ export class ESService extends AbstractService {
 
     if (search.enabled && !oldDomains.hasOwnProperty(ESService.CLIENT_DOMAIN_NAME)) {
       domainsConfig[ESService.CLIENT_DOMAIN_NAME] = ESService.STD_CLUSTER_CONFIG;
+      
+      // override ES version if available
+      if (search.es && search.es.version) {
+        domainsConfig[ESService.CLIENT_DOMAIN_NAME].ElasticsearchVersion = search.es.version;
+      }
     }
 
     this._createDomains(
       domainsConfig
     )((domains) => {
       this._config.domains = objectMerge(oldDomains, domains);
-
-      this._ready = true;
+      
+      // update to a new version if setup
+      if (search.enabled && search.es && search.es.version
+        && oldDomains.hasOwnProperty(ESService.CLIENT_DOMAIN_NAME)
+        && oldDomains[ESService.CLIENT_DOMAIN_NAME].ElasticsearchVersion !== search.es.version) {
+        
+        // @todo Remove this when ES version update available
+        // Figure out a way to update ES version without data loss
+        console.info(
+          `ElasticSearch domain '${oldDomains[ESService.CLIENT_DOMAIN_NAME].DomainName}'` +
+          `version update (to v${search.es.version}) is not supported by 'es.updateElasticsearchDomainConfig()'`
+        );
+        this._ready = true;
+        return;
+        
+        // this._updateSearchDomainVersion(
+        //   oldDomains[ESService.CLIENT_DOMAIN_NAME],
+        //   search.es.version,
+        //   () => {
+        //     console.info(
+        //       `ElasticSearch domain '${oldDomains[ESService.CLIENT_DOMAIN_NAME].DomainName}' ` +
+        //       `updated to v${search.es.version}`
+        //     );
+        //     
+        //     this._config.domains[ESService.CLIENT_DOMAIN_NAME].ElasticsearchVersion = search.es.version;
+        //     this._ready = true;
+        //   }
+        // );
+      } else {
+        this._ready = true;
+      }
     });
 
     return this;
+  }
+  
+  /**
+   * @param {*} domainConfig
+   * @param {String}  newVersion
+   * @param {Function} onReady
+   *
+   * @private
+   */
+  _updateSearchDomainVersion(domainConfig, newVersion, onReady) {
+    let elasticSearch = this.provisioning.elasticSearch;
+    let params = {
+      DomainName: domainConfig.DomainName,
+      AccessPolicies: domainConfig.AccessPolicies,
+      AdvancedOptions: domainConfig.AdvancedOptions,
+      EBSOptions: domainConfig.EBSOptions,
+      ElasticsearchClusterConfig: domainConfig.ElasticsearchClusterConfig,
+      SnapshotOptions: domainConfig.SnapshotOptions,
+    };
+    
+    elasticSearch.updateElasticsearchDomainConfig(params, (error, data) => {
+      if (error) {
+        throw new FailedToUpdateEsDomainException(
+          domainConfig.DomainName,
+          error
+        );
+      }
+      
+      onReady(data.DomainConfig);
+    });
   }
 
   /**
@@ -155,12 +220,17 @@ export class ESService extends AbstractService {
   }
 
   /**
-   * @returns {{ElasticsearchClusterConfig: {InstanceType: string, InstanceCount: number, DedicatedMasterEnabled: boolean, ZoneAwarenessEnabled: boolean}, EBSOptions: {EBSEnabled: boolean, VolumeType: string, VolumeSize: number, Iops: number}, SnapshotOptions: {AutomatedSnapshotStartHour: number}}}
+   * @returns {*}
+   *
+   * Note that 't2.micro.elasticsearch' instance don't support
+   * ElasticSearch v5.x
+   *
+   * @see http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/what-is-amazon-elasticsearch-service.html#aes-choosing-version
    */
   static get STD_CLUSTER_CONFIG() {
     return {
       ElasticsearchClusterConfig: {
-        InstanceType: 't2.micro.elasticsearch',
+        InstanceType: 't2.small.elasticsearch',
         InstanceCount: 1,
         DedicatedMasterEnabled: false,
         ZoneAwarenessEnabled: false,
@@ -174,6 +244,7 @@ export class ESService extends AbstractService {
       SnapshotOptions: {
         AutomatedSnapshotStartHour: 0,
       },
+      ElasticsearchVersion: '2.3', // 1.5, 2.3, 5.1 
     };
   }
 
