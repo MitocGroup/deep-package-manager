@@ -91,6 +91,9 @@ export class Instance {
     return this._s3Service;
   }
 
+  /**
+   * @returns {CloudFrontService}
+   */
   get cloudFrontService() {
     return this._cloudFrontService;
   }
