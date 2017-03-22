@@ -1331,6 +1331,45 @@ export class Instance {
   }
 
   /**
+   * @param {String} actionIdentifier
+   * @param {Function} callback
+   */
+  deployAction(actionIdentifier, callback) {
+    let lambdaArn = this.getLambdaArnForDeepResourceId(actionIdentifier);
+    let lambdaName = lambdaArn.replace(/.+\/([^\/]+)/, '$1');
+
+    let actionParts = actionIdentifier.match(Instance.DEEP_RESOURCE_IDENTIFIER_REGEXP);
+    let microserviceIdentifier = actionParts[1];
+    let resourceName = actionParts[2];
+    let actionName = actionParts[3];
+    let lambdaIdentifier = `${resourceName}-${actionName}`;
+
+    let lambdaExecRoles = this._config.provisioning.lambda.executionRoles;
+    let lambdaExecRole = lambdaExecRoles[microserviceIdentifier];
+
+    let microservice = this._config.microservices[microserviceIdentifier];
+    let lambdaPath = microservice.raw.lambdas[lambdaIdentifier];
+    let lambdaOptions = microservice.raw.lambdas._[lambdaIdentifier];
+
+    let lambdaInstance = new Lambda(
+      this,
+      microserviceIdentifier,
+      lambdaIdentifier,
+      lambdaName,
+      lambdaExecRole,
+      lambdaPath
+    );
+
+    lambdaInstance.memorySize = lambdaOptions.memory;
+    lambdaInstance.timeout = lambdaOptions.timeout;
+    lambdaInstance.runtime = lambdaOptions.runtime;
+    lambdaInstance.forceUserIdentity = lambdaOptions.forceUserIdentity;
+    lambdaInstance.injectValidationSchemas(this._config.validationSchemas);
+
+    lambdaInstance.update(callback);
+  }
+
+  /**
    * @returns {number}
    */
   static get DEPLOY_FRONTEND() {

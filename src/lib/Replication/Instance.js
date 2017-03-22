@@ -7,6 +7,7 @@
 'use strict';
 
 import AWS from 'aws-sdk';
+import URL from 'url';
 import {Hash} from '../Helpers/Hash';
 import {S3Service} from './Service/S3Service';
 import {DynamoDBService} from './Service/DynamoDBService';
@@ -15,6 +16,8 @@ import {DBManager} from './Manager/DBManager';
 import {FSManager} from './Manager/FSManager';
 import {CloudFrontEvent} from './Service/Helpers/CloudFrontEvent';
 import {CloudFrontService} from './Service/CloudFrontService';
+import {CNAMEResolver} from './Service/Helpers/CNAMEResolver';
+import {MissingCNAMEException} from './Exception/MissingCNAMEException';
 
 export class Instance {
   /**
@@ -92,6 +95,13 @@ export class Instance {
   }
 
   /**
+   * @returns {CloudFrontService}
+   */
+  get cloudFrontService() {
+    return this._cloudFrontService;
+  }
+
+  /**
    * @returns {String}
    */
   get hashCode() {
@@ -155,36 +165,78 @@ export class Instance {
           console.info(`Blue-green replication has been stopped for "${manager.name()} resources."`);
         });
       })
-    );
+    ).then(() => {
+      let cfDistributionId = this._cloudFrontService.blueConfig().id;
+      let events = [
+        CloudFrontEvent.VIEWER_REQUEST,
+        CloudFrontEvent.VIEWER_RESPONSE,
+      ];
+
+      console.info(`Detaching lambda associations from "${cfDistributionId}" distribution`);
+
+      return this.cloudFrontService.detachEventsFromDistribution(
+        events,
+        cfDistributionId
+      ).then(() => {
+        console.info(`CloudFront "${events.join(', ')}" events have been detached from "${cfDistributionId}"`);
+      });
+    });
   }
 
   /**
-   * @param {String} greenHostname
-   * @param {String} domain
    * @param {Number} percentage
    * @returns {Promise}
    */
-  publish(greenHostname, domain, percentage) {
+  publish(percentage) {
     let cfDistributionId = this._cloudFrontService.blueConfig().id;
-    let lambdaVariables = {
+    let greenDistributionId = this._cloudFrontService.greenConfig().id;
+
+    return this._cloudFrontService.getDistributionCNAMES(greenDistributionId).then(cNames => {
+      let lambdaVariables = this._buildLambdaEdgeVariables(percentage, cNames);
+
+      return this._prepareCloudFrontLambda(
+        this._lambdaService.cloudFrontTrafficManagerFunctionName,
+        lambdaVariables,
+        cfDistributionId,
+        CloudFrontEvent.VIEWER_REQUEST
+      ).then(() => {
+        return this._prepareCloudFrontLambda(
+          this._lambdaService.cloudFrontResponseEnhancerFunctionName,
+          lambdaVariables,
+          cfDistributionId,
+          CloudFrontEvent.VIEWER_RESPONSE
+        );
+      });
+    });
+  }
+
+  /**
+   * @param {Number} percentage
+   * @param {String[]} cNames
+   * @returns {Object}
+   * @private
+   */
+  _buildLambdaEdgeVariables(percentage, cNames) {
+    if (cNames.length === 0) {
+      throw new MissingCNAMEException();
+    }
+
+    let cName = new CNAMEResolver(cNames).resolve();
+    let greenHostname = `https://${cName}`;
+
+    console.debug(`Using "${greenHostname}" as green environment hostname`);
+
+    let host = URL.parse(greenHostname).host;
+    let hostParts = host.split('.');
+    let domain = hostParts.slice(1).join('.');
+
+    console.debug(`Using "${domain}" as application domain`);
+
+    return {
       'percentage': percentage,
       'domain-name': domain,
       'green-hostname': greenHostname,
     };
-
-    return this._prepareCloudFrontLambda(
-      this._lambdaService.cloudFrontTrafficManagerFunctionName,
-      lambdaVariables,
-      cfDistributionId,
-      CloudFrontEvent.VIEWER_REQUEST
-    ).then(() => {
-      return this._prepareCloudFrontLambda(
-        this._lambdaService.cloudFrontResponseEnhancerFunctionName,
-        lambdaVariables,
-        cfDistributionId,
-        CloudFrontEvent.VIEWER_RESPONSE
-      );
-    });
   }
 
   /**
