@@ -331,6 +331,11 @@ export class LambdaService extends AbstractService {
             compiler.addVariable(key, variables[key]);
           }
 
+          // @todo: find a better solution to update lambda edge traffic percentage
+          compiler.addEntryProcessor('bootstrap.js', (entryContent) => {
+            return entryContent.replace(/\(\s*[\d\.]+(\s*\/\s*\d+\s*)\)/, `(${variables.percentage}$1)`);
+          });
+
           return compiler.compile();
         })
         .then(codeBuffer => {

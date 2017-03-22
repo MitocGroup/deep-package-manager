@@ -114,4 +114,18 @@ export class CloudFrontService extends AbstractService {
       return this._cloudFrontClient.updateDistribution(payload).promise();
     });
   }
+
+  /**
+   * @param {String} distributionId
+   * @returns {Promise}
+   */
+  getDistributionCNAMES(distributionId) {
+    return this._cloudFrontClient.getDistributionConfig({
+      Id: distributionId,
+    }).promise().then(response => {
+      let cnamesObj = response.DistributionConfig.Aliases;
+
+      return cnamesObj.Items || [];
+    });
+  }
 }

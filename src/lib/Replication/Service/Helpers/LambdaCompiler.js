@@ -15,6 +15,7 @@ export class LambdaCompiler {
   constructor(buffer) {
     this._buffer = buffer;
     this._variablesMap = {};
+    this._processorsMap = {};
   }
 
   /**
@@ -59,6 +60,12 @@ export class LambdaCompiler {
         );
       }
 
+      let customProcessors = this._processorsMap[entryName] || [];
+
+      for (let processor of customProcessors) {
+        entryContent = processor(entryContent);
+      }
+
       zip.file(entryName, entryContent);
     });
   }
@@ -84,6 +91,19 @@ export class LambdaCompiler {
   addVariable(key, value, entry = 'bootstrap.js') {
     this._variablesMap[entry] = this._variablesMap[entry] || {};
     this._variablesMap[entry][key] = value;
+
+    return this;
+  }
+
+  /**
+   * @todo: find a better way to update lambda edge functions
+   * @param {String} entry
+   * @param {Function} processor
+   * @returns {LambdaCompiler}
+   */
+  addEntryProcessor(entry, processor) {
+    this._processorsMap[entry] = this._processorsMap[entry] || [];
+    this._processorsMap[entry].push(processor);
 
     return this;
   }
