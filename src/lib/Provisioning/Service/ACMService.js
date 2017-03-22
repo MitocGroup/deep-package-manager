@@ -10,7 +10,6 @@ import {FailedToRequestCloudFrontDistributionCertificateException} from
   './Exception/FailedToRequestCloudFrontDistributionCertificateException';
 import {Hash} from '../../Helpers/Hash';
 import {ACMDriver as ACMListing} from '../ListingDriver/ACMDriver';
-import {WaitFor} from '../../Helpers/WaitFor';
 import {CloudFrontService} from './CloudFrontService';
 import {APIGatewayService} from './APIGatewayService';
 
@@ -186,6 +185,7 @@ export class ACMService extends AbstractService {
   /**
    * @param {String} domain
    * @param {Function} cb
+   * @returns {*}
    */
   ensureCertificate(domain, cb) {
     let domainRoot = this.extractDomainRoot(domain);
