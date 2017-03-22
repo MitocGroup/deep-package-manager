@@ -97,8 +97,9 @@ export class LambdaCompiler {
 
   /**
    * @todo: find a better way to update lambda edge functions
-   * @param entry
-   * @param processor
+   * @param {String} entry
+   * @param {Function} processor
+   * @returns {LambdaCompiler}
    */
   addEntryProcessor(entry, processor) {
     this._processorsMap[entry] = this._processorsMap[entry] || [];
