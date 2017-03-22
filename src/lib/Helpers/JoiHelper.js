@@ -42,10 +42,17 @@ export class JoiHelper {
   /**
    * Array of strings expression
    *
+   * @param {Boolean} lowercase
    * @returns {*}
    */
-  static stringArray() {
-    return Joi.array().items(Joi.string());
+  static stringArray(lowercase = false) {
+    let proto = Joi.string();
+    
+    if (lowercase) {
+      proto.lowercase();
+    }
+    
+    return Joi.array().items(proto);
   }
 
   /**
