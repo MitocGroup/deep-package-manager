@@ -117,4 +117,4 @@ lib.compiled
 coverage/*
 coverages/*
 .parameters.json
-**/test/bin/**/*.js
+**/bin/test/**/*.js
