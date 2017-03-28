@@ -99,6 +99,7 @@ export class Lambda {
     config.timestamp = (new Date()).getTime();
     config.buckets = S3Service.fakeBucketsConfig(propertyConfig.appIdentifier, microservice.autoload.frontend);
     config.tablesNames = {};
+    config.nonPartitionedModels = propertyConfig.nonPartitionedModels;
 
     config.cacheDsn = '';
     config.api = {};
@@ -637,10 +638,22 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
       }
 
       let request = null;
+      let additionalRequest = null;
 
-      console.debug(`Lambda ${this._identifier} uploaded`);
+      console.debug(`Lambda ${this._identifier} code uploaded`);
 
       if (update && this._wasPreviouslyDeployed) {
+        
+        // update function configuration
+        additionalRequest = lambda.updateFunctionConfiguration({
+          FunctionName: this.functionName,
+          Handler: this.handler,
+          Role: this._execRole.Arn,
+          Runtime: this._runtime,
+          MemorySize: this._memorySize,
+          Timeout: this._timeout,
+        });
+        
         request = lambda.updateFunctionCode({
           S3Bucket: tmpBucket,
           S3Key: objectKey,
@@ -672,8 +685,24 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
         }
       }
 
+      if (additionalRequest) {
+        syncStack.level(1).push(additionalRequest, (error, data) => {
+          if (error) {
+            
+            // This is not critical, just warn developer
+            console.warn(
+              `Lambda ${this._identifier} failed to process configuration`,
+              error
+            );
+          } else {
+            console.debug(`Lambda ${this._identifier} configuration processed`);
+          }
+        });
+      }
+
       syncStack.level(1).push(request, (error, data) => {
         if (error) {
+          
           // @todo: remove this hook
           if (Lambda.isErrorFalsePositive(error)) {
             // @todo: get rid of this hook...
@@ -684,6 +713,8 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
 
           throw new FailedLambdaUploadException(this, error);
         }
+        
+        console.debug(`Lambda ${this._identifier} code and configuration processed`);
 
         this._uploadedLambda = data;
       });
@@ -762,6 +793,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
     switch(this._runtime) {
       case 'nodejs':
       case 'nodejs4.3':
+      case 'nodejs4.3-edge':
         handler = 'bootstrap.handler';
         break;
       case 'java8':
@@ -770,6 +802,9 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
       case 'python2.7':
         handler = 'bootstrap.handler';
         break;
+      case 'dotnetcore1.0':
+        handler = 'DeepApp::Handler.Handler::Handle';
+        break;  
       default:
         throw new Error(`The Lambda runtime ${this._runtime} is not supported yet`);
     }
@@ -796,26 +831,36 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    */
   static get AVAILABLE_MEMORY_VALUES() {
     return [
-      128, 192, 256, 320, 384, 448,
-      512, 576, 640, 704, 768, 832,
-      896, 960, 1024, 1088, 1152,
-      1216, 1280, 1344, 1408,
-      1472, 1536
+      128, 192, 256, 320, 384, 448, 
+      512, 576, 640, 704, 768, 832, 
+      896, 960, 1024, 1088, 1152, 
+      1216, 1280, 1344, 1408, 1472,
+      1536, 
     ];
   }
 
   /**
    * @returns {Number}
+   *
+   * @todo find out most suitable default value
+   *       when deep-benchmarking ready
    */
   static get DEFAULT_MEMORY_LIMIT() {
-    return 128;
+    return 512;
+  }
+
+  /**
+   * @returns {Number}
+   */
+  static get MIN_MEMORY_LIMIT() {
+    return Lambda.AVAILABLE_MEMORY_VALUES.shift();
   }
 
   /**
    * @returns {Number}
    */
   static get MAX_MEMORY_LIMIT() {
-    return 1536;
+    return Lambda.AVAILABLE_MEMORY_VALUES.pop();
   }
 
   /**
@@ -829,7 +874,11 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    * @returns {String[]}
    */
   static get RUNTIMES() {
-    return ['nodejs4.3', 'nodejs', 'java8', 'python2.7'];
+    return [
+      'nodejs4.3', 'nodejs', 
+      'java8', 'python2.7', 
+      'dotnetcore1.0', 'nodejs4.3-edge',
+    ];
   }
 
   /**
@@ -844,6 +893,8 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    * @returns {boolean}
    */
   static isNodeRuntime(runtime) {
-    return ['nodejs4.3', 'nodejs'].indexOf(runtime) !== -1;
+    return [
+      'nodejs4.3', 'nodejs', 'nodejs4.3-edge'
+    ].indexOf(runtime) !== -1;
   }
 }

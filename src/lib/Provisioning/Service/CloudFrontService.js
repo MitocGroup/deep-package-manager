@@ -12,6 +12,7 @@ import {FailedToCreateCloudFrontDistributionException}
   from './Exception/FailedToCreateCloudFrontDistributionException';
 import {WaitFor} from '../../Helpers/WaitFor';
 import objectMerge from 'object-merge';
+import {UrlReplacer} from '../../Assets/Replacer/UrlReplacer';
 
 /**
  * CloudFront service
@@ -189,13 +190,14 @@ export class CloudFrontService extends AbstractService {
               Forward: 'all',
             },
             QueryString: true,
+            QueryStringCacheKeys: {
+              Quantity: 1,
+              Items: [ UrlReplacer.VERSION_PARAM ],
+            },
           },
-
-          // @todo: fine tune cache behavior
-          MinTTL: 0,
-          MaxTTL: 60,// 31536000,
-          DefaultTTL: 60,// 86400,
-
+          MinTTL: 60, // one minute
+          MaxTTL: 604800, // one week
+          DefaultTTL: 86400, // one day
           TargetOriginId: bucketWebsite,
           TrustedSigners: {
             Enabled: false,

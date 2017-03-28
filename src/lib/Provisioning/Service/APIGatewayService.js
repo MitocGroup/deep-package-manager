@@ -33,6 +33,11 @@ import objectMerge from 'object-merge';
 import nodePath from 'path';
 import jsonPointer from 'json-pointer';
 import {ActionFlags} from '../../Microservice/Metadata/Helpers/ActionFlags';
+import {FailedToRetrieveUsagePlanException} from './Exception/FailedToRetrieveUsagePlanException';
+import {FailedCreatingApiDomainException} from './Exception/FailedCreatingApiDomainException';
+import {FailedAssigningApiDomainException} from './Exception/FailedAssigningApiDomainException';
+import {ACMService} from './ACMService';
+import {WaitFor} from '../../Helpers/WaitFor';
 
 /**
  * APIGateway service
@@ -44,6 +49,7 @@ export class APIGatewayService extends AbstractService {
   constructor(...args) {
     super(...args);
 
+    this.certificateArn = null;
     this._apiResources = {};
     this._nonDirectLambdaIdentifiers = [];
   }
@@ -223,6 +229,22 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
+   * @returns {String|null}
+   * @private
+   */
+  get _apiAlias() {
+    return this.provisioning.property.config.apiAlias;
+  }
+
+  /**
+   * @returns {String|null}
+   * @private
+   */
+  get _apiDomain() {
+    return this.provisioning.property.config.domain;
+  }
+
+  /**
    * @param {Core.Generic.ObjectStorage} services
    * @returns {APIGatewayService}
    * @private
@@ -233,7 +255,7 @@ export class APIGatewayService extends AbstractService {
       this._readyTeardown = true;
       return this;
     }
-
+    
     this._readyTeardown = true;
 
     return this;
@@ -250,6 +272,35 @@ export class APIGatewayService extends AbstractService {
       return this;
     }
 
+    let acmService = services.find(ACMService);
+    let wait = new WaitFor();
+
+    wait.push(() => {
+      return acmService.allowRunApg;
+    });
+
+    wait.ready(() => {
+      let certificateArn = this.certificateArn;
+      let apiDomain = this._apiDomain;
+      let apiAlias = this._apiAlias;
+
+      if (!this._config.api.hasOwnProperty('id')
+        || !certificateArn || !apiDomain || !apiAlias) {
+        return this._setupApi();
+      }
+
+      this._setupApi({ domain: `${apiAlias}.${apiDomain}`, certificateArn });
+    });
+
+    return this;
+  }
+  
+  /**
+   * @param {*} customDomain
+   * 
+   * @private
+   */
+  _setupApi(customDomain = null) {
     this._nonDirectLambdaIdentifiers = this.provisioning.services.find(LambdaService)
       .extractFunctionIdentifiers(ActionFlags.NON_DIRECT_ACTION_FILTER);
 
@@ -257,7 +308,8 @@ export class APIGatewayService extends AbstractService {
       this._config.api.id,
       this._config.api.resources,
       this._config.api.role,
-      this._config.api.usagePlan
+      this._config.api.usagePlan,
+      customDomain
     )((methods, integrations, rolePolicy, apiStage, authorizer) => {
       this._config.api.methods = methods;
       this._config.api.integrations = integrations;
@@ -273,8 +325,6 @@ export class APIGatewayService extends AbstractService {
 
       this._ready = true;
     });
-
-    return this;
   }
 
   /**
@@ -355,7 +405,7 @@ export class APIGatewayService extends AbstractService {
           this._createApiIamRole((role) => {
             restApiIamRole = role;
 
-            this._createUsagePlan(this.apiConfig.plan, (usagePlan) => {
+            this._createOrGetUsagePlan(this.apiConfig.plan, (usagePlan) => {
 
               callback(restApi, this._extractApiResourcesMetadata(restResources), restApiIamRole, usagePlan);
             });
@@ -366,14 +416,47 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
+   * @param {Object} planParams
+   * @param {Function} cb
+   * @returns {*}
+   * @private
+   */
+  _createOrGetUsagePlan(planParams, cb) {
+    return (planParams.Id
+      ? this._getUsagePlan
+      : this._createUsagePlan
+    ).call(this, planParams, cb);
+  }
+
+  /**
+   * @param {Object} planParams
+   * @param {Function} cb
+   * @private
+   */
+  _getUsagePlan(planParams, cb) {
+    let payload = {
+      usagePlanId: planParams.Id,
+    };
+
+    this.apiGatewayClient.getUsagePlan(payload, (error, data) => {
+      if (error) {
+        throw new FailedToRetrieveUsagePlanException(planParams.Id, error);
+      }
+
+      cb(data);
+    });
+  }
+
+  /**
    * @param {String} apiId
    * @param {Object} apiResources
    * @param {Object} apiRole
    * @param {Object} usagePlan
+   * @param {*} customDomain
    * @returns {Function}
    * @private
    */
-  _putApiIntegrations(apiId, apiResources, apiRole, usagePlan) {
+  _putApiIntegrations(apiId, apiResources, apiRole, usagePlan, customDomain) {
     var authorizer = null;
     var methods = null;
     var methodsResponse = null;
@@ -399,19 +482,36 @@ export class APIGatewayService extends AbstractService {
 
               this._executeProvisionMethod('putIntegrationResponse', apiId, apiResources, integrationParams, (data) => {
                 integrationsResponse = data;
-
+                
                 this._addPolicyToApiRole(apiRole, (data) => {
-                  rolePolicy = data;
+                  rolePolicy = data.policy;
+                  
+                  this._ensureCloudWatchLogsSetup((data) => {
+                    let deployApi = () => {
+                      this._deployApi(apiId, (apiStage) => {
 
-                  this._deployApi(apiId, (apiStage) => {
+                        this._addStageToUsagePlan(apiId, usagePlan, this.stageName, () => {
 
-                    this._addStageToUsagePlan(apiId, usagePlan, this.stageName, () => {
+                          this._updateStage(apiId, this.stageName, data.apiRole, this.apiConfig, (data) => {
 
-                      this._updateStage(apiId, this.stageName, apiRole, this.apiConfig, (data) => {
-
-                        callback(methods, integrations, rolePolicy, apiStage, authorizer);
+                            callback(methods, integrations, rolePolicy, apiStage, authorizer);
+                          });
+                        });
                       });
-                    });
+                    };
+                    
+                    if (customDomain) {
+                      let domainName = customDomain.domain;
+                      let certificateArn = customDomain.certificateArn;
+                      
+                      this._ensureDomainName(domainName, certificateArn, () => {
+                        this._assignDomainName(domainName, apiId, () => {
+                          deployApi();
+                        });
+                      });
+                    } else {
+                      deployApi();
+                    }
                   });
                 });
               });
@@ -420,6 +520,74 @@ export class APIGatewayService extends AbstractService {
         });
       });
     };
+  }
+  
+  /**
+   * @param {String} domainName
+   * @param {String} restApiId
+   * @param {Function} cb
+   * @private
+   */
+  _assignDomainName(domainName, restApiId, cb) {
+    let payload = { domainName, restApiId };
+    
+    this.apiGatewayClient.createBasePathMapping(payload, (error, data) => {
+      if (error && error.code !== 'ConflictException') {
+        throw new FailedAssigningApiDomainException(domainName, restApiId);
+      }
+      
+      cb();
+    });
+  }
+  
+  /**
+   * @param {String} domainName
+   * @param {String} certificateArn
+   * @param {Function} cb
+   * @private
+   */
+  _ensureDomainName(domainName, certificateArn, cb) {
+    let payload = { domainName, certificateArn };
+    
+    this.apiGatewayClient.createDomainName(payload, (error, data) => {
+      if (error && error.code !== 'BadRequestException') {
+        throw new FailedCreatingApiDomainException(domainName, certificateArn);
+      }
+      
+      cb();
+    });
+  }
+  
+  /**
+   * @param {Object} apiRole
+   * @param {Function} callback
+   * @private
+   */
+  _addPolicyToApiRole(apiRole, callback) {
+    let lambdaService = this.provisioning.services.find(LambdaService);
+    let cloudWatchService = this.provisioning.services.find(CloudWatchLogsService);
+
+    let iam = this.provisioning.iam;
+    let policy = new Core.AWS.IAM.Policy();
+    policy.statement.add(lambdaService.generateAllowActionsStatement());
+    policy.statement.add(cloudWatchService.generateAllowFullAccessStatement());
+
+    let params = {
+      PolicyDocument: policy.toString(),
+      PolicyName: this.generateAwsResourceName(
+        `${APIGatewayService.API_NAME_PREFIX}ExecAccessPolicy`,
+        Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
+      ),
+      RoleName: apiRole.RoleName,
+    };
+
+    iam.putRolePolicy(params, (error, data) => {
+      if (error) {
+        throw new FailedAttachingPolicyToRoleException(params.PolicyName, params.RoleName, error);
+      }
+
+      callback(policy);
+    });
   }
 
   /**
@@ -529,8 +697,9 @@ export class APIGatewayService extends AbstractService {
     /**
      * @param {Number} methodIndex
      * @param {Function} onCompleteCallback
+     * @param {String} _resourcePath
      */
-    function executeSingleMethod(methodIndex, onCompleteCallback) {
+    function executeSingleMethod(methodIndex, onCompleteCallback, _resourcePath = null) {
       if (!methodsParams.hasOwnProperty(methodIndex)) {
         onCompleteCallback();
 
@@ -539,7 +708,7 @@ export class APIGatewayService extends AbstractService {
 
       let params = methodsParams[methodIndex];
       let retries = retriesMap[methodIndex] || (retriesMap[methodIndex] = 0);
-      var resourcePath = params.resourcePath;
+      var resourcePath = _resourcePath || params.resourcePath;
       delete params.resourcePath;
 
       this.apiGatewayClient[method](params, (error, data) => {
@@ -551,7 +720,8 @@ export class APIGatewayService extends AbstractService {
               executeSingleMethod.bind(this),
               APIGatewayService.RETRY_INTERVAL * retriesMap[methodIndex],
               methodIndex,
-              onCompleteCallback
+              onCompleteCallback,
+              resourcePath
             );
 
             return;
@@ -650,7 +820,7 @@ export class APIGatewayService extends AbstractService {
         continue;
       }
 
-      if (apiStages[key].stage === stageName) {
+      if (apiStages[key].stage === stageName && apiStages[key].apiId === apiId) {
         callback(null);
         return;
       }
@@ -851,35 +1021,81 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
-   * @param {Object} apiRole
    * @param {Function} callback
    * @private
+   *
+   * @see https://aws.amazon.com/premiumsupport/knowledge-center/api-gateway-cloudwatch-logs/
    */
-  _addPolicyToApiRole(apiRole, callback) {
-    let lambdaService = this.provisioning.services.find(LambdaService);
-    let cloudWatchService = this.provisioning.services.find(CloudWatchLogsService);
+  _ensureCloudWatchLogsSetup(callback) {
+    this._ensureCloudWatchLogsRole((apiRole) => {
+      let cloudWatchService = this.provisioning.services.find(CloudWatchLogsService);
 
+      let iam = this.provisioning.iam;
+      let policy = new Core.AWS.IAM.Policy();
+      policy.statement.add(cloudWatchService.generateAllowFullAccessStatement());
+
+      let params = {
+        PolicyDocument: policy.toString(),
+        PolicyName: apiRole.RoleName,
+        RoleName: apiRole.RoleName,
+      };
+
+      iam.putRolePolicy(params, (error, data) => {
+        if (error) {
+          throw new FailedAttachingPolicyToRoleException(params.PolicyName, params.RoleName, error);
+        }
+
+        callback({ policy, apiRole });
+      });
+    });
+  }
+  
+  /**
+   * @param {Function} callback
+   * @private
+   *
+   * @see https://aws.amazon.com/premiumsupport/knowledge-center/api-gateway-cloudwatch-logs/
+   */
+  _ensureCloudWatchLogsRole(callback) {
     let iam = this.provisioning.iam;
-    let policy = new Core.AWS.IAM.Policy();
-    policy.statement.add(lambdaService.generateAllowActionsStatement());
-    policy.statement.add(cloudWatchService.generateAllowFullAccessStatement());
-
+    let roleName = APIGatewayService.CLOUD_WATCH_LOGS_ROLE_NAME;
+    let policyDocument = IAMService.getAssumeRolePolicy(Core.AWS.Service.API_GATEWAY).extract();
+    policyDocument.Statement.Sid = '';
+    
     let params = {
-      PolicyDocument: policy.toString(),
-      PolicyName: this.generateAwsResourceName(
-        `${APIGatewayService.API_NAME_PREFIX}ExecAccessPolicy`,
-        Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT
-      ),
-      RoleName: apiRole.RoleName,
+      AssumeRolePolicyDocument: JSON.stringify(policyDocument),
+      RoleName: roleName,
     };
 
-    iam.putRolePolicy(params, (error, data) => {
+    iam.createRole(params, (error, data) => {
       if (error) {
-        throw new FailedAttachingPolicyToRoleException(params.PolicyName, params.RoleName, error);
+        
+        // fail silently in case the role exists
+        if (error.code === 'EntityAlreadyExists') {
+          return callback({
+            RoleName: roleName, 
+            Arn: this._getRoleArnFromName(roleName),
+          });
+        }
+        
+        throw new FailedToCreateIamRoleException(roleName, error);
       }
 
-      callback(policy);
+      callback(data.Role);
     });
+  }
+  
+  /**
+   * @param {String} roleName
+   *
+   * @returns {String}
+   *
+   * @private
+   */
+  _getRoleArnFromName(roleName) {
+    let serviceId = Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT;
+    
+    return `arn:aws:${serviceId}::${this.awsAccountId}:role/${roleName}`;
   }
 
   /**
@@ -1771,6 +1987,13 @@ export class APIGatewayService extends AbstractService {
     });
 
     return statement;
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get CLOUD_WATCH_LOGS_ROLE_NAME() {
+    return 'DeepApiCloudWatchLogs';
   }
 
   /**

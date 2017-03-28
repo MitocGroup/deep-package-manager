@@ -91,12 +91,13 @@ export default {
         .lowercase().default(DeployConfig.AVAILABLE_ENV[0]),
       awsAccountId: Joi.number().required(),
       domain: Joi.string().optional().lowercase()
-        .regex(/^([a-zA-Z0-9-_]+\.)+[a-zA-Z]+?$/i)
-        .replace(/^www\./i, ''),
+        .regex(/^([a-zA-Z0-9-_]+\.)+[a-zA-Z]+?$/i),
+      domainAliases: JoiHelper.stringArray(true).optional(),
+      apiAlias:  JoiHelper.string().optional().lowercase(),
       apiVersion: JoiHelper.string().regex(/^[a-zA-Z0-9_]+$/i).optional().default(DeployConfig.DEFAULT_API_VERSION),
       aws: Joi.object().keys({
         accessKeyId: JoiHelper.string().required().empty(''),
-        secretAccessKey: JoiHelper.string().required().empty(''),
+        secretAccessKey: JoiHelper.string().optional().empty(''),
         sessionToken: JoiHelper.string().optional().empty(''),
         region: JoiHelper.string().required(),
         httpOptions: Joi.object().optional(),

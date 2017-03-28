@@ -80,7 +80,6 @@ export class CloudWatchLogsService extends AbstractService {
   }
 
   /**
-   * // @todo - limit access to CloudWatch logs from * to certain actions and log groups
    * Allow full access to CloudWatch logs
    *
    * @returns {Core.AWS.IAM.Statement}
@@ -89,7 +88,13 @@ export class CloudWatchLogsService extends AbstractService {
     let policy = new Core.AWS.IAM.Policy();
     let statement = policy.statement.add();
 
-    statement.action.add(Core.AWS.Service.CLOUD_WATCH_LOGS, Core.AWS.IAM.Policy.ANY);
+    statement.action.add(Core.AWS.Service.CLOUD_WATCH_LOGS, 'CreateLogGroup');
+    statement.action.add(Core.AWS.Service.CLOUD_WATCH_LOGS, 'CreateLogStream');
+    statement.action.add(Core.AWS.Service.CLOUD_WATCH_LOGS, 'DescribeLogGroups');
+    statement.action.add(Core.AWS.Service.CLOUD_WATCH_LOGS, 'DescribeLogStreams');
+    statement.action.add(Core.AWS.Service.CLOUD_WATCH_LOGS, 'PutLogEvents');
+    statement.action.add(Core.AWS.Service.CLOUD_WATCH_LOGS, 'GetLogEvents');
+    statement.action.add(Core.AWS.Service.CLOUD_WATCH_LOGS, 'FilterLogEvents');
     statement.resource.add(
       Core.AWS.Service.CLOUD_WATCH_LOGS,
       Core.AWS.IAM.Policy.ANY,

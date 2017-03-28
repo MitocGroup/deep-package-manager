@@ -5,6 +5,7 @@
 'use strict';
 
 import fse from 'fs-extra';
+import createOutputStream from 'create-output-stream';
 import tar from 'tar-stream';
 import string2stream from 'string2stream';
 import {FileWalker} from '../../Helpers/FileWalker';
@@ -96,7 +97,7 @@ export class ModuleInstance extends AbstractModuleInstance {
 
         filesToExtract++;
 
-        stream.pipe(fse.createOutputStream(file));
+        stream.pipe(createOutputStream(file));
 
         stream.on('end', () => {
           filesToExtract--;

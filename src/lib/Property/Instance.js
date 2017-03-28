@@ -46,6 +46,7 @@ import {AbstractStrategy} from './ExtractStrategy/AbstractStrategy';
 import {OptimisticStrategy} from './ExtractStrategy/OptimisticStrategy';
 import {DeployIgnore} from './DeployIgnore';
 import {PostRootFetchHook} from '../Microservice/PostRootFetchHook';
+import {Parameters} from '../Microservice/Parameters';
 
 /**
  * Property instance
@@ -90,6 +91,8 @@ export class Instance {
     this._config.deployId = new DeployID(this).toString();
 
     this._configObj = new DeployConfig(this);
+
+    this._frontendConfig = null;
   }
 
   /**
@@ -117,6 +120,13 @@ export class Instance {
    */
   get configObj() {
     return this._configObj;
+  }
+
+  /**
+   * @returns {*}
+   */
+  get frontendConfig() {
+    return this._frontendConfig;
   }
 
   /**
@@ -400,23 +410,7 @@ export class Instance {
   fakeBuild() {
     let microservicesConfig = {};
     let microservices = this.microservices;
-    let rootMicroservice = null;
-
-    for (let i in microservices) {
-      if (!microservices.hasOwnProperty(i)) {
-        continue;
-      }
-
-      let microservice = microservices[i];
-
-      if (microservice.isRoot) {
-        if (rootMicroservice) {
-          throw new DuplicateRootException(rootMicroservice, microservice);
-        }
-
-        rootMicroservice = microservice;
-      }
-    }
+    let rootMicroservice = this._getRootMicroservice(microservices);
 
     if (!rootMicroservice) {
       throw new MissingRootException();
@@ -467,6 +461,7 @@ export class Instance {
 
     this._config.models = models.map(m => m.extract());
     this._config.modelsSettings = models.map(m => m.settings.extract());
+    this._config.nonPartitionedModels = this._getNonPartitionedModels(this.accountMicroservice);
     this._config.validationSchemas = validationSchemas.map((s) => {
       return {
         name: s.name,
@@ -544,6 +539,53 @@ export class Instance {
   }
 
   /**
+   * @param {*} microservices
+   * @returns {*}
+   * @private
+   */
+  _getRootMicroservice(microservices) {
+    let rootMicroservice = null;
+
+    for (let i in microservices) {
+      if (!microservices.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let microservice = microservices[i];
+
+      if (microservice.isRoot) {
+        if (rootMicroservice) {
+          throw new DuplicateRootException(rootMicroservice, microservice);
+        }
+
+        rootMicroservice = microservice;
+      }
+    }
+
+    return rootMicroservice;
+  }
+
+  /**
+   * @param {Microservice} accountMicroservice
+   * @returns {Array}
+   * @private
+   */
+  _getNonPartitionedModels(accountMicroservice) {
+    let nonPartitionedModels = [];
+
+    if (accountMicroservice) {
+      let backendParams = accountMicroservice.parameters[Parameters.BACKEND];
+
+      nonPartitionedModels = (backendParams.nonPartitionedModels || '')
+        .split(',')
+        .map(item => item.trim())
+        .filter(Boolean);
+    }
+
+    return nonPartitionedModels;
+  }
+
+  /**
    * @returns {Object}
    * @private
    */
@@ -579,23 +621,7 @@ export class Instance {
 
     let microservicesConfig = isUpdate ? this._config.microservices : {};
     let microservices = this.microservices;
-    let rootMicroservice;
-
-    for (let i in microservices) {
-      if (!microservices.hasOwnProperty(i)) {
-        continue;
-      }
-
-      let microservice = microservices[i];
-
-      if (microservice.isRoot) {
-        if (rootMicroservice) {
-          throw new DuplicateRootException(rootMicroservice, microservice);
-        }
-
-        rootMicroservice = microservice;
-      }
-    }
+    let rootMicroservice = this._getRootMicroservice(microservices);
 
     if (!rootMicroservice) {
       throw new MissingRootException();
@@ -628,7 +654,10 @@ export class Instance {
       };
 
       if (isUpdate) {
-        microserviceConfig.deployedServices = microservicesConfig[microservice.config.identifier].deployedServices;
+        let oldConfig = microservicesConfig[microservice.config.identifier] || {};
+        microserviceConfig.deployedServices = oldConfig.deployedServices || {
+          lambdas: {},
+        };
       }
 
       microservicesConfig[microserviceConfig.identifier] = microserviceConfig;
@@ -649,6 +678,7 @@ export class Instance {
 
     this._config.models = models.map(m => m.extract());
     this._config.modelsSettings = models.map(m => m.settings.extract());
+    this._config.nonPartitionedModels = this._getNonPartitionedModels(this.accountMicroservice);
     this._config.validationSchemas = validationSchemas.map((s) => {
       return {
         name: s.name,
@@ -841,7 +871,9 @@ export class Instance {
   buildFrontend(dumpPath = null, callback = () => {}) {
     let frontend = new Frontend(this, this._config.microservices, dumpPath || this._path, this.deployId);
 
-    frontend.build(Frontend.createConfig(this._config), callback.bind(this, frontend));
+    this._frontendConfig = Frontend.createConfig(this._config);
+
+    frontend.build(this._frontendConfig, callback.bind(this, frontend));
 
     return frontend;
   }
@@ -1296,6 +1328,45 @@ export class Instance {
     } else {
       throw new Error(`Invalid deep resource identifier "${resourceIdentifier}".`);
     }
+  }
+
+  /**
+   * @param {String} actionIdentifier
+   * @param {Function} callback
+   */
+  deployAction(actionIdentifier, callback) {
+    let lambdaArn = this.getLambdaArnForDeepResourceId(actionIdentifier);
+    let lambdaName = lambdaArn.replace(/.+\/([^\/]+)/, '$1');
+
+    let actionParts = actionIdentifier.match(Instance.DEEP_RESOURCE_IDENTIFIER_REGEXP);
+    let microserviceIdentifier = actionParts[1];
+    let resourceName = actionParts[2];
+    let actionName = actionParts[3];
+    let lambdaIdentifier = `${resourceName}-${actionName}`;
+
+    let lambdaExecRoles = this._config.provisioning.lambda.executionRoles;
+    let lambdaExecRole = lambdaExecRoles[microserviceIdentifier];
+
+    let microservice = this._config.microservices[microserviceIdentifier];
+    let lambdaPath = microservice.raw.lambdas[lambdaIdentifier];
+    let lambdaOptions = microservice.raw.lambdas._[lambdaIdentifier];
+
+    let lambdaInstance = new Lambda(
+      this,
+      microserviceIdentifier,
+      lambdaIdentifier,
+      lambdaName,
+      lambdaExecRole,
+      lambdaPath
+    );
+
+    lambdaInstance.memorySize = lambdaOptions.memory;
+    lambdaInstance.timeout = lambdaOptions.timeout;
+    lambdaInstance.runtime = lambdaOptions.runtime;
+    lambdaInstance.forceUserIdentity = lambdaOptions.forceUserIdentity;
+    lambdaInstance.injectValidationSchemas(this._config.validationSchemas);
+
+    lambdaInstance.update(callback);
   }
 
   /**

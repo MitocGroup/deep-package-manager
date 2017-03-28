@@ -7,7 +7,6 @@
 import {AbstractService} from './AbstractService';
 import Core from 'deep-core';
 import {FailedToCreateIdentityPoolException} from './Exception/FailedToCreateIdentityPoolException';
-import {AwsRequestSyncStack} from '../../Helpers/AwsRequestSyncStack';
 import {FailedToCreateIamRoleException} from './Exception/FailedToCreateIamRoleException';
 import {FailedSettingIdentityPoolRolesException} from './Exception/FailedSettingIdentityPoolRolesException';
 import {FailedAttachingPolicyToRoleException} from './Exception/FailedAttachingPolicyToRoleException';
@@ -20,6 +19,7 @@ import {AbstractProvider} from './Helper/PolicyProvider/AbstractProvider';
 import {SQSService} from './SQSService';
 import {APIGatewayService} from './APIGatewayService';
 import {MissingPolicyProviderMethodException} from './Exception/MissingPolicyProviderMethodException';
+import {FailedToDescribeIdentityPoolException} from './Exception/FailedToDescribeIdentityPoolException';
 
 /**
  * Cognito service
@@ -31,7 +31,19 @@ export class CognitoIdentityService extends AbstractService {
   constructor(...args) {
     super(...args);
 
-    this._policyProvider = AbstractProvider.create(this.provisioning);
+    this._policyProvider = null;
+    this._securityConfig = null;
+  }
+  
+  /**
+   * @returns {AbstractProvider|*}
+   */
+  get policyProvider() {
+    if (!this._policyProvider) {
+      this._policyProvider = AbstractProvider.create(this.provisioning);
+    }
+    
+    return this._policyProvider;
   }
 
   /**
@@ -89,13 +101,7 @@ export class CognitoIdentityService extends AbstractService {
       return this;
     }
 
-    let globalsConfig = this.property.config.globals;
-    let identityProviders = globalsConfig.security && globalsConfig.security.identityProviders
-      ? globalsConfig.security.identityProviders : {};
-
-    this._createIdentityPool(
-      identityProviders
-    )((identityPool) => {
+    this._ensureIdentityPool().then(identityPool => {
       this._config.identityPool = identityPool;
       this._ready = true;
     });
@@ -104,17 +110,70 @@ export class CognitoIdentityService extends AbstractService {
   }
 
   /**
-   * @param {Core.Generic.ObjectStorage} services
-   * @returns {CognitoIdentityService}
+   * @returns {Promise}
    * @private
    */
-  _postProvision(services) {
+  _postProvision() {
     // @todo: implement!
     if (this._isUpdate) {
       this._readyTeardown = true;
       return this;
     }
 
+    let identityPoolId = this.securityConfig.identityPoolId;
+
+    return (identityPoolId
+      ? this._getIdentityPoolRoles(identityPoolId)
+      : this._attachCognitoIdentityProviders()
+    ).then(() => {
+      this._readyTeardown = true;
+    });
+  }
+
+  /**
+   * @param {String} identityPoolId
+   * @returns {Promise}
+   * @private
+   */
+  _getIdentityPoolRoles(identityPoolId) {
+    let cognitoIdentity = this.provisioning.cognitoIdentity;
+    let iam = this.provisioning.iam;
+
+    let payload = {IdentityPoolId: identityPoolId,};
+
+    return cognitoIdentity.getIdentityPoolRoles(payload)
+      .promise()
+      .then(response => {
+        let rolesMap = response.Roles;
+        let rolesObj = {};
+
+        return Promise.all(
+          Object.keys(rolesMap).map(roleType => {
+            let roleName = rolesMap[roleType].replace(/^[^\/]+\//, '');
+
+            return iam.getRole({RoleName: roleName,})
+              .promise()
+              .then(response => {
+                rolesObj[roleType] = response.Role;
+              });
+          })
+        ).then(() => {
+          this._config.roles = rolesObj;
+        });
+      })
+      .catch(error => {
+        setImmediate(() => {
+          throw new FailedSettingIdentityPoolRolesException(this._config.identityPool.IdentityPoolName, error);
+        });
+      });
+  }
+
+  /**
+   * @returns {Promise}
+   * @private
+   */
+  _attachCognitoIdentityProviders() {
+    let services = this.provisioning.services;
     let iamInstance = services.find(IAMService);
     let cognitoIdpService = services.find(CognitoIdentityProviderService);
     let cognitoIdpConfig = cognitoIdpService.config();
@@ -144,16 +203,15 @@ export class CognitoIdentityService extends AbstractService {
       }
     }
 
-    this._updateIdentityPool(this._config.identityPool, changeSet, (data) => {
-      this._config.identityPool = data;
+    return this._updateIdentityPool(this._config.identityPool, changeSet)
+      .then(data => {
+        this._config.identityPool = data;
 
-      this._setIdentityPoolRoles(this._config.identityPool)((roles) => {
-        this._readyTeardown = true;
+        return this._setIdentityPoolRoles(this._config.identityPool);
+      })
+      .then(roles => {
         this._config.roles = roles;
       });
-    });
-
-    return this;
   }
 
   /**
@@ -162,22 +220,44 @@ export class CognitoIdentityService extends AbstractService {
    * @private
    */
   _postDeployProvision(/* services */) {
-    this._updateCognitoRolesPolicy(
-      this._config.roles
-    )((policies) => {
-      this._config.postDeploy = {
-        inlinePolicies: policies,
-      };
+    this._updateCognitoRolesPolicy(this._config.roles)
+      .then(policies => {
+        this._config.postDeploy = {
+          inlinePolicies: policies,
+        };
 
-      this._ready = true;
-    });
+        this._ready = true;
+      });
 
     return this;
   }
 
   /**
+   * @returns {Promise}
+   * @private
+   */
+  _ensureIdentityPool() {
+    let securityConfig = this.securityConfig;
+    let identityPoolId = securityConfig.identityPoolId;
+
+    if (!identityPoolId) {
+      return this._createIdentityPool(securityConfig.identityProviders);
+    }
+
+    let cognitoIdentity = this.provisioning.cognitoIdentity;
+
+    return cognitoIdentity.describeIdentityPool({
+      IdentityPoolId: identityPoolId,
+    }).promise().catch(error => {
+      setImmediate(() => {
+        throw new FailedToDescribeIdentityPoolException(identityPoolId, error);
+      });
+    });
+  }
+
+  /**
    * @param {Object} identityProviders
-   * @returns {function}
+   * @returns {Promise}
    * @private
    */
   _createIdentityPool(identityProviders) {
@@ -189,58 +269,49 @@ export class CognitoIdentityService extends AbstractService {
       SupportedLoginProviders: identityProviders,
     };
 
-    let identityPool = null;
     let cognitoIdentity = this.provisioning.cognitoIdentity;
-    let syncStack = new AwsRequestSyncStack();
 
-    syncStack.push(cognitoIdentity.createIdentityPool(params), (error, data) => {
-      if (error) {
-        throw new FailedToCreateIdentityPoolException(identityPoolName, error);
-      }
-
-      identityPool = data;
-    });
-
-    return (callback) => {
-      return syncStack.join().ready(() => {
-        callback(identityPool);
+    return cognitoIdentity.createIdentityPool(params)
+      .promise()
+      .catch(error => {
+        setImmediate(() => {
+          throw new FailedToCreateIdentityPoolException(identityPoolName, error);
+        });
       });
-    };
   }
 
   /**
    * @param {Object} identityPool
    * @param {Object} changeSet
-   * @param {Function} callback
+   * @returns {Promise}
    * @private
    */
-  _updateIdentityPool(identityPool, changeSet, callback) {
+  _updateIdentityPool(identityPool, changeSet) {
     if (Object.keys(changeSet).length === 0) {
-      callback(identityPool);
-      return;
+      return Promise.resolve(identityPool);
     }
 
     let cognitoIdentity = this.provisioning.cognitoIdentity;
     let params = Object.assign(identityPool, changeSet);
 
-    cognitoIdentity.updateIdentityPool(params, (error, data) => {
-      if (error) {
-        throw new FailedToUpdateIdentityPoolException(params.IdentityPoolName, error);
-      }
-
-      callback(data);
-    });
+    return cognitoIdentity.updateIdentityPool(params)
+      .promise()
+      .catch(error => {
+        setImmediate(() => {
+          throw new FailedToUpdateIdentityPoolException(params.IdentityPoolName, error);
+        });
+      });
   }
 
   /**
    * @param {String} identityPool
-   * @returns {function}
+   * @returns {Promise}
    * @private
    */
   _setIdentityPoolRoles(identityPool) {
     let iam = this.provisioning.iam;
     let roles = {};
-    let syncStack = new AwsRequestSyncStack();
+    let promiseStack = [];
 
     for (let roleKey in CognitoIdentityService.ROLE_TYPES) {
       if (!CognitoIdentityService.ROLE_TYPES.hasOwnProperty(roleKey)) {
@@ -254,39 +325,40 @@ export class CognitoIdentityService extends AbstractService {
         RoleName: this.generateAwsResourceName(roleType, Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT),
       };
 
-      syncStack.push(iam.createRole(roleParams), (error, data) => {
-        if (error) {
-          throw new FailedToCreateIamRoleException(roleParams.RoleName, error);
-        }
+      let promise = iam.createRole(roleParams)
+        .promise()
+        .then(data => {
+          roles[roleType] = data.Role;
+        })
+        .catch(error => {
+          setImmediate(() => {
+            throw new FailedToCreateIamRoleException(roleParams.RoleName, error);
+          });
+        });
 
-        roles[roleType] = data.Role;
-      });
+      promiseStack.push(promise);
     }
 
-    return (callback) => {
-      return syncStack.join().ready(() => {
-        let innerSyncStack = new AwsRequestSyncStack();
-        let cognitoIdentity = this.provisioning.cognitoIdentity;
+    return Promise.all(promiseStack).then(() => {
+      let cognitoIdentity = this.provisioning.cognitoIdentity;
 
-        let parameters = {
-          IdentityPoolId: identityPool.IdentityPoolId,
-          Roles: {
-            authenticated: roles[CognitoIdentityService.ROLE_AUTH].Arn,
-            unauthenticated: roles[CognitoIdentityService.ROLE_UNAUTH].Arn,
-          },
-        };
+      let parameters = {
+        IdentityPoolId: identityPool.IdentityPoolId,
+        Roles: {
+          authenticated: roles[CognitoIdentityService.ROLE_AUTH].Arn,
+          unauthenticated: roles[CognitoIdentityService.ROLE_UNAUTH].Arn,
+        },
+      };
 
-        innerSyncStack.push(cognitoIdentity.setIdentityPoolRoles(parameters), (error, data) => {
-          if (error) {
+      return cognitoIdentity.setIdentityPoolRoles(parameters)
+        .promise()
+        .then(() => roles)
+        .catch(error => {
+          setImmediate(() => {
             throw new FailedSettingIdentityPoolRolesException(identityPool.IdentityPoolName, error);
-          }
+          });
         });
-
-        innerSyncStack.join().ready(() => {
-          callback(roles);
-        });
-      });
-    };
+    });
   }
 
   /**
@@ -329,13 +401,13 @@ export class CognitoIdentityService extends AbstractService {
    * Adds inline policies to Cognito auth and unauth roles
    *
    * @param {Object} cognitoRoles
-   * @returns {function}
+   * @returns {Promise}
    * @private
    */
   _updateCognitoRolesPolicy(cognitoRoles) {
     let iam = this.provisioning.iam;
     let policies = {};
-    let syncStack = new AwsRequestSyncStack();
+    let promiseStack = [];
 
     for (let cognitoRoleType in cognitoRoles) {
       if (!cognitoRoles.hasOwnProperty(cognitoRoleType)) {
@@ -347,10 +419,10 @@ export class CognitoIdentityService extends AbstractService {
 
       switch (cognitoRoleType) {
         case CognitoIdentityService.ROLE_AUTH:
-          policy = this._policyProvider.getAuthenticatedPolicy();
+          policy = this.policyProvider.getAuthenticatedPolicy();
           break;
         case CognitoIdentityService.ROLE_UNAUTH:
-          policy = this._policyProvider.getUnauthenticatedPolicy();
+          policy = this.policyProvider.getUnauthenticatedPolicy();
           break;
         default:
           throw new MissingPolicyProviderMethodException(cognitoRoleType);
@@ -358,26 +430,27 @@ export class CognitoIdentityService extends AbstractService {
 
       let authPolicyPayload = {
         PolicyDocument: policy.toString(),
-        PolicyName: cognitoRole.RoleName, // Security `policyName` should be same `roleName` for deep-account
+        PolicyName: this.generateAwsResourceName(cognitoRoleType, Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT),
         RoleName: cognitoRole.RoleName,
       };
 
       [authPolicyPayload, this._createSystemPolicyPayload(cognitoRole)].forEach(params => {
-        syncStack.push(iam.putRolePolicy(params), (error) => {
-          if (error) {
-            throw new FailedAttachingPolicyToRoleException(params.PolicyName, params.RoleName, error);
-          }
+        let promise = iam.putRolePolicy(params)
+          .promise()
+          .then(() => {
+            policies[params.RoleName] = policy;
+          })
+          .catch(error => {
+            setImmediate(() => {
+              throw new FailedAttachingPolicyToRoleException(params.PolicyName, params.RoleName, error);
+            });
+          });
 
-          policies[params.RoleName] = policy;
-        });
+        promiseStack.push(promise);
       });
     }
 
-    return (callback) => {
-      return syncStack.join().ready(() => {
-        callback(policies);
-      });
-    };
+    return Promise.all(promiseStack).then(() => policies);
   }
 
   /**
@@ -392,7 +465,12 @@ export class CognitoIdentityService extends AbstractService {
     let sqsService = this.provisioning.services.find(SQSService);
     let cognitoIdentity = this.provisioning.services.find(CognitoIdentityService);
 
-    policy.statement.add(APIGatewayService.generateAllowInvokeMethodStatement(apiGateway.getAllEndpointsArn()));
+    // allow users calling all api gateways 
+    // if account microservice not included
+    if (!this.property.accountMicroservice) {
+      policy.statement.add(APIGatewayService.generateAllowInvokeMethodStatement(apiGateway.getAllEndpointsArn()));
+    }
+    
     policy.statement.add(sqsService.generateAllowActionsStatement());
     policy.statement.add(cognitoIdentity.generateAllowCognitoSyncStatement(
       ['ListRecords', 'UpdateRecords', 'ListDatasets']
@@ -446,6 +524,27 @@ export class CognitoIdentityService extends AbstractService {
     );
 
     return statement;
+  }
+
+  /**
+   * @returns {{identityProviders: (string|*|{}), identityPoolId: (string|String|*|string)}}
+   */
+  get securityConfig() {
+    if (this._securityConfig) {
+      return this._securityConfig;
+    }
+
+    let globalsConfig = this.property.config.globals;
+    let securityConfig = globalsConfig.security || {};
+    let identityProviders = securityConfig.identityProviders || {};
+    let identityPoolId = (securityConfig.identityPool || {}).Id;
+
+    this._securityConfig = {
+      identityProviders,
+      identityPoolId,
+    };
+
+    return this._securityConfig;
   }
 
   /**

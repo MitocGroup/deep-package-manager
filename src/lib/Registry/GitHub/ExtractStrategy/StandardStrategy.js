@@ -4,7 +4,7 @@
 
 'use strict';
 
-import fse from 'fs-extra';
+import createOutputStream from 'create-output-stream';
 import path from 'path';
 import {AbstractStrategy} from './AbstractStrategy';
 
@@ -50,7 +50,7 @@ export class StandardStrategy extends AbstractStrategy {
     }
 
     let file = path.join(this.dumpPath, StandardStrategy.normalizeFilePath(filePath));
-    let output = fse.createOutputStream(file);
+    let output = createOutputStream(file);
 
     output.on('finish', cb);
 

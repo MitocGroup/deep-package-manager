@@ -11,7 +11,7 @@ import {GitHubDriver} from '../Storage/Driver/GitHubDriver';
 import tar from 'tar-stream';
 import gunzip from 'gunzip-maybe';
 import path from 'path';
-import fse from 'fs-extra';
+import createOutputStream from 'create-output-stream';
 
 export class GitHubModuleInstance extends ModuleInstance {
   /**
@@ -68,7 +68,7 @@ export class GitHubModuleInstance extends ModuleInstance {
 
       if (this._haveToDump(filePath)) {
         let file = path.join(dumpPath, StandardStrategy.normalizeFilePath(filePath));
-        let output = fse.createOutputStream(file);
+        let output = createOutputStream(file);
 
         output.on('finish', () => {
           filesToExtract--;

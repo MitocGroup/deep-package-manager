@@ -244,9 +244,13 @@ export class ProvisioningDumpFileMatcher extends AbstractMatcher {
    * @param {Function} cb
    */
   bckConfigFile(cb) {
-    fse.move(this.fileName, this.fileNameBck, (error) => {
-      cb(error);
-    });
+    fse.move(
+      this.fileName, 
+      this.fileNameBck, 
+      { overwrite: true }, 
+      (error) => {
+        cb(error);
+      });
   }
 
   /**
