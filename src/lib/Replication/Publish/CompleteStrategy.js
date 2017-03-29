@@ -41,7 +41,7 @@ export class CompleteStrategy extends AbstractStrategy {
       .catch(e => {
         if (e instanceof RecordSetNotFoundException) {
           console.warn(`No Route53 RecordSet found matching "${e.targetHostname}" hostname`);
-          console.warn(`Please change your dns record and rerun this command with --skip-route53 flag`);
+          console.warn(`Please change your dns record and rerun this command with --skip-route53 flag`)
         }
 
         throw e;

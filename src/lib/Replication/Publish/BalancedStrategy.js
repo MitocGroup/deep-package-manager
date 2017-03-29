@@ -59,7 +59,7 @@ export class BalancedStrategy extends AbstractStrategy {
     let lambdaService = this.replication.lambdaService;
 
     return lambdaService.compileLambdaForCloudFront(functionName, variables)
-      .then(() => lambdaService.addLambdaEdgeInvokePermission(functionName, cfDistributionId))
+      .then(() => this.lambdaService.addLambdaEdgeInvokePermission(functionName, cfDistributionId))
       .then(() => {
         console.info(`Attaching "${functionName}" to ${cfDistributionId} ${eventType} event.`);
 
