@@ -34,6 +34,10 @@ import nodePath from 'path';
 import jsonPointer from 'json-pointer';
 import {ActionFlags} from '../../Microservice/Metadata/Helpers/ActionFlags';
 import {FailedToRetrieveUsagePlanException} from './Exception/FailedToRetrieveUsagePlanException';
+import {FailedCreatingApiDomainException} from './Exception/FailedCreatingApiDomainException';
+import {FailedAssigningApiDomainException} from './Exception/FailedAssigningApiDomainException';
+import {ACMService} from './ACMService';
+import {WaitFor} from '../../Helpers/WaitFor';
 
 /**
  * APIGateway service
@@ -45,6 +49,7 @@ export class APIGatewayService extends AbstractService {
   constructor(...args) {
     super(...args);
 
+    this.certificateArn = null;
     this._apiResources = {};
     this._nonDirectLambdaIdentifiers = [];
   }
@@ -224,6 +229,22 @@ export class APIGatewayService extends AbstractService {
   }
 
   /**
+   * @returns {String|null}
+   * @private
+   */
+  get _apiAlias() {
+    return this.provisioning.property.config.apiAlias;
+  }
+
+  /**
+   * @returns {String|null}
+   * @private
+   */
+  get _apiDomain() {
+    return this.provisioning.property.config.domain;
+  }
+
+  /**
    * @param {Core.Generic.ObjectStorage} services
    * @returns {APIGatewayService}
    * @private
@@ -234,7 +255,7 @@ export class APIGatewayService extends AbstractService {
       this._readyTeardown = true;
       return this;
     }
-
+    
     this._readyTeardown = true;
 
     return this;
@@ -251,6 +272,35 @@ export class APIGatewayService extends AbstractService {
       return this;
     }
 
+    let acmService = services.find(ACMService);
+    let wait = new WaitFor();
+
+    wait.push(() => {
+      return acmService.allowRunApg;
+    });
+
+    wait.ready(() => {
+      let certificateArn = this.certificateArn;
+      let apiDomain = this._apiDomain;
+      let apiAlias = this._apiAlias;
+
+      if (!this._config.api.hasOwnProperty('id')
+        || !certificateArn || !apiDomain || !apiAlias) {
+        return this._setupApi();
+      }
+
+      this._setupApi({ domain: `${apiAlias}.${apiDomain}`, certificateArn });
+    });
+
+    return this;
+  }
+  
+  /**
+   * @param {*} customDomain
+   * 
+   * @private
+   */
+  _setupApi(customDomain = null) {
     this._nonDirectLambdaIdentifiers = this.provisioning.services.find(LambdaService)
       .extractFunctionIdentifiers(ActionFlags.NON_DIRECT_ACTION_FILTER);
 
@@ -258,7 +308,8 @@ export class APIGatewayService extends AbstractService {
       this._config.api.id,
       this._config.api.resources,
       this._config.api.role,
-      this._config.api.usagePlan
+      this._config.api.usagePlan,
+      customDomain
     )((methods, integrations, rolePolicy, apiStage, authorizer) => {
       this._config.api.methods = methods;
       this._config.api.integrations = integrations;
@@ -274,8 +325,6 @@ export class APIGatewayService extends AbstractService {
 
       this._ready = true;
     });
-
-    return this;
   }
 
   /**
@@ -403,10 +452,11 @@ export class APIGatewayService extends AbstractService {
    * @param {Object} apiResources
    * @param {Object} apiRole
    * @param {Object} usagePlan
+   * @param {*} customDomain
    * @returns {Function}
    * @private
    */
-  _putApiIntegrations(apiId, apiResources, apiRole, usagePlan) {
+  _putApiIntegrations(apiId, apiResources, apiRole, usagePlan, customDomain) {
     var authorizer = null;
     var methods = null;
     var methodsResponse = null;
@@ -437,16 +487,31 @@ export class APIGatewayService extends AbstractService {
                   rolePolicy = data.policy;
                   
                   this._ensureCloudWatchLogsSetup((data) => {
-                    this._deployApi(apiId, (apiStage) => {
+                    let deployApi = () => {
+                      this._deployApi(apiId, (apiStage) => {
 
-                      this._addStageToUsagePlan(apiId, usagePlan, this.stageName, () => {
+                        this._addStageToUsagePlan(apiId, usagePlan, this.stageName, () => {
 
-                        this._updateStage(apiId, this.stageName, data.apiRole, this.apiConfig, (data) => {
+                          this._updateStage(apiId, this.stageName, data.apiRole, this.apiConfig, (data) => {
 
-                          callback(methods, integrations, rolePolicy, apiStage, authorizer);
+                            callback(methods, integrations, rolePolicy, apiStage, authorizer);
+                          });
                         });
                       });
-                    });
+                    };
+                    
+                    if (customDomain) {
+                      let domainName = customDomain.domain;
+                      let certificateArn = customDomain.certificateArn;
+                      
+                      this._ensureDomainName(domainName, certificateArn, () => {
+                        this._assignDomainName(domainName, apiId, () => {
+                          deployApi();
+                        });
+                      });
+                    } else {
+                      deployApi();
+                    }
                   });
                 });
               });
@@ -455,6 +520,42 @@ export class APIGatewayService extends AbstractService {
         });
       });
     };
+  }
+  
+  /**
+   * @param {String} domainName
+   * @param {String} restApiId
+   * @param {Function} cb
+   * @private
+   */
+  _assignDomainName(domainName, restApiId, cb) {
+    let payload = { domainName, restApiId };
+    
+    this.apiGatewayClient.createBasePathMapping(payload, (error, data) => {
+      if (error && error.code !== 'ConflictException') {
+        throw new FailedAssigningApiDomainException(domainName, restApiId);
+      }
+      
+      cb();
+    });
+  }
+  
+  /**
+   * @param {String} domainName
+   * @param {String} certificateArn
+   * @param {Function} cb
+   * @private
+   */
+  _ensureDomainName(domainName, certificateArn, cb) {
+    let payload = { domainName, certificateArn };
+    
+    this.apiGatewayClient.createDomainName(payload, (error, data) => {
+      if (error && error.code !== 'BadRequestException') {
+        throw new FailedCreatingApiDomainException(domainName, certificateArn);
+      }
+      
+      cb();
+    });
   }
   
   /**
