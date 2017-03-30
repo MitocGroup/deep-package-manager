@@ -181,7 +181,7 @@ export class DeployConfig {
     let payload = {
       Bucket: bucket,
       Key: path.basename(this.configFile),
-      Body: JSON.stringify(this.config),
+      Body: JSON.stringify(this._cleanDeployConfig),
     };
 
     this._s3.putObject(payload, (error) => {
@@ -193,9 +193,21 @@ export class DeployConfig {
    * @returns {DeployConfig}
    */
   dump() {
-    JsonFile.writeFileSync(this.configFile, this.config);
+    JsonFile.writeFileSync(this.configFile, this._cleanDeployConfig);
 
     return this;
+  }
+
+  /**
+   * @returns {*}
+   */
+  get _cleanDeployConfig() {
+    let config = JSON.parse(JSON.stringify(this.config));
+    
+    // ensure credentials remains safe
+    delete config.aws;
+     
+    return config;
   }
 
   /**
