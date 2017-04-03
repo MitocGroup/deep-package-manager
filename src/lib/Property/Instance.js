@@ -47,6 +47,7 @@ import {OptimisticStrategy} from './ExtractStrategy/OptimisticStrategy';
 import {DeployIgnore} from './DeployIgnore';
 import {PostRootFetchHook} from '../Microservice/PostRootFetchHook';
 import {Parameters} from '../Microservice/Parameters';
+import {PostInstallHook} from '../Microservice/PostInstallHook';
 
 /**
  * Property instance
@@ -996,6 +997,13 @@ export class Instance {
    */
   runPreDeployMsHooks(callback) {
     this._runHook(PreDeployHook, callback);
+  }
+
+  /**
+   * @param {Function} callback
+   */
+  runPostInstallMsHooks(callback) {
+    this._runHook(PostInstallHook, callback);
   }
 
   /**

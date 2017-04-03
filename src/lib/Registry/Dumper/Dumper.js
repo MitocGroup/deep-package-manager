@@ -150,7 +150,11 @@ export class Dumper {
 
         console.debug(`Dumping '${moduleName}@${moduleVersion}' module`);
 
-        this._dumpDriver.dump(moduleObj, cb);
+        this._dumpDriver.dump(moduleObj, () => {
+          console.debug(`Initializing '${moduleName}@${moduleVersion}' module`);
+
+          this._dumpDriver.initialize(moduleObj,  cb);
+        });
       });
     });
   }
