@@ -45,9 +45,9 @@ export class CloudFrontService extends AbstractService {
       return Promise.reject(new MissingCloudFrontEventTypeException(eventType));
     }
 
-    return this._cloudFrontClient.getDistributionConfig({
+    return this._getDistributionConfig({
       Id: distributionId,
-    }).promise().then(response => {
+    }).then(response => {
       let distributionConfig = response.DistributionConfig;
       let functionAssociations = distributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations;
       let payload = {
@@ -76,19 +76,19 @@ export class CloudFrontService extends AbstractService {
         LambdaFunctionARN: lambdaArn,
       });
 
-      return this._cloudFrontClient.updateDistribution(payload).promise();
+      return this._updateDistribution(payload);
     });
   }
 
   /**
    * @param {String[]} events
    * @param {String} distributionId
-   * @returns {Promise.<TResult>}
+   * @returns {Promise}
    */
   detachEventsFromDistribution(events, distributionId) {
-    return this._cloudFrontClient.getDistributionConfig({
+    return this._getDistributionConfig({
       Id: distributionId,
-    }).promise().then(response => {
+    }).then(response => {
       let distributionConfig = response.DistributionConfig;
       let functionAssociations = distributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations;
       let payload = {
@@ -111,8 +111,86 @@ export class CloudFrontService extends AbstractService {
 
       distributionConfig.DefaultCacheBehavior.LambdaFunctionAssociations = newFunctionAssociations;
 
-      return this._cloudFrontClient.updateDistribution(payload).promise();
+      return this._updateDistribution(payload);
     });
+  }
+
+  /**
+   * @param {String} bDistributionId
+   * @param {String} gDistributionId
+   * @returns {Promise}
+   */
+  hotSwapCloudFrontCNames(bDistributionId = null, gDistributionId = null) {
+    bDistributionId = bDistributionId || this.blueConfig().id;
+    gDistributionId = gDistributionId || this.greenConfig().id;
+
+    return Promise.all([
+      this._getDistributionConfig({Id: bDistributionId}),
+      this._getDistributionConfig({Id: gDistributionId}),
+    ]).then(responses => {
+      let bDistributionConfig = responses[0].DistributionConfig;
+      let gDistributionConfig = responses[1].DistributionConfig;
+
+      let tmpAliases = bDistributionConfig.Aliases;
+      bDistributionConfig.Aliases = gDistributionConfig.Aliases;
+      gDistributionConfig.Aliases = tmpAliases;
+
+      let bPayload = {
+        Id: bDistributionId,
+        IfMatch: responses[0].ETag,
+        DistributionConfig: bDistributionConfig,
+      };
+
+      let gPayload = {
+        Id: gDistributionId,
+        IfMatch: responses[1].ETag,
+        DistributionConfig: gDistributionConfig,
+      };
+
+      return Promise.all([
+        this._updateDistribution(this._resetCfAliases(bPayload)),
+        this._updateDistribution(this._resetCfAliases(gPayload)),
+      ]).then(() => Promise.all([
+        this._refreshDistributionObjETag(bPayload),
+        this._refreshDistributionObjETag(gPayload),
+      ]))
+      .then(() => Promise.all([
+        this._updateDistribution(bPayload),
+        this._updateDistribution(gPayload),
+      ]));
+    });
+  }
+
+  /**
+   * @param {Object} distributionObj
+   * @returns {Promise}
+   * @private
+   */
+  _refreshDistributionObjETag(distributionObj) {
+    return this._getDistributionConfig({
+      Id: distributionObj.Id,
+    }).then(response => {
+      distributionObj.IfMatch = response.ETag;
+
+      return distributionObj;
+    });
+  }
+
+  /**
+   * @param {Object} distributionObj
+   *
+   * @returns {Object}
+   * @private
+   */
+  _resetCfAliases(distributionObj) {
+    let clone = JSON.parse(JSON.stringify(distributionObj));
+
+    clone.DistributionConfig.Aliases = {
+      Items: [],
+      Quantity: 0,
+    };
+
+    return clone;
   }
 
   /**
@@ -120,12 +198,34 @@ export class CloudFrontService extends AbstractService {
    * @returns {Promise}
    */
   getDistributionCNAMES(distributionId) {
-    return this._cloudFrontClient.getDistributionConfig({
+    return this._getDistributionConfig({
       Id: distributionId,
-    }).promise().then(response => {
+    }).then(response => {
       let cnamesObj = response.DistributionConfig.Aliases;
 
       return cnamesObj.Items || [];
     });
+  }
+
+  /**
+   * @param {Object} payload
+   * @returns {Promise}
+   * @private
+   */
+  _getDistributionConfig(payload) {
+    return this._retryableRequest(
+      this._cloudFrontClient.getDistributionConfig(payload)
+    ).promise();
+  }
+
+  /**
+   * @param {Object} updatePayload
+   * @returns {Promise}
+   * @private
+   */
+  _updateDistribution(updatePayload) {
+    return this._retryableRequest(
+      this._cloudFrontClient.updateDistribution(updatePayload)
+    ).promise();
   }
 }

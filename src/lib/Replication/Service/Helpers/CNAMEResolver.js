@@ -12,13 +12,27 @@ export class CNAMEResolver {
    */
   constructor(cNames) {
     this._cNames = cNames;
+    this._resolvedHostname = null;
   }
 
   /**
    * @returns {String}
    */
-  resolve() {
-    return this._resolveLongest() || this._askForCName();
+  resolveHostname() {
+    if (!this._resolvedHostname) {
+      this._resolvedHostname = this._resolveLongest() || this._askForCName();
+    }
+
+    return this._resolvedHostname;
+  }
+
+  /**
+   * @returns {String}
+   */
+  resolveDomain() {
+    let hostParts = this.resolveHostname().split('.');
+
+    return hostParts.slice(1).join('.');
   }
 
   /**

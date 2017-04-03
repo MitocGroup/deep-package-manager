@@ -49,7 +49,7 @@ export class AbstractService extends Core.OOP.Interface {
 
     request.on('retry', response => {
       if (retryableCodes.indexOf(response.error.code) !== -1) {
-        console.warn(`"${this.name()}" resources locked. Retrying...`);
+        console.debug(`"${this.name()}" resources locked. Retrying...`);
 
         response.error.retryable = true;
         response.error.retryDelay = AbstractService.RETRY_DELAY;
