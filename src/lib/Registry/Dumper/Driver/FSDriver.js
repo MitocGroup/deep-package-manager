@@ -5,6 +5,7 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
+import {Instance as Microservice} from '../../../Microservice/Instance';
 import path from 'path';
 import fs from 'fs';
 
@@ -69,5 +70,21 @@ export class FSDriver extends AbstractDriver {
       this._basePath, 
       this._appendVersion ? moduleContext.toString() : moduleContext.name
     );
+  }
+
+  /**
+   * @param {ModuleInstance|*} moduleObj
+   * @param {Function} cb
+   */
+  initialize(moduleObj, cb) {
+    let microservice = Microservice.create(this._dumpPath(moduleObj.context));
+    let postInstallHook = microservice.postInstallHook ||
+      (cb => {
+        console.debug(`No hook.post-install.js found for microservice ${microservice.identifier}`);
+
+        cb();
+      });
+
+    postInstallHook(cb);
   }
 }
