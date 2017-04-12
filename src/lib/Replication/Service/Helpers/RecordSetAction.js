@@ -33,7 +33,7 @@ export class RecordSetAction {
    * @returns {RecordSetAction}
    */
   create() {
-    this._action = RecordSetAction.DELETE;
+    this._action = RecordSetAction.CREATE;
 
     return this;
   }
@@ -58,6 +58,16 @@ export class RecordSetAction {
   }
 
   /**
+   * @param {String} newName
+   * @returns {RecordSetAction}
+   */
+  name(newName) {
+    this._recordSet.Name = newName;
+    
+    return this;
+  }
+
+  /**
    * @returns {Object}
    */
   extract() {
@@ -66,7 +76,7 @@ export class RecordSetAction {
       Type: this._recordSet.Type,
     };
 
-    if ([RecordSetAction.CREATE, RecordSetAction.UPSERT].indexOf(this._action)) {
+    if ([RecordSetAction.CREATE, RecordSetAction.UPSERT].indexOf(this._action) !== -1) {
       recordSet.AliasTarget = this._recordSet.AliasTarget;
     }
 
