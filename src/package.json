@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "DEEP Package Manager",
   "keywords": [
     "Digital Enterprise End-To-End Platform",
@@ -42,14 +42,14 @@
       "email": "vcernomschi@mitocgroup.com"
     }
   ],
-  "main": "lib.compiled/bootstrap.js",
+  "main": "lib.compiled/bootstrap.dist.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/MitocGroup/deep-package-manager.git"
   },
   "scripts": {
     "test": "bash node-bin/test.sh",
-    "compile": "bash node-bin/compile.sh",
+    "compile": "bash node-bin/compile.sh && node node-bin/bootstrap-dist.js > lib.compiled/bootstrap.dist.js",
     "prepublish": "bash node-bin/assure-deps.sh && bash node-bin/compile.sh"
   },
   "dependencies": {
