@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "1.10.35",
+  "version": "2.0.0",
   "description": "DEEP Package Manager",
   "keywords": [
     "Digital Enterprise End-To-End Platform",
@@ -99,8 +99,8 @@
     "proxyquire": "^1.7.x"
   },
   "engines": {
-    "node": ">=0.12 <5.0",
-    "npm": ">=2.10 <3.0"
+    "node": ">=6.0 <7.0",
+    "npm": ">=3.0"
   },
   "preferGlobal": false,
   "analyze": true
