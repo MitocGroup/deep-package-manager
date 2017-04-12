@@ -25,6 +25,8 @@ export class CompleteStrategy extends BalancedStrategy {
    * 2. Change green distribution to use the blue ones (Wait until deployed)
    * 3. Change blue route53 record to point at green distribution
    *
+   * @param {Number} percentage
+   *
    * @returns {Promise}
    */
   publish(percentage) {
@@ -62,6 +64,8 @@ export class CompleteStrategy extends BalancedStrategy {
    * 3. Change green cloudfront distribution to use original blues CNAMEs (www.deep.mg) (Wait until deployed)
    * 4. Change route53 record for original (www.deep.mg) record to point at green distribution
    * 5. @todo: implement cleanup parameter which would delete the 3rd balancer distribution and its route53 record
+   *
+   * @param {Number} percentage
    *
    * @returns {Promise}
    */
@@ -143,7 +147,10 @@ export class CompleteStrategy extends BalancedStrategy {
         .catch(e => {
           if (e instanceof RecordSetNotFoundException) {
             console.warn(e.toString());
-            console.warn(`Please change your DNS record for "${e.targetHostname}" to point at "${greenDistribution.domain}"`);
+            console.warn(
+              `Please change your DNS record for "${e.targetHostname}" ` +
+              `to point at "${greenDistribution.domain}"`
+            );
 
             return Promise.resolve();
           }

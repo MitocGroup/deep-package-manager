@@ -72,6 +72,7 @@ export class AbstractStrategy extends Core.OOP.Interface {
 
   /**
    * @param {Object} config
+   * @returns {AbstractStrategy|BalancedStrategy}
    */
   updateConfig(config) {
     this._config = config;
