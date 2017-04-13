@@ -33,11 +33,22 @@ export class BalancedStrategy extends AbstractStrategy {
     let cloudFrontService = this.replication.cloudFrontService;
     let blueDistribution = cloudFrontService.blueConfig();
 
+    console.info('Changing blue distribution CNAMEs to wildcarded');
+
     return this._changeCloudFrontCNames(percentage)
       .then(blueAliases => {
         return (this.skipDNSActions ? this._askForBlue2ndDNSRecord() : this._createBlue2ndDNSRecord())
-          .then(() => cloudFrontService.waitForDistributionDeployed(blueDistribution.id))
-          .then(() => this._createTrafficManagerCfDistribution(blueAliases));
+          .then(() => {
+            cloudFrontService.waitForDistributionDeployed(blueDistribution.id);
+          })
+          .then(() => {
+            console.info('Creating 3rd cloudfront distribution for blue green traffic management');
+
+            return this._createTrafficManagerCfDistribution(blueAliases)
+              .then(newDistribution => cloudFrontService
+                .waitForDistributionDeployed(newDistribution.Id)
+                .then(() => newDistribution))
+          });
       })
       .then(newDistribution => {
         this._config.balancerDistribution = newDistribution;
@@ -169,9 +180,7 @@ export class BalancedStrategy extends AbstractStrategy {
     }).then(response => {
       let newDistribution = response.Distribution;
 
-      return this.attachLambdaEdgeFunction(newDistribution.Id)
-        .then(() => cloudFrontService.waitForDistributionDeployed(newDistribution.Id))
-        .then(() => newDistribution);
+      return this.attachLambdaEdgeFunction(newDistribution.Id);
     });
   }
 
