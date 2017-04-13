@@ -28,7 +28,7 @@ walker.walk(
 
   if (jsObj.hasOwnProperty(className)) {
     const requireContent = jsFile.substr(libsDir.length + 1);
-    const classObj = jsObj[className];
+
     nsParts.push(className);
     
     modules[nsParts.join('_')] = `require('./${requireContent}').${className}`;
