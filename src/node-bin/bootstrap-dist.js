@@ -9,10 +9,6 @@ const modules = {};
 const libsDir = path.resolve(__dirname, '..', 'lib.compiled');
 const walker = new FileWalker(FileWalker.RECURSIVE);
 
-function normalizeModulePath() {
-  
-}
-
 walker.walk(
   libsDir, 
   FileWalker.skipDotsFilter(file => {
