@@ -9,6 +9,10 @@ const modules = {};
 const libsDir = path.resolve(__dirname, '..', 'lib.compiled');
 const walker = new FileWalker(FileWalker.RECURSIVE);
 
+function normalizeModulePath() {
+  
+}
+
 walker.walk(
   libsDir, 
   FileWalker.skipDotsFilter(file => {
@@ -27,10 +31,11 @@ walker.walk(
   const jsObj = require(jsFile);
 
   if (jsObj.hasOwnProperty(className)) {
-    let classObj = jsObj[className];
+    const requireContent = jsFile.substr(libsDir.length + 1);
+    const classObj = jsObj[className];
     nsParts.push(className);
     
-    modules[nsParts.join('_')] = `require('${jsFile}').${className}`;
+    modules[nsParts.join('_')] = `require('./${requireContent}').${className}`;
   }
 });
 
