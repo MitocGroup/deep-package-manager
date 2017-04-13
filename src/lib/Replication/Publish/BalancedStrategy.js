@@ -126,7 +126,7 @@ export class BalancedStrategy extends AbstractStrategy {
   }
 
   /**
-   * @param records
+   * @param {Object[]} records
    * @returns {Object}
    */
   resolveSuitableRecord(records) {
