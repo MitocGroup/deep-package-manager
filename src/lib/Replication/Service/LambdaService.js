@@ -322,22 +322,7 @@ export class LambdaService extends AbstractService {
       let s3Location = functionObj.Code.Location;
 
       return LambdaCompiler.fetchFromUrl(s3Location)
-        .then(compiler => {
-          for (let key in variables) {
-            if (!variables.hasOwnProperty(key)) {
-              continue;
-            }
-
-            compiler.addVariable(key, variables[key]);
-          }
-
-          // @todo: find a better solution to update lambda edge traffic percentage
-          compiler.addEntryProcessor('bootstrap.js', (entryContent) => {
-            return entryContent.replace(/\(\s*[\d\.]+(\s*\/\s*\d+\s*)\)/, `(${variables.percentage}$1)`);
-          });
-
-          return compiler.compile();
-        })
+        .then(compiler => compiler.addParameterBag(variables, 'EDGE-PARAMS').compile())
         .then(codeBuffer => {
           return this._lambda.updateFunctionCode({
             FunctionName: functionName,
