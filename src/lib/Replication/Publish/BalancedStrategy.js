@@ -4,14 +4,16 @@
 
 'use strict';
 
+import URL from 'url';
+import os from 'os';
 import {CloudFrontEvent} from '../Service/Helpers/CloudFrontEvent';
 import {RecordSetAction} from '../Service/Helpers/RecordSetAction';
 import {AbstractStrategy} from './AbstractStrategy';
 import {CloudFrontService} from '../Service/CloudFrontService';
 import {CNAMEResolver} from '../Service/Helpers/CNAMEResolver';
 import {MissingCNAMEException} from '../Exception/MissingCNAMEException';
-import URL from 'url';
 import {CNAMEAlreadyExistsException} from '../Exception/CNAMEAlreadyExistsException';
+import {Prompt} from '../../Helpers/Terminal/Prompt';
 
 export class BalancedStrategy extends AbstractStrategy {
   /**
@@ -100,14 +102,17 @@ export class BalancedStrategy extends AbstractStrategy {
     let route53Service = this.replication.route53Service;
     let blueDistribution = this.replication.cloudFrontService.blueConfig();
 
-    return route53Service.findRoute53RecordByCfCNameDomain(
+    return route53Service.findRoute53RecordsByCfCNameDomain(
       this.parameters.domain,
       blueDistribution.domain
-    ).then(route53Record => {
-      this._blueRoute53Record = route53Record;
+    ).then(result => {
+      this._blueRoute53Record = {
+        HostedZone: result.HostedZone,
+        RecordSet: this.resolveSuitableRecord(result.Records),
+      };
 
-      let hostedZone = route53Record.HostedZone;
-      let recordSet = route53Record.RecordSet;
+      let hostedZone = this._blueRoute53Record.HostedZone;
+      let recordSet = this._blueRoute53Record.RecordSet;
 
       let blueHostname = URL.parse(this.parameters.blueBase).hostname;
       let createAction = new RecordSetAction(recordSet).create().name(blueHostname);
@@ -118,6 +123,35 @@ export class BalancedStrategy extends AbstractStrategy {
 
       return Promise.resolve();
     });
+  }
+
+  /**
+   * @param records
+   * @returns {Object}
+   */
+  resolveSuitableRecord(records) {
+    if (records.length === 1) {
+      return records[0];
+    }
+
+    let recordsObj = records.reduce((obj, record) => {
+      obj[record.Name.slice(0, -1)] = record;
+
+      return obj;
+    }, {});
+
+    let hostnameChoice = null;
+    let prompt = new Prompt(
+      `Multiple Route53 Records found for "${records[0].AliasTarget.DNSName}" cloudfront. ${os.EOL}` +
+      `Which one you would like to use for blue green deployment? `
+    );
+
+    prompt.syncMode = true;
+    prompt.readChoice(choice => {
+      hostnameChoice = choice;
+    }, Object.keys(recordsObj));
+
+    return recordsObj[hostnameChoice];
   }
 
   /**

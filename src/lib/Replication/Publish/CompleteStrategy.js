@@ -129,10 +129,11 @@ export class CompleteStrategy extends BalancedStrategy {
     let greenDistribution = cloudFrontService.greenConfig();
 
     let updatePromises = cloudFrontDomains.map(cloudFrontDomain => {
-      return route53Service.findRoute53RecordByCfCNameDomain(domainName, cloudFrontDomain)
+      return route53Service.findRoute53RecordsByCfCNameDomain(domainName, cloudFrontDomain)
         .then(route53Record => {
           let hostedZone = route53Record.HostedZone;
-          let updateAction = new RecordSetAction(route53Record.RecordSet).upsert().aliasTarget({
+          let recordSet = this.resolveSuitableRecord(route53Record.Records);
+          let updateAction = new RecordSetAction(recordSet).upsert().aliasTarget({
             DNSName: greenDistribution.domain,
             EvaluateTargetHealth: false,
             HostedZoneId: CloudFrontService.CF_HOSTED_ZONE_ID,
