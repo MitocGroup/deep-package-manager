@@ -118,3 +118,4 @@ coverage/*
 coverages/*
 .parameters.json
 **/bin/test/**/*.js
+/vendor
