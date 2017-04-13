@@ -11,6 +11,6 @@ export class CNAMEAlreadyExistsException extends Exception {
    * @param {String} cName
    */
   constructor(cName) {
-    super(`CNAME "${cName}" should be available in for blue green deployment.`);
+    super(`CNAME "${cName}" should be available for blue green deployment.`);
   }
 }
