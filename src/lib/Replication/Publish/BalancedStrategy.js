@@ -37,17 +37,19 @@ export class BalancedStrategy extends AbstractStrategy {
 
     return this._changeCloudFrontCNames(percentage)
       .then(blueAliases => {
-        return (this.skipDNSActions ? this._askForBlue2ndDNSRecord() : this._createBlue2ndDNSRecord())
+        return (this.skipDNSActions ? this._askForBlue2ndDNSRecord() : this._createBlue2ndDNSRecord(blueAliases))
           .then(() => {
-            cloudFrontService.waitForDistributionDeployed(blueDistribution.id);
+            return cloudFrontService.waitForDistributionDeployed(blueDistribution.id);
           })
           .then(() => {
             console.info('Creating 3rd cloudfront distribution for blue green traffic management');
 
-            return this._createTrafficManagerCfDistribution(blueAliases)
-              .then(newDistribution => cloudFrontService
-                .waitForDistributionDeployed(newDistribution.Id)
-                .then(() => newDistribution))
+            return this._createTrafficManagerCfDistribution(blueAliases);
+              // there is not point to wait for distribution deploy since Route53 starts pointing
+              // to 3rd distribution even before Route53 record hotswap
+              // .then(newDistribution => cloudFrontService
+              //   .waitForDistributionDeployed(newDistribution.Id)
+              //   .then(() => newDistribution))
           });
       })
       .then(newDistribution => {
@@ -55,7 +57,7 @@ export class BalancedStrategy extends AbstractStrategy {
 
         if (this.skipDNSActions) {
           console.info(
-            `NOTE: Please change your DNS provider to point at distribution: `,
+            `NOTE: Please change your DNS provider to point at distribution ${newDistribution.DomainName}: `,
             JSON.stringify(newDistribution, null, '  ')
           );
 
@@ -106,10 +108,16 @@ export class BalancedStrategy extends AbstractStrategy {
   }
 
   /**
+   * Refactor this s**tty method
+   *
    * @returns {Promise}
    * @private
    */
-  _createBlue2ndDNSRecord() {
+  _createBlue2ndDNSRecord(blueOriginalAliases) {
+    let resolver = new CNAMEResolver(blueOriginalAliases.Items);
+    let blueOriginalHostname = resolver.resolveHostname();
+    let blueDomain = resolver.resolveDomain();
+    let blueSubDomain = blueOriginalHostname.split('.').shift();
     let route53Service = this.replication.route53Service;
     let blueDistribution = this.replication.cloudFrontService.blueConfig();
 
@@ -124,15 +132,35 @@ export class BalancedStrategy extends AbstractStrategy {
 
       let hostedZone = this._blueRoute53Record.HostedZone;
       let recordSet = this._blueRoute53Record.RecordSet;
+      let cNameCounter = 0;
 
-      let blueHostname = URL.parse(this.parameters.blueBase).hostname;
-      let createAction = new RecordSetAction(recordSet).create().name(blueHostname);
+      let nextCName = () => `${blueSubDomain}${++cNameCounter}.${blueDomain}`;
+      let tryCreateNextRecord = () => {
+        let currentCName = nextCName();
+        let createAction = new RecordSetAction(recordSet).create().name();
 
-      if (this.askRecordChangePermissions([createAction])) {
-        return route53Service.applyRecordSetActions(hostedZone.Id, [createAction]);
-      }
+        if (this.askRecordChangePermissions([createAction])) {
+          return route53Service.applyRecordSetActions(hostedZone.Id, [createAction])
+            .then(() => {
+              this.parameters.blueBase = `https://${currentCName}`;
 
-      return Promise.resolve();
+              console.debug(`Using "${this.parameters.blueBase}" as blue environment second base`);
+            })
+            .catch(e => {
+              if (e.code === 'InvalidChangeBatch') {
+                console.warn(`"${currentCName}" is already used. Trying another CNAME for second blue record`);
+
+                return tryCreateNextRecord();
+              }
+
+              throw e;
+            });
+        }
+
+        return Promise.resolve();
+      };
+
+      return tryCreateNextRecord();
     });
   }
 
@@ -180,7 +208,7 @@ export class BalancedStrategy extends AbstractStrategy {
     }).then(response => {
       let newDistribution = response.Distribution;
 
-      return this.attachLambdaEdgeFunction(newDistribution.Id);
+      return this.attachLambdaEdgeFunction(newDistribution.Id).then(() => newDistribution);
     });
   }
 
@@ -292,14 +320,13 @@ export class BalancedStrategy extends AbstractStrategy {
 
     let cNameResolver = new CNAMEResolver(cNames);
 
-    let hostname = new CNAMEResolver(cNames).resolveHostname();
+    let hostname = cNameResolver.resolveHostname();
     let domain = cNameResolver.resolveDomain();
     let greenBase = `https://${hostname}`;
     let blueBase = `https://www1.${domain}`; // @todo: implement a smart subdomain generation for blue environment
 
     console.debug(`Using "${domain}" as application domain`);
     console.debug(`Using "${greenBase}" as green environment base`);
-    console.debug(`Using "${blueBase}" as blue environment new base`);
 
     return {
       percentage,

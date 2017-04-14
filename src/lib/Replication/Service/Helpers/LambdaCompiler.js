@@ -82,18 +82,6 @@ export class LambdaCompiler {
   }
 
   /**
-   * Regexp for replacing [placeholders]
-   * @param {String} key
-   * @returns {RegExp}
-   * @private
-   */
-  _buildReplaceRegExp(key) {
-    let escapedKey = key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-
-    return new RegExp('\\[' + escapedKey + '\\]', 'gi');
-  }
-
-  /**
    * @param {String} url
    * @returns {Promise}
    */
