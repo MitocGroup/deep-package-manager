@@ -115,7 +115,7 @@ export class LambdaCompiler {
    * @private
    */
   _buildParametersReplaceRegExp(groupId) {
-    let cleanGroupId = groupId.replace(/[-[\]{}()*+?.,\\^$'|#\s]/g, "\\$&");
+    let cleanGroupId = groupId.replace(/[-[\]{}()*+?.,\\^$'|#\s]/g, '\\$&');
 
     return new RegExp(
       `'${cleanGroupId}\\-START'\\s*;?` +
@@ -128,6 +128,7 @@ export class LambdaCompiler {
   /**
    * @param {Object} parameters
    * @param {String} groupId
+   * @returns {String}
    */
   _buildParametersTemplate(parameters, groupId) {
     return `'${groupId}-START';` +

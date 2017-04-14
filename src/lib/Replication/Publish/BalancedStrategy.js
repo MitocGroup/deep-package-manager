@@ -4,7 +4,6 @@
 
 'use strict';
 
-import URL from 'url';
 import os from 'os';
 import {CloudFrontEvent} from '../Service/Helpers/CloudFrontEvent';
 import {RecordSetAction} from '../Service/Helpers/RecordSetAction';
@@ -109,6 +108,8 @@ export class BalancedStrategy extends AbstractStrategy {
 
   /**
    * Refactor this s**tty method
+   *
+   * @param {Object} blueOriginalAliases
    *
    * @returns {Promise}
    * @private
