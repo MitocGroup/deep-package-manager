@@ -794,6 +794,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
       case 'nodejs':
       case 'nodejs4.3':
       case 'nodejs4.3-edge':
+      case 'nodejs6.10':
         handler = 'bootstrap.handler';
         break;
       case 'java8':
@@ -875,7 +876,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    */
   static get RUNTIMES() {
     return [
-      'nodejs4.3', 'nodejs', 
+      'nodejs6.10', 'nodejs4.3', 'nodejs', 
       'java8', 'python2.7', 
       'dotnetcore1.0', 'nodejs4.3-edge',
     ];
@@ -894,7 +895,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    */
   static isNodeRuntime(runtime) {
     return [
-      'nodejs4.3', 'nodejs', 'nodejs4.3-edge'
+      'nodejs6.10', 'nodejs4.3', 'nodejs', 'nodejs4.3-edge'
     ].indexOf(runtime) !== -1;
   }
 }

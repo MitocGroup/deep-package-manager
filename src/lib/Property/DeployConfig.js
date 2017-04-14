@@ -191,9 +191,12 @@ export class DeployConfig {
 
   /**
    * @returns {DeployConfig}
+   *
+   * @todo dump locally without aws credentials 
+   *       after property config fixed
    */
   dump() {
-    JsonFile.writeFileSync(this.configFile, this._cleanDeployConfig);
+    JsonFile.writeFileSync(this.configFile, this.config);
 
     return this;
   }
