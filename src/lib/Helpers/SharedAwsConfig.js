@@ -276,7 +276,7 @@ export class SharedAwsConfig {
    * @constructor
    */
   static get AwsCliConfig() {
-    return () => {
+    return function() {
       return {
         accessKeyId: null,
         secretAccessKey: null,
@@ -309,7 +309,7 @@ export class SharedAwsConfig {
       new AWS.EnvironmentCredentials(),
       new AWS.SharedIniFileCredentials(),
       new AWS.FileSystemCredentials(SharedAwsConfig.AWS_GLOB_CFG_FILE),
-      new SharedAwsConfig.AwsCliConfig
+      new SharedAwsConfig.AwsCliConfig(),
     ];
   }
 
