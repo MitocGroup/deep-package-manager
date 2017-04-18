@@ -116,6 +116,74 @@ export class CloudFrontService extends AbstractService {
   }
 
   /**
+   * @param {String} distributionId
+   * @param {Object} changeSet
+   * @returns {Promise}
+   */
+  cloneDistribution(distributionId, changeSet = {}) {
+    return this._getDistributionConfig({Id: distributionId})
+      .then(response => {
+        let newDistributionConfig = Object.assign(response.DistributionConfig, changeSet);
+
+        return this._createDistribution({
+          DistributionConfig: newDistributionConfig,
+        });
+      });
+  }
+
+  /**
+   * @Note: this method returns a Promise which resolves old cnames
+   * 
+   * @param {String} distributionId
+   * @param {String[]} newCNames
+   * @returns {Promise.<String[]>}
+   */
+  changeCloudFrontCNAMEs(distributionId, newCNames) {
+    return this._getDistributionConfig({Id: distributionId})
+      .then(response => {
+        let distributionConfig = response.DistributionConfig;
+        let oldCNames = JSON.parse(JSON.stringify(distributionConfig.Aliases));
+
+        distributionConfig.Aliases.Quantity = 1;
+        distributionConfig.Aliases.Items = newCNames;
+
+        return this._updateDistribution({
+          IfMatch: response.ETag,
+          Id: distributionId,
+          DistributionConfig: distributionConfig,
+        }).then(() => oldCNames);
+      });
+  }
+
+  /**
+   * @param {String} distributionId
+   * @param {Number} _interval
+   * @param {Number} _estTime
+   *
+   * @returns {Promise}
+   */
+  waitForDistributionDeployed(distributionId, _interval = 1000 * 30, _estTime = 1200) {
+    return this._getDistribution({Id: distributionId,}).then(response => {
+      let status = response.Distribution.Status;
+
+      if (status === 'Deployed') {
+        return Promise.resolve();
+      }
+
+      let estTimeMinutes = (_estTime / 60);
+
+      console.info(
+        `Waiting for CloudFront distribution ${distributionId} to be deployed`,
+        `(currently ${status}, ETC ${estTimeMinutes <= 0 ? '...' : `${estTimeMinutes} min`})`
+      );
+
+      return this.wait(_interval).then(() => {
+        return this.waitForDistributionDeployed(distributionId, _interval, _estTime - 30);
+      });
+    });
+  }
+
+  /**
    * @param {String} bDistributionId
    * @param {String} gDistributionId
    * @returns {Promise}
@@ -227,5 +295,34 @@ export class CloudFrontService extends AbstractService {
     return this._retryableRequest(
       this._cloudFrontClient.updateDistribution(updatePayload)
     ).promise();
+  }
+
+  /**
+   * @param {Object} payload
+   * @returns {Promise}
+   * @private
+   */
+  _createDistribution(payload) {
+    return this._retryableRequest(
+      this._cloudFrontClient.createDistribution(payload)
+    ).promise();
+  }
+
+  /**
+   * @param {Object} payload
+   * @returns {Promise}
+   * @private
+   */
+  _getDistribution(payload) {
+    return this._retryableRequest(
+      this._cloudFrontClient.getDistribution(payload)
+    ).promise();
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get CF_HOSTED_ZONE_ID() {
+    return 'Z2FDTNDATAQYW2';
   }
 }

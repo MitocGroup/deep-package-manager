@@ -61,7 +61,7 @@ export class CNAMEResolver {
    * @private
    */
   _askForCName() {
-    let prompt = new Prompt('Choose the AWS profile to be used');
+    let prompt = new Prompt('Choose the CNAME to be used');
     let chosenCName = null;
 
     prompt.syncMode = true;
