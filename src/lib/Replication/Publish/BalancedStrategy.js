@@ -43,12 +43,10 @@ export class BalancedStrategy extends AbstractStrategy {
           .then(() => {
             console.info('Creating 3rd cloudfront distribution for blue green traffic management');
 
-            return this._createTrafficManagerCfDistribution(blueAliases);
-              // there is not point to wait for distribution deploy since Route53 starts pointing
-              // to 3rd distribution even before Route53 record hotswap
-              // .then(newDistribution => cloudFrontService
-              //   .waitForDistributionDeployed(newDistribution.Id)
-              //   .then(() => newDistribution))
+            return this._createTrafficManagerCfDistribution(blueAliases)
+              .then(newDistribution => cloudFrontService
+                .waitForDistributionDeployed(newDistribution.Id)
+                .then(() => newDistribution));
           });
       })
       .then(newDistribution => {
@@ -138,7 +136,7 @@ export class BalancedStrategy extends AbstractStrategy {
       let nextCName = () => `${blueSubDomain}${++cNameCounter}.${blueDomain}`;
       let tryCreateNextRecord = () => {
         let currentCName = nextCName();
-        let createAction = new RecordSetAction(recordSet).create().name();
+        let createAction = new RecordSetAction(recordSet).create().name(currentCName);
 
         if (this.askRecordChangePermissions([createAction])) {
           return route53Service.applyRecordSetActions(hostedZone.Id, [createAction])
@@ -149,7 +147,7 @@ export class BalancedStrategy extends AbstractStrategy {
             })
             .catch(e => {
               if (e.code === 'InvalidChangeBatch') {
-                console.warn(`"${currentCName}" is already used. Trying another CNAME for second blue record`);
+                console.warn(`"${currentCName}" is already used. Trying another CNAME for second blue record...`);
 
                 return tryCreateNextRecord();
               }
