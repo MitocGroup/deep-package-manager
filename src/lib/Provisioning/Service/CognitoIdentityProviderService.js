@@ -249,13 +249,14 @@ export class CognitoIdentityProviderService extends AbstractService {
     let cognitoIdentityServiceProvider = this.provisioning.cognitoIdentityServiceProvider;
     let promises = [];
 
-    this.userPoolMetadata.clients.forEach(clientName => {
+    this.userPoolMetadata.clients.forEach(clientObj => {
       let payload = {
         UserPoolId: userPool.Id,
         // JavaScript SDK doesn't support apps that have a client secret,
         // http://docs.aws.amazon.com/cognito/latest/developerguide/setting-up-the-javascript-sdk.html
         GenerateSecret: false,
-        ClientName: clientName,
+        ClientName: clientObj.Name,
+        RefreshTokenValidity: clientObj.RefreshTokenValidity,
         ExplicitAuthFlows: [
           'ADMIN_NO_SRP_AUTH',
         ],
@@ -296,12 +297,24 @@ export class CognitoIdentityProviderService extends AbstractService {
       // @todo - remove fallback to globalConfig.userPool && globalConfig.userPool.enabled
       // when "enabled" parameter will be consolidated into deep-account under security key
       let enabled = poolConfig.enabled || globalConfig.userPool && globalConfig.userPool.enabled;
-      let clients = (poolConfig.clients || '').trim();
-      clients = clients ? clients.split(/[\s,]+/) : [];
 
-      if (clients.indexOf(CognitoIdentityProviderService.SYSTEM_CLIENT_APP) === -1) {
-        clients.push(CognitoIdentityProviderService.SYSTEM_CLIENT_APP);
+      // @link http://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-with-identity-providers.html#amazon-cognito-user-pools-using-the-access-token
+      let refreshTokenValidity = poolConfig.refreshTokenValidity || 3560;
+
+      let clients = [];
+      let clientsNames = (poolConfig.clients || '').trim();
+      clientsNames = clientsNames ? clientsNames.split(/[\s,]+/) : [];
+
+      if (clientsNames.indexOf(CognitoIdentityProviderService.SYSTEM_CLIENT_APP) === -1) {
+        clientsNames.push(CognitoIdentityProviderService.SYSTEM_CLIENT_APP);
       }
+
+      clientsNames.forEach(clientName => {
+        clients.push({
+          Name: clientName,
+          RefreshTokenValidity: refreshTokenValidity
+        });
+      });
 
       this._userPoolMetadata = {
         enabled: enabled,
