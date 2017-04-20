@@ -237,6 +237,15 @@ export class Lambda {
   }
 
   /**
+   * @returns {Boolean}
+   */
+  get xRayEnabled() {
+    let xRayConfig = this._property.config.globals.xRay || {};
+
+    return !!xRayConfig.enabled;
+  }
+
+  /**
    * @returns {String}
    */
   get functionName() {
@@ -653,7 +662,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
           MemorySize: this._memorySize,
           Timeout: this._timeout,
           TracingConfig: {
-            Mode: 'Active'
+            Mode: this.xRayEnabled ? 'Active' : 'PassThrough'
           },
         });
         
@@ -677,7 +686,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
           MemorySize: this._memorySize,
           Timeout: this._timeout,
           TracingConfig: {
-            Mode: 'Active'
+            Mode: this.xRayEnabled ? 'Active' : 'PassThrough'
           },
         });
 
@@ -745,10 +754,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
       MemorySize: this._memorySize,
       Role: this._execRole.Arn,
       Runtime: this._runtime,
-      Timeout: this._timeout,
-      TracingConfig: {
-        Mode: 'Active'
-      },
+      Timeout: this._timeout
     };
   }
 
