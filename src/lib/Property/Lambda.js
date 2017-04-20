@@ -652,6 +652,9 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
           Runtime: this._runtime,
           MemorySize: this._memorySize,
           Timeout: this._timeout,
+          TracingConfig: {
+            Mode: 'Active'
+          },
         });
         
         request = lambda.updateFunctionCode({
@@ -673,6 +676,9 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
           Runtime: this._runtime,
           MemorySize: this._memorySize,
           Timeout: this._timeout,
+          TracingConfig: {
+            Mode: 'Active'
+          },
         });
 
         this._fixLambdaCreateIssue(request);
@@ -740,6 +746,9 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
       Role: this._execRole.Arn,
       Runtime: this._runtime,
       Timeout: this._timeout,
+      TracingConfig: {
+        Mode: 'Active'
+      },
     };
   }
 
