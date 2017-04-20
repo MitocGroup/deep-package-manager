@@ -65,7 +65,8 @@ export class AbstractDriver extends Core.OOP.Interface {
     let tags = this.tags;
 
     if (resourcesArns.length === 0) {
-      return cb();
+      cb();
+      return;
     }
 
     let resourcesChunks = this.arrayChunk(resourcesArns);
@@ -84,7 +85,7 @@ export class AbstractDriver extends Core.OOP.Interface {
   }
 
   /**
-   * @param {String[][]} chunks
+   * @param {(String[])[]} chunks
    * @param {Object} tags
    * @returns {Promise}
    * @private

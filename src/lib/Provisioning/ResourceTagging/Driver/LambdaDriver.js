@@ -8,6 +8,7 @@ import Core from 'deep-core';
 import {AbstractDriver} from './AbstractDriver';
 import {LambdaService} from '../../Service/LambdaService';
 import {Tagging} from '../Tagging';
+import {AwsRequestExtend} from '../../../Helpers/AwsRequestExtend';
 
 export class LambdaDriver extends AbstractDriver {
   /**
@@ -15,6 +16,65 @@ export class LambdaDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
+
+    this._lambda = this.provisioning.lambda;
+  }
+
+  /**
+   * @param {Function} cb
+   */
+  tag(cb) {
+    let lambdasArns = this.resourcesArns();
+    let tags = this.tags;
+
+    if (lambdasArns.length === 0) {
+      cb();
+      return;
+    }
+
+    let lambdaChunks = this.arrayChunk(lambdasArns, LambdaDriver.TAG_CHUNK_SIZE);
+
+    this._tagChunks(lambdaChunks, tags)
+      .then(() => {
+        console.debug(`Lambda resources have been successfully tagged`);
+
+        cb();
+      })
+      .catch(e => {
+        console.warn(`Error while tagging lambda resources: ${e.toString()}`);
+      });
+  }
+
+  /**
+   * @param {(String[])[]} chunks
+   * @param {Object} tags
+   * @returns {Promise}
+   * @private
+   */
+  _tagChunks(chunks, tags) {
+    if (chunks.length === 0) {
+      return Promise.resolve();
+    }
+
+    let chunksClone = [].concat(chunks);
+    let workingChunk = chunksClone.shift();
+
+    let promises = workingChunk.map(lambdaArn => {
+      return AwsRequestExtend.retryable(
+        this._lambda.tagResource({
+          Resource: lambdaArn,
+          Tags: tags,
+        })
+      ).promise().catch(e => {
+        console.warn(`Error while tagging "${lambdaArn}": ${e.toString()}`);
+
+        return Promise.resolve();
+      });
+    });
+
+    return Promise.all(promises).then(() => {
+      return this._tagChunks(chunksClone, tags);
+    });
   }
 
   /**
@@ -56,6 +116,13 @@ export class LambdaDriver extends AbstractDriver {
     }
 
     return lambdaArns;
+  }
+
+  /**
+   * @returns {Number}
+   */
+  static get TAG_CHUNK_SIZE() {
+    return 5;
   }
 
   /**
