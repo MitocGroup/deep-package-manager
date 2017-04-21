@@ -87,7 +87,19 @@ export class BalancedStrategy extends AbstractStrategy {
     let blueDistribution = cloudFrontService.blueConfig();
     let greenDistribution = cloudFrontService.greenConfig();
 
-    return cloudFrontService.getDistributionCNAMES(greenDistribution.id)
+    return cloudFrontService.getDistributionCNAMES(blueDistribution.id)
+      .then(cNames => {
+        let resolver = new CNAMEResolver(cNames);
+
+        let domain = resolver.resolveDomain();
+        let domainCName = `*.${domain}`;
+
+        if (cNames.indexOf(domainCName) !== -1) {
+          throw new CNAMEAlreadyExistsException(domainCName);
+        }
+
+        return cloudFrontService.getDistributionCNAMES(greenDistribution.id);
+      })
       .then(cNames => {
         this.parameters = this.buildParameters(percentage, cNames);
 

@@ -51,7 +51,7 @@ export class Route53Service extends AbstractService {
       : this.findHostedZoneByDomain(domainName)
     ).then(hostedZone => {
       if (!hostedZone) {
-        return null;
+        return {HostedZone: null, Records: []};
       }
 
       let payload = {
