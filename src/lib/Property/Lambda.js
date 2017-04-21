@@ -237,6 +237,15 @@ export class Lambda {
   }
 
   /**
+   * @returns {Boolean}
+   */
+  get xRayEnabled() {
+    let xRayConfig = this._property.config.globals.xRay || {};
+
+    return !!xRayConfig.enabled;
+  }
+
+  /**
    * @returns {String}
    */
   get functionName() {
@@ -643,16 +652,29 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
       console.debug(`Lambda ${this._identifier} code uploaded`);
 
       if (update && this._wasPreviouslyDeployed) {
-        
-        // update function configuration
-        additionalRequest = lambda.updateFunctionConfiguration({
+        let funcConfig = {
           FunctionName: this.functionName,
           Handler: this.handler,
           Role: this._execRole.Arn,
           Runtime: this._runtime,
           MemorySize: this._memorySize,
           Timeout: this._timeout,
-        });
+        };
+
+        if (!Lambda.isEdgeRuntime(this._runtime)) {
+          funcConfig.TracingConfig =  {
+            Mode: this.xRayEnabled ? 'Active' : 'PassThrough'
+          };
+
+          funcConfig.Environment = {
+            Variables: {
+              'DEEP_X_RAY_ENABLED': `${this.xRayEnabled}`
+            }
+          };
+        }
+
+        // update function configuration
+        additionalRequest = lambda.updateFunctionConfiguration(funcConfig);
         
         request = lambda.updateFunctionCode({
           S3Bucket: tmpBucket,
@@ -661,7 +683,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
           FunctionName: this.functionName,
         });
       } else {
-        request = lambda.createFunction({
+        let funcConfig = {
           Code: {
             S3Bucket: tmpBucket,
             S3Key: objectKey,
@@ -673,7 +695,21 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
           Runtime: this._runtime,
           MemorySize: this._memorySize,
           Timeout: this._timeout,
-        });
+        };
+
+        if (!Lambda.isEdgeRuntime(this._runtime)) {
+          funcConfig.TracingConfig =  {
+            Mode: this.xRayEnabled ? 'Active' : 'PassThrough'
+          };
+
+          funcConfig.Environment = {
+            Variables: {
+              'DEEP_X_RAY_ENABLED': `${this.xRayEnabled}`
+            }
+          };
+        }
+
+        request = lambda.createFunction(funcConfig);
 
         this._fixLambdaCreateIssue(request);
 
@@ -897,5 +933,13 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
     return [
       'nodejs6.10', 'nodejs4.3', 'nodejs', 'nodejs4.3-edge'
     ].indexOf(runtime) !== -1;
+  }
+
+  /**
+   * @param {String} runtime
+   * @returns {boolean}
+   */
+  static isEdgeRuntime(runtime) {
+    return /^.+-edge$/.test(runtime);
   }
 }
