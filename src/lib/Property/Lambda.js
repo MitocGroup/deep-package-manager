@@ -764,7 +764,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
       MemorySize: this._memorySize,
       Role: this._execRole.Arn,
       Runtime: this._runtime,
-      Timeout: this._timeout
+      Timeout: this._timeout,
     };
   }
 
