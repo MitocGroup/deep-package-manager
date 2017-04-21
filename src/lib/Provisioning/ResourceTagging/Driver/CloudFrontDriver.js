@@ -14,31 +14,31 @@ export class CloudFrontDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
-    
-    this._cloudFront = this.provisioning.cloudFront;
   }
 
   /**
-   * @param {Function} cb
+   * @returns {String}
    */
-  tag(cb) {
+  region() {
+    return this.provisioning.cloudFront.config.region;
+  }
+
+  /**
+   * @returns {String}
+   */
+  name() {
+    return Core.AWS.Service.CLOUD_FRONT;
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  resourcesArns() {
     let distributionId = this.provisioning.config[Core.AWS.Service.CLOUD_FRONT].id;
-    let payload = {
-      Resource: this.generateCloudFrontARN(distributionId),
-      Tags: {
-        Items: this.tagsPayload,
-      },
-    };
 
-    this._cloudFront.tagResource(payload, error => {
-      if (error) {
-        console.warn(`Error on tagging cloudfront distribution ${distributionId}: ${error}`);
-      } else {
-        console.debug(`Cloudfront distribution ${distributionId} has been successfully tagged`);
-      }
-
-      cb();
-    });
+    return [
+      this.generateCloudFrontARN(distributionId),
+    ];
   }
 
   /**

@@ -13,38 +13,26 @@ export class DynamoDBDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
-
-    this._dynamoDB = this.provisioning.dynamoDB;
   }
 
   /**
-   * @param {Function} callback
+   * @returns {String}
    */
-  tag(callback) {
-    let tagsPayload = this.tagsPayload;
+  region() {
+    return this.provisioning.dynamoDB.config.region;
+  }
 
-    let tagPromises = this.tablesArns.map(tableArn => {
-      let payload = {
-        ResourceArn: tableArn,
-        Tags: tagsPayload,
-      };
-
-      return this._dynamoDB.tagResource(payload).promise().then(() => {
-        console.debug(`"${tableArn}" has been successfully tagged`);
-      }).catch(e => {
-        console.warn(`Error on tagging "${tableArn}": ${e}`);
-      });
-    });
-
-    Promise.all(tagPromises)
-      .then(responses => callback(null, responses))
-      .catch(e => callback(e, null));
+  /**
+   * @returns {String}
+   */
+  name() {
+    return Core.AWS.Service.DYNAMO_DB;
   }
 
   /**
    * @returns {String[]}
    */
-  get tablesArns() {
+  resourcesArns() {
     let config = this.property.config;
     let tablesObj = this.provisioning.config[Core.AWS.Service.DYNAMO_DB].tablesNames;
     let tableArns = [];

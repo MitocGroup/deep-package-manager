@@ -5,7 +5,7 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
-import {AwsRequestSyncStack} from '../../../Helpers/AwsRequestSyncStack';
+import Core from 'deep-core';
 
 export class S3Driver extends AbstractDriver {
   /**
@@ -13,42 +13,27 @@ export class S3Driver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
-
-    this._s3 = this.provisioning.s3;
   }
 
   /**
-   * @returns {AWS.S3|*}
+   * @returns {String}
    */
-  get s3() {
-    return this._s3;
+  region() {
+    return this.provisioning.s3.config.region;
   }
 
   /**
-   * @param {Function} cb
+   * @returns {String}
    */
-  tag(cb) {
-    let stack = new AwsRequestSyncStack();
-    let tagsPayload = this.tagsPayload;
+  name() {
+    return Core.AWS.Service.SIMPLE_STORAGE_SERVICE;
+  }
 
-    this.buckets.forEach((bucket) => {
-      let payload = {
-        Bucket: bucket,
-        Tagging: {
-          TagSet: tagsPayload,
-        },
-      };
-
-      stack.push(this._s3.putBucketTagging(payload), (error) => {
-        if (error) {
-          console.warn(`Error on tagging S3 bucket ${bucket}: ${error}`);
-        } else {
-          console.debug(`S3 bucket ${bucket} has been successfully tagged`);
-        }
-      });
-    });
-
-    stack.join().ready(cb);
+  /**
+   * @returns {Array}
+   */
+  resourcesArns() {
+    return this.buckets.map(bucket => `arn:aws:s3:::${bucket}`);
   }
 
   /**
