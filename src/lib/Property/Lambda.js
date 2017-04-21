@@ -664,6 +664,11 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
           TracingConfig: {
             Mode: this.xRayEnabled ? 'Active' : 'PassThrough'
           },
+          Environment: {
+            Variables: {
+              'DEEP_X_RAY_ENABLED': `${this.xRayEnabled}`
+            }
+          }
         });
         
         request = lambda.updateFunctionCode({
@@ -688,6 +693,11 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
           TracingConfig: {
             Mode: this.xRayEnabled ? 'Active' : 'PassThrough'
           },
+          Environment: {
+            Variables: {
+              'DEEP_X_RAY_ENABLED': `${this.xRayEnabled}`
+            }
+          }
         });
 
         this._fixLambdaCreateIssue(request);
