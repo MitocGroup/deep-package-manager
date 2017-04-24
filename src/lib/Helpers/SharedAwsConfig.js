@@ -11,8 +11,6 @@ import path from 'path';
 import {_extend as extend} from 'util';
 import {Prompt} from './Terminal/Prompt';
 import FS from 'fs';
-import os from 'os';
-import process from 'process';
 
 export class SharedAwsConfig {
   constructor() {
@@ -171,7 +169,7 @@ export class SharedAwsConfig {
 
     let sifCredentials = new AWS.SharedIniFileCredentials();
 
-    sifCredentials.loadDefaultFilename = sifCredentials.loadDefaultFilename || () => {
+    sifCredentials.loadDefaultFilename = sifCredentials.loadDefaultFilename || function() {
       sifCredentials.filename = SharedAwsConfig.AWS_GLOB_CFG_FILE;
     };
 
