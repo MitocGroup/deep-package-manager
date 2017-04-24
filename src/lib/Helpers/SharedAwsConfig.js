@@ -168,6 +168,11 @@ export class SharedAwsConfig {
     let resultCredentials = {};
 
     let sifCredentials = new AWS.SharedIniFileCredentials();
+
+    sifCredentials.loadDefaultFilename = sifCredentials.loadDefaultFilename || function() {
+      sifCredentials.filename = SharedAwsConfig.AWS_GLOB_CFG_FILE;
+    };
+
     sifCredentials.loadDefaultFilename();
 
     let guessedIniFile = sifCredentials.filename;
@@ -325,6 +330,7 @@ export class SharedAwsConfig {
    */
   static get AWS_GLOB_CFG_FILE() {
     let env = process.env;
+    let sharedCredentialsFile = env['AWS_SHARED_CREDENTIALS_FILE'];
     let home = env.HOME ||
       env.USERPROFILE ||
       (env.HOMEPATH ? ((env.HOMEDRIVE || 'C:/') + env.HOMEPATH) : null);
@@ -333,7 +339,7 @@ export class SharedAwsConfig {
       home = '~/';
     }
 
-    return path.join(home, '.aws', 'credentials');
+    return sharedCredentialsFile || path.join(home, '.aws', 'credentials');
   }
 
   /**
