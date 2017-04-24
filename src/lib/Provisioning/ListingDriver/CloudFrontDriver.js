@@ -4,11 +4,9 @@
 
 'use strict';
 
-import {AbstractDriver} from './AbstractDriver';
-import {AbstractDriver as AbstractTaggingDriver} from '../ResourceTagging/Driver/AbstractDriver';
-import {AbstractService} from '../Service/AbstractService';
+import {AbstractTaggingDriver} from './AbstractTaggingDriver';
 
-export class CloudFrontDriver extends AbstractDriver {
+export class CloudFrontDriver extends AbstractTaggingDriver {
   /**
    * @param {*} args
    */
@@ -20,15 +18,52 @@ export class CloudFrontDriver extends AbstractDriver {
    * @param {Function} cb
    */
   list(cb) {
-    this._listDistributions(cb);
+    return Promise.all([
+      this.listFilteredResources(),
+      this._listDistributions(),
+    ]).then(responses => {
+      let resourcesToPush = responses[0];
+      let distributions = responses[1];
+      let resourcesToPushMap = resourcesToPush.reduce((map, resource) => {
+        map[resource.ResourceARN] = resource.Tags;
+
+        return map;
+      }, {});
+
+      let arnsToPush = Object.keys(resourcesToPushMap);
+
+      distributions.forEach(distribution => {
+        if (arnsToPush.indexOf(distribution.ARN) !== -1) {
+          // @todo: refactor deepify list to extract resource id directly from tags
+          distribution.DeepResourceId = this._generateResourceIdFromTags(resourcesToPushMap[distribution.ARN]);
+
+          this._stack[distribution.Id] = distribution;
+        }
+      });
+
+      // avoid callback synchronous errors
+      setImmediate(() => {
+        cb();
+      });
+    }).catch(e => {
+      console.warn('Error while listing cloudfront distributions: ', e.stack);
+      cb();
+    });
   }
 
   /**
-   * @param {Function} cb
+   * @returns {String}
+   */
+  resourceType() {
+    return 'cloudfront:distribution';
+  }
+
+  /**
    * @param {String|null} nextMarker
+   * @returns {Promise}
    * @private
    */
-  _listDistributions(cb, nextMarker = null) {
+  _listDistributions(nextMarker = null) {
     let payload = {
       MaxItems: CloudFrontDriver.MAX_ITEMS,
     };
@@ -37,73 +72,17 @@ export class CloudFrontDriver extends AbstractDriver {
       payload.Marker = nextMarker;
     }
 
-    this._awsService.listDistributions(payload, (error, data) => {
-      if (error) {
-        cb(error);
-        return;
-      }
+    return this._awsService.listDistributions(payload).promise().then(data => {
+      let distributions = data.DistributionList.Items || [];
 
-      let distCount = (data.DistributionList.Items || []).length;
+      if (data.DistributionList.IsTruncated) {
+        let marker = data.DistributionList.NextMarker;
 
-      if (distCount <= 0) {
-        return cb(null);
-      }
-
-      for (let i in data.DistributionList.Items) {
-        if (!data.DistributionList.Items.hasOwnProperty(i)) {
-          continue;
-        }
-
-        let distribution = data.DistributionList.Items[i];
-
-        setTimeout(() => {
-          this._checkDistributionTags(distribution)
-            .catch(e => {
-              console.warn(`Error checking distribution "${distribution.Id}" tags: ${e}`);
-            })
-            .then(() => {
-              distCount--;
-
-              if (distCount === 0) {
-                if (data.DistributionList.IsTruncated) {
-                  let marker = data.DistributionList.NextMarker;
-
-                  this._listDistributions(cb, marker);
-                } else {
-                  cb(null);
-                }
-              }
-            });
-        }, i * CloudFrontDriver.REQUEST_INTERVAL);
-      }
-    });
-  }
-
-  /**
-   * @param {Object} distribution
-   * @returns {Promise}
-   * @private
-   */
-  _checkDistributionTags(distribution) {
-    let envNameKey = AbstractTaggingDriver.ENVIRONMENT_NAME_KEY;
-    let envIdKey = AbstractTaggingDriver.ENVIRONMENT_ID_KEY;
-    let awsResourcePrefix = AbstractService.AWS_RESOURCES_PREFIX;
-
-    return this._retryableRequest(this._awsService.listTagsForResource({
-      Resource: distribution.ARN,
-    })).promise().then(response => {
-      let tags = (response.Tags.Items || []).reduce((obj, tag) => {
-        obj[tag.Key] = tag.Value;
-
-        return obj;
-      }, {});
-
-      if (tags.hasOwnProperty(envNameKey) && tags.hasOwnProperty(envIdKey)) {
-        let cfResourceId = `${awsResourcePrefix}.${tags[envNameKey]}.cloudfront.${tags[envIdKey]}`;
-
-        distribution.DeepResourceId = cfResourceId;
-
-        this._checkPushStack(cfResourceId, distribution.Id, distribution);
+        return this._listDistributions(marker).then(childDistributions => {
+          return distributions.concat(childDistributions);
+        });
+      } else {
+        return distributions;
       }
     });
   }
@@ -113,12 +92,5 @@ export class CloudFrontDriver extends AbstractDriver {
    */
   static get MAX_ITEMS() {
     return '100';
-  }
-
-  /**
-   * @returns {String}
-   */
-  static get REQUEST_INTERVAL() {
-    return '500';
   }
 }
