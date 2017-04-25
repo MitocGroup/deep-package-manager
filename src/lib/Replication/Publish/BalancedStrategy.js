@@ -38,30 +38,36 @@ export class BalancedStrategy extends AbstractStrategy {
       .then(blueAliases => {
         return (this.skipDNSActions ? this._askForBlue2ndDNSRecord() : this._createBlue2ndDNSRecord(blueAliases))
           .then(() => {
-            return cloudFrontService.waitForDistributionDeployed(blueDistribution.id);
-          })
-          .then(() => {
             console.info('Creating 3rd cloudfront distribution for blue green traffic management');
 
-            return this._createTrafficManagerCfDistribution(blueAliases)
-              .then(newDistribution => cloudFrontService
-                .waitForDistributionDeployed(newDistribution.Id)
-                .then(() => newDistribution));
+            return this._createTrafficManagerCfDistribution();
+          })
+          .then(managerDistribution => {
+            return Promise.all([
+              cloudFrontService.waitForDistributionDeployed(blueDistribution.id),
+              cloudFrontService.waitForDistributionDeployed(managerDistribution.Id),
+            ]).then(() => managerDistribution);
+          })
+          .then(managerDistribution => {
+            managerDistribution.Aliases = blueAliases;
+
+            return cloudFrontService.changeCloudFrontCNAMEs(managerDistribution.Id, blueAliases.Items)
+              .then(() => managerDistribution);
           });
       })
-      .then(newDistribution => {
-        this._config.balancerDistribution = newDistribution;
+      .then(managerDistribution => {
+        this._config.balancerDistribution = managerDistribution;
 
         if (this.skipDNSActions) {
           console.info(
-            `NOTE: Please change your DNS provider to point at distribution ${newDistribution.DomainName}: `,
-            JSON.stringify(newDistribution, null, '  ')
+            `NOTE: Please change your DNS provider to point at distribution ${managerDistribution.DomainName}: `,
+            JSON.stringify(managerDistribution, null, '  ')
           );
 
           return Promise.resolve();
         }
 
-        return this._updateBlueMainDNSRecord(newDistribution).then(() => {
+        return this._updateBlueMainDNSRecord(managerDistribution).then(() => {
           console.debug('Route53 Changes have been applied. Please note that DNS changes propagates slowly.');
         });
       });
@@ -205,16 +211,15 @@ export class BalancedStrategy extends AbstractStrategy {
   }
 
   /**
-   * @param {Object} cNameAliases
    * @returns {Promise}
    * @private
    */
-  _createTrafficManagerCfDistribution(cNameAliases) {
+  _createTrafficManagerCfDistribution() {
     let cloudFrontService = this.replication.cloudFrontService;
     let blueDistribution = cloudFrontService.blueConfig();
 
     return cloudFrontService.cloneDistribution(blueDistribution.id, {
-      Aliases: cNameAliases,
+      Aliases: {Quantity: 0, Items: []},
       CallerReference: this._trafficManagerDistributionIdentifier,
     }).then(response => {
       let newDistribution = response.Distribution;

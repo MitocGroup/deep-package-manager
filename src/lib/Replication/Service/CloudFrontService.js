@@ -144,7 +144,7 @@ export class CloudFrontService extends AbstractService {
         let distributionConfig = response.DistributionConfig;
         let oldCNames = JSON.parse(JSON.stringify(distributionConfig.Aliases));
 
-        distributionConfig.Aliases.Quantity = 1;
+        distributionConfig.Aliases.Quantity = newCNames.length;
         distributionConfig.Aliases.Items = newCNames;
 
         return this._updateDistribution({
