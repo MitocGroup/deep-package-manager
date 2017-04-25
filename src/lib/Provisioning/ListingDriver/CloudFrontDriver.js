@@ -18,7 +18,7 @@ export class CloudFrontDriver extends AbstractTaggingDriver {
    * @param {Function} cb
    */
   list(cb) {
-    return Promise.all([
+    Promise.all([
       this.listFilteredResources(),
       this._listDistributions(),
     ]).then(responses => {
@@ -40,15 +40,14 @@ export class CloudFrontDriver extends AbstractTaggingDriver {
           this._stack[distribution.Id] = distribution;
         }
       });
-
+    }).catch(e => {
+      console.warn('Error while listing cloudfront distributions: ', e.stack);
+    }).then(() => {
       // avoid callback synchronous errors
       setImmediate(() => {
         cb();
       });
-    }).catch(e => {
-      console.warn('Error while listing cloudfront distributions: ', e.stack);
-      cb();
-    });
+    })
   }
 
   /**
