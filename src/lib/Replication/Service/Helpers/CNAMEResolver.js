@@ -5,12 +5,17 @@
 'use strict';
 
 import {Prompt} from '../../../Helpers/Terminal/Prompt';
+import {MissingCNAMEException} from '../../Exception/MissingCNAMEException';
 
 export class CNAMEResolver {
   /**
    * @param {String[]} cNames
    */
   constructor(cNames) {
+    if (!cNames || cNames.length === 0) {
+      throw new MissingCNAMEException();
+    }
+
     this._cNames = cNames;
     this._resolvedHostname = null;
   }
