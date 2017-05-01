@@ -1637,10 +1637,19 @@ export class APIGatewayService extends AbstractService {
     let tpl = '';
 
     if (authType === Action.AUTH_TYPE_CUSTOM) {
-      tpl = '#set($body = $util.parseJson("$input.json(\'$\')")) { #foreach($paramName in $body.keySet()) ' +
-        '#if ($paramName != "_deep_auth_context_") "$paramName" : "$body.get($paramName)", #end #end' +
-        '"_deep_auth_context_": { "cognitoIdentityId" : "$context.authorizer.principalId", ' +
-        '"cognitoIdentityPoolId": "$context.authorizer.cognitoIdentityPoolId" } }';
+      tpl = `
+#set($body = $util.parseJson($input.body))
+{
+  #foreach($paramName in $body.keySet())
+    #if ($paramName != "_deep_auth_context_")
+      "$paramName": $input.json("$.$paramName"),
+    #end
+  #end
+  "_deep_auth_context_": {
+    "cognitoIdentityId" : "$context.authorizer.principalId",
+    "cognitoIdentityPoolId": "$context.authorizer.cognitoIdentityPoolId"
+  }
+}`;
     }
 
     return tpl;
