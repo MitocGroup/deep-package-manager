@@ -5,7 +5,7 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver.js';
-import {AwsRequestSyncStack} from '../../../Helpers/AwsRequestSyncStack';
+import Core from 'deep-core';
 
 /**
  * Elasticsearch Tag Driver
@@ -16,33 +16,27 @@ export class ESDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
-
-    this._elasticSearch = this.provisioning.elasticSearch;
   }
 
   /**
-   * @param {Function} callback
+   * @returns {String}
    */
-  tag(callback) {
-    let stack = new AwsRequestSyncStack();
-    let tagsPayload = this.tagsPayload;
+  name() {
+    return Core.AWS.Service.ELASTIC_SEARCH;
+  }
 
-    this.domainList.forEach((domain) => {
-      let payload = {
-        ARN: domain.ARN,
-        TagList: tagsPayload
-      };
+  /**
+   * @returns {String}
+   */
+  region() {
+    return this.provisioning.elasticSearch.config.region;
+  }
 
-      stack.push(this._elasticSearch.addTags(payload), (error) => {
-        if (error) {
-          console.warn(`Error on tagging Elasticsearch domain ${domain.DomainName}`);
-        } else {
-          console.debug(`Elasticsearch domain ${domain.DomainName} has been tagged`);
-        }
-      });
-    });
-
-    stack.join().ready(callback);
+  /**
+   * @returns {String[]}
+   */
+  resourcesArns() {
+    return this.domainList.map(domain => domain.ARN);
   }
 
   /**

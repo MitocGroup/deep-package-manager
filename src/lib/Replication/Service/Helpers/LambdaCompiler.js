@@ -7,6 +7,7 @@
 import JSZip from 'jszip';
 import URL from 'url';
 import {InvalidUrlException} from '../../Exception/InvalidUrlException';
+import {Inflector} from '../../../Helpers/Inflector';
 
 export class LambdaCompiler {
   /**
@@ -14,8 +15,24 @@ export class LambdaCompiler {
    */
   constructor(buffer) {
     this._buffer = buffer;
-    this._variablesMap = {};
-    this._processorsMap = {};
+    this._parametersBag = {};
+  }
+
+  /**
+   * @param {Object} parameters
+   * @param {String} parametersGroupId
+   * @param {String} entry
+   * @returns {LambdaCompiler}
+   */
+  addParameterBag(
+    parameters,
+    parametersGroupId = LambdaCompiler.DEFAULT_PARAMETERS_GROUP_ID,
+    entry = LambdaCompiler.DEFAULT_ENTRY
+  ) {
+    this._parametersBag[entry] = this._parametersBag[entry] || {};
+    this._parametersBag[entry][parametersGroupId] = parameters;
+
+    return this;
   }
 
   /**
@@ -23,7 +40,7 @@ export class LambdaCompiler {
    */
   compile() {
     let jsZip = new JSZip();
-    let entriesToCompile = Object.keys(this._variablesMap);
+    let entriesToCompile = Object.keys(this._parametersBag);
 
     return jsZip.loadAsync(this._buffer)
       .then(zip => {
@@ -44,68 +61,24 @@ export class LambdaCompiler {
    * @private
    */
   _compileEntry(zip, entryName) {
-    let entryVariables = this._variablesMap[entryName];
+    let entryParameterBag = this._parametersBag[entryName];
 
     return zip.file(entryName).async('string').then(entryContent => {
-      for (let key in entryVariables) {
-        if (!entryVariables.hasOwnProperty(key)) {
+      for (let paramGroupId in entryParameterBag) {
+        if (!entryParameterBag.hasOwnProperty(paramGroupId)) {
           continue;
         }
 
-        let value = entryVariables[key];
+        let params = entryParameterBag[paramGroupId];
 
         entryContent = entryContent.replace(
-          this._buildReplaceRegExp(key),
-          value
+          this._buildParametersReplaceRegExp(paramGroupId),
+          this._buildParametersTemplate(params, paramGroupId)
         );
-      }
-
-      let customProcessors = this._processorsMap[entryName] || [];
-
-      for (let processor of customProcessors) {
-        entryContent = processor(entryContent);
       }
 
       zip.file(entryName, entryContent);
     });
-  }
-
-  /**
-   * Regexp for replacing [placeholders]
-   * @param {String} key
-   * @returns {RegExp}
-   * @private
-   */
-  _buildReplaceRegExp(key) {
-    let escapedKey = key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-
-    return new RegExp('\\[' + escapedKey + '\\]', 'gi');
-  }
-
-  /**
-   * @param {String} key
-   * @param {String} value
-   * @param {String} entry
-   * @returns {LambdaCompiler}
-   */
-  addVariable(key, value, entry = 'bootstrap.js') {
-    this._variablesMap[entry] = this._variablesMap[entry] || {};
-    this._variablesMap[entry][key] = value;
-
-    return this;
-  }
-
-  /**
-   * @todo: find a better way to update lambda edge functions
-   * @param {String} entry
-   * @param {Function} processor
-   * @returns {LambdaCompiler}
-   */
-  addEntryProcessor(entry, processor) {
-    this._processorsMap[entry] = this._processorsMap[entry] || [];
-    this._processorsMap[entry].push(processor);
-
-    return this;
   }
 
   /**
@@ -134,5 +107,46 @@ export class LambdaCompiler {
         })
       }).on('error', reject);
     });
+  }
+
+  /**
+   * @param {String} groupId
+   * @returns {RegExp}
+   * @private
+   */
+  _buildParametersReplaceRegExp(groupId) {
+    let cleanGroupId = groupId.replace(/[-[\]{}()*+?.,\\^$'|#\s]/g, '\\$&');
+
+    return new RegExp(
+      `'${cleanGroupId}\\-START'\\s*;?` +
+      '(.|\\n)*' +
+      `'${cleanGroupId}\\-END'\\s*;?`,
+      'ig'
+    );
+  }
+
+  /**
+   * @param {Object} parameters
+   * @param {String} groupId
+   * @returns {String}
+   */
+  _buildParametersTemplate(parameters, groupId) {
+    return `'${groupId}-START';` +
+    `var ${Inflector.camelCase(groupId)}=${JSON.stringify(parameters)};` +
+    `'${groupId}-END';`;
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get DEFAULT_PARAMETERS_GROUP_ID() {
+    return 'DEEP-PARAMETERS';
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get DEFAULT_ENTRY() {
+    return 'bootstrap.js';
   }
 }

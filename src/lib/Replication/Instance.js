@@ -13,10 +13,7 @@ import {DynamoDBService} from './Service/DynamoDBService';
 import {LambdaService} from './Service/LambdaService';
 import {DBManager} from './Manager/DBManager';
 import {FSManager} from './Manager/FSManager';
-import {CloudFrontEvent} from './Service/Helpers/CloudFrontEvent';
 import {CloudFrontService} from './Service/CloudFrontService';
-import {CNAMEResolver} from './Service/Helpers/CNAMEResolver';
-import {MissingCNAMEException} from './Exception/MissingCNAMEException';
 import {Route53Service} from './Service/Route53Service';
 import {AbstractStrategy as AbstractPublishStrategy} from './Publish/AbstractStrategy';
 
@@ -176,68 +173,38 @@ export class Instance {
           console.info(`Blue-green replication has been stopped for "${manager.name()} resources."`);
         });
       })
-    ).then(() => this.detachCloudFrontLambdaAssociations());
+    );
   }
 
   /**
+   * @param {Number} percentage
+   * @param {Boolean} skipDNSActions
    * @returns {Promise}
    */
-  detachCloudFrontLambdaAssociations() {
-    let cfDistributionId = this._cloudFrontService.blueConfig().id;
-    let events = [
-      CloudFrontEvent.VIEWER_REQUEST,
-      CloudFrontEvent.VIEWER_RESPONSE,
-    ];
+  publish(percentage, skipDNSActions) {
+    let PublishStrategyProto = AbstractPublishStrategy.chooseStrategyProto(percentage);
+    let publisherInstance = new PublishStrategyProto(this, skipDNSActions);
 
-    console.info(`Detaching lambda associations from "${cfDistributionId}" distribution`);
-
-    return this.cloudFrontService.detachEventsFromDistribution(
-      events,
-      cfDistributionId
-    ).then(() => {
-      console.info(`CloudFront "${events.join(', ')}" events have been detached from "${cfDistributionId}"`);
+    return publisherInstance.publish(percentage).then(() => {
+      return publisherInstance.config();
     });
   }
 
   /**
    * @param {Number} percentage
+   * @param {Boolean} skipDNSActions
+   * @param {Object} config
    * @returns {Promise}
    */
-  publish(percentage) {
+  update(percentage, skipDNSActions, config) {
     let PublishStrategyProto = AbstractPublishStrategy.chooseStrategyProto(percentage);
-    let publisherInstance = new PublishStrategyProto(this);
+    let publisherInstance = new PublishStrategyProto(this, skipDNSActions);
 
-    return publisherInstance.publish(percentage);
-  }
+    publisherInstance.updateConfig(config);
 
-  /**
-   * @todo: inject those variables into publish strategy
-   * 
-   * @param {Number} percentage
-   * @param {String[]} cNames
-   * @returns {Object}
-   */
-  buildLambdaEdgeVariables(percentage, cNames) {
-    if (cNames.length === 0) {
-      throw new MissingCNAMEException();
-    }
-
-    let cNameResolver = new CNAMEResolver(cNames);
-
-    let hostname = new CNAMEResolver(cNames).resolveHostname();
-    let greenBase = `https://${hostname}`;
-
-    console.debug(`Using "${greenBase}" as green environment hostname`);
-
-    let domain = cNameResolver.resolveDomain();
-
-    console.debug(`Using "${domain}" as application domain`);
-
-    return {
-      'percentage': percentage,
-      'domain-name': domain,
-      'green-hostname': greenBase,
-    };
+    return publisherInstance.update(percentage).then(() => {
+      return publisherInstance.config();
+    });
   }
 
   /**

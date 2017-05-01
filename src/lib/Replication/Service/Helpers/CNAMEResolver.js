@@ -5,12 +5,17 @@
 'use strict';
 
 import {Prompt} from '../../../Helpers/Terminal/Prompt';
+import {MissingCNAMEException} from '../../Exception/MissingCNAMEException';
 
 export class CNAMEResolver {
   /**
    * @param {String[]} cNames
    */
   constructor(cNames) {
+    if (!cNames || cNames.length === 0) {
+      throw new MissingCNAMEException();
+    }
+
     this._cNames = cNames;
     this._resolvedHostname = null;
   }
@@ -61,7 +66,7 @@ export class CNAMEResolver {
    * @private
    */
   _askForCName() {
-    let prompt = new Prompt('Choose the AWS profile to be used');
+    let prompt = new Prompt('Choose the CNAME to be used');
     let chosenCName = null;
 
     prompt.syncMode = true;

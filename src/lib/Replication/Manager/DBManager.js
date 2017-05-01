@@ -2,6 +2,8 @@
  * Created by CCristi on 2/17/17.
  */
 
+/* eslint no-unreachable:0 */
+
 'use strict';
 
 import {AbstractManager} from './AbstractManager';
@@ -121,6 +123,9 @@ export class DBManager extends AbstractManager {
    * @private
    */
   _checkModelStatus(model) {
+    //@todo: find other way to check if dynamodb model is backfilled, ItemCount data may have a 6 hours delay
+    return Promise.resolve(1.0);
+
     let blueTable = this.dynamoDbService.getAwsBlueTableName(model);
     let greenTable = this.dynamoDbService.getAwsGreenTableName(model);
 

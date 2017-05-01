@@ -29,8 +29,16 @@ export class Inflector {
     return str
       .split(/[^a-zA-Z0-9]+/)
       .reduce((pascalString, part) => {
-        return pascalString + Inflector.capitalizeFirst(part);
+        return pascalString + Inflector.capitalizeFirst(part.toLowerCase());
       }, '');
+  }
+
+  /**
+   * @param {String} str
+   * @returns {String}
+   */
+  static camelCase(str) {
+    return Inflector.lowerCaseFirst(Inflector.pascalCase(str));
   }
 
   /**

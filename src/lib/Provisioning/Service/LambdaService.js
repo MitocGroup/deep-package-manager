@@ -642,6 +642,11 @@ export class LambdaService extends AbstractService {
       policy.statement.add(iamService.generateAllowAlterIamStatement());
     }
 
+    let xRayStatement = policy.statement.add();
+    xRayStatement.action.add(Core.AWS.Service.X_RAY, 'PutTraceSegments');
+    xRayStatement.action.add(Core.AWS.Service.X_RAY, 'PutTelemetryRecords');
+    xRayStatement.resource.add().any();
+
     return policy;
   }
 

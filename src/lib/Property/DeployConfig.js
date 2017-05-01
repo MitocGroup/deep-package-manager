@@ -9,6 +9,7 @@ import path from 'path';
 import JsonFile from 'jsonfile';
 import {AbstractService} from '../Provisioning/Service/AbstractService';
 import {S3Service} from '../Provisioning/Service/S3Service';
+import {SharedAwsConfig} from '../Helpers/SharedAwsConfig';
 
 /**
  * Application configuration loader
@@ -160,9 +161,17 @@ export class DeployConfig {
         return;
       }
 
-      fs.writeFile(this.configFile, data.Body.toString(), (error) => {
-        cb(error);
-      });
+      try {
+        let configDump = JSON.parse(data.Body.toString());
+
+        this._extendCleanConfig(configDump);
+
+        fs.writeFile(this.configFile, JSON.stringify(configDump, null, '  '), (error) => {
+          cb(error);
+        });
+      } catch(e) {
+        cb(new Error('Broken s3 config dump. Cannot parse s3 config.'));
+      }
     });
   }
 
@@ -191,9 +200,12 @@ export class DeployConfig {
 
   /**
    * @returns {DeployConfig}
+   *
+   * @todo dump locally without aws credentials 
+   *       after property config fixed
    */
   dump() {
-    JsonFile.writeFileSync(this.configFile, this._cleanDeployConfig);
+    JsonFile.writeFileSync(this.configFile, this.config);
 
     return this;
   }
@@ -208,6 +220,19 @@ export class DeployConfig {
     delete config.aws;
      
     return config;
+  }
+
+  /**
+   * @param {Object} configDump
+   * @returns {DeployConfig}
+   * @private
+   */
+  _extendCleanConfig(configDump) {
+    if (!configDump.aws) {
+      configDump.aws = this._property.config.aws || new SharedAwsConfig().choose();
+    }
+
+    return this;
   }
 
   /**

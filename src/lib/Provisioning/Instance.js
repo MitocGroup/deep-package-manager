@@ -101,6 +101,7 @@ export class Instance {
     this._config = {};
 
     this._services = null;
+    this._tagging = null;
   }
 
   /**
@@ -428,12 +429,23 @@ export class Instance {
         } else {
           console.debug('Start tagging resources');
 
-          Tagging.create(this._property).tag(() => {
+          this.tagging.tag(() => {
             callback(this._config);
           });
         }
       });
     });
+  }
+
+  /**
+   * @returns {Tagging}
+   */
+  get tagging() {
+    if (!this._tagging) {
+      this._tagging = Tagging.create(this._property);
+    }
+
+    return this._tagging;
   }
 
   /**
@@ -540,7 +552,11 @@ export class Instance {
     });
 
     wait.ready(() => {
-      callback(this._config);
+      console.debug('Start tagging resources post deploy');
+
+      this.tagging.tag(() => {
+        callback(this._config);
+      }, Tagging.POST_DEPLOY_STEP);
     });
   }
 }

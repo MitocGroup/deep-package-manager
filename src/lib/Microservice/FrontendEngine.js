@@ -116,7 +116,7 @@ export class FrontendEngine {
   static get engines() {
     return [
       FrontendEngine.ANGULAR_ENGINE,
-      FrontendEngine.ANGULAR2_ENGINE,
+      FrontendEngine.ANGULAR1_ENGINE,
       FrontendEngine.VANILLA_ENGINE,
     ];
   }
@@ -131,8 +131,8 @@ export class FrontendEngine {
   /**
    * @returns {String}
    */
-  static get ANGULAR2_ENGINE() {
-    return 'angular2';
+  static get ANGULAR1_ENGINE() {
+    return 'angular1';
   }
 
   /**

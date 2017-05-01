@@ -36,20 +36,22 @@ export class Route53Service extends AbstractService {
    * @param {String} cfDistributionHost
    * @param {Object|null} _hostedZone
    * @param {String|null} _startRecordIdentifier
+   * @param {Object[]} _matchingRecords
    * @returns {Promise}
    */
-  findRoute53RecordByCfCNameDomain(
+  findRoute53RecordsByCfCNameDomain(
     domainName, 
     cfDistributionHost,
     _hostedZone = null, 
-    _startRecordIdentifier = null
+    _startRecordIdentifier = null,
+    _matchingRecords = []
   ) {
     return (_hostedZone
       ? Promise.resolve(_hostedZone)
       : this.findHostedZoneByDomain(domainName)
     ).then(hostedZone => {
       if (!hostedZone) {
-        return null;
+        return {HostedZone: null, Records: []};
       }
 
       let payload = {
@@ -65,26 +67,24 @@ export class Route53Service extends AbstractService {
 
         for (let recordSet of recordSets) {
           if (recordSet.AliasTarget && recordSet.AliasTarget.DNSName.indexOf(cfDistributionHost) !== -1) {
-            return {
-              HostedZone: hostedZone,
-              RecordSet: recordSet,
-            };
+            _matchingRecords.push(recordSet);
           }
         }
 
         return response.IsTruncated
-          ? this.findRoute53RecordByCfCNameDomain(
+          ? this.findRoute53RecordsByCfCNameDomain(
             domainName, cfDistributionHost,
-            hostedZone, response.NextRecordIdentifier
+            hostedZone, response.NextRecordIdentifier,
+            _matchingRecords
           )
-          : null;
+          : {HostedZone: hostedZone, Records: _matchingRecords};
       });
-    }).then(rSet => {
-      if (!rSet) {
+    }).then(result => {
+      if (result.Records.length === 0) {
         throw new RecordSetNotFoundException(domainName, cfDistributionHost);
       }
-      
-      return rSet;
+
+      return result;
     });
   }
 

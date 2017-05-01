@@ -38,6 +38,14 @@ export class AbstractService extends Core.OOP.Interface {
   }
 
   /**
+   * @param {Number} timeout
+   * @returns {Promise}
+   */
+  wait(timeout) {
+    return new Promise(resolve => setTimeout(resolve, timeout));
+  }
+
+  /**
    * @param {AWS.Request|Object} request
    * @param {String[]} retryableCodes
    * @returns {AWS.Request|Object}
