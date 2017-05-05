@@ -22,6 +22,11 @@ import FileSystemExtra from 'fs-extra';
 import {InvalidConfigException} from './Exception/InvalidConfigException';
 import {Exception} from '../Exception/Exception';
 import {DeepConfigDriver} from '../Tags/Driver/DeepConfigDriver';
+import {Semaphore} from '../Helpers/Semaphore';
+
+// @todo find more elegant way of defining it
+global._deep_packSemaphore = global._deep_packSemaphore || new Semaphore('LAMBDA');
+const packSemaphore = global._deep_packSemaphore;
 
 /**
  * Lambda instance
@@ -373,10 +378,17 @@ export class Lambda {
    * @returns {Lambda}
    */
   update(callback) {
-    this.pack().ready(() => {
-      this.updateCode().ready(callback);
-    });
-
+    packSemaphore.wrap(() => {
+      return new Promise((resolve, reject) => {
+        this.pack().ready(() => {
+          console.debug(`Lambda ${this._identifier} packing is ready`);
+          
+          this.updateCode()
+            .ready(() => resolve());
+        });
+      });
+    }, this.path).then(() => callback());
+    
     return this;
   }
 
@@ -385,11 +397,16 @@ export class Lambda {
    * @returns {Lambda}
    */
   deploy(callback) {
-    this.pack().ready(() => {
-      console.debug(`Lambda ${this._identifier} packing is ready`);
+    packSemaphore.wrap(() => {
+      return new Promise((resolve, reject) => {
+        this.pack().ready(() => {
+          console.debug(`Lambda ${this._identifier} packing is ready`);
 
-      this.upload().ready(callback);
-    });
+          this.upload()
+            .ready(() => resolve());
+        });
+      });
+    }, this.path).then(() => callback());
 
     return this;
   }
@@ -508,7 +525,7 @@ export class Lambda {
     console.debug(`Start packing lambda ${this._identifier}`);
 
     this.persistConfig();
-    this._injectDeepConfigIntoBootstrap();
+    this._injectDeepConfigIntoBootstrap(this._runtime);
 
     let buildFile = `${this._path}.zip`;
 
