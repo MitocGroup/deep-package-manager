@@ -153,6 +153,8 @@ export class CognitoIdentityService extends AbstractService {
           })
         ).then(() => {
           this._config.roles = rolesObj;
+
+          return rolesObj;
         });
       })
       .catch(error => {
