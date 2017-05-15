@@ -32,7 +32,6 @@ export class CognitoIdentityService extends AbstractService {
     super(...args);
 
     this._policyProvider = null;
-    this._securityConfig = null;
   }
   
   /**
@@ -95,12 +94,6 @@ export class CognitoIdentityService extends AbstractService {
    * @private
    */
   _setup(services) {
-    // @todo: implement!
-    if (this._isUpdate) {
-      this._ready = true;
-      return this;
-    }
-
     this._ensureIdentityPool().then(identityPool => {
       this._config.identityPool = identityPool;
       this._ready = true;
@@ -114,20 +107,21 @@ export class CognitoIdentityService extends AbstractService {
    * @private
    */
   _postProvision() {
-    // @todo: implement!
-    if (this._isUpdate) {
-      this._readyTeardown = true;
-      return this;
-    }
+    return this._attachCognitoIdentityProviders(this._config.identityPool || null)
+      .then(data => {
+        this._config.identityPool = data;
 
-    let identityPoolId = this.securityConfig.identityPoolId;
+        if (this._isUpdate) {
+          return this._getIdentityPoolRoles(this._config.identityPool.IdentityPoolId);
+        } else {
+          return this._setIdentityPoolRoles(this._config.identityPool);
+        }
+      })
+      .then(roles => {
+        this._config.roles = roles;
 
-    return (identityPoolId
-      ? this._getIdentityPoolRoles(identityPoolId)
-      : this._attachCognitoIdentityProviders()
-    ).then(() => {
-      this._readyTeardown = true;
-    });
+        this._readyTeardown = true;
+      });
   }
 
   /**
@@ -169,10 +163,11 @@ export class CognitoIdentityService extends AbstractService {
   }
 
   /**
+   * @param {*} identityPool
    * @returns {Promise}
    * @private
    */
-  _attachCognitoIdentityProviders() {
+  _attachCognitoIdentityProviders(identityPool) {
     let services = this.provisioning.services;
     let iamInstance = services.find(IAMService);
     let cognitoIdpService = services.find(CognitoIdentityProviderService);
@@ -203,15 +198,7 @@ export class CognitoIdentityService extends AbstractService {
       }
     }
 
-    return this._updateIdentityPool(this._config.identityPool, changeSet)
-      .then(data => {
-        this._config.identityPool = data;
-
-        return this._setIdentityPoolRoles(this._config.identityPool);
-      })
-      .then(roles => {
-        this._config.roles = roles;
-      });
+    return this._updateIdentityPool(identityPool, changeSet);
   }
 
   /**
@@ -238,7 +225,7 @@ export class CognitoIdentityService extends AbstractService {
    */
   _ensureIdentityPool() {
     let securityConfig = this.securityConfig;
-    let identityPoolId = securityConfig.identityPoolId;
+    let identityPoolId = this._config.identityPool ? this._config.identityPool.IdentityPoolId : null;
 
     if (!identityPoolId) {
       return this._createIdentityPool(securityConfig.identityProviders);
@@ -287,6 +274,10 @@ export class CognitoIdentityService extends AbstractService {
    * @private
    */
   _updateIdentityPool(identityPool, changeSet) {
+    if (!identityPool) {
+      return Promise.reject(new Error(`IdentityPool instance is required when updating it.`));
+    }
+
     if (Object.keys(changeSet).length === 0) {
       return Promise.resolve(identityPool);
     }
@@ -527,24 +518,16 @@ export class CognitoIdentityService extends AbstractService {
   }
 
   /**
-   * @returns {{identityProviders: (string|*|{}), identityPoolId: (string|String|*|string)}}
+   * @returns {{identityProviders: (string|*|{})}}
    */
   get securityConfig() {
-    if (this._securityConfig) {
-      return this._securityConfig;
-    }
-
     let globalsConfig = this.property.config.globals;
     let securityConfig = globalsConfig.security || {};
     let identityProviders = securityConfig.identityProviders || {};
-    let identityPoolId = (securityConfig.identityPool || {}).Id;
 
-    this._securityConfig = {
+    return {
       identityProviders,
-      identityPoolId,
     };
-
-    return this._securityConfig;
   }
 
   /**
