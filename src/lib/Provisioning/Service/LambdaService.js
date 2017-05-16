@@ -454,37 +454,35 @@ export class LambdaService extends AbstractService {
 
       let execRole = roles[microserviceIdentifier];
 
-      if (this._isIamRoleNew(execRole.RoleName)) {
-        let policyName = this.generateAwsResourceName(
-          Inflector.pascalCase(microserviceIdentifier) + 'LambdaExecPolicy',
-          Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
-          microserviceIdentifier
-        );
+      let policyName = this.generateAwsResourceName(
+        Inflector.pascalCase(microserviceIdentifier) + 'LambdaExecPolicy',
+        Core.AWS.Service.IDENTITY_AND_ACCESS_MANAGEMENT,
+        microserviceIdentifier
+      );
 
-        let policy = this._getAccessPolicy(
-          microserviceIdentifier,
-          buckets,
-          microserviceIdentifier === rootMicroservice.identifier
-        );
+      let policy = this._getAccessPolicy(
+        microserviceIdentifier,
+        buckets,
+        microserviceIdentifier === rootMicroservice.identifier
+      );
 
-        this.property
-          .microservice(microserviceIdentifier)
-          .overwriteRolePolicy('lambda', policy);
+      this.property
+        .microservice(microserviceIdentifier)
+        .overwriteRolePolicy('lambda', policy);
 
-        let params = {
-          PolicyDocument: policy.toString(),
-          PolicyName: policyName,
-          RoleName: execRole.RoleName,
-        };
+      let params = {
+        PolicyDocument: policy.toString(),
+        PolicyName: policyName,
+        RoleName: execRole.RoleName,
+      };
 
-        syncStack.push(iam.putRolePolicy(params), (error, data) => {
-          if (error) {
-            throw new FailedAttachingPolicyToRoleException(policyName, execRole.RoleName, error);
-          }
+      syncStack.push(iam.putRolePolicy(params), (error, data) => {
+        if (error) {
+          throw new FailedAttachingPolicyToRoleException(policyName, execRole.RoleName, error);
+        }
 
-          policies[execRole.RoleName] = policy;
-        });
-      }
+        policies[execRole.RoleName] = policy;
+      });
     }
 
     return (callback) => {
