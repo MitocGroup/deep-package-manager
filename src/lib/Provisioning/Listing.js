@@ -4,6 +4,7 @@
 
 'use strict';
 
+import Core from 'deep-core';
 import {WaitFor} from '../Helpers/WaitFor';
 
 export class Listing {
@@ -18,42 +19,53 @@ export class Listing {
   /**
    * @param {Function} callback
    * @param {String[]} services
+   * @param {String[]} regions
    * @returns {Listing}
    */
-  list(callback, services = Listing.SERVICES) {
+  list(callback, services = Listing.SERVICES, regions = Listing.REGIONS) {
     let wait = new WaitFor();
     let result = {
       matchedResources: 0,
       resources: {},
       errors: {},
     };
+    // @todo: count regions as well
     let servicesRemaining = services.length;
 
     wait.push(() => {
       return servicesRemaining <= 0;
     });
 
-    for (let i in services) {
-      if (!services.hasOwnProperty(i)) {
+    for (let i in regions) {
+      if (!regions.hasOwnProperty(i)) {
         continue;
       }
 
-      let serviceName = services[i];
-      let service = this._createAwsService(serviceName);
-      let ServiceListerProto = require(`./ListingDriver/${serviceName}Driver`)[`${serviceName}Driver`];
+      let region = regions[i];
 
-      let serviceLister = new ServiceListerProto(service, this._hash, this.deployCfg);
-
-      serviceLister.list((error) => {
-        servicesRemaining--;
-
-        if (error) {
-          result.errors[serviceName] = error;
-        } else {
-          result.resources[serviceName] = serviceLister.extractResetStack;
-          result.matchedResources += Object.keys(result.resources[serviceName]).length;
+      for (let i in services) {
+        if (!services.hasOwnProperty(i)) {
+          continue;
         }
-      });
+
+        let serviceName = services[i];
+        let service = this._createAwsService(serviceName, region);
+        let ServiceListerProto = require(`./ListingDriver/${serviceName}Driver`)[`${serviceName}Driver`];
+
+        let serviceLister = new ServiceListerProto(service, this._hash, this.deployCfg);
+
+        serviceLister.list((error) => {
+          servicesRemaining--;
+
+          // @todo: split result by region
+          if (error) {
+            result.errors[serviceName] = error;
+          } else {
+            result.resources[serviceName] = serviceLister.extractResetStack;
+            result.matchedResources += Object.keys(result.resources[serviceName]).length;
+          }
+        });
+      }
     }
 
     wait.ready(() => {
@@ -93,10 +105,15 @@ export class Listing {
 
   /**
    * @param {String} name
+   * @param {String} region
    * @returns {AbstractService|*}
    */
-  _createAwsService(name) {
-    return this._property.provisioning.getAwsServiceByName(name);
+  _createAwsService(name, region) {
+    let service = this._property.provisioning.getAwsServiceByName(name);
+
+    service.config.region = region;
+
+    return service;
   }
 
   /**
@@ -109,5 +126,21 @@ export class Listing {
       'CloudWatchLogs', 'SQS', 'ElastiCache',
       'ES', 'CloudWatchEvents', 'CognitoIdentityProvider',
     ];
+  }
+
+  /**
+   * @returns {Array}
+   */
+  static get REGIONS() {
+    let regions = Core.AWS.Region.all();
+
+    let allIndex = regions.indexOf('*');
+
+    // removing * - all regions
+    if (allIndex > -1) {
+      regions.splice(allIndex, 1);
+    }
+
+    return regions;
   }
 }
