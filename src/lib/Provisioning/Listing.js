@@ -24,16 +24,11 @@ export class Listing {
    */
   list(callback, services = Listing.SERVICES, regions = Listing.REGIONS) {
     let wait = new WaitFor();
-    let result = {
-      matchedResources: 0,
-      resources: {},
-      errors: {},
-    };
-    // @todo: count regions as well
-    let servicesRemaining = services.length;
+    let result = {};
+    let totalRequests = regions.length * services.length;
 
     wait.push(() => {
-      return servicesRemaining <= 0;
+      return totalRequests <= 0;
     });
 
     for (let i in regions) {
@@ -42,6 +37,12 @@ export class Listing {
       }
 
       let region = regions[i];
+
+      result[region] = {
+        matchedResources: 0,
+        resources: {},
+        errors: {},
+      };
 
       for (let i in services) {
         if (!services.hasOwnProperty(i)) {
@@ -55,14 +56,13 @@ export class Listing {
         let serviceLister = new ServiceListerProto(service, this._hash, this.deployCfg);
 
         serviceLister.list((error) => {
-          servicesRemaining--;
+          totalRequests--;
 
-          // @todo: split result by region
           if (error) {
-            result.errors[serviceName] = error;
+            result[region].errors[serviceName] = error;
           } else {
-            result.resources[serviceName] = serviceLister.extractResetStack;
-            result.matchedResources += Object.keys(result.resources[serviceName]).length;
+            result[region].resources[serviceName] = serviceLister.extractResetStack;
+            result[region].matchedResources += Object.keys(result[region].resources[serviceName]).length;
           }
         });
       }
