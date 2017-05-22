@@ -233,7 +233,7 @@ export class Instance {
       return AbstractService.extractBaseHashFromResourceName(resourceName) === _this._configObj.baseHash;
     };
 
-    resourcesLister.listCurrentRegion((result) => {
+    resourcesLister.list((result) => {
       if (Object.keys(result.errors).length > 0) {
         callback(new ProvisioningCollisionsListingException(result.errors), null);
       } else if (result.matchedResources <= 0) {

@@ -65,7 +65,7 @@ export class Undeploy {
       lister.hash = baseHash;
     }
 
-    lister.listCurrentRegion((listingResult) => {
+    lister.list((listingResult) => {
       if (Object.keys(listingResult.errors).length > 0) {
         callback(new ProvisioningCollisionsListingException(listingResult.errors), null);
       } else if (listingResult.matchedResources <= 0) {

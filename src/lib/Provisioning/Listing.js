@@ -22,7 +22,7 @@ export class Listing {
    * @param {String[]} regions
    * @returns {Listing}
    */
-  list(callback, services = Listing.SERVICES, regions = Listing.REGIONS) {
+  listAll(callback, services = Listing.SERVICES, regions = Listing.REGIONS) {
     let wait = new WaitFor();
     let result = {};
     let totalRequests = regions.length * services.length;
@@ -82,10 +82,10 @@ export class Listing {
    * @param {String[]} services
    * @returns {Listing}
    */
-  listCurrentRegion(callback, services = Listing.SERVICES) {
+  list(callback, services = Listing.SERVICES) {
     let region = this._property.config.aws.region;
 
-    return this.list(result => {
+    return this.listAll(result => {
       callback(result[region]);
     }, services, [region]);
   }
