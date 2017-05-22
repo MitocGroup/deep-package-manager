@@ -76,6 +76,21 @@ export class Listing {
   }
 
   /**
+   * back-compatible shortcut for legacy implementations
+   *
+   * @param {Function} callback
+   * @param {String[]} services
+   * @returns {Listing}
+   */
+  listCurrentRegion(callback, services = Listing.SERVICES) {
+    let region = this._property.config.aws.region;
+
+    return this.list(result => {
+      callback(result[region]);
+    }, services, [region]);
+  }
+
+  /**
    * @returns {Property|Object}
    */
   get property() {
