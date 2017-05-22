@@ -91,6 +91,44 @@ export class Listing {
   }
 
   /**
+   * @param {*} result
+   * @returns {boolean}
+   */
+  resultHasErrors(result) {
+    for (let region in result) {
+      if (!result.hasOwnProperty(region)) {
+        continue;
+      }
+
+      let regionResult = result[region];
+
+      if (Object.keys(regionResult.errors).length > 0) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * @param {*} result
+   * @returns {number}
+   */
+  resultMatchedResources(result) {
+    let count = 0;
+
+    for (let region in result) {
+      if (!result.hasOwnProperty(region)) {
+        continue;
+      }
+
+      count += result[region].matchedResources;
+    }
+
+    return count;
+  }
+
+  /**
    * @returns {Property|Object}
    */
   get property() {
