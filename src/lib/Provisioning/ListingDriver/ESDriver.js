@@ -5,6 +5,7 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
+import {ESService} from '../Service/ESService';
 
 export class ESDriver extends AbstractDriver {
   /**
@@ -12,6 +13,13 @@ export class ESDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get AVAILABLE_REGIONS() {
+    return ESService.AVAILABLE_REGIONS;
   }
 
   /**

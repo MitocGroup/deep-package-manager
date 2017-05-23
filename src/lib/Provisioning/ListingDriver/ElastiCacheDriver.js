@@ -5,6 +5,7 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
+import {ElasticacheService} from '../Service/ElasticacheService';
 
 export class ElastiCacheDriver extends AbstractDriver {
   /**
@@ -12,6 +13,13 @@ export class ElastiCacheDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get AVAILABLE_REGIONS() {
+    return ElasticacheService.AVAILABLE_REGIONS;
   }
 
   /**

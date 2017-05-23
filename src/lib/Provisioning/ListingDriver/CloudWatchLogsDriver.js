@@ -6,6 +6,7 @@
 
 import {AbstractDriver} from './AbstractDriver';
 import {AbstractService} from '../Service/AbstractService';
+import {CloudWatchLogsService} from '../Service/CloudWatchLogsService';
 
 export class CloudWatchLogsDriver extends AbstractDriver {
   /**
@@ -13,6 +14,13 @@ export class CloudWatchLogsDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get AVAILABLE_REGIONS() {
+    return CloudWatchLogsService.AVAILABLE_REGIONS;
   }
 
   /**

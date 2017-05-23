@@ -24,6 +24,10 @@ export class AbstractDriver extends Core.OOP.Interface {
     this._stack = {};
   }
 
+  static get AVAILABLE_REGIONS() {
+    throw new Error(`AVAILABLE_REGIONS method should be implemented into child class.`);
+  }
+
   /**
    * @param {String} resourceToMatch
    * @param {String} resourceId

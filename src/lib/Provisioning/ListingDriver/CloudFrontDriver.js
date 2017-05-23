@@ -5,6 +5,7 @@
 'use strict';
 
 import {AbstractTaggingDriver} from './AbstractTaggingDriver';
+import {CloudFrontService} from '../Service/CloudFrontService';
 
 export class CloudFrontDriver extends AbstractTaggingDriver {
   /**
@@ -12,6 +13,13 @@ export class CloudFrontDriver extends AbstractTaggingDriver {
    */
   constructor(...args) {
     super(...args);
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get AVAILABLE_REGIONS() {
+    return CloudFrontService.AVAILABLE_REGIONS;
   }
 
   /**

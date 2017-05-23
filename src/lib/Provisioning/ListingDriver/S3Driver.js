@@ -5,6 +5,7 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
+import {S3Service} from '../Service/S3Service';
 
 export class S3Driver extends AbstractDriver {
   /**
@@ -12,6 +13,13 @@ export class S3Driver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get AVAILABLE_REGIONS() {
+    return S3Service.AVAILABLE_REGIONS;
   }
 
   /**

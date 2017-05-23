@@ -5,6 +5,7 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
+import {CognitoIdentityService} from '../Service/CognitoIdentityService';
 
 export class CognitoIdentityDriver extends AbstractDriver {
   /**
@@ -12,6 +13,13 @@ export class CognitoIdentityDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get AVAILABLE_REGIONS() {
+    return CognitoIdentityService.AVAILABLE_REGIONS;
   }
 
   /**

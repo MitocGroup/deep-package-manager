@@ -6,6 +6,7 @@
 
 import {AbstractDriver} from './AbstractDriver';
 import {AbstractService} from '../Service/AbstractService';
+import {IAMService} from '../Service/IAMService';
 
 export class IAMDriver extends AbstractDriver {
   /**
@@ -13,6 +14,13 @@ export class IAMDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get AVAILABLE_REGIONS() {
+    return IAMService.AVAILABLE_REGIONS;
   }
 
   /**

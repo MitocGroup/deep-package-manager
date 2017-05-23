@@ -50,9 +50,14 @@ export class Listing {
         }
 
         let serviceName = services[i];
-        let service = this._createAwsService(serviceName, region);
         let ServiceListerProto = require(`./ListingDriver/${serviceName}Driver`)[`${serviceName}Driver`];
 
+        if (!Listing.serviceSupportsRegion(ServiceListerProto, region)) {
+          totalRequests--;
+          continue;
+        }
+
+        let service = this._createAwsService(serviceName, region);
         let serviceLister = new ServiceListerProto(service, this._hash, this.deployCfg);
 
         serviceLister.list((error) => {
@@ -126,6 +131,16 @@ export class Listing {
     }
 
     return count;
+  }
+
+  /**
+   * @param {*} ServicePrototype
+   * @param {String} region
+   * @returns {Boolean}
+   */
+  static serviceSupportsRegion(ServicePrototype, region) {
+    return ServicePrototype.AVAILABLE_REGIONS.indexOf(region) !== -1 ||
+      ServicePrototype.AVAILABLE_REGIONS.indexOf(Core.AWS.Region.ANY) !== -1;
   }
 
   /**
