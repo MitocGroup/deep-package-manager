@@ -164,9 +164,10 @@ export class Listing {
   _createAwsService(name, region) {
     let service = this._property.provisioning.getAwsServiceByName(name);
 
-    service.config.region = region;
-
-    return service;
+    // create a new service instance with different region
+    return new service.constructor({
+      region: region
+    });
   }
 
   /**
