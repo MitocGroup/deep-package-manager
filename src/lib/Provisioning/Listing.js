@@ -24,6 +24,7 @@ export class Listing {
    */
   listAll(callback, services = Listing.SERVICES, regions = Listing.REGIONS) {
     let wait = new WaitFor();
+    let regionsWithResources = [];
     let result = {};
     let totalRequests = regions.length * services.length;
 
@@ -50,13 +51,103 @@ export class Listing {
         }
 
         let serviceName = services[i];
+
+        // skip listing globally available services like IAM, S3, etc
+        if (Listing.isGlobalService(serviceName)) {
+          totalRequests--;
+          continue;
+        }
+
         let ServiceListerProto = require(`./ListingDriver/${serviceName}Driver`)[`${serviceName}Driver`];
 
+        // skip listing services that are not supported by specific region
         if (!Listing.serviceSupportsRegion(ServiceListerProto, region)) {
           totalRequests--;
           continue;
         }
 
+        let service = this._createAwsService(serviceName, region);
+        let serviceLister = new ServiceListerProto(service, this._hash, this.deployCfg);
+
+        serviceLister.list((error) => {
+          totalRequests--;
+
+          if (error) {
+            result[region].errors[serviceName] = error;
+          } else {
+            result[region].resources[serviceName] = serviceLister.extractResetStack;
+            result[region].matchedResources += Object.keys(result[region].resources[serviceName]).length;
+
+            // collect regions where are some deep resources
+            if (result[region].matchedResources > 0) {
+              regionsWithResources.push(region);
+            }
+          }
+        });
+      }
+    }
+
+    wait.ready(() => {
+      this._listGlobalServices(regionsWithResources, result, (extendedResult) => {
+        callback(extendedResult);
+      });
+    });
+
+    return this;
+  }
+
+  /**
+   * back-compatible shortcut for legacy implementations
+   *
+   * @param {Function} callback
+   * @param {String[]} services
+   * @returns {Listing}
+   */
+  list(callback, services = Listing.SERVICES) {
+    let region = this._property.config.aws.region;
+
+    return this.listAll(result => {
+      callback(result[region]);
+    }, services, [region]);
+  }
+
+  /**
+   * @param {String[]}regions
+   * @param {*} result
+   * @param {Function} callback
+   * @returns {Listing}
+   * @private
+   */
+  _listGlobalServices(regions, result, callback) {
+    let wait = new WaitFor();
+    let services = Listing.GLOBAL_SERVICES;
+    let totalRequests = regions.length * services.length;
+
+    wait.push(() => {
+      return totalRequests <= 0;
+    });
+
+    for (let i in regions) {
+      if (!regions.hasOwnProperty(i)) {
+        continue;
+      }
+
+      let region = regions[i];
+
+      for (let i in services) {
+        if (!services.hasOwnProperty(i)) {
+          continue;
+        }
+
+        let serviceName = services[i];
+
+        // skip listing globally available services like IAM, S3, etc
+        if (!Listing.isGlobalService(serviceName)) {
+          totalRequests--;
+          continue;
+        }
+
+        let ServiceListerProto = require(`./ListingDriver/${serviceName}Driver`)[`${serviceName}Driver`];
         let service = this._createAwsService(serviceName, region);
         let serviceLister = new ServiceListerProto(service, this._hash, this.deployCfg);
 
@@ -78,21 +169,6 @@ export class Listing {
     });
 
     return this;
-  }
-
-  /**
-   * back-compatible shortcut for legacy implementations
-   *
-   * @param {Function} callback
-   * @param {String[]} services
-   * @returns {Listing}
-   */
-  list(callback, services = Listing.SERVICES) {
-    let region = this._property.config.aws.region;
-
-    return this.listAll(result => {
-      callback(result[region]);
-    }, services, [region]);
   }
 
   /**
@@ -139,8 +215,8 @@ export class Listing {
    * @returns {Boolean}
    */
   static serviceSupportsRegion(ServicePrototype, region) {
-    return ServicePrototype.AVAILABLE_REGIONS.indexOf(region) !== -1 ||
-      ServicePrototype.AVAILABLE_REGIONS.indexOf(Core.AWS.Region.ANY) !== -1;
+    return ServicePrototype.AVAILABLE_REGIONS.indexOf(region) !== -1
+      || ServicePrototype.AVAILABLE_REGIONS.indexOf(Core.AWS.Region.ANY) !== -1;
   }
 
   /**
@@ -186,6 +262,14 @@ export class Listing {
   }
 
   /**
+   * @param {String} service
+   * @returns {Boolean}
+   */
+  static isGlobalService(service) {
+    return Listing.GLOBAL_SERVICES.indexOf(service) !== -1;
+  }
+
+  /**
    * @returns {String[]}
    */
   static get SERVICES() {
@@ -195,6 +279,13 @@ export class Listing {
       'CloudWatchLogs', 'SQS', 'ElastiCache',
       'ES', 'CloudWatchEvents', 'CognitoIdentityProvider',
     ];
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get GLOBAL_SERVICES() {
+    return ['IAM', 'CloudFront', 'S3'];
   }
 
   /**
