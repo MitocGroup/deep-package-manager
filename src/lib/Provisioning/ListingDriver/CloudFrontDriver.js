@@ -45,7 +45,7 @@ export class CloudFrontDriver extends AbstractTaggingDriver {
           // @todo: refactor deepify list to extract resource id directly from tags
           distribution.DeepResourceId = this._generateResourceIdFromTags(resourcesToPushMap[distribution.ARN]);
 
-          this._stack[distribution.Id] = distribution;
+          this._checkPushStack(distribution.DeepResourceId, distribution.Id, distribution);
         }
       });
     }).catch(e => {

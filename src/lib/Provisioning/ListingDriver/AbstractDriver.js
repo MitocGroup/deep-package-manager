@@ -24,6 +24,13 @@ export class AbstractDriver extends Core.OOP.Interface {
     this._stack = {};
   }
 
+  /**
+   * @returns {string}
+   */
+  static get UNKNOWN_HASH() {
+    return 'unknown';
+  }
+
   static get AVAILABLE_REGIONS() {
     throw new Error(`AVAILABLE_REGIONS method should be implemented into child class.`);
   }
@@ -35,8 +42,12 @@ export class AbstractDriver extends Core.OOP.Interface {
    * @private
    */
   _checkPushStack(resourceToMatch, resourceId, rawData = {}) {
+    let resourceHash = AbstractService.extractBaseHashFromResourceName(resourceToMatch) || AbstractDriver.UNKNOWN_HASH;
+
     if (this._matchResource(resourceToMatch, rawData)) {
-      this._stack[resourceId] = rawData;
+      this._stack[resourceHash] = this._stack[resourceHash] || {};
+
+      this._stack[resourceHash][resourceId] = rawData;
     }
   }
 
