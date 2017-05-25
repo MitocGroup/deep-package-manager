@@ -48,9 +48,9 @@
     "url": "https://github.com/MitocGroup/deep-package-manager.git"
   },
   "scripts": {
-    "test": "bash node-bin/test.sh",
-    "compile": "bash node-bin/compile.sh && node node-bin/bootstrap-dist.js > lib.compiled/bootstrap.dist.js",
-    "prepublish": "bash node-bin/assure-deps.sh && bash node-bin/compile.sh"
+    "compile-travis": "bash ../bin/compile-lib.sh .",
+    "compile": "bash node-bin/compile.sh",
+    "prepublish": "npm run compile"
   },
   "dependencies": {
     "amazon-cognito-js": "MitocGroup/amazon-cognito-js",
