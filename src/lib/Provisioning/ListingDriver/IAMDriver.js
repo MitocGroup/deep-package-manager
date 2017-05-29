@@ -98,7 +98,10 @@ export class IAMDriver extends AbstractDriver {
         let roleData = data.Roles[i];
         let roleName = roleData.RoleName;
 
-        this._checkPushStack(roleName, roleName, roleData);
+        // @todo: find a way to include this global role into one region only
+        if (roleName !== 'DeepApiCloudWatchLogs') {
+          this._checkPushStack(roleName, roleName, roleData);
+        }
       }
 
       if (data.Marker) {
