@@ -1,60 +1,13 @@
 language: node_js
-sudo: false
-node_js:
-  - '6.10'
-  - '7.9'
+git: {depth: 1}
+node_js: [6, 7]
 cache:
-  edge: true
-  directories:
-    - $(npm root -g)
-    - node_modules
-    - $(npm config get prefix)/bin
+  bundler: true
+  directories: [node_modules, $(npm root -g), $(npm config get prefix)/bin]
 branches:
-  only:
-    - master
-    - stage
-    - test
-    - dev
-before_install:
-  - (npm list -g babel-cli --depth=0 || npm install -g babel-cli@6.14.0)
-  - (npm list -g browserify --depth=0 || npm install -g browserify@11.2.x)
-  - (npm list -g mocha@2.5.x --depth=0 || npm install -g mocha@2.5.x)
-  - 
-    (npm list -g istanbul@^1.0.0-alpha --depth=0 || npm install -g
-    istanbul@^1.0.0-alpha)
-  - 
-    (npm list -g codeclimate-test-reporter --depth=0 || npm install -g
-    codeclimate-test-reporter)
-  - 
-    (if [ ! -d "node_modules/istanbul-combine" ]; then npm install
-    istanbul-combine@0.3.x; fi)
-  - '(if [ ! -d "node_modules/fs-extra" ]; then npm install fs-extra@0.x.x; fi)'
-  - '(if [ ! -d "node_modules/github" ]; then npm install github; fi)'
-  - '(if [ ! -d "node_modules/aws-sdk" ]; then npm install aws-sdk; fi)'
-  - '(if [ ! -d "node_modules/s3" ]; then npm install s3; fi)'
-  - cp bin/test/package.json .
-after_success:
-  - npm run coverage
-after_script:
-  - npm run remove-coverage
+  only: [master, dev, stage, test]
+before_install: [npm install -g run-jst]
+script: jst run unit
 env:
   global:
-    - DEEP_NO_INTERACTION=1
-    - secure: 
-        UYjH+JdqzVkSVGnkaf1jg0LtABlDXtOIvi+Q1J2tNI2X86AjE0YeOfrG4TsiemAymuxaZE1Y3E4ghOZls6ro5nnsdSdDyCbIuLaiV1qIPTYDGTMZwhAqzLLlvARLruWv5P0GIFnFe4q01i/XKuDgBR+f8aSI/cXYtCTsg562P/kX43lpwK+Iec/+cOtv4SPif4qUFH4Q9cK4g49FpFFyotW9kL/AJHHpb4CC09ZKyWwrpZmKJDdyDBvprL6jSR/1YGCU4YAzfYBv2VBvuWpE8oRmqV4KfID7J4itDl26sY79U6ed79QvfVLdee6SEeyUw50HcbHBj26W1SAziFn/rkxNJJYqU4kWVHHxN4oSTtL1V4zDmkFgnu+bZGn5r8GUjfk0ty2Rp8H9GaB3CrDIUf3BdjNwoHWN+Ky6zimM5FMuHW5AIOs9Ul+VeGAN9TAsKofqAape16kwczxpyQp0G6uYQH5AifQmVzzg/oaVonAwsdyKDYdkzP0Ad9wr0QNBV8cTEM2e6+6tMLrbIn089GRbSj7Zhu8pSuzfTk1WMS5wBDesjPhGUQBTnk2gfulsXXUOWhIj+alx40tRLKJH9MILuO+uosRDvsHMTObADu7X19/CG08huJuARblPz/LIgiWglYvTLds5dC8XFiu0P7TBQy5yaEYxwIE369iOMPE=
-    - secure: 
-        05KsQ05dOOrKCb1b5M1gdwhSz4bCUeY+QGvIikMgt7JwstGwYITcLAH0JR5t4geFNdZKQ/crE0GfGHiF7a3aiGVEfda8P76iZutrIPqt43ugwc8uF4aXoTSC57n2m/lA2aBuWI/kV1a24qehkp8CNYojTgV2/BIhBlRVSIZBPmSzaGPMJ3oyFZqbsfJEXovtQeaklHC/dCLUpuNZ+s2ZrSKDzJLTeQ1uWlbctm7VMPA01m5Tp4EzCh7HCWnsyfhoyEcpM/oL9ubaP3uS6SOABm1ZjGmNFEXjCeXlt868oyaO3QpWRyEd/01ze7AXoldWZTBxw1pyDxhTGLZhUNEkgSbRzmdgIyJLv0I6dorQcuzXpUhv4JFL4gjVkzCiQAsc1OdHGJJDWI7dsv/uaptPPLMUlWwkaVyN2SEFZO8OjEuKVL72Mz2FhZtWFF6TQ5vCV7xZ4gQPVr9tfrGJP98wr3N9XfCkiFz+fqfrrydvWyi6iUpq9p90EYx51BcZSjd05VFHbCo7h6anvL5bMFDktZOC5ceDMjbXGxIpq5S9BXOSgdAczV3DkHrfsKDX3njkkuotI5n2qXNKA7nDom2vorc7xpaP2AjKpB3CvQO8ycKQ8Q8KlnqN3BSJqeg7lZYY9KlvhlwVEJqX4CkaX88w2tYl9iN0AUyg1rxZ9dZIViY=
-    - secure: 
-        YY2G/SsQPH3+5xGl9kmCSLMbNxB3vadodMSsG5CFZ4/0n/41nfgbmojpHfdQQmNfUy/yNHsNo75ElPyPoAOfQqxiSqzYeAPbwtx6LaZb9HgEqtX1Jja7t1khVtnyFJT0isDCme1gP9+vyrN+NQnrfkdOsu8JgnrkB0D5ppCeo5Lr2fnEWi3HVnlRk2Iud4A4zzAKq8tziuK/ADylmwYwVCZTUhY+TQEdK2slI3TTW4mkLTR6DCeAm4CvSdP7lY1OyArBKeqKVPxdbXt9IAMKkYe+AB2ONhFHnJTBZ56fmJ42/5OIw/kecPxZfEXMhXEPgIQH6ZozIDqYSiqZy6fTJDvfD1assnAzD5K4qaGhBHtQwmaSEjbnCfTug8enBr8mAbj1fACC43yQq/tB9tsRzqjymyZxIYLbiwHlW+ALIL65nM9bFkI8o5c3+0tCn+4ZodfsrffMuZrlEcld4mkH/LTZGjB+pZWjcAcqSknhTz1GY/JHGaAhjrDZw806XQNcK25PgpIM9u8u3pSrRwv9+kfcazbxd6pzXUbKXlHIoT9FbOr5jbGm+0FArhABjHdUZ6TXdyZxulw2q8s9gHEbttMoM5ypDNLaWBSk8wHqJzKV6na6p7hzBU6+qiv/MIvYUjFp/lWjheauRsnPJvuekgXNB9C/9/Pl0H79r76B40w=
-    - secure: 
-        oAl+BuUvBKiKQJE6mJwf7ajWCizJIJZn3TZeGz1w/J3AX8V+sOARQAz39IF19SVEK1hKhakC65gtLkwxkfw5W2cVBSsSgS1I+XSGXDTWFWFktldYcCISsDnLf9r2Wv/xT+KtW9mEEPZCkDRg9zenBJAbgVdZGuHymeRcHj44hCMVI3l2rqwN/1U4blA9Ca2heChar0MdWyPkX/s+Q4vlqdLr5RpCcNeeKTiQzrQoZxRaj8raE8xW8SUWJoduDEBoOJ27PWu2AjOJQsaGiIJjO/7P82bMDvv5ewLKjX4VnaJZBwk36gOsJJkUoE/s0epWL0MDQobohtkJlwpICfR+44eulr4hZa010oYRT8Ye6aLXm9bnnqSOembuy24lUc2pZYc2//AFjB1QKOPZ3cV35tnhdC97XA8Dd4qB36EGJ806mHHZoKX/8vfs8gsAHpVO8KQR5zxqOkEMYoLN3pDKwmIOiBUnOwS7vjPNa+o6N2aXigJgR/PUhxlG/EQ5BPZFVmd1gGJySP2t+6eRFyt4biRdyknodllLBVVhXeLQ690oIvgmyFxJYrgkAzpNWvZgyO5vB62Bq0OvFffgj1JUzKc5uyio8CdICCknCpQZTra3W7K89ladePW76YVBSWEwlNo4z4zmZXtKU3pasUIsv0NdDij0cKMXf66NB0qWw78=
-    - secure: 
-        HtmCrBRYWop/EqEGDU49pV3y07nt1n80ih9i9uK3jHMXGVtLR7BJQ21o4chGfq7mAKGDzUDJwMI9kQK90UL8o+l63BBYC660ha+Ru6TyMzU17JEN96tK/GYAbo4uo7MozDG2ZQw+rgXoF8bn0dL4xU6OuGhXLIreqJtvraq5kA+zl5vPUfV5jVBAh40wPwgq4K9FV4riYNKf4d5Ih6GOKIPYVhDDxRfclVOo4pHSEz+kCwh3L6Q0Ssg+u367n1cYyBA6zdfVlHD4NyEN9l+YK914oX2IafiFGlRIgoUOoNYUK+ElMn4gmUNQmhOLKx0/xYDOC5+CkxAxwyUquNQqwF7bEirGJnt1tfBrN/OLzmP3L2w7XqJKVCuQaeTVsVFd4UtVKiwpNKTrn+PX1NGGsg63Db63XXmmdQufBXFZmtojz4d8CVY/gCh2m6zURMjIhlcsqsqN9yWCF6Bb/hzuDpMWd0nmvsWNIlRadSVCoJWQKcMJtGhyy/xYNqr9CgEPIvDkpx4EQ+63bKxjvjDLVjxJZ0bqwDdJCkgSlfPzf4Je6gLFUXBkB3hnpYpDv/iaKA+G/CCw0Wcrrx2H+0ugaxTMMaCTcoEsxFpZmsVBZCm/IhhXLTybfGYx2s+ho4vP8LLRKsFT5ICa7gB+8kOCAkW9mA8ncGHCSGTjQCJWgUw=
-    - secure: 
-        YbhT0qesNr53q/15upL4X1lzwrGTgadMOIPqwFgBCSd5CMNOTKLQ3HhOgdwmti+cNYg5tH5cnm8fgvnj0FlBQ+HXPZuO+qsExayGH35v0YUKgaQ+oEmPUnc5FrJBl5ExD6pW/r5tsPRJOlXhXQgsX4IrQiPN1y8CKgdmB00GTlG0hIA8bvzue+GKTN8LdY/WvWC0hjJ3QJ9tel8mVboGJKyQ62Mbdvvjck55eKSz6QDlZy/petW2gsoi246/KdcGXEhyUztjffRIJo0CC7bTS1zDNw1jaNDHA2BrF7tGodEucfwuhfpzdNGVPMbpdlw8UXgzQ+YT79l96coBciJdiCbY/tkUSDvXJ2Sgm1YC1zNHv3ggxj7o9dQwRKcgQ026IbJXVKqnkVeT2JrSuLBvkkxwSE1vY4AKxRBG4w3VC4hY86Y2DaiXG72LJ2/ED6e6bmPYFta7AFxONtw9RCiF0LN0i/oesULW7lzFINXTkOBZoIbYWJEnWSjy/Z+ZhTZ0he7oDQjSgpzAsKSexPp5yCxg8FpytfU9HTbkkhB0oA1vYRErTHUvB//AJvl/LPIjSlnYamKOP7Hh+x8da/WkxYeY9MGQESSU2qgcPl6mBVXL/psMCPDbbj9OiQzMqBCLR/PKstKIYTic0tjPeLdINYDldLWLorJ0luFwuOYi3mE=
-    - secure: 
-        NymSjjGrzhcaNbz0sXV+UMLKDn3iQm6+7R7T3WGx7+kwgP/0VrcEww14Eenc1iSenYyZcB3sjxb7JjfPaLoipV976zAQ1j8wzrcyE3AlQQyi1wR+fu7CxcVpAaATOTlxrxaQbPt4UpoJeqzfCxsNxRnHii1nQx20+SUSw6zcfvbaFohuSwCKdbCKNWmOwFXtf1xyYLqO7Z7F6SnsV1SnrrRZrpUaHEYNwZGt5jjjEobxF0Waag3966pVwnZxkPplDOkf8oZtdZl4kcMTNXKhDigWybgNrDUroUTg5shxGLrwHnnRH6hUw0nOdLBwNcE8uhzAqDLe+p6lBfjlRgNQwIiVP1j9LYLz6uOLQRNYhJgS/Q7xcs0SbTKzilaM7PSmvvdvR2EOBmW9TrBhj/zvK55H+HRW7Dcq06zHrWTbZWe2pHwiDKEB9YTTFCd5Z4FGRUuZ/6nT4nRfhnsgGLQBkLKKA7WE+8CNasLJP53dh6iymqO42jZFCUt7/4IiD0M753WERvxS0NeNBzMLXA1HgfnVOoA6XQXbWRdIGBoE33s7m780mk3YAjg+fNYKRlmDpsxbJhlm4d/0HldC4A5JL276Hy9krcfFWbFZhw+BUH/caZAPbXw4CMJjb4ehnm7d+B4hHbwjATdbAX9MYLWr74Z/MIpxJzzGphqWjXnH2nQ=
-notifications:
-  slack:
-    secure: 
-      CParjUyPwAK8/GB/OUmSjzfDFzls9F05h5+vxjpkvuFRmCpqbJKwEA4M9KRR+VK+H9nGJcUzTJBFLNTsADh8+hmKDt5vDsCxZ48hQ2zUIJfMIXVtpf/Hxs3K1HfLhN/YCkO14o1MMMkmXFqrbPI8YqmupdlXBVG3YQM1N0B37vnlsjhcEtJgql8FUx1T5CtFuNjRzA5SqYhx7/G1O/xtAYKkYfD/XGyoJBZngMfQ/FY/6fUlBztedC8n6RgcrzDi0phIWmT1u0naVgK8CI9ywa2/Cn0sozTfZQA0TshlDjM6aZdBqd5rxWZKm6faCzr36mmtr0eowHt6LuhGKR/RNx/Q9LDiCleOGOv6l+qbjIqUB4WVMMec7t6V0cENeWgUPYLhUZ7Z3/HKRO4jdbeSpMc8mpJ7BxW1kCWgtYqOP/yRRfXuBC5wxybFkI3Ljv63YVMCPmL8qHcidiLsa1adr4nBuBkrV/A67BUzonhdSVOuvS/sxVxy187xwHsQITBuf2gL+oRCzBg8K/dp6O0M3xkvGsXDoUa43B85kgOEJ9YoAqnuf0Q0iuDSgu4YaCnZHSoKF+dYmy+M5fQTXSzYm9Mk9rfAA/lES/2iWJcGOqUQlpoG3y7BhJhX8X0+zWPrIzPiECMMY38bnRsxr6rxY39Zih/X6mjoph3amyru1fs=
+  - {secure: Q1G82Et+V54aASh2dR2W1mqyQ7nsej1LFnK69mg5KslFJ0rRJ7PknIn7iNYUhJGMuKCQWBVeTxRY5YUmpGVdg+DqAKq77O08+PtrUG1/zZL+30lVE/t0I7WaiyLqqNHnuH2AcSG7DCe0/hIEcKBjWomFBqX+qxCdS2ik4Lpdf6KkS4wlCewSEhtLa0yJGW1Q1M9NRQZgP5O34zeCnR42fj4AKmrxAkSQCwGpKmjLhTeaNyYeHa5i21Nrf8fiRBX+5wUltr0UfuZ2FyZ2wVxoJ3EMrP8fkYvs4QMhvrXaUi4LIt58ZgCNZjxrATaDWxhGLZq+BVvFDxJCTcL+BAqSPKP4ShefNiNnz0Soj9AQOyITuRZ8uW0gu9oYdpkdGvKyyoqGnPdow0fCs/WaiuQZaRYVWziQ2o6CMNGZWUMto1zkyUBDz89KrqESC2X2EKuFnstx9oHRKkRlNeKYPqnX2c7uI3Rxq8B7FJGLzgheHCYtHjV9G1R0hzN8lfzcO2cyRJx8AxAFR0O5wcYr3rHAhV0BdiDZGJhyW8PpD/jE9wybZ78YeLAgppqq8rxvgOJskEu7692Hy6EPxC4jGENldtilzBHXgBfTuLw64AwPPyLKibeJJdRwQ5JagpQTrl/jwry4ln8Xd3kZgnu0uJEZA4rZK48NlN9w/cQ4c2F7yAk=}
