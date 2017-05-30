@@ -72,34 +72,43 @@ export class Undeploy {
         callback(null, null);
       } else {
         let wait = new WaitFor();
-        let servicesRemaining = services.length;
-        let results = Undeploy._createExecResultObj(services);
-        let rawResourcesObj = this._matcher.filter(listingResult);
+        let regions = Object.keys(listingResult);
+        let servicesRemaining = regions.length * services.length;
+        let results = Undeploy._createExecResultObj(regions, services);
 
         wait.push(() => {
           return servicesRemaining <= 0;
         });
 
-        for (let i in services) {
-          if (!services.hasOwnProperty(i)) {
+        for (let region in listingResult) {
+          if (!listingResult.hasOwnProperty(region)) {
             continue;
           }
 
-          let serviceName = services[i];
-          let service = this._createAwsService(serviceName);
-          let ServiceUndeployProto = require(`./UndeployDriver/${serviceName}Driver`)[`${serviceName}Driver`];
+          let rawResourcesObj = this._matcher.filter(listingResult[region].resources);
 
-          let serviceUndeploy = new ServiceUndeployProto(service, this._hash, this._debug);
-
-          serviceUndeploy.execute((error) => {
-            servicesRemaining--;
-
-            if (error) {
-              results[serviceName].error = error;
-            } else {
-              results[serviceName].resources = serviceUndeploy.extractResetStack;
+          for (let i in services) {
+            if (!services.hasOwnProperty(i)) {
+              continue;
             }
-          }, rawResourcesObj);
+
+            let serviceName = services[i];
+
+            let service = this._createAwsService(serviceName, region);
+            let ServiceUndeployProto = require(`./UndeployDriver/${serviceName}Driver`)[`${serviceName}Driver`];
+
+            let serviceUndeploy = new ServiceUndeployProto(service, this._hash, this._debug);
+
+            serviceUndeploy.execute((error) => {
+              servicesRemaining--;
+
+              if (error) {
+                results[region][serviceName].error = error;
+              } else {
+                results[region][serviceName].resources = serviceUndeploy.extractResetStack;
+              }
+            }, rawResourcesObj);
+          }
         }
 
         wait.ready(() => {
@@ -113,10 +122,14 @@ export class Undeploy {
 
   /**
    * @param {String} name
+   * @param {String} region
    * @returns {AbstractDriver|*}
    */
-  _createAwsService(name) {
+  _createAwsService(name, region) {
     let service = this._property.provisioning.getAwsServiceByName(name);
+
+    // create a new service instance with different region
+    service = new service.constructor({region: region});
 
     AbstractDriver.injectServiceCredentials(
       service,
@@ -131,24 +144,35 @@ export class Undeploy {
   }
 
   /**
+   * @param {String[]} regions
    * @param {String[]} services
    * @returns {Object}
    * @private
    */
-  static _createExecResultObj(services) {
+  static _createExecResultObj(regions, services) {
     let result = {};
 
-    for (let i in services) {
-      if (!services.hasOwnProperty(i)) {
+    for (let key in regions) {
+      if (!regions.hasOwnProperty(key)) {
         continue;
       }
 
-      let serviceName = services[i];
+      let region = regions[key];
 
-      result[serviceName] = {
-        error: null,
-        resources: [],
-      };
+      result[region] = {};
+
+      for (let i in services) {
+        if (!services.hasOwnProperty(i)) {
+          continue;
+        }
+
+        let serviceName = services[i];
+
+        result[region][serviceName] = {
+          error: null,
+          resources: [],
+        };
+      }
     }
 
     return result;

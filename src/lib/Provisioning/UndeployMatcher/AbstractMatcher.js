@@ -14,49 +14,36 @@ export class AbstractMatcher extends Core.OOP.Interface {
   }
 
   /**
-   * @param {Object} listingResult
+   * @param {Object} rawResourcesObj
    * @returns {Object}
    */
-  filter(listingResult) {
+  filter(rawResourcesObj) {
     let resourcesObj = {};
 
-    // back-compatible for legacy implementations
-    if (listingResult.hasOwnProperty('resources')) {
-      listingResult['default-region'] = listingResult;
-    }
-
-    for (let region in listingResult) {
-      if (!listingResult.hasOwnProperty(region)) {
+    for (let type in rawResourcesObj) {
+      if (!rawResourcesObj.hasOwnProperty(type) || !AbstractMatcher.isKnownType(type)) {
         continue;
       }
 
-      let rawResourcesObj = listingResult[region].resources;
+      let appResources = rawResourcesObj[type];
 
-      for (let type in rawResourcesObj) {
-        if (!rawResourcesObj.hasOwnProperty(type) || !AbstractMatcher.isKnownType(type)) {
+      for (let appHash in appResources) {
+        if (!appResources.hasOwnProperty(appHash)) {
           continue;
         }
 
-        let appResources = rawResourcesObj[type];
+        let resourcesObjStack = appResources[appHash];
 
-        for (let appHash in appResources) {
-          if (!appResources.hasOwnProperty(appHash)) {
+        for (let resourceId in resourcesObjStack) {
+          if (!resourcesObjStack.hasOwnProperty(resourceId) || !this.match(type, resourceId)) {
             continue;
           }
 
-          let resourcesObjStack = appResources[appHash];
-
-          for (let resourceId in resourcesObjStack) {
-            if (!resourcesObjStack.hasOwnProperty(resourceId) || !this.match(type, resourceId)) {
-              continue;
-            }
-
-            if (!resourcesObj.hasOwnProperty(type)) {
-              resourcesObj[type] = {};
-            }
-
-            resourcesObj[type][resourceId] = resourcesObjStack[resourceId];
+          if (!resourcesObj.hasOwnProperty(type)) {
+            resourcesObj[type] = {};
           }
+
+          resourcesObj[type][resourceId] = resourcesObjStack[resourceId];
         }
       }
     }
