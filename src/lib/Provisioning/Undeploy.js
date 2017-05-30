@@ -65,6 +65,12 @@ export class Undeploy {
       lister.hash = baseHash;
     }
 
+    let regions = [this._property.config.awsRegion];
+
+    if (this.matcher instanceof OptimisticMatcher) {
+      regions = Listing.REGIONS;
+    }
+
     lister.listAll((listingResult) => {
       if (lister.resultHasErrors(listingResult)) {
         callback(new ProvisioningCollisionsListingException(listingResult), null);
@@ -115,7 +121,7 @@ export class Undeploy {
           callback(null, results);
         });
       }
-    }, services);
+    }, services, regions);
 
     return this;
   }
