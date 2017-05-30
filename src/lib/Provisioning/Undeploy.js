@@ -65,7 +65,7 @@ export class Undeploy {
       lister.hash = baseHash;
     }
 
-    lister.list((listingResult) => {
+    lister.listAll((listingResult) => {
       if (lister.resultHasErrors(listingResult)) {
         callback(new ProvisioningCollisionsListingException(listingResult), null);
       } else if (lister.resultMatchedResources(listingResult) <= 0) {

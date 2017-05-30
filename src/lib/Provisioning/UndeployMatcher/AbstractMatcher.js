@@ -18,41 +18,45 @@ export class AbstractMatcher extends Core.OOP.Interface {
    * @returns {Object}
    */
   filter(listingResult) {
-    let rawResourcesObj = null;
+    let resourcesObj = {};
 
     // back-compatible for legacy implementations
     if (listingResult.hasOwnProperty('resources')) {
-      rawResourcesObj = listingResult.resources
-    } else {
-      // @todo: listingResult instead of rawResourcesObj, check for listingResultType (single region or multiple region)
+      listingResult['default-region'] = listingResult;
     }
 
-    let resourcesObj = {};
-
-    for (let type in rawResourcesObj) {
-      if (!rawResourcesObj.hasOwnProperty(type) || !AbstractMatcher.isKnownType(type)) {
+    for (let region in listingResult) {
+      if (!listingResult.hasOwnProperty(region)) {
         continue;
       }
 
-      let appResources = rawResourcesObj[type];
+      let rawResourcesObj = listingResult[region].resources;
 
-      for (let appHash in appResources) {
-        if (!appResources.hasOwnProperty(appHash)) {
+      for (let type in rawResourcesObj) {
+        if (!rawResourcesObj.hasOwnProperty(type) || !AbstractMatcher.isKnownType(type)) {
           continue;
         }
 
-        let resourcesObjStack = appResources[appHash];
+        let appResources = rawResourcesObj[type];
 
-        for (let resourceId in resourcesObjStack) {
-          if (!resourcesObjStack.hasOwnProperty(resourceId) || !this.match(type, resourceId)) {
+        for (let appHash in appResources) {
+          if (!appResources.hasOwnProperty(appHash)) {
             continue;
           }
 
-          if (!resourcesObj.hasOwnProperty(type)) {
-            resourcesObj[type] = {};
-          }
+          let resourcesObjStack = appResources[appHash];
 
-          resourcesObj[type][resourceId] = resourcesObjStack[resourceId];
+          for (let resourceId in resourcesObjStack) {
+            if (!resourcesObjStack.hasOwnProperty(resourceId) || !this.match(type, resourceId)) {
+              continue;
+            }
+
+            if (!resourcesObj.hasOwnProperty(type)) {
+              resourcesObj[type] = {};
+            }
+
+            resourcesObj[type][resourceId] = resourcesObjStack[resourceId];
+          }
         }
       }
     }
