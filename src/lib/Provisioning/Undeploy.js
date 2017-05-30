@@ -66,15 +66,15 @@ export class Undeploy {
     }
 
     lister.list((listingResult) => {
-      if (Object.keys(listingResult.errors).length > 0) {
-        callback(new ProvisioningCollisionsListingException(listingResult.errors), null);
-      } else if (listingResult.matchedResources <= 0) {
+      if (lister.resultHasErrors(listingResult)) {
+        callback(new ProvisioningCollisionsListingException(listingResult), null);
+      } else if (lister.resultMatchedResources(listingResult) <= 0) {
         callback(null, null);
       } else {
         let wait = new WaitFor();
         let servicesRemaining = services.length;
         let results = Undeploy._createExecResultObj(services);
-        let rawResourcesObj = this._matcher.filter(listingResult.resources);
+        let rawResourcesObj = this._matcher.filter(listingResult);
 
         wait.push(() => {
           return servicesRemaining <= 0;

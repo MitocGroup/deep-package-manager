@@ -14,10 +14,19 @@ export class AbstractMatcher extends Core.OOP.Interface {
   }
 
   /**
-   * @param {Object} rawResourcesObj
+   * @param {Object} listingResult
    * @returns {Object}
    */
-  filter(rawResourcesObj) {
+  filter(listingResult) {
+    let rawResourcesObj = null;
+
+    // back-compatible for legacy implementations
+    if (listingResult.hasOwnProperty('resources')) {
+      rawResourcesObj = listingResult.resources
+    } else {
+      // @todo: listingResult instead of rawResourcesObj, check for listingResultType (single region or multiple region)
+    }
+
     let resourcesObj = {};
 
     for (let type in rawResourcesObj) {
@@ -25,18 +34,26 @@ export class AbstractMatcher extends Core.OOP.Interface {
         continue;
       }
 
-      let resourcesObjStack = rawResourcesObj[type];
+      let appResources = rawResourcesObj[type];
 
-      for (let resourceId in resourcesObjStack) {
-        if (!resourcesObjStack.hasOwnProperty(resourceId) || !this.match(type, resourceId)) {
+      for (let appHash in appResources) {
+        if (!appResources.hasOwnProperty(appHash)) {
           continue;
         }
 
-        if (!resourcesObj.hasOwnProperty(type)) {
-          resourcesObj[type] = {};
-        }
+        let resourcesObjStack = appResources[appHash];
 
-        resourcesObj[type][resourceId] = resourcesObjStack[resourceId];
+        for (let resourceId in resourcesObjStack) {
+          if (!resourcesObjStack.hasOwnProperty(resourceId) || !this.match(type, resourceId)) {
+            continue;
+          }
+
+          if (!resourcesObj.hasOwnProperty(type)) {
+            resourcesObj[type] = {};
+          }
+
+          resourcesObj[type][resourceId] = resourcesObjStack[resourceId];
+        }
       }
     }
 

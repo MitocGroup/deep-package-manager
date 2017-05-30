@@ -119,6 +119,11 @@ export class Listing {
    * @returns {boolean}
    */
   resultHasErrors(result) {
+    // back-compatible for legacy implementations
+    if (result.hasOwnProperty('errors')) {
+      return Object.keys(result.errors).length > 0;
+    }
+
     for (let region in result) {
       if (!result.hasOwnProperty(region)) {
         continue;
@@ -139,6 +144,11 @@ export class Listing {
    * @returns {number}
    */
   resultMatchedResources(result) {
+    // back-compatible for legacy implementations
+    if (result.hasOwnProperty('matchedResources')) {
+      return result.matchedResources;
+    }
+
     let count = 0;
 
     for (let region in result) {
