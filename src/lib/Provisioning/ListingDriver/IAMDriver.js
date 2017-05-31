@@ -6,6 +6,7 @@
 
 import {AbstractDriver} from './AbstractDriver';
 import {AbstractService} from '../Service/AbstractService';
+import {APIGatewayService} from '../Service/APIGatewayService';
 import {IAMService} from '../Service/IAMService';
 
 export class IAMDriver extends AbstractDriver {
@@ -98,8 +99,8 @@ export class IAMDriver extends AbstractDriver {
         let roleData = data.Roles[i];
         let roleName = roleData.RoleName;
 
-        // @todo: find a way to include this global role into one region only
-        if (roleName !== 'DeepApiCloudWatchLogs') {
+        // skip global IAM role used for all applications
+        if (roleName !== APIGatewayService.CLOUD_WATCH_LOGS_ROLE_NAME) {
           this._checkPushStack(roleName, roleName, roleData);
         }
       }
