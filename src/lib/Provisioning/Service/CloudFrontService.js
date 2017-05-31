@@ -195,9 +195,9 @@ export class CloudFrontService extends AbstractService {
               Items: [ UrlReplacer.VERSION_PARAM ],
             },
           },
-          MinTTL: 60, // one minute
+          MinTTL: 86400, // one minute
           MaxTTL: 604800, // one week
-          DefaultTTL: 86400, // one day
+          DefaultTTL: 604800, // one day
           TargetOriginId: bucketWebsite,
           TrustedSigners: {
             Enabled: false,
