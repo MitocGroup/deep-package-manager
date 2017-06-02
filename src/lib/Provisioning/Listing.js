@@ -291,7 +291,6 @@ export class Listing {
               serviceApps[appHash]
             );
 
-            // @todo: fix counter
             globalRegion.matchedResources += Object.keys(globalRegion.resources[service][appHash]).length;
           }
 
@@ -306,8 +305,7 @@ export class Listing {
     }
 
     if (globalRegion.matchedResources > 0) {
-      // @todo: set existent region instead of global key
-      result['global'] = globalRegion;
+      result[Listing.GLOBAL_REGION_KEY] = globalRegion;
     }
 
     return result;
@@ -338,6 +336,22 @@ export class Listing {
    */
   static get GLOBAL_SERVICES() {
     return ['IAM', 'CloudFront', 'S3'];
+  }
+
+  /**
+   * @returns {String}
+   */
+  static get GLOBAL_REGION_KEY() {
+    return 'global';
+  }
+
+  /**
+   * Use us-east-1 to undeploy globally available resources (IAM, S3, etc)
+   *
+   * @returns {String}
+   */
+  static get GLOBAL_REGION_REPLACER() {
+    return 'us-east-1';
   }
 
   /**

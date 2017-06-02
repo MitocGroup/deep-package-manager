@@ -134,6 +134,10 @@ export class Undeploy {
   _createAwsService(name, region) {
     let service = this._property.provisioning.getAwsServiceByName(name);
 
+    if (region === Listing.GLOBAL_REGION_KEY) {
+      region = Listing.GLOBAL_REGION_REPLACER;
+    }
+
     // create a new service instance with different region
     service = new service.constructor({region: region});
 
