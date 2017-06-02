@@ -6,6 +6,7 @@
 
 import Core from 'deep-core';
 import {WaitFor} from '../Helpers/WaitFor';
+import objectMerge from 'object-merge';
 
 export class Listing {
   /**
@@ -93,7 +94,7 @@ export class Listing {
     }
 
     wait.ready(() => {
-      callback(result);
+      callback(this._filterResult(result));
     });
 
     return this;
@@ -212,6 +213,104 @@ export class Listing {
     return new service.constructor({
       region: region
     });
+  }
+
+  /**
+   * @param {String} appHash
+   * @param {*} result
+   * @returns {Boolean}
+   * @private
+   */
+  _appExistsInOtherRegion(appHash, result) {
+    for (let region in result) {
+      if (!result.hasOwnProperty(region)) {
+        continue;
+      }
+
+      let regionApps = result[region].apps;
+
+      if (regionApps.hasOwnProperty(appHash) && regionApps[appHash] > 0) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Moves all "alone" global resources into global region to avoid duplications
+   *
+   * @param {*} result
+   * @returns {*}
+   * @private
+   */
+  _filterResult(result) {
+    let globalRegion = {
+      matchedResources: 0,
+      apps: {},
+      resources: {},
+      errors: {},
+    };
+
+    let prevRegion = null;
+
+    for (let region in result) {
+      if (!result.hasOwnProperty(region)) {
+        continue;
+      }
+
+      // cleanup regions without resources
+      if (prevRegion && result[prevRegion].matchedResources === 0) {
+        delete result[prevRegion];
+      }
+
+      prevRegion = region;
+
+      let regionResources = result[region].resources;
+
+      for (let service in regionResources) {
+        if (!regionResources.hasOwnProperty(service)) {
+          continue;
+        }
+
+        let serviceApps = regionResources[service];
+
+        for (let appHash in serviceApps) {
+          if (!serviceApps.hasOwnProperty(appHash) || result[region].apps[appHash] !== 0) {
+            continue;
+          }
+
+          let matchedResources = Object.keys(serviceApps[appHash]).length;
+
+          if (!this._appExistsInOtherRegion(appHash, result)) {
+            globalRegion.apps[appHash] = result[region].apps[appHash];
+
+            globalRegion.resources[service] = globalRegion.resources[service] || {};
+            globalRegion.resources[service][appHash] = objectMerge(
+              globalRegion.resources[service][appHash],
+              serviceApps[appHash]
+            );
+
+            // @todo: fix counter
+            globalRegion.matchedResources += Object.keys(globalRegion.resources[service][appHash]).length;
+          }
+
+          result[region].matchedResources -= matchedResources;
+          delete serviceApps[appHash];
+        }
+      }
+    }
+
+    if (prevRegion && result[prevRegion].matchedResources === 0) {
+      delete result[prevRegion];
+    }
+
+    if (globalRegion.matchedResources > 0) {
+      // @todo: set existent region instead of global key
+      result['global'] = globalRegion;
+    }
+
+    return result;
   }
 
   /**
