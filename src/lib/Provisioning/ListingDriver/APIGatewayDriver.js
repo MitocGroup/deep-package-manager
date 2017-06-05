@@ -16,6 +16,13 @@ export class APIGatewayDriver extends AbstractDriver {
   }
 
   /**
+   * @returns {String[]}
+   */
+  static get AVAILABLE_REGIONS() {
+    return APIGatewayService.AVAILABLE_REGIONS;
+  }
+
+  /**
    * @param {Function} cb
    */
   list(cb) {

@@ -24,16 +24,43 @@ export class ProvisioningCollisionsListingException extends Exception {
    */
   get stringifiedErrorsObj() {
     return ProvisioningCollisionsListingException._stringifyErrorsObj(
-      this._resourcesObj
+      this._errorsObj
     );
   }
 
   /**
-   * @param {Object} errorsObj
+   * @param {Object} result
    * @returns {String}
    * @private
    */
-  static _stringifyErrorsObj(errorsObj) {
+  static _stringifyErrorsObj(result) {
+    // back compatibility hook for old result format
+    if (result.hasOwnProperty('errors')) {
+      return ProvisioningCollisionsListingException._stringifyErrors(result.errors);
+    }
+
+    let output = '';
+
+    for (let regionName in result) {
+      if (!result.hasOwnProperty(regionName)) {
+        continue;
+      }
+
+      let regionErrors = result[regionName].errors;
+
+      output += `Errors in ${regionName} region: ${OS.EOL}`;
+      output += ProvisioningCollisionsListingException._stringifyErrors(regionErrors);
+    }
+
+    return output;
+  }
+
+  /**
+   * @param {*} errorsObj
+   * @returns {String}
+   * @private
+   */
+  static _stringifyErrors(errorsObj) {
     let output = '';
 
     for (let resourceName in errorsObj) {
