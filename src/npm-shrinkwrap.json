@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "2.0.22",
+  "version": "2.0.23",
   "dependencies": {
     "abstract-leveldown": {
       "version": "0.12.4",
