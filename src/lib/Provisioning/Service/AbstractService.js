@@ -100,6 +100,23 @@ export class AbstractService extends Core.OOP.Interface {
   }
 
   /**
+   * @returns {RegExp}
+   */
+  static get AWS_RESOURCE_LISTING_REGEXP() {
+    let regExp = '';
+    let prefix = AbstractService.AWS_RESOURCES_PREFIX;
+    let capPrefix = AbstractService.capitalizeFirst(prefix);
+    let hashSize = AbstractService.MAIN_HASH_SIZE;
+
+    regExp += `${capPrefix}[A-Z].+[A-Z].+(\\w{${hashSize}})$|`; // upperCase delimiter
+    regExp += `${prefix}\\.\\w+\\.\\w+\\.(\\w{${hashSize}})$|`; // dot delimiter
+    regExp += `${prefix}\\_\\w+\\_\\w+\\_(\\w{${hashSize}})$|`; // underscore delimiter
+    regExp += `(${capPrefix}|${prefix})\\-\\w+\\-\\w+\\-(\\w{${hashSize}})`; // hyphen delimiter
+
+    return new RegExp(`^${regExp}$`);
+  }
+
+  /**
    * @param {Core.Generic.ObjectStorage} services
    * @returns {WaitFor}
    */

@@ -45,7 +45,10 @@ export class CloudWatchLogsDriver extends AbstractDriver {
     if (typeof this._baseHash === 'function') {
       return this._baseHash.bind(this)(resource);
     } else if (this._baseHash instanceof RegExp) {
-      return this._baseHash.test(resource);
+      // remove log group prefix to match generalized deep resource regexp
+      let trimmedResource = resource.replace(CloudWatchLogsDriver.LAMBDA_LOG_GROUP_PREFIX, '');
+
+      return this._baseHash.test(trimmedResource);
     }
 
     return AbstractService.extractBaseHashFromResourceName(resource) === this._baseHash;
