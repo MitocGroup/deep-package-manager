@@ -308,7 +308,7 @@ export class Listing {
       result[Listing.GLOBAL_REGION_KEY] = globalRegion;
     }
 
-    return result;
+    return result || {};
   }
 
   /**
