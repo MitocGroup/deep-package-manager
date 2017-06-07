@@ -234,9 +234,9 @@ export class Instance {
     };
 
     resourcesLister.list((result) => {
-      if (Object.keys(result.errors).length > 0) {
-        callback(new ProvisioningCollisionsListingException(result.errors), null);
-      } else if (result.matchedResources <= 0) {
+      if (resourcesLister.resultHasErrors(result)) {
+        callback(new ProvisioningCollisionsListingException(result), null);
+      } else if (resourcesLister.resultMatchedResources(result) <= 0) {
         callback(null, null);
       } else {
         let filteredResources = result.resources;
