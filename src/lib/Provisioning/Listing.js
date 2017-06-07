@@ -111,7 +111,11 @@ export class Listing {
     let region = this._property.config.aws.region;
 
     return this.listAll(result => {
-      callback(result[region]);
+      if (result.hasOwnProperty(region)) {
+        result = result[region];
+      }
+
+      callback(result);
     }, services, [region]);
   }
 
