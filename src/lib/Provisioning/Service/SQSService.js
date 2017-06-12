@@ -58,6 +58,7 @@ export class SQSService extends AbstractService {
       Core.AWS.Region.US_EAST_OHIO,
       Core.AWS.Region.US_WEST_N_CALIFORNIA,
       Core.AWS.Region.US_WEST_OREGON,
+      Core.AWS.Region.SOUTH_AMERICA_SAO_PAULO,
     ];
   }
 
