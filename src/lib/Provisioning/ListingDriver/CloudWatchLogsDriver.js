@@ -6,6 +6,7 @@
 
 import {AbstractDriver} from './AbstractDriver';
 import {AbstractService} from '../Service/AbstractService';
+import {CloudWatchLogsService} from '../Service/CloudWatchLogsService';
 
 export class CloudWatchLogsDriver extends AbstractDriver {
   /**
@@ -13,6 +14,13 @@ export class CloudWatchLogsDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get AVAILABLE_REGIONS() {
+    return CloudWatchLogsService.AVAILABLE_REGIONS;
   }
 
   /**
@@ -37,7 +45,10 @@ export class CloudWatchLogsDriver extends AbstractDriver {
     if (typeof this._baseHash === 'function') {
       return this._baseHash.bind(this)(resource);
     } else if (this._baseHash instanceof RegExp) {
-      return this._baseHash.test(resource);
+      // remove log group prefix to match generalized deep resource regexp
+      let trimmedResource = resource.replace(CloudWatchLogsDriver.LAMBDA_LOG_GROUP_PREFIX, '');
+
+      return this._baseHash.test(trimmedResource);
     }
 
     return AbstractService.extractBaseHashFromResourceName(resource) === this._baseHash;

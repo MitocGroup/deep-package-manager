@@ -102,6 +102,12 @@ export class IAMDriver extends AbstractDriver {
       RoleName: roleName,
     }, (error) => {
       if (error) {
+        // role was not found into this region
+        if (error.code === 'NoSuchEntity') {
+          cb(null);
+          return;
+        }
+
         // remove inline policies...
         if (error.code === 'DeleteConflict') {
           this._awsService.listRolePolicies({
@@ -127,7 +133,7 @@ export class IAMDriver extends AbstractDriver {
                 PolicyName: inlinePolicyName,
               }), (error) => {
                 if (error) {
-                  cb(error);
+                  cb(error.code === 'NoSuchEntity' ? null : error);
                 }
               });
             }

@@ -4,6 +4,7 @@
 
 'use strict';
 
+import {ACMService} from '../Service/ACMService';
 import {AbstractDriver} from './AbstractDriver';
 
 export class ACMDriver extends AbstractDriver {
@@ -12,6 +13,13 @@ export class ACMDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get AVAILABLE_REGIONS() {
+    return ACMService.AVAILABLE_REGIONS;
   }
 
   /**

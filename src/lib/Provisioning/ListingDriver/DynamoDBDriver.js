@@ -5,6 +5,7 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
+import {DynamoDBService} from '../Service/DynamoDBService';
 
 export class DynamoDBDriver extends AbstractDriver {
   /**
@@ -12,6 +13,13 @@ export class DynamoDBDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get AVAILABLE_REGIONS() {
+    return DynamoDBService.AVAILABLE_REGIONS;
   }
 
   /**

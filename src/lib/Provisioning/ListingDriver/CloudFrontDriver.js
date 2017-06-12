@@ -5,6 +5,7 @@
 'use strict';
 
 import {AbstractTaggingDriver} from './AbstractTaggingDriver';
+import {CloudFrontService} from '../Service/CloudFrontService';
 
 export class CloudFrontDriver extends AbstractTaggingDriver {
   /**
@@ -12,6 +13,13 @@ export class CloudFrontDriver extends AbstractTaggingDriver {
    */
   constructor(...args) {
     super(...args);
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get AVAILABLE_REGIONS() {
+    return CloudFrontService.AVAILABLE_REGIONS;
   }
 
   /**
@@ -37,7 +45,7 @@ export class CloudFrontDriver extends AbstractTaggingDriver {
           // @todo: refactor deepify list to extract resource id directly from tags
           distribution.DeepResourceId = this._generateResourceIdFromTags(resourcesToPushMap[distribution.ARN]);
 
-          this._stack[distribution.Id] = distribution;
+          this._checkPushStack(distribution.DeepResourceId, distribution.Id, distribution);
         }
       });
     }).catch(e => {

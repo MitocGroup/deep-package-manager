@@ -5,6 +5,7 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
+import {LambdaService} from '../Service/LambdaService';
 
 export class LambdaDriver extends AbstractDriver {
   /**
@@ -12,6 +13,13 @@ export class LambdaDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get AVAILABLE_REGIONS() {
+    return LambdaService.AVAILABLE_REGIONS;
   }
 
   /**

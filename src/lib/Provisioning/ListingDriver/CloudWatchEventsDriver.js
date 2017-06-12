@@ -5,6 +5,7 @@
 'use strict';
 
 import {AbstractDriver} from './AbstractDriver';
+import {CloudWatchEventsService} from '../Service/CloudWatchEventsService';
 
 export class CloudWatchEventsDriver extends AbstractDriver {
   /**
@@ -12,6 +13,13 @@ export class CloudWatchEventsDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get AVAILABLE_REGIONS() {
+    return CloudWatchEventsService.AVAILABLE_REGIONS;
   }
 
   /**

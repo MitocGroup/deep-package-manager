@@ -6,6 +6,8 @@
 
 import {AbstractDriver} from './AbstractDriver';
 import {AbstractService} from '../Service/AbstractService';
+import {APIGatewayService} from '../Service/APIGatewayService';
+import {IAMService} from '../Service/IAMService';
 
 export class IAMDriver extends AbstractDriver {
   /**
@@ -13,6 +15,13 @@ export class IAMDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get AVAILABLE_REGIONS() {
+    return IAMService.AVAILABLE_REGIONS;
   }
 
   /**
@@ -90,7 +99,10 @@ export class IAMDriver extends AbstractDriver {
         let roleData = data.Roles[i];
         let roleName = roleData.RoleName;
 
-        this._checkPushStack(roleName, roleName, roleData);
+        // skip global IAM role used for all applications
+        if (roleName !== APIGatewayService.CLOUD_WATCH_LOGS_ROLE_NAME) {
+          this._checkPushStack(roleName, roleName, roleData);
+        }
       }
 
       if (data.Marker) {

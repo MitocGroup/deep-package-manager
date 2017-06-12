@@ -6,6 +6,7 @@
 
 import {AbstractDriver} from './AbstractDriver';
 import {AbstractService} from '../Service/AbstractService';
+import {SQSService} from '../Service/SQSService';
 
 export class SQSDriver extends AbstractDriver {
   /**
@@ -13,6 +14,13 @@ export class SQSDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
+  }
+
+  /**
+   * @returns {String[]}
+   */
+  static get AVAILABLE_REGIONS() {
+    return SQSService.AVAILABLE_REGIONS;
   }
 
   /**
