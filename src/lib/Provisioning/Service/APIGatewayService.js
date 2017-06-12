@@ -178,6 +178,7 @@ export class APIGatewayService extends AbstractService {
       Core.AWS.Region.EU_FRANKFURT,
       Core.AWS.Region.ASIA_PACIFIC_TOKYO,
       Core.AWS.Region.ASIA_PACIFIC_SINGAPORE,
+      Core.AWS.Region.SOUTH_AMERICA_SAO_PAULO,
     ];
   }
 

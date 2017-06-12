@@ -52,9 +52,7 @@ export class ACMService extends AbstractService {
    * @returns {String[]}
    */
   static get AVAILABLE_REGIONS() {
-    return [
-      Core.AWS.Region.US_EAST_N_VIRGINIA,
-    ];
+    return Core.AWS.Region.all();
   }
 
   /**
