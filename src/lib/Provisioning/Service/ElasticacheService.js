@@ -33,9 +33,7 @@ export class ElasticacheService extends AbstractService {
    * @returns {String[]}
    */
   static get AVAILABLE_REGIONS() {
-    return [
-      Core.AWS.Region.all(),
-    ];
+    return Core.AWS.Region.all();
   }
 
   /**
