@@ -15,6 +15,7 @@ export class Listing {
   constructor(property) {
     this._property = property;
     this._hash = property.configObj.baseHash;
+    this._env = property.configObj.env;
   }
 
   /**
@@ -62,7 +63,7 @@ export class Listing {
         }
 
         let service = this._createAwsService(serviceName, region);
-        let serviceLister = new ServiceListerProto(service, this._hash, this.deployCfg);
+        let serviceLister = new ServiceListerProto(service, this._hash, this._env, this.deployCfg);
 
         serviceLister.list((error) => {
           totalRequests--;

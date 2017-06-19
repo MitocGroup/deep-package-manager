@@ -11,15 +11,17 @@ export class AbstractDriver extends Core.OOP.Interface {
   /**
    * @param {Object} awsService
    * @param {String|RegExp|Function} baseHash
+   * @param {String} env
    * @param {Object|null} deployCfg
    *
    * @todo: rename base hash
    */
-  constructor(awsService, baseHash, deployCfg = null) {
+  constructor(awsService, baseHash, env, deployCfg = null) {
     super(['list']);
 
     this._awsService = awsService;
     this._baseHash = baseHash;
+    this._env = env;
     this._deployCfg = deployCfg;
     this._stack = {};
   }
@@ -83,6 +85,15 @@ export class AbstractDriver extends Core.OOP.Interface {
    * @private
    */
   _matchResource(resource, rawData = {}) {
+    let resourceEnv = AbstractService.extractEnvFromResourceName(resource);
+
+    // do we need to check env only for typeof hash = string ?
+    if (!resourceEnv) {
+      console.warn(`Cannot extract env from ${resource} resource.`);
+    } else if (resourceEnv !== this._env) {
+      return false;
+    }
+
     if (typeof this.baseHash === 'function') {
       return this.baseHash.bind(this)(resource);
     } else if (this.baseHash instanceof RegExp) {
