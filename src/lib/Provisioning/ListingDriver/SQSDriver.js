@@ -41,8 +41,9 @@ export class SQSDriver extends AbstractDriver {
         }
 
         let queueUrl = data.QueueUrls[i];
+        let queueName = queueUrl.split('/').pop();
 
-        this._checkPushStack(queueUrl, queueUrl);
+        this._checkPushStack(queueName, queueUrl);
       }
 
       cb(null);
