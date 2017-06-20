@@ -25,6 +25,8 @@ export class IAMDriver extends AbstractDriver {
   }
 
   /**
+   * @todo: find a better way to handle IAM oidc-provider specific use case
+   *
    * Overrides base _matchResource by adding support for oidc provider IAM resources
    * e.g. arn:aws:iam::545786123497:oidc-provider/example.auth0.com
    *
@@ -42,6 +44,15 @@ export class IAMDriver extends AbstractDriver {
       }
 
       return oidcProviderARN ? resource === oidcProviderARN : false;
+    }
+
+    let resourceEnv = AbstractService.extractEnvFromResourceName(resource);
+
+    // do we need to check env only for typeof hash = string ?
+    if (!resourceEnv) {
+      console.warn(`Cannot extract env from ${resource} resource.`);
+    } else if (resourceEnv !== this._env) {
+      return false;
     }
 
     if (typeof this._baseHash === 'function') {
