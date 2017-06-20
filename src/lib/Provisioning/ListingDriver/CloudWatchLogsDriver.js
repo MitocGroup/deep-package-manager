@@ -46,12 +46,8 @@ export class CloudWatchLogsDriver extends AbstractDriver {
 
     // remove log group prefix to match generalized deep resource regexp
     let trimmedResource = resource.replace(CloudWatchLogsDriver.LAMBDA_LOG_GROUP_PREFIX, '');
-    let resourceEnv = AbstractService.extractEnvFromResourceName(trimmedResource);
 
-    // do we need to check env only for typeof hash = string ?
-    if (!resourceEnv) {
-      console.warn(`Cannot extract env from ${trimmedResource} resource.`);
-    } else if (resourceEnv !== this._env) {
+    if (!this._matchResourceEnv(trimmedResource)) {
       return false;
     }
 

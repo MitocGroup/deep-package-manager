@@ -54,15 +54,20 @@ export class Undeploy {
   /**
    * @param {Function} callback
    * @param {String|RegExp|null} baseHash
+   * @param {String|null} env
    * @param {String[]} services
    * @returns {Undeploy}
    */
-  execute(callback, baseHash = null, services = Undeploy.SERVICES) {
+  execute(callback, baseHash = null, env = null, services = Undeploy.SERVICES) {
     let lister = this.newLister;
 
     // @todo: do it smarter?
     if (baseHash) {
       lister.hash = baseHash;
+    }
+
+    if (env) {
+      lister.env = env;
     }
 
     let regions = [this._property.config.awsRegion];
