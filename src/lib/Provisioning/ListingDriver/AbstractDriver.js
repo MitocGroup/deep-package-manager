@@ -108,9 +108,7 @@ export class AbstractDriver extends Core.OOP.Interface {
       let resourceEnv = AbstractService.extractEnvFromResourceName(resource);
 
       // do we need to check env only for typeof hash = string ?
-      if (!resourceEnv) {
-        console.warn(`Cannot extract env from ${resource} resource.`);
-      } else if (resourceEnv !== this._env) {
+      if (resourceEnv && resourceEnv !== this._env) {
         return false;
       }
     }
