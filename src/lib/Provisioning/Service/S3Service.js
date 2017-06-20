@@ -223,7 +223,7 @@ export class S3Service extends AbstractService {
         bucketSuffix,
         Core.AWS.Service.SIMPLE_STORAGE_SERVICE,
         '',
-        AbstractService.DELIMITER_DOT
+        AbstractService.DELIMITER_HYPHEN_LOWER_CASE
       );
 
       syncStack.push(s3.createBucket({Bucket: bucketName}), (error, data) => {
