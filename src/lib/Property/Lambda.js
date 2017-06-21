@@ -748,7 +748,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
       }
 
       if (additionalRequest) {
-        syncStack.level(1).push(additionalRequest, (error, data) => {
+        syncStack.level(2).push(additionalRequest, (error, data) => {
           if (error) {
             
             // This is not critical, just warn developer
