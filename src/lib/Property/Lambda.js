@@ -260,6 +260,13 @@ export class Lambda {
   /**
    * @returns {String}
    */
+  get functionDescription() {
+    return `Deployed on ${new Date().toISOString()}`;
+  }
+
+  /**
+   * @returns {String}
+   */
   get arn() {
     return `arn:aws:lambda:${this.region}:${this.awsAccountId}:function:${this.functionName}`;
   }
@@ -671,6 +678,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
       if (update && this._wasPreviouslyDeployed) {
         let funcConfig = {
           FunctionName: this.functionName,
+          Description: this.functionDescription,
           Handler: this.handler,
           Role: this._execRole.Arn,
           Runtime: this._runtime,
@@ -707,6 +715,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
             S3ObjectVersion: data.VersionId,
           },
           FunctionName: this.functionName,
+          Description: this.functionDescription,
           Handler: this.handler,
           Role: this._execRole.Arn,
           Runtime: this._runtime,
@@ -784,7 +793,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
   get createConfigHookData() {
     return {
       CodeSize: 0,
-      Description: '',
+      Description: this.functionDescription,
       FunctionArn: this.arn,
       FunctionName: this.functionName,
       Handler: this.handler,
