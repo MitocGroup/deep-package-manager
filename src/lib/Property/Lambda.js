@@ -261,7 +261,7 @@ export class Lambda {
    * @returns {String}
    */
   get functionDescription() {
-    return `Deployed on ${new Date().toISOString()}`;
+    return `Deployed on ${new Date().toString()}`;
   }
 
   /**
