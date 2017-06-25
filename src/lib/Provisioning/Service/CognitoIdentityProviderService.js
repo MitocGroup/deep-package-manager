@@ -572,9 +572,15 @@ export class CognitoIdentityProviderService extends AbstractService {
    */
   static get AVAILABLE_REGIONS() {
     return [
-      Core.AWS.Region.US_EAST_N_VIRGINIA,
-      Core.AWS.Region.EU_IRELAND,
-      Core.AWS.Region.ASIA_PACIFIC_TOKYO,
+      Core.AWS.Region.AP_NORTHEAST_TOKYO,
+      Core.AWS.Region.AP_NORTHEAST_SEOUL,
+      Core.AWS.Region.AP_SOUTHEAST_SYDNEY,
+      Core.AWS.Region.AP_SOUTH_MUMBAI,
+      Core.AWS.Region.EU_CENTRAL_FRANKFURT,
+      Core.AWS.Region.EU_WEST_IRELAND,
+      Core.AWS.Region.EU_WEST_LONDON,
+      Core.AWS.Region.US_EAST_VIRGINIA,
+      Core.AWS.Region.US_EAST_OHIO,
       Core.AWS.Region.US_WEST_OREGON,
     ];
   }
