@@ -1062,9 +1062,9 @@ export class Instance {
     this.microservicesToUpdate = microservicesToUpdate;
 
     if (propertyConfigSnapshot) {
-      this._configObj.updateConfig(propertyConfigSnapshot);
+      this._configObj.updateConfig(propertyConfigSnapshot, callback);
     } else {
-      this._configObj.tryReadFromDump();
+      this._configObj.tryReadFromDump(callback);
     }
 
     return this.install((...args) => {
