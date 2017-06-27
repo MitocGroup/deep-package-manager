@@ -125,12 +125,11 @@ export class DeployConfig {
   tryLoadConfig(cb, bucket = null) {
     if (!this.configExists) {
       this.trySyncS3Dump((error) => {
-        if (error) {
-          cb(error);
-          return;
+        if (!error) {
+          this.tryReadFromDump(cb);
+        } else {
+          cb();
         }
-
-        this.tryReadFromDump(cb);
       }, bucket);
     } else {
       this.tryReadFromDump(cb);
