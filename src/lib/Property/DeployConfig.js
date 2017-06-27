@@ -289,6 +289,8 @@ you have to undeploy it from ${propertyConfigSnapshot.aws.region}.`;
       this._property._config.provisioning
     );
 
+    cb();
+
     return this;
   }
 
