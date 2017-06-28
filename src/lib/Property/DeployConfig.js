@@ -126,15 +126,13 @@ export class DeployConfig {
     if (!this.configExists) {
       this.trySyncS3Dump((error) => {
         if (!error) {
-          this.tryReadFromDump();
+          this.tryReadFromDump(cb);
+        } else {
+          cb();
         }
-
-        cb();
       }, bucket);
     } else {
-      this.tryReadFromDump();
-
-      cb();
+      this.tryReadFromDump(cb);
     }
   }
 
@@ -243,23 +241,39 @@ export class DeployConfig {
   }
 
   /**
+   * @param {Function} cb
    * @returns {DeployConfig}
    */
-  tryReadFromDump() {
+  tryReadFromDump(cb = () => {}) {
     if (!this.configExists) {
+      cb();
       return this;
     }
 
     let propertyConfigSnapshot = JsonFile.readFileSync(this.configFile);
 
-    return this.updateConfig(propertyConfigSnapshot);
+    return this.updateConfig(propertyConfigSnapshot, cb);
   }
 
   /**
    * @param {Object} propertyConfigSnapshot
+   * @param {Function} cb
    * @returns {DeployConfig}
    */
-  updateConfig(propertyConfigSnapshot) {
+  updateConfig(propertyConfigSnapshot, cb = () => {}) {
+    if (propertyConfigSnapshot.env === this._property._config.env &&
+      propertyConfigSnapshot.appIdentifier === this._property._config.appIdentifier &&
+      propertyConfigSnapshot.aws.region !== this._property._config.aws.region) {
+
+      let messsage = `App ${this.baseHash} is already deployed in ${propertyConfigSnapshot.aws.region} region. 
+If you want to deploy it into ${this._property._config.aws.region} 
+you have to undeploy it from ${propertyConfigSnapshot.aws.region}.`;
+
+      cb(new Error(messsage.replace(/\n/g, '')));
+
+      return this;
+    }
+
     // keep initial deployId
     let deployId = this._property.deployId;
 
@@ -273,6 +287,8 @@ export class DeployConfig {
     this._property._provisioning.injectConfig(
       this._property._config.provisioning
     );
+
+    cb();
 
     return this;
   }

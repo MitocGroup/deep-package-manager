@@ -24,6 +24,8 @@ export class CloudWatchLogsDriver extends AbstractDriver {
   }
 
   /**
+   * @todo: find a better way to handle API logs specific use case
+   *
    * Overrides base _matchResource by adding support for custom API Gateway CloudWatch log group name
    * e.g. API-Gateway-Execution-Logs_56fh4n843h/dev
    *
@@ -42,12 +44,16 @@ export class CloudWatchLogsDriver extends AbstractDriver {
       return apiCloudWatchLogGroup ? resource === apiCloudWatchLogGroup : false;
     }
 
+    // remove log group prefix to match generalized deep resource regexp
+    let trimmedResource = resource.replace(CloudWatchLogsDriver.LAMBDA_LOG_GROUP_PREFIX, '');
+
+    if (!this._matchResourceEnv(trimmedResource)) {
+      return false;
+    }
+
     if (typeof this._baseHash === 'function') {
       return this._baseHash.bind(this)(resource);
     } else if (this._baseHash instanceof RegExp) {
-      // remove log group prefix to match generalized deep resource regexp
-      let trimmedResource = resource.replace(CloudWatchLogsDriver.LAMBDA_LOG_GROUP_PREFIX, '');
-
       return this._baseHash.test(trimmedResource);
     }
 
