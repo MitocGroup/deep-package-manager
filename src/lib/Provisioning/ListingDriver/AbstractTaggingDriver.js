@@ -16,9 +16,27 @@ export class AbstractTaggingDriver extends AbstractDriver {
   constructor(...args) {
     super(...args);
 
-    this._taggingService = new AWS.ResourceGroupsTaggingAPI({
-      region: this.awsService.config.region,
-    });
+    this._taggingService = null;
+  }
+
+  /**
+   * @returns {*}
+   */
+  get taggingService() {
+    if (!this._taggingService) {
+      this._taggingService = new AWS.ResourceGroupsTaggingAPI({
+        region: this.region(),
+      });
+    }
+
+    return this._taggingService;
+  }
+
+  /**
+   * @returns {String}
+   */
+  region() {
+    return this.awsService.config.region;
   }
 
   /**
@@ -77,7 +95,7 @@ export class AbstractTaggingDriver extends AbstractDriver {
       payload.PaginationToken = _token;
     }
 
-    return this._taggingService.getResources(payload).promise().then(response => {
+    return this.taggingService.getResources(payload).promise().then(response => {
       const resourcesList = response.ResourceTagMappingList;
 
       if (response.PaginationToken) {
