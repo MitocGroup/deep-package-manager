@@ -16,6 +16,13 @@ export class CloudFrontDriver extends AbstractTaggingDriver {
   }
 
   /**
+   * @returns {String}
+   */
+  region() {
+    return 'us-east-1';
+  }
+
+  /**
    * @returns {String[]}
    */
   static get AVAILABLE_REGIONS() {
