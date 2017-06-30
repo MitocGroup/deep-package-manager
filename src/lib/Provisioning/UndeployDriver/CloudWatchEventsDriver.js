@@ -4,7 +4,9 @@
 
 'use strict';
 
+import AWS from 'aws-sdk';
 import {AbstractDriver} from './AbstractDriver';
+import {CloudWatchLogsDriver as CloudWatchLogsListingDriver} from '../ListingDriver/CloudWatchLogsDriver';
 
 export class CloudWatchEventsDriver extends AbstractDriver {
   /**
@@ -12,6 +14,8 @@ export class CloudWatchEventsDriver extends AbstractDriver {
    */
   constructor(...args) {
     super(...args);
+
+    this._cloudWatchLogsService = null;
   }
 
   /**
@@ -19,6 +23,19 @@ export class CloudWatchEventsDriver extends AbstractDriver {
    */
   service() {
     return 'CloudWatchEvents';
+  }
+
+  /**
+   * @returns {AWS.CloudWatchLogs}
+   */
+  get cloudWatchLogsService() {
+    if (!this._cloudWatchLogsService) {
+      this._cloudWatchLogsService = new AWS.CloudWatchLogs({
+        region: this.awsService.config.region,
+      });
+    }
+
+    return this._cloudWatchLogsService;
   }
 
   /**
@@ -64,7 +81,10 @@ export class CloudWatchEventsDriver extends AbstractDriver {
         return;
       }
 
-      cb(null);
+      // trying to remove associated scheduled lambdas log groups that were created while undeploying the app
+      this._removeAssociatedLogGroup(ruleName, error => {
+        cb(null);
+      });
     });
   }
 
@@ -104,6 +124,19 @@ export class CloudWatchEventsDriver extends AbstractDriver {
         cb(error);
       });
     });
+  }
+
+  /**
+   * @param {String} ruleName
+   * @param {Function} cb
+   * @private
+   */
+  _removeAssociatedLogGroup(ruleName, cb) {
+    let params = {
+      logGroupName: `${CloudWatchLogsListingDriver.LAMBDA_LOG_GROUP_PREFIX}${ruleName}`,
+    };
+
+    this.cloudWatchLogsService.deleteLogGroup(params, cb);
   }
 
   /**

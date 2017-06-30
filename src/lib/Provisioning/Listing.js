@@ -343,10 +343,9 @@ export class Listing {
    */
   static get SERVICES() {
     return [
-      'APIGateway', 'APIGatewayPlan', 'APIGatewayKey', 'IAM', 'CognitoIdentity',
-      'Lambda', 'CloudFront', 'DynamoDB', 'S3',
-      'CloudWatchLogs', 'SQS', 'ElastiCache',
-      'ES', 'CloudWatchEvents', 'CognitoIdentityProvider',
+      'CloudWatchEvents', 'Lambda', 'APIGateway', 'APIGatewayPlan', 'APIGatewayKey', 'IAM',
+      'CognitoIdentity', 'CloudFront', 'DynamoDB', 'S3', 'SQS', 'ElastiCache',
+      'ES', 'CognitoIdentityProvider', 'CloudWatchLogs'
     ];
   }
 
@@ -370,7 +369,7 @@ export class Listing {
    * @returns {String}
    */
   static get GLOBAL_REGION_REPLACER() {
-    return 'us-east-1';
+    return Core.AWS.Region.US_EAST_VIRGINIA;
   }
 
   /**
