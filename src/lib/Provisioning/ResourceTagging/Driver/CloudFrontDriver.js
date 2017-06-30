@@ -21,7 +21,7 @@ export class CloudFrontDriver extends AbstractDriver {
    */
   region() {
     // used this region to avoid "Invocation of TagResources for this resource is not supported in this region"
-    return 'us-east-1';
+    return Core.AWS.Region.US_EAST_VIRGINIA;
   }
 
   /**
