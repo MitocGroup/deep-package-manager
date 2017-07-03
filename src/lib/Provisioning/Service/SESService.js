@@ -79,8 +79,8 @@ export class SESService extends AbstractService {
    */
   static get AVAILABLE_REGIONS() {
     return [
-      Core.AWS.Region.EU_IRELAND,
-      Core.AWS.Region.US_EAST_N_VIRGINIA,
+      Core.AWS.Region.EU_WEST_IRELAND,
+      Core.AWS.Region.US_EAST_VIRGINIA,
       Core.AWS.Region.US_WEST_OREGON,
     ];
   }

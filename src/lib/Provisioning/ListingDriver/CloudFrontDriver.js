@@ -4,6 +4,7 @@
 
 'use strict';
 
+import Core from 'deep-core';
 import {AbstractTaggingDriver} from './AbstractTaggingDriver';
 import {CloudFrontService} from '../Service/CloudFrontService';
 
@@ -13,6 +14,14 @@ export class CloudFrontDriver extends AbstractTaggingDriver {
    */
   constructor(...args) {
     super(...args);
+  }
+
+  /**
+   * @returns {String}
+   */
+  region() {
+    // used this region to avoid "Invocation of TagResources for this resource is not supported in this region"
+    return Core.AWS.Region.US_EAST_VIRGINIA;
   }
 
   /**

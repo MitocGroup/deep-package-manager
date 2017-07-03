@@ -50,7 +50,6 @@ export class Instance {
     this._sns = new property.AWS.SNS();
     this._cloudFront = new property.AWS.CloudFront();
     this._iam = new property.AWS.IAM();
-    this._cloudWatchLogs = new property.AWS.CloudWatchLogs();
 
     // set appropriate region for services that are not available on all regions
     this._dynamoDb = new property.AWS.DynamoDB({
@@ -89,6 +88,9 @@ export class Instance {
       region: this._lambda.config.region,
     });
     this._s3 = new property.AWS.S3({
+      region: this._lambda.config.region,
+    });
+    this._cloudWatchLogs = new property.AWS.CloudWatchLogs({
       region: this._lambda.config.region,
     });
     this._cloudWatchEvents = new property.AWS.CloudWatchEvents({

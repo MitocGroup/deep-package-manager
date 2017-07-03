@@ -261,15 +261,17 @@ export class DeployConfig {
    * @returns {DeployConfig}
    */
   updateConfig(propertyConfigSnapshot, cb = () => {}) {
+    let currentRegion = this._property._config.aws.region;
+    let snapshotRegion = propertyConfigSnapshot.awsRegion;
+
     if (propertyConfigSnapshot.env === this._property._config.env &&
       propertyConfigSnapshot.appIdentifier === this._property._config.appIdentifier &&
-      propertyConfigSnapshot.aws.region !== this._property._config.aws.region) {
+      snapshotRegion !== currentRegion) {
 
-      let messsage = `App ${this.baseHash} is already deployed in ${propertyConfigSnapshot.aws.region} region. 
-If you want to deploy it into ${this._property._config.aws.region} 
-you have to undeploy it from ${propertyConfigSnapshot.aws.region}.`;
+      let message = `App ${this.baseHash} is already deployed in ${snapshotRegion} region.
+If you want to deploy it into ${currentRegion} you have to undeploy it from ${snapshotRegion}.`;
 
-      cb(new Error(messsage.replace(/\n/g, '')));
+      cb(new Error(message.replace(/\n/g, '')));
 
       return this;
     }
