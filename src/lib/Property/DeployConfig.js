@@ -261,7 +261,7 @@ export class DeployConfig {
    * @returns {DeployConfig}
    */
   updateConfig(propertyConfigSnapshot, cb = () => {}) {
-    let currentRegion = this._property._config.aws.region;
+    let currentRegion = this._property._config.awsRegion;
     let snapshotRegion = propertyConfigSnapshot.awsRegion;
 
     if (propertyConfigSnapshot.env === this._property._config.env &&
