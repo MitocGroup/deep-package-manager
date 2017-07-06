@@ -617,7 +617,7 @@ export class LambdaService extends AbstractService {
     if (cognitoIdpService.isCognitoPoolEnabled) {
       policy.statement.add(cognitoIdpService.generateAllowActionsStatement([
         'AdminUpdateUserAttributes', 'AdminInitiateAuth',
-        'AdminGetUser', 'AdminConfirmSignUp',
+        'AdminGetUser', 'AdminConfirmSignUp', 'AdminDeleteUser',
       ]));
     }
 
