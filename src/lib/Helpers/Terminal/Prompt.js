@@ -5,9 +5,10 @@
 'use strict';
 
 import readline from 'readline';
-import {ReadlineSync} from './ReadlineSync';
+import { ReadlineSync } from './ReadlineSync';
 
 export class Prompt {
+
   /**
    * @param {String} text
    */
@@ -89,7 +90,7 @@ export class Prompt {
    */
   readConfirm(callback) {
     if (Prompt._noInteractionMode) {
-      callback(true);
+      callback(!Prompt._deepConfirmationRefuse);
       return this;
     }
 
@@ -251,4 +252,13 @@ export class Prompt {
   static get _noInteractionMode() {
     return process.env.hasOwnProperty('DEEP_NO_INTERACTION');
   }
+
+  /**
+   * @returns {boolean}
+   * @private
+   */
+  static get _deepConfirmationRefuse() {
+    return process.env.hasOwnProperty('DEEP_CONFIRMATION_REFUSE');
+  }
+
 }
