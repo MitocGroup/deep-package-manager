@@ -108,7 +108,7 @@ export class Prompt {
     if (Prompt._noInteractionMode) {
       let choice = '';
       if (choices.length > 0) {
-        choice = Prompt._noInteractionAlwaysNo ? 'N' : choices[0];
+        choice = (Prompt._noInteractionAlwaysNo && choices.map(x => x.toLowerCase()).includes('n')) ? 'n' : choices[0];
       }
 
       callback(choice);
