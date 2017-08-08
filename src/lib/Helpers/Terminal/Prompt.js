@@ -5,9 +5,10 @@
 'use strict';
 
 import readline from 'readline';
-import {ReadlineSync} from './ReadlineSync';
+import { ReadlineSync } from './ReadlineSync';
 
 export class Prompt {
+
   /**
    * @param {String} text
    */
@@ -89,7 +90,7 @@ export class Prompt {
    */
   readConfirm(callback) {
     if (Prompt._noInteractionMode) {
-      callback(true);
+      callback(!Prompt._deepConfirmationRefuse);
       return this;
     }
 
@@ -106,12 +107,7 @@ export class Prompt {
    */
   readChoice(callback, choices, castToLower = true) {
     if (Prompt._noInteractionMode) {
-      let choice = '';
-      if (choices.length > 0) {
-        choice = (Prompt._noInteractionAlwaysNo && choices.map(x => x.toLowerCase()).includes('n')) ? 'n' : choices[0];
-      }
-
-      callback(choice);
+      callback(choices.length > 0 ? choices[0] : '');
       return this;
     }
 
@@ -261,8 +257,8 @@ export class Prompt {
    * @returns {boolean}
    * @private
    */
-  static get _noInteractionAlwaysNo() {
-    return process.env.hasOwnProperty('DEEP_NO_INTERACTION_ALWAYS_NO');
+  static get _deepConfirmationRefuse() {
+    return process.env.hasOwnProperty('DEEP_CONFIRMATION_REFUSE');
   }
 
 }
