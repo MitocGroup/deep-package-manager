@@ -106,7 +106,12 @@ export class Prompt {
    */
   readChoice(callback, choices, castToLower = true) {
     if (Prompt._noInteractionMode) {
-      callback(choices.length > 0 ? choices[0] : '');
+      let choice = '';
+      if (choices.length > 0) {
+        choice = Prompt._noInteractionAlwaysNo ? 'N' : choices[0];
+      }
+
+      callback(choice);
       return this;
     }
 
@@ -251,4 +256,13 @@ export class Prompt {
   static get _noInteractionMode() {
     return process.env.hasOwnProperty('DEEP_NO_INTERACTION');
   }
+
+  /**
+   * @returns {boolean}
+   * @private
+   */
+  static get _noInteractionAlwaysNo() {
+    return process.env.hasOwnProperty('DEEP_NO_INTERACTION_ALWAYS_NO');
+  }
+
 }
