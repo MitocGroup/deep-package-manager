@@ -56,7 +56,7 @@ export class SESService extends AbstractService {
    * @param {String[]} actions
    * @returns {Object}
    */
-  generateAllowActionsStatement(actions = ['SendEmail']) {
+  generateAllowActionsStatement(actions = ['SendEmail', 'SendRawEmail']) {
     let policy = new Core.AWS.IAM.Policy();
     let statement = policy.statement.add();
 
