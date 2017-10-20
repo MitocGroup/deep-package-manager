@@ -4,7 +4,7 @@
 
 'use strict';
 
-import {AbstractReplacer} from './AbstractReplacer';
+import { AbstractReplacer } from './AbstractReplacer';
 import findHtmlAssets from 'find-assets';
 import findCssAssets from 'css-find-assets';
 import parseCss from 'css-parse';
@@ -157,13 +157,17 @@ export class UrlReplacer extends AbstractReplacer {
       }
 
       let matchObj = rawAst[i];
+      // skip svg and base64 encoded content
+      if (matchObj.url.indexOf('data:image/') >= 0) {
+        continue;
+      }
 
       result[matchObj.node.value] = matchObj.url;
     }
 
     return result;
   }
-  
+
   /**
    * @returns {String}
    */
