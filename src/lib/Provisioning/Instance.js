@@ -262,14 +262,14 @@ export class Instance {
   }
 
   /**
-   * @returns {AWS.ApiGateway|*}
+   * @returns {AWS.APIGateway|*}
    */
   get apiGateway() {
     return this._apiGateway;
   }
 
   /**
-   * @returns {AWS.SNS|*}
+   * @returns {AWS.SQS|*}
    */
   get sqs() {
     return this._sqs;

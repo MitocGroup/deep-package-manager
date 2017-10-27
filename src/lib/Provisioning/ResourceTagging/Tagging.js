@@ -4,16 +4,17 @@
 
 'use strict';
 
-import {WaitFor} from '../../Helpers/WaitFor';
-import {S3Driver} from './Driver/S3Driver';
-import {ESDriver} from './Driver/ESDriver';
-import {CloudFrontDriver} from './Driver/CloudFrontDriver';
-import {DynamoDBDriver} from './Driver/DynamoDBDriver';
-import {LambdaDriver} from './Driver/LambdaDriver';
+import { WaitFor } from '../../Helpers/WaitFor';
+import { S3Driver } from './Driver/S3Driver';
+import { ESDriver } from './Driver/ESDriver';
+import { CloudFrontDriver } from './Driver/CloudFrontDriver';
+import { DynamoDBDriver } from './Driver/DynamoDBDriver';
+import { LambdaDriver } from './Driver/LambdaDriver';
+import { SQSDriver } from './Driver/SQSDriver';
 
 export class Tagging {
   /**
-   * @param {AbstractDriver|S3Driver|*} drivers
+   * @param {AbstractDriver|*} drivers
    */
   constructor(...drivers) {
     this._drivers = drivers;
@@ -32,12 +33,13 @@ export class Tagging {
     let cloudFrontDriver = new CloudFrontDriver(property, applicationName);
     let dynamoDbDriver = new DynamoDBDriver(property, applicationName);
     let lambdaDriver = new LambdaDriver(property, applicationName);
+    let sqsDriver = new SQSDriver(property, applicationName);
 
-    return new Tagging(s3Driver, esDriver, cloudFrontDriver, dynamoDbDriver, lambdaDriver);
+    return new Tagging(s3Driver, esDriver, cloudFrontDriver, dynamoDbDriver, lambdaDriver, sqsDriver);
   }
 
   /**
-   * @returns {AbstractDriver[]|S3Driver[]|*}
+   * @returns {AbstractDriver[]|*}
    */
   get drivers() {
     return this._drivers;
