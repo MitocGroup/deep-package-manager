@@ -90,7 +90,7 @@
     "tmp": "^0.0.x"
   },
   "optionalDependencies": {
-    "aws-sdk": "^2.4.x"
+    "aws-sdk": "^2.140.x"
   },
   "devDependencies": {
     "proxyquire": "^1.7.x"

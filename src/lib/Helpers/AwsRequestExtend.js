@@ -1,7 +1,3 @@
-/**
- * Created by CCristi on 4/20/17.
- */
-
 'use strict';
 
 export class AwsRequestExtend {
@@ -27,11 +23,16 @@ export class AwsRequestExtend {
   }
 
   /**
-   *
    * @returns {String[]}
    */
   static get DEFAULT_RETRYABLE_CODES() {
-    return ['ResourceInUseException', 'Throttling'];
+    return [
+      'ResourceInUseException',
+      'Throttling',
+      'ThrottledException',
+      'ThrottlingException',
+      'InternalServiceException'
+    ];
   }
 
   /**
