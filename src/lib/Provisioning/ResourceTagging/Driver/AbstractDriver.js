@@ -30,6 +30,10 @@ export class AbstractDriver extends Core.OOP.Interface {
     if (!this._taggingService) {
       this._taggingService = new AWS.ResourceGroupsTaggingAPI({
         region: this.region(),
+        maxRetries: AbstractDriver.MAX_RETRIES,
+        retryDelayOptions: {
+          base: AbstractDriver.DEFAULT_DELAY
+        }
       });
     }
 
@@ -229,5 +233,19 @@ export class AbstractDriver extends Core.OOP.Interface {
    */
   step() {
     return Tagging.PROVISION_STEP;
+  }
+
+  /**
+   * @returns {Number}
+   */
+  static get DEFAULT_DELAY() {
+    return 500;
+  }
+
+  /**
+   * @returns {Number}
+   */
+  static get MAX_RETRIES() {
+    return 3;
   }
 }
