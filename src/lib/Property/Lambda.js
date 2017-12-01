@@ -55,6 +55,7 @@ export class Lambda {
     this._runtime = Lambda.DEFAULT_RUNTIME;
 
     this._forceUserIdentity = false;
+    this._skipCompile = false;
     this._wasPreviouslyDeployed = false;
     this._uploadedLambda = {};
 
@@ -74,6 +75,20 @@ export class Lambda {
    */
   set forceUserIdentity(state) {
     this._forceUserIdentity = state;
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  get skipCompile() {
+    return this._skipCompile;
+  }
+
+  /**
+   * @param {Boolean} state
+   */
+  set skipCompile(state) {
+    this._skipCompile = !!state;
   }
 
   /**
@@ -98,6 +113,7 @@ export class Lambda {
     let microservice = this._property.microservice(this._microserviceIdentifier);
 
     config.forceUserIdentity = this._forceUserIdentity;
+    config.skipCompile = this._skipCompile;
     config.microserviceIdentifier = this.microserviceIdentifier;
     config.awsAccountId = propertyConfig.awsAccountId;
     config.appIdentifier = propertyConfig.appIdentifier;

@@ -26,6 +26,7 @@ export class Action {
     this._engine = config.engine;
     this._cacheTtl = config.cacheTtl;
     this._forceUserIdentity = config.forceUserIdentity;
+    this._skipCompile = config.skipCompile;
     this._validationSchema = config.validationSchema;
     this._scope = ActionFlags.unstringify(config.scope);
     this._cron = config.cron || null;
@@ -145,6 +146,10 @@ export class Action {
     }
 
     return this._forceUserIdentity;
+  }
+
+  get skipCompile() {
+    return this._skipCompile;
   }
 
   /**
