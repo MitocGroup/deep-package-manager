@@ -494,7 +494,7 @@ export class Lambda {
     let wait = new WaitFor();
     let ready = false;
 
-    let configFile = Path.join(lambdaPath, Lambda.CONFIG_FILE);    
+    let configFile = Path.join(lambdaPath, Lambda.CONFIG_FILE);
 
     if (!FileSystem.existsSync(packageFile)) {
       throw new InvalidConfigException(`Package file not found in ${packageFile}!`);
@@ -584,7 +584,7 @@ export class Lambda {
     }
 
     if (FileSystem.existsSync(buildFile)) {
-      console.debug(`Lambda prebuilt in ${buildFile}`);    
+      console.debug(`Lambda prebuilt in ${buildFile}`);
 
       FileSystemExtra.copySync(buildFile, this._zipPath);
 
