@@ -410,7 +410,7 @@ export class Lambda {
             .ready(() => resolve());
         });
       }).catch(err => {
-        console.error("Error Message:", err);
+        console.error('Error Message:', err);
       });
     }, this.path).then(() => callback());
     
@@ -475,7 +475,7 @@ export class Lambda {
   static externalPackage(buildpath){
     let wait = new WaitFor();
     
-    console.debug("Detected external lambda:", buildpath);
+    console.log('Detected external lambda:', buildpath);
     
     wait.push(() => {
       return true;
@@ -571,6 +571,8 @@ export class Lambda {
     let lambdaAction = actionsArray.filter(action => {
       return action.name === lambdaName;
     }).pop();
+
+    console.debug('~~~~~~~~~~',lambdaAction);
 
     if (lambdaAction.skipCompile) {
 
@@ -691,6 +693,8 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
     let s3 = this._property.provisioning.s3;
     let securityGroupId = this._property.config.provisioning.elasticache.securityGroupId;
     let subnetIds = this._property.config.provisioning.elasticache.subnetIds;
+
+    this._property.provisioning.lambda.config.httpOptions.timeout = 240000;
 
     let tmpBucket = this._uploadBucket;
     let objectPrefix = this._getUploadKeyPrefix(tmpBucket);
@@ -937,6 +941,10 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
     return Lambda.MAX_TIMEOUT;
   }
 
+  static get DEFAULT_UPLOAD_TIMEOUT() {
+    return 120000;
+  }
+
   /**
    * @returns {Number[]}
    */
@@ -979,6 +987,10 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    */
   static get MAX_TIMEOUT() {
     return 60 * 5;
+  }
+
+  static get MAX_UPLOAD_TIMEOUT() {
+    return 240000;
   }
 
   /**
