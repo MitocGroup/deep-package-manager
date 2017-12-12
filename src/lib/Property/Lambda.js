@@ -55,6 +55,7 @@ export class Lambda {
     this._runtime = Lambda.DEFAULT_RUNTIME;
 
     this._forceUserIdentity = false;
+    this._skipCompile = false;
     this._wasPreviouslyDeployed = false;
     this._uploadedLambda = {};
 
@@ -74,6 +75,20 @@ export class Lambda {
    */
   set forceUserIdentity(state) {
     this._forceUserIdentity = state;
+  }
+
+  /**
+   * @returns {Boolean}
+   */
+  get skipCompile() {
+    return this._skipCompile;
+  }
+
+  /**
+   * @param {Boolean} state
+   */
+  set skipCompile(state) {
+    this._skipCompile = !!state;
   }
 
   /**
@@ -98,6 +113,7 @@ export class Lambda {
     let microservice = this._property.microservice(this._microserviceIdentifier);
 
     config.forceUserIdentity = this._forceUserIdentity;
+    config.skipCompile = this._skipCompile;
     config.microserviceIdentifier = this.microserviceIdentifier;
     config.awsAccountId = propertyConfig.awsAccountId;
     config.appIdentifier = propertyConfig.appIdentifier;
@@ -393,6 +409,8 @@ export class Lambda {
           this.updateCode()
             .ready(() => resolve());
         });
+      }).catch(err => {
+        console.error('Error Message:', err);
       });
     }, this.path).then(() => callback());
     
@@ -451,6 +469,18 @@ export class Lambda {
       .directory(path, false)
       .finalize();
 
+    return wait;
+  }
+
+  static externalPackage(buildpath){
+    let wait = new WaitFor();
+    
+    console.log('Detected external lambda:', buildpath);
+    
+    wait.push(() => {
+      return true;
+    });
+    
     return wait;
   }
 
@@ -535,6 +565,25 @@ export class Lambda {
     this._injectDeepConfigIntoBootstrap(this._runtime);
 
     let buildFile = `${this._path}.zip`;
+
+    let lambdaName = this._path.split('/').pop();
+    let actionsArray = this._property.microservice(this._microserviceIdentifier).resources.actions;
+    let lambdaAction = actionsArray.filter(action => {
+      return action.name === lambdaName;
+    }).pop();
+
+    console.debug('~~~~~~~~~~',lambdaAction);
+
+    if (lambdaAction.skipCompile) {
+
+      if (FileSystem.existsSync(buildFile)) {
+        FileSystemExtra.copySync(buildFile, this._zipPath);
+      } else {
+        console.error('Make sure you have external lambda zip here');      
+      }
+
+      return Lambda.externalPackage(buildFile);
+    }
 
     if (FileSystem.existsSync(buildFile)) {
       console.debug(`Lambda prebuilt in ${buildFile}`);
@@ -644,6 +693,8 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
     let s3 = this._property.provisioning.s3;
     let securityGroupId = this._property.config.provisioning.elasticache.securityGroupId;
     let subnetIds = this._property.config.provisioning.elasticache.subnetIds;
+
+    this._property.provisioning.lambda.config.httpOptions.timeout = 240000;
 
     let tmpBucket = this._uploadBucket;
     let objectPrefix = this._getUploadKeyPrefix(tmpBucket);
@@ -861,8 +912,9 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
         break;
       case 'java8':
         handler = 'bootstrap.handler::handle';
-        break;
-      case 'python2.7':
+        break;     
+      case 'python2.7':      
+      case 'python3.6':
         handler = 'bootstrap.handler';
         break;
       case 'dotnetcore1.0':
@@ -887,6 +939,10 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    */
   static get DEFAULT_TIMEOUT() {
     return Lambda.MAX_TIMEOUT;
+  }
+
+  static get DEFAULT_UPLOAD_TIMEOUT() {
+    return 120000;
   }
 
   /**
@@ -933,13 +989,17 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
     return 60 * 5;
   }
 
+  static get MAX_UPLOAD_TIMEOUT() {
+    return 240000;
+  }
+
   /**
    * @returns {String[]}
    */
   static get RUNTIMES() {
     return [
       'nodejs6.10', 'nodejs4.3', 'nodejs', 
-      'java8', 'python2.7', 
+      'java8', 'python2.7', 'python3.6', 
       'dotnetcore1.0', 'nodejs4.3-edge',
     ];
   }
