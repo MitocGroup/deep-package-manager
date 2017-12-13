@@ -221,6 +221,9 @@ export class CognitoIdentityProviderService extends AbstractService {
       Policies: {
         PasswordPolicy: userPoolMetadata.passwordPolicy,
       },
+      UserPoolAddOns: {
+        AdvancedSecurityMode: 'OFF'
+      }
     };
 
     let emailVerifications = userPoolMetadata.verifications.email;
