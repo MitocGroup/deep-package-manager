@@ -49,14 +49,16 @@ export class CognitoIdentityService extends AbstractService {
    * @returns {string}
    */
   static get ROLE_AUTH() {
-    return 'cognitoAuthenticated';
+    // todo: use cognitoAuthenticated
+    return 'authenticated';
   }
 
   /**
    * @returns {string}
    */
   static get ROLE_UNAUTH() {
-    return 'cognitoUnauthenticated';
+    // todo: use cognitoUnauthenticated
+    return 'unauthenticated';
   }
 
   /**
