@@ -58,10 +58,12 @@ export default Joi.object().keys({
       .max(Lambda.MAX_MEMORY_LIMIT)
       .default(Lambda.DEFAULT_MEMORY_LIMIT),
     timeout: Joi.number().optional().integer().min(1).max(Lambda.MAX_TIMEOUT).default(Lambda.DEFAULT_TIMEOUT),
+    uploadTimeout: Joi.number().optional().integer().min(1).max(Lambda.MAX_UPLOAD_TIMEOUT).default(Lambda.DEFAULT_UPLOAD_TIMEOUT),
     runtime: Joi.string().optional().allow(Lambda.RUNTIMES).default(Lambda.DEFAULT_RUNTIME),
   }).default({
     memory: Lambda.DEFAULT_MEMORY_LIMIT,
     timeout: Lambda.DEFAULT_TIMEOUT,
+    uploadTimeout: Lambda.DEFAULT_UPLOAD_TIMEOUT,
     runtime: Lambda.DEFAULT_RUNTIME,
   })),
 });

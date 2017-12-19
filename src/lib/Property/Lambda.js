@@ -572,8 +572,6 @@ export class Lambda {
       return action.name === lambdaName;
     }).pop();
 
-    console.debug('~~~~~~~~~~',lambdaAction);
-
     if (lambdaAction.skipCompile) {
 
       if (FileSystem.existsSync(buildFile)) {
@@ -694,7 +692,8 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
     let securityGroupId = this._property.config.provisioning.elasticache.securityGroupId;
     let subnetIds = this._property.config.provisioning.elasticache.subnetIds;
 
-    this._property.provisioning.lambda.config.httpOptions.timeout = 240000;
+    let action = this._property.microservice(this._microserviceIdentifier).resources.actions.pop();
+    this._property.provisioning.lambda.config.httpOptions.timeout = action.engine.uploadTimeout;
 
     let tmpBucket = this._uploadBucket;
     let objectPrefix = this._getUploadKeyPrefix(tmpBucket);
