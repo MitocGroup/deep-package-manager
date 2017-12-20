@@ -1,4 +1,4 @@
-if [ -n "${TRAVIS:-}" || -n "${JENKINS_URL:-}" ]; then
+if [[ -n "${TRAVIS:-}" || -n "${JENKINS_URL:-}" ]]; then
     echo "CI environment detected. Skipping code transpiling to ES5..."
 elif [ -d 'lib/' ] && [ "$OSTYPE" != "win32" ] && [ "$OSTYPE" != "win64" ]; then
     NPM_GLOBAL_NM=`npm root -g`;
