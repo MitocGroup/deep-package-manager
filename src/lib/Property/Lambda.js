@@ -566,30 +566,32 @@ export class Lambda {
 
     let buildFile = `${this._path}.zip`;
 
-    let lambdaName = this._path.split('/').pop();
-    let actionsArray = this._property.microservice(this._microserviceIdentifier).resources.actions;
-    let lambdaAction = actionsArray.filter(action => {
-      return action.name === lambdaName;
-    }).pop();
+    console.debug(`Lambda zip will be stored ${buildFile}`);
+    let splittedPath = this._path.split('/');
+    let lambdaName = splittedPath[splittedPath.length - 1];
+    let lambdaCategory = splittedPath[splittedPath.length - 2];
+    let currentActions = this._property.microservice(this._microserviceIdentifier).resources.rawResources[lambdaCategory];
 
-    if (lambdaAction.skipCompile) {
-
-      if (FileSystem.existsSync(buildFile)) {
-        FileSystemExtra.copySync(buildFile, this._zipPath);
-      } else {
-        console.error('Make sure you have external lambda zip here');      
+    console.debug(`Checking if skipCompile is enabled for ${lambdaName}`);
+    if (currentActions[lambdaName] && currentActions[lambdaName].hasOwnProperty(skipCompile) && currentActions[lambdaName].skipCompile) {
+      if (!FileSystem.existsSync(buildFile)) {
+        console.debug(`Creating externalPackage zip file from ${this,_path}`);
+        let result = new Exec(`cd ${this._path} && zip -r ${buildFile} ./*`).runSync();
       }
 
+      FileSystemExtra.copySync(buildFile, this._zipPath);
+
+      console.debug(`Return Lambda zip file as externalPackage ${buildFile}`);
       return Lambda.externalPackage(buildFile);
     }
 
     if (FileSystem.existsSync(buildFile)) {
-      console.debug(`Lambda prebuilt in ${buildFile}`);
-
       FileSystemExtra.copySync(buildFile, this._zipPath);
 
+      console.debug(`Return Lambda zip file with injected config ${this._runtime}`);
       return Lambda.injectPackageConfig(this._path, this._zipPath, this._runtime);
     } else {
+      console.debug(`Return Lambda zip file as regular ${this._zipPath}`);
       return Lambda.createPackage(this._path, this._zipPath);
     }
   }
