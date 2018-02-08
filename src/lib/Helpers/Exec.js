@@ -259,9 +259,7 @@ export class Exec {
       cwd: this._cwd,
     }, (error, stdout) => {
       if (error) {
-        this._error = new Error(
-          `Command '${this._fullCmd}' failed in '${this._cwd}' with error: ${error}`
-        );
+        this._error = new Error(`Command '${this._fullCmd}' failed in '${this._cwd}' with error: ${error}`);
       } else {
         this._result = stdout ? stdout.toString().trim() : null;
       }
@@ -382,7 +380,7 @@ export class Exec {
 
   /**
    * Returns command in Windows format
-   * @param {Sting} cmd
+   * @param {String} cmd
    * @returns {String}
    */
   static winCmd(cmd) {
