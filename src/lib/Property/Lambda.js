@@ -406,8 +406,7 @@ export class Lambda {
         this.pack().ready(() => {
           console.debug(`Lambda ${this._identifier} packing is ready`);
           
-          this.updateCode()
-            .ready(() => resolve());
+          this.updateCode().ready(() => resolve());
         });
       }).catch(err => {
         console.error('Error Message:', err);
@@ -997,9 +996,14 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    */
   static get RUNTIMES() {
     return [
-      'nodejs6.10', 'nodejs4.3', 'nodejs', 
-      'java8', 'python2.7', 'python3.6', 
-      'dotnetcore1.0', 'nodejs4.3-edge',
+      'nodejs6.10',
+      'nodejs4.3',
+      'nodejs',
+      'java8',
+      'python2.7',
+      'python3.6',
+      'dotnetcore1.0',
+      'nodejs4.3-edge'
     ];
   }
 

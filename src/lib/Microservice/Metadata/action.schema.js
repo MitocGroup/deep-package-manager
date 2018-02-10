@@ -1,15 +1,11 @@
-/**
- * Created by AlexanderC on 5/25/15.
- */
-
 'use strict';
 
-import {Action} from './Action';
 import Joi from 'joi';
 import path from 'path';
-import {JoiHelper} from '../../Helpers/JoiHelper';
-import {Lambda} from '../../Property/Lambda';
-import {ActionFlags} from './Helpers/ActionFlags';
+import { Action } from './Action';
+import { Lambda } from '../../Property/Lambda';
+import { JoiHelper } from '../../Helpers/JoiHelper';
+import { ActionFlags } from './Helpers/ActionFlags';
 
 /**
  * @param {Object} joiObject
