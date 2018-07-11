@@ -858,6 +858,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
       case 'nodejs4.3':
       case 'nodejs4.3-edge':
       case 'nodejs6.10':
+      case 'nodejs8.10':
         handler = 'bootstrap.handler';
         break;
       case 'java8':
