@@ -1,6 +1,6 @@
 {
   "name": "deep-package-manager",
-  "version": "2.0.53",
+  "version": "2.0.54",
   "buildDate": "Wed Jul 11 11:20:31 EST 2018",
   "description": "DEEP Package Manager",
   "keywords": [
@@ -97,7 +97,7 @@
     "proxyquire": "^1.7.x"
   },
   "engines": {
-    "node": ">=6.0 <8.0",
+    "node": ">=6.0",
     "npm": ">=3.0"
   },
   "preferGlobal": false,
