@@ -997,6 +997,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    */
   static get RUNTIMES() {
     return [
+      'nodejs8.10',
       'nodejs6.10',
       'nodejs4.3',
       'nodejs',
@@ -1021,7 +1022,7 @@ global.${DeepConfigDriver.DEEP_CFG_VAR} =
    */
   static isNodeRuntime(runtime) {
     return [
-      'nodejs6.10', 'nodejs4.3', 'nodejs', 'nodejs4.3-edge'
+      'nodejs8.10', 'nodejs6.10', 'nodejs4.3', 'nodejs', 'nodejs4.3-edge'
     ].indexOf(runtime) !== -1;
   }
 
