@@ -51,7 +51,8 @@
   "scripts": {
     "compile-travis": "bash ../bin/compile-lib.sh .",
     "compile": "bash node-bin/compile.sh && node node-bin/bootstrap-dist.js > lib.compiled/bootstrap.dist.js",
-    "prepublish": "bash node-bin/assure-deps.sh && bash node-bin/compile.sh"
+    "prepublish": "npm run snyk-protect && bash node-bin/assure-deps.sh && bash node-bin/compile.sh",
+    "snyk-protect": "snyk protect"
   },
   "dependencies": {
     "amazon-cognito-js": "MitocGroup/amazon-cognito-js",
@@ -88,7 +89,8 @@
     "string2stream": "MitocGroup/string2stream",
     "sync-exec": "^0.6.x",
     "tar-stream": "^1.5.x",
-    "tmp": "^0.0.x"
+    "tmp": "^0.0.x",
+    "snyk": "^1.316.1"
   },
   "optionalDependencies": {
     "aws-sdk": "^2.140.x"
@@ -101,5 +103,6 @@
     "npm": ">=3.0"
   },
   "preferGlobal": false,
-  "analyze": true
+  "analyze": true,
+  "snyk": true
 }
