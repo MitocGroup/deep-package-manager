@@ -88,7 +88,7 @@
     "string2stream": "MitocGroup/string2stream",
     "sync-exec": "^0.6.x",
     "tar-stream": "^1.5.x",
-    "tmp": "^0.0.x"
+    "tmp": "^0.2.4"
   },
   "optionalDependencies": {
     "aws-sdk": "^2.140.x"
